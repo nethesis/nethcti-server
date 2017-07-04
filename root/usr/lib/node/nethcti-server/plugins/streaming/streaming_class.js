@@ -7,7 +7,6 @@
 * @param {object} data The streaming information
 *   @param {object} data.id         The streaming identifier
 *   @param {object} data.url        The HTTP url of the streaming
-*   @param {object} data.type       The streaming type
 *   @param {object} data.exten      The streaming extension
 *   @param {object} data.descr      The streaming description
 *   @param {object} data.open       The command to open the streaming device
@@ -18,16 +17,6 @@
 * @return {object} The streaming object.
 */
 exports.Streaming = function (data) {
-    // check the parameter
-    if (   typeof data               !== 'object' || typeof data.secret !== 'string'
-        || typeof data.id            !== 'string' || typeof data.descr  !== 'string'
-        || typeof data.url           !== 'string' || typeof data.type   !== 'string'
-        || typeof data.exten         !== 'string' || typeof data.open   !== 'string'
-        || typeof data['frame-rate'] !== 'string' || typeof data.user   !== 'string') {
-        
-        throw new Error('wrong parameter');
-    }
-
     /**
     * The streaming identifier.
     *
@@ -57,16 +46,6 @@ exports.Streaming = function (data) {
     * @private
     */
     var url = data.url;
-
-    /**
-    * The streaming type.
-    *
-    * @property type
-    * @type {string}
-    * @required
-    * @private
-    */
-    var type = data.type;
 
     /**
     * The streaming extension identifier.
@@ -156,7 +135,6 @@ exports.Streaming = function (data) {
     *     {
     *         id:          "door",                           // the identifier
     *         url:         "http://192.168.5.224/image.jpg", // the HTTP url of the streaming source
-    *         type:        "helios",                         // the streaming type
     *         user:        "root",                           // the username
     *         cmdOpen:     "0*",                             // the DMTF code to open the streaming device
     *         password:    "password",                       // the password
@@ -172,7 +150,6 @@ exports.Streaming = function (data) {
         return {
             id:          id,
             url:         url,
-            type:        type,
             user:        user,
             cmdOpen:     cmdOpen,
             password:    password,
