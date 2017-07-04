@@ -34,3 +34,7 @@
       "address": "localhost",
       "templates_customercards": "/var/lib/nethserver/nethcti/templates/customer_card"
     \},
+    "streaming": \{
+      "port": "50008",
+      "address": "localhost"
+    \},

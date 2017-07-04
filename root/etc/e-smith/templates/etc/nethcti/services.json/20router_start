@@ -8,3 +8,4 @@
       "/voicemail": "http://127.0.0.1:50005/voicemail",
       "/dbconn": "http://127.0.0.1:50006/dbconn",
       "/custcard": "http://127.0.0.1:50007/custcard",
+      "/streaming": "http://127.0.0.1:50008/streaming",
