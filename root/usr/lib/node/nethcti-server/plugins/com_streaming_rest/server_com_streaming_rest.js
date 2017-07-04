@@ -1,19 +1,18 @@
 /**
- * Provides the REST server for dbconn functions using
- * _dbconn_ component.
+ * Provides the REST server for the streaming functions.
  *
- * @module com_dbconn_rest
- * @main com_dbconn_rest
+ * @module com_streaming_rest
+ * @main arch_com_streaming_rest
  */
 
 /**
  * Provides the REST server.
  *
- * @class server_com_dbconn_rest
+ * @class server_com_streaming_rest
  */
 var fs = require('fs');
 var restify = require('restify');
-var plugins = require('jsplugs')().require('./plugins/com_dbconn_rest/plugins_rest');
+var plugins = require('jsplugs')().require('./plugins/com_streaming_rest/plugins_rest');
 
 /**
  * The module identifier used by the logger.
@@ -23,9 +22,9 @@ var plugins = require('jsplugs')().require('./plugins/com_dbconn_rest/plugins_re
  * @private
  * @final
  * @readOnly
- * @default [server_com_dbconn_rest]
+ * @default [server_com_streaming_rest]
  */
-var IDLOG = '[server_com_dbconn_rest]';
+var IDLOG = '[server_com_streaming_rest]';
 
 /**
  * The logger. It must have at least three methods: _info, warn and error._
@@ -44,8 +43,9 @@ var logger = console;
  * @property port
  * @type string
  * @private
+ * @default "9011"
  */
-var port;
+var port = '9011';
 
 /**
  * Listening address of the REST server. It can be customized by the
@@ -59,6 +59,24 @@ var port;
 var address = 'localhost';
 
 /**
+ * The architect component to be used for authorization.
+ *
+ * @property compAuthorization
+ * @type object
+ * @private
+ */
+var compAuthorization;
+
+/**
+ * The utility architect component.
+ *
+ * @property compUtil
+ * @type object
+ * @private
+ */
+var compUtil;
+
+/**
  * Set the logger to be used.
  *
  * @method setLogger
@@ -68,10 +86,10 @@ var address = 'localhost';
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object'
-    && typeof log.info === 'function'
-    && typeof log.warn === 'function'
-    && typeof log.error === 'function') {
+    if (typeof log === 'object' &&
+      typeof log.info === 'function' &&
+      typeof log.warn === 'function' &&
+      typeof log.error === 'function') {
 
       logger = log;
       logger.info(IDLOG, 'new logger has been set');
@@ -111,6 +129,60 @@ function setAllRestPluginsLogger(log) {
 }
 
 /**
+ * Sets the utility architect component to be used by REST plugins.
+ *
+ * @method setCompUtil
+ * @param {object} comp The architect utility component
+ * @static
+ */
+function setCompUtil(comp) {
+  try {
+    // check parameter
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameter');
+    }
+
+    compUtil = comp;
+
+    var p;
+    // set utility architect component to all REST plugins
+    for (p in plugins) {
+      if (typeof plugins[p].setCompUtil === 'function') {
+        plugins[p].setCompUtil(comp);
+      }
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Sets the config manager architect component to be used by REST plugins.
+ *
+ * @method setCompConfigManager
+ * @param {object} comp The architect config manager component
+ * @static
+ */
+function setCompConfigManager(comp) {
+  try {
+    // check parameter
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameter');
+    }
+
+    var p;
+    // set user architect component to all REST plugins
+    for (p in plugins) {
+      if (typeof plugins[p].setCompConfigManager === 'function') {
+        plugins[p].setCompConfigManager(comp);
+      }
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Executed by all REST request. It calls the appropriate REST plugin function.
  *
  * @method execute
@@ -122,9 +194,19 @@ function execute(req, res, next) {
     var p = tmp[1];
     var name = tmp[2];
 
-    logger.info(IDLOG, 'execute: ' + p + '.' + name);
-    plugins[p][name].apply(plugins[p], [req, res, next]);
+    // check authorization
+    var username = req.headers.authorization_user;
+    if (username === 'admin' ||
+      compAuthorization.authorizeStreamingUser(username) === true) {
 
+      logger.info(IDLOG, 'streaming authorization successfully for user "' + username + '"');
+      logger.info(IDLOG, 'execute: ' + p + '.' + name);
+      plugins[p][name].apply(plugins[p], [req, res, next]);
+
+    } else { // authorization failed
+      logger.warn(IDLOG, 'streaming authorization failed for user "' + username + '"!');
+      compUtil.net.sendHttp403(IDLOG, res);
+    }
     return next();
 
   } catch (err) {
@@ -133,25 +215,73 @@ function execute(req, res, next) {
 }
 
 /**
- * Set the dbconn architect component to be used by REST plugins.
+ * Set the post-it architect component to be used by REST plugins.
  *
- * @method setCompDbConn
- * @param {object} compDbConn The architect dbconn component
+ * @method setCompStreaming
+ * @param {object} compStreaming The architect post-it component
  * @static
  */
-function setCompDbConn(compDbConn) {
+function setCompStreaming(compStreaming) {
   try {
     // check parameter
-    if (typeof compDbConn !== 'object') {
+    if (typeof compStreaming !== 'object') {
       throw new Error('wrong parameter');
     }
 
     var p;
-    // set dbconn architect component to all REST plugins
+    // set post-it architect component to all REST plugins
     for (p in plugins) {
-      plugins[p].setCompDbConn(compDbConn);
+      plugins[p].setCompStreaming(compStreaming);
     }
 
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the authorization architect component.
+ *
+ * @method setCompAuthorization
+ * @param {object} ca The architect authorization component
+ * @static
+ */
+function setCompAuthorization(ca) {
+  try {
+    // check parameter
+    if (typeof ca !== 'object') {
+      throw new Error('wrong parameter');
+    }
+
+    compAuthorization = ca;
+    logger.log(IDLOG, 'authorization component has been set');
+
+    // set the authorization for all REST plugins
+    setAllRestPluginsAuthorization(ca);
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Called by _setCompAuthorization_ function for all REST plugins.
+ *
+ * @method setAllRestPluginsAuthorization
+ * @private
+ * @param ca The architect authorization component
+ * @type {object}
+ */
+function setAllRestPluginsAuthorization(ca) {
+  try {
+    var key;
+    for (key in plugins) {
+
+      if (typeof plugins[key].setCompAuthorization === 'function') {
+        plugins[key].setCompAuthorization(ca);
+        logger.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
+      }
+    }
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -181,16 +311,16 @@ function config(path) {
   var json = require(path).rest;
 
   // initialize the port of the REST server
-  if (json.dbconn && json.dbconn.port) {
-    port = json.dbconn.port;
+  if (json.streaming && json.streaming.port) {
+    port = json.streaming.port;
 
   } else {
     logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
   }
 
   // initialize the address of the REST server
-  if (json.dbconn && json.dbconn.address) {
-    address = json.dbconn.address;
+  if (json.streaming && json.streaming.address) {
+    address = json.streaming.address;
 
   } else {
     logger.warn(IDLOG, 'no address has been specified in JSON file ' + path);
@@ -223,8 +353,8 @@ function start() {
     server.use(restify.bodyParser());
     server.use(restify.CORS({
       origins: ['*'],
-      credentials: false
-      // headers: ['WWW-Authenticate', 'Authorization']
+      credentials: true,
+      headers: ['WWW-Authenticate']
     }));
 
     // load plugins
@@ -254,35 +384,11 @@ function start() {
   }
 }
 
-/**
- * Set the utility architect component to be used by REST plugins.
- *
- * @method setCompUtil
- * @param {object} comp The architect utility component
- * @static
- */
-function setCompUtil(comp) {
-  try {
-    // check parameter
-    if (typeof comp !== 'object') {
-      throw new Error('wrong parameter');
-    }
-
-    var p;
-    // set utility architect component to all REST plugins
-    for (p in plugins) {
-      if (typeof plugins[p].setCompUtil === 'function') {
-        plugins[p].setCompUtil(comp);
-      }
-    }
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-  }
-}
-
 // public interface
 exports.start = start;
 exports.config = config;
 exports.setLogger = setLogger;
 exports.setCompUtil = setCompUtil;
-exports.setCompDbConn = setCompDbConn;
+exports.setCompStreaming = setCompStreaming;
+exports.setCompAuthorization = setCompAuthorization;
+exports.setCompConfigManager = setCompConfigManager;
