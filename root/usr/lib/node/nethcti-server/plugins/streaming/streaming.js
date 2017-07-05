@@ -213,21 +213,19 @@ function start() {
     setInterval(function() {
       for (var i in streamings) {
         if (loopStep%(streamings[i].getFramerate()/baseTime) == 0) {
-          streamings[i].acquireSample();
-
           // emit the streaming source changed event
-          streamings[i].getSample(function(err, img) {
+          streamings[i].getSample(function(err, id, img) {
             logger.debug(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_CHANGED + '"');
             emitter.emit(EVT_STREAMING_SOURCE_CHANGED, {
               streaming: {
-                source: i,
+                source: id,
                 image: img
               }
             });
           });
         }
       }
-      loopStep = (loopStep < 120 ? loopStep+1 : 1);
+      loopStep = (loopStep < 600 ? loopStep+1 : 1);
     }, baseTime);
   } catch (err) {
     console.error(err);

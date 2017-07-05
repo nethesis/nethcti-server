@@ -731,7 +731,6 @@ function setUserListeners() {
  */
 function setStreamingListeners() {
   try {
-    console.log(compStreaming);
     if (!compStreaming || typeof compStreaming.on !== 'function') {
       throw new Error('wrong user object');
     }

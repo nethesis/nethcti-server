@@ -173,23 +173,6 @@ exports.Streaming = function (data) {
     }
 
     /**
-    * Sample the video source.
-    *
-    * @method sample
-    * @param {function} cb The callback function
-    */
-    function acquireSample(cb) {
-      if (url) {
-        var ws = fs.createWriteStream('/tmp/' + id + '.jpg');
-
-        request({
-          uri: url,
-          timeout: 2000
-        }).pipe(ws);
-      }
-    }
-
-    /**
     * Get the sample.
     *
     * @method getSample
@@ -197,17 +180,16 @@ exports.Streaming = function (data) {
     * @return {object} The sample from video source.
     */
     function getSample(cb) {
-      var fname = '/tmp/' + id + '.jpg';
-
-      if (fs.existsSync(fname)) {
-        fs.readFile(fname, (err, res) => {
-          if (err) {
-            throw err;
-          }
-
-          data.sample = res;
-
-          cb(err, new Buffer(res).toString('base64'));
+      if (url) {
+        request({
+          uri: url,
+          encoding: null,
+          timeout: 2000
+        }, function(err, res, body) {
+          if (!err && res.statusCode == 200) {
+              var data = "data:" + res.headers["content-type"] + ";base64," + new Buffer(body).toString('base64');
+              cb(err, id, data);
+            }
         });
       }
     }
@@ -220,7 +202,6 @@ exports.Streaming = function (data) {
         getExtension:   getExtension,
         getFramerate:   getFramerate,
         getOpenCommand: getOpenCommand,
-        acquireSample:  acquireSample,
         getSample:      getSample
     };
 }
