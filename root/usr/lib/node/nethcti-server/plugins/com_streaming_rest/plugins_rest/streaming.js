@@ -277,8 +277,9 @@ function setCompConfigManager(comp) {
           var stream = req.params.id;
 
           // check if the user is authorized to use the streaming source
-          if (compAuthorization.authorizeStreamingSourceUser(username, stream) === true) {
-
+          if (compAuthorization.authorizeStreamingSourceUser(username).filter(function(e) {
+            return e.permissionId == stream;
+          }).length > 0) {
             logger.info(IDLOG, 'authorization for user "' + username + '" to open streaming source "' + stream + '" has been successful');
 
             // create the caller identifier
