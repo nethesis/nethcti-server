@@ -1057,7 +1057,9 @@ function presenceOnBusySet(req, res, next) {
     var username = req.headers.authorization_user;
     var destination = req.params.to;
 
-    if (!compUser.isValidUserPresenceOnBusy(status) || typeof destination !== 'string') {
+    if (!compUser.isValidUserPresenceOnBusy(status) ||
+      (status === compUser.USER_PRESENCE_ONBUSY_STATUS.callforward && typeof destination !== 'string')) {
+
       compUtil.net.sendHttp400(IDLOG, res);
       return;
     }
@@ -1103,7 +1105,9 @@ function presenceOnUnavailableSet(req, res, next) {
     var username = req.headers.authorization_user;
     var destination = req.params.to;
 
-    if (!compUser.isValidUserPresenceOnUnavailable(status) || typeof destination !== 'string') {
+    if (!compUser.isValidUserPresenceOnUnavailable(status) ||
+      (status === compUser.USER_PRESENCE_ONUNAVAILABLE_STATUS.callforward && typeof destination !== 'string')) {
+
       compUtil.net.sendHttp400(IDLOG, res);
       return;
     }
