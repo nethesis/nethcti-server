@@ -180,17 +180,12 @@ exports.Streaming = function (data) {
     */
     function acquireSample(cb) {
       if (url) {
+        var ws = fs.createWriteStream('/tmp/' + id + '.jpg');
+
         request({
           uri: url,
           timeout: 2000
-        }, function(error, response, body) {
-          fs.writeFile('/tmp/' + id + '.vs', body, function(err) {
-            if (err) {
-              console.log(err);
-              return err;
-            }
-          });
-        });
+        }).pipe(ws);
       }
     }
 
@@ -202,15 +197,19 @@ exports.Streaming = function (data) {
     * @return {object} The sample from video source.
     */
     function getSample(cb) {
-      fs.readFile('/tmp/' + id + '.vs', (err, res) => {
-        if (err) {
-          throw err;
-        }
+      var fname = '/tmp/' + id + '.jpg';
 
-        data.sample = res;
+      if (fs.existsSync(fname)) {
+        fs.readFile(fname, (err, res) => {
+          if (err) {
+            throw err;
+          }
 
-        cb(err, new Buffer(res).toString('base64'));
-      });
+          data.sample = res;
+
+          cb(err, new Buffer(res).toString('base64'));
+        });
+      }
     }
 
     // public interface
