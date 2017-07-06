@@ -289,7 +289,7 @@ function setCompConfigManager(comp) {
             }
             var callerid = '"' + username + '" <' + defaultExten + '>';
 
-            compStreaming.open(stream, callerid, function(err) {
+            compStreaming.open(stream, callerid, defaultExten, function(err) {
 
               if (err) {
                 var str = 'opening streaming source "' + stream + '"';
