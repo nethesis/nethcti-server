@@ -212,7 +212,7 @@ function start() {
     var baseTime = 500;
     setInterval(function() {
       for (var i in streamings) {
-        if (loopStep%(streamings[i].getFramerate()/baseTime) == 0) {
+        if (loopStep%(streamings[i].getFramerate()/baseTime) === 0) {
           // emit the streaming source changed event
           streamings[i].getSample(function(err, id, img) {
             logger.debug(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_CHANGED + '"');
