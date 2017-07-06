@@ -273,7 +273,7 @@ function getAllStreamingSources(username, cb) {
 * @param {string}   callerid The caller identifier
 * @param {function} cb       The callback function
 */
-function open(streamId, callerid, cb) {
+function open(streamId, callerid, fromExten, cb) {
     try {
         // check parameters
         if (   typeof streamId !== 'string'
@@ -304,7 +304,7 @@ function open(streamId, callerid, cb) {
 
         // sends the DTMF tones to the extension device associated
         // with the streaming source to open it
-        compAstProxy.sendDTMFSequence(exten, opencmd, callerid, function (err) {
+        compAstProxy.sendDTMFSequence(exten, opencmd, callerid, fromExten, function (err) {
 
             if (err) {
                 logger.error(IDLOG, 'sending DTMF sequence "' + opencmd + '" to extension ' + exten);
