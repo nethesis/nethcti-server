@@ -36,6 +36,105 @@ var pathReq = require('path');
 var EVT_EXTEN_HANGUP = 'extenHangup';
 
 /**
+ * Emitted to a tcp client with supported commands on login action received.
+ *
+ * Example:
+ *
+ *                         {
+        "commands": {
+          "url": {
+            "command": "url",
+            "runwith": ""
+          }
+        }
+     }
+ *
+ * @event commands
+ * @param {object} data The data about the event
+ *
+ */
+/**
+ * The name of the suported commands event.
+ *
+ * @property EVT_COMMANDS
+ * @type string
+ * @default "commands"
+ */
+var EVT_COMMANDS = 'commands';
+
+/**
+ * Emitted to a tcp client connection on extension ringing.
+ *
+ * Example:
+ *
+ *                         {
+        "notification": {
+          "cf": "",
+          "id": "123345",
+          "url": "https://<server>/webrest/...",
+          "width": "480",
+          "height": "280",
+          "action": 'open',
+          "closetimeout": "10"
+        }
+     }
+ *
+ * @event notification
+ * @param {object} data The data about the event
+ *
+ */
+/**
+ * The name of the extension update event.
+ *
+ * @property EVT_NOTIFICATION
+ * @type string
+ * @default "notification"
+ */
+var EVT_NOTIFICATION = 'notification';
+
+/**
+ * Emitted to a tcp client connection on action ping received.
+ *
+ * Example:
+ *
+ *                         {
+        "ping": "active"
+     }
+ *
+ * @event ping
+ * @param {object} data The data about the event
+ *
+ */
+/**
+ * The name of the ping event.
+ *
+ * @property EVT_PING
+ * @type string
+ * @default "ping"
+ */
+var EVT_PING = 'ping';
+
+/**
+ * Emitted to a tcp client connection on extension connected on a conversation.
+ *
+ * Example:
+ *
+ *     { "extenConnected": "223" }
+ *
+ * @event extenConnected
+ * @param {object} data The data about the event
+ *
+ */
+/**
+ * The name of the extension connected event.
+ *
+ * @property EVT_EXTEN_CONNECTED
+ * @type string
+ * @default "extenConnected"
+ */
+var EVT_EXTEN_CONNECTED = 'extenConnected';
+
+/**
  * The module identifier used by the logger.
  *
  * @property IDLOG
@@ -410,13 +509,12 @@ function setAstProxy(ap) {
  */
 function setAstProxyListeners() {
   try {
-    // check compAstProxy object
     if (!compAstProxy || typeof compAstProxy.on !== 'function') {
       throw new Error('wrong compAstProxy object');
     }
-    compAstProxy.on(compAstProxy.EVT_EXTEN_DIALING, extenDialing); // an extension ringing
-    compAstProxy.on(compAstProxy.EVT_EXTEN_HANGUP, extenHangup); // an extension ringing
-
+    compAstProxy.on(compAstProxy.EVT_EXTEN_HANGUP, extenHangup);
+    compAstProxy.on(compAstProxy.EVT_EXTEN_DIALING, extenDialing);
+    compAstProxy.on(compAstProxy.EVT_EXTEN_CONNECTED, extenConnected);
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -554,6 +652,42 @@ function extenHangup(data) {
 }
 
 /**
+ * Handler for the _extenConnected_ event emitted by _astproxy_ component.
+ * The event indicates two extensions, but it emits the event for only data.num1,
+ * because another event _extenConnected_ will signal the same for other extension.
+ *
+ * @method extenConnected
+ * @param {object} data
+ *   @param {string} data.num1 The identy of a part of the conversation
+ *   @param {object} data.num2 The identy of other part of the conversation
+ * @private
+ */
+function extenConnected(data) {
+  try {
+    // check parameters
+    if (typeof data !== 'object' || typeof data.num1 !== 'string' || typeof data.num2 !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.info(IDLOG, 'received event extenConnected between num1=' + data.num1 + ' and num2=' + data.num2);
+    var user = compUser.getUserUsingEndpointExtension(data.num1);
+    // emit the notification event for each logged in user associated
+    // with the connected extension data.num1 to close a desktop notification popup
+    var sockId, username;
+    for (sockId in sockets) {
+      // "sockets[sockId]" is a socket object that contains the "username", "token"
+      // and "id" properties added by "connHdlr" and "loginHdlr" methods
+      username = sockets[sockId].username;
+      // the user is associated with the connected data.num1 extension and is logged in, so send to notification event
+      if (user === username) {
+        sendCallConnectedNotificationEvent(username, data, sockets[sockId]);
+      }
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Sends the event to open a desktop notification popup about a streaming source.
  *
  * @method sendStreamingNotificationEvent
@@ -603,7 +737,7 @@ function sendStreamingNotificationEvent(username, data, socket) {
 
     socket.write(JSON.stringify(notif), ENCODING, function() {
       try {
-        logger.info(IDLOG, 'sent "open streaming notification" to ' + socket.username + ' with id ' + socket.id);
+        logger.info(IDLOG, 'sent "open streaming notification" to ' + socket.username + ' with socket.id ' + socket.id);
 
       } catch (err1) {
         logger.error(IDLOG, err1.stack);
@@ -630,7 +764,6 @@ function sendCallNotificationEvent(username, data, socket) {
     var isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
     // check if the answer button is to be displayed
     var answerAction = (isSupported || compUser.isExtenWebrtc(data.dialingExten)) ? true : false;
-
     // always add this information without filter them
     var params = [
       'callerNum=', data.callerIdentity.callerNum,
@@ -642,32 +775,52 @@ function sendCallNotificationEvent(username, data, socket) {
       '&webrtc=', compUser.isExtenWebrtc(data.dialingExten),
       '&random=', (new Date()).getTime()
     ].join('');
-
     // add parameters to the HTTP GET url
     var url = callNotifTemplatePath + '?' + params;
-
     // create the id to identify the notification popup
     var notifid = data.callerIdentity.numCalled + '<-' + data.callerIdentity.callerNum;
-
-    var notif = {
-      notification: {
-        id: notifid,
-        url: url,
-        width: callNotifSize.width,
-        height: callNotifSize.height,
-        action: 'open',
-        closetimeout: notifCloseTimeout
-      }
+    var notif = {};
+    notif[EVT_NOTIFICATION] = {
+      id: notifid,
+      url: url,
+      width: callNotifSize.width,
+      height: callNotifSize.height,
+      action: 'open',
+      closetimeout: notifCloseTimeout
     };
-
     socket.write(JSON.stringify(notif), ENCODING, function() {
       try {
-        logger.info(IDLOG, 'sent "open call notification" to ' + socket.username + ' with id ' + socket.id);
+        logger.info(IDLOG, 'sent "' + EVT_NOTIFICATION + '" evt to open call notification to ' + socket.username + ' with socket.id ' + socket.id);
       } catch (err1) {
         logger.error(IDLOG, err1.stack);
       }
     });
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
 
+/**
+ * Send the event to close a desktop notification popup about a connected call.
+ *
+ * @method sendCallConnectedNotificationEvent
+ * @param {string} username The username of the client
+ * @param {object} data The data about the parts of the conversation
+ * @param {object} socket The TCP socket client
+ * @private
+ */
+function sendCallConnectedNotificationEvent(username, data, socket) {
+  try {
+    var evt = {};
+    evt[EVT_EXTEN_CONNECTED] = data.num1;
+    socket.write(JSON.stringify(evt), ENCODING, function() {
+      try {
+        logger.info(IDLOG, 'sent "' + EVT_EXTEN_CONNECTED + '" evt between "' + data.num1 + '" and "' + data.num2 +
+          '" to close call notification to ' + socket.username + ' with socket.id ' + socket.id);
+      } catch (err1) {
+        logger.error(IDLOG, err1.stack);
+      }
+    });
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -1093,20 +1246,15 @@ function pingHdlr(socket) {
     if (typeof socket !== 'object') {
       throw new Error('wrong socket parameter');
     }
-
-    var data = {
-      ping: 'active'
-    };
-
+    var data = {};
+    data[EVT_PING] = 'active';
     socket.write(JSON.stringify(data), ENCODING, function() {
       try {
-        logger.info(IDLOG, 'sent response "active" to ping request to ' + socket.username + ' with id ' + socket.id);
-
+        logger.info(IDLOG, 'sent "' + EVT_PING + '" evt response "active" to ping request to ' + socket.username + ' with socket.id ' + socket.id);
       } catch (err1) {
         logger.error(IDLOG, err1.stack);
       }
     });
-
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -1121,24 +1269,18 @@ function pingHdlr(socket) {
  */
 function sendNotificationSupportedCommands(socket) {
   try {
-    // check parameters
     if (typeof socket !== 'object') {
       throw new Error('wrong socket parameter');
     }
-
-    var cmds = {
-      commands: notifSupportedCommands
-    };
-
+    var cmds = {};
+    cmds[EVT_COMMANDS] = notifSupportedCommands;
     socket.write(JSON.stringify(cmds), ENCODING, function() {
       try {
-        logger.info(IDLOG, 'sent notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
-
+        logger.info(IDLOG, 'sent "' + EVT_COMMANDS + '" evt notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
       } catch (err1) {
         logger.error(IDLOG, err1.stack);
       }
     });
-
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -1157,13 +1299,11 @@ function sendResetNotificationSupportedCommands(socket) {
     if (typeof socket !== 'object') {
       throw new Error('wrong socket parameter');
     }
-
     var obj = {
       action: 'reset',
       type: 'commands',
       commands: notifSupportedCommands
     };
-
     socket.write(JSON.stringify(obj), ENCODING, function() {
       try {
         logger.info(IDLOG, 'sent reset notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
@@ -1271,7 +1411,7 @@ function sendAutheSuccess(socket) {
 
     socket.write(JSON.stringify(data), ENCODING, function() {
       try {
-        logger.info(IDLOG, 'sent authorized successfully to ' + socket.username + ' with id ' + socket.id);
+        logger.info(IDLOG, 'sent authorized successfully to ' + socket.username + ' with socket.id ' + socket.id);
 
       } catch (err1) {
         logger.error(IDLOG, err1.stack);

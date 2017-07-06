@@ -240,6 +240,21 @@ var EVT_TRUNK_CHANGED = 'trunkChanged';
 var EVT_EXTEN_DIALING = 'extenDialing';
 
 /**
+ * Fired when an extension is connected in a conversation.
+ *
+ * @event extenConnected
+ * @param {object} data The caller identity
+ */
+/**
+ * The name of the extension connected event.
+ *
+ * @property EVT_EXTEN_CONNECTED
+ * @type string
+ * @default "extenConnected"
+ */
+var EVT_EXTEN_CONNECTED = 'extenConnected';
+
+/**
  * Fired when something changed in a parking.
  *
  * @event parkingChanged
@@ -5239,56 +5254,45 @@ function evtConversationConnected(num1, num2) {
     if (typeof num1 !== 'string' || typeof num2 !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+    updateConversationsOfNum(num1);
+    updateConversationsOfNum(num2);
+    // emit the event
+    logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CONNECTED + ' between num1=' + num1 + ' and num2=' + num2);
+    astProxy.emit(EVT_EXTEN_CONNECTED, {
+      num1: num1,
+      num2: num2
+    });
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
 
-    // check if num1 is an extension
-    if (extensions[num1]) {
-
-      // request all channels
-      logger.info(IDLOG, 'requests the channel list to update the extension ' + num1);
+/**
+ * Update the conversations of the specified num, that can be extension, trunk or other.
+ *
+ * @method updateConversationsOfNum
+ * @param {string} num A phone number that can be extension, trunk or other.
+ * @private
+ */
+function updateConversationsOfNum(num) {
+  try {
+    if (typeof num !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (extensions[num]) {
+      logger.info(IDLOG, 'requests the channel list to update the extension ' + num);
       astProxy.doCmd({
         command: 'listChannels'
       }, function(err, resp) {
-        // update the conversations of the extension
-        updateExtenConversations(err, resp, num1);
+        updateExtenConversations(err, resp, num);
       });
     }
-
-    // check if num1 is a trunk
-    if (trunks[num1]) {
-
-      // request all channels
-      logger.info(IDLOG, 'requests the channel list to update the trunk ' + num1);
+    if (trunks[num]) {
+      logger.info(IDLOG, 'requests the channel list to update the trunk ' + num);
       astProxy.doCmd({
         command: 'listChannels'
       }, function(err, resp) {
-        // update the conversations of the trunk
-        updateTrunkConversations(err, resp, num1);
-      });
-    }
-
-    // check if num2 is an extension
-    if (extensions[num2]) {
-
-      // request all channels
-      logger.info(IDLOG, 'requests the channel list to update the extension ' + num2);
-      astProxy.doCmd({
-        command: 'listChannels'
-      }, function(err, resp) {
-        // update the conversations of the extension
-        updateExtenConversations(err, resp, num2);
-      });
-    }
-
-    // check if num2 is a trunk
-    if (trunks[num2]) {
-
-      // request all channels
-      logger.info(IDLOG, 'requests the channel list to update the trunk ' + num2);
-      astProxy.doCmd({
-        command: 'listChannels'
-      }, function(err, resp) {
-        // update the conversations of the trunk
-        updateTrunkConversations(err, resp, num2);
+        updateTrunkConversations(err, resp, num);
       });
     }
   } catch (err) {
@@ -5306,7 +5310,8 @@ function evtConversationConnected(num1, num2) {
  */
 function evtConversationInfoChanged(num1, num2) {
   try {
-    evtConversationConnected(num1, num2);
+    updateConversationsOfNum(num1);
+    updateConversationsOfNum(num2);
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -8743,6 +8748,7 @@ exports.evtNewExternalCall = evtNewExternalCall;
 exports.pickupConversation = pickupConversation;
 exports.evtExtenDndChanged = evtExtenDndChanged;
 exports.muteUserMeetmeConf = muteUserMeetmeConf;
+exports.EVT_EXTEN_CONNECTED = EVT_EXTEN_CONNECTED;
 exports.isExtenInMeetmeConf = isExtenInMeetmeConf;
 exports.evtRemoveMeetmeConf = evtRemoveMeetmeConf;
 exports.evtQueueMemberAdded = evtQueueMemberAdded;
