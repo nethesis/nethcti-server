@@ -4437,18 +4437,16 @@ function call(username, req, res) {
     if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    // if source extension is of webrtc type it sends a websocket event to make
-    // the client to originate the call: this is used with conference.
-    // If the user has enabled the automatic click2call then make an HTTP
-    // request directly to the phone, otherwise make a new call by asterisk
-    // if (compUser.isExtenWebrtc(req.params.endpointId)) {
-    //   compComNethctiWs.sendCallWebrtcToClient(username, req.params.number);
-    //   compUtil.net.sendHttp200(IDLOG, res);
-    // } else if (!compConfigManager.isAutomaticClick2callEnabled(username)) {
     var extenAgent = compAstProxy.getExtensionAgent(req.params.endpointId);
     var isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
-    if (isSupported && compAstProxy.isAutoC2CEnabled()) {
+    // if source extension is of webrtc type it sends a websocket event to make
+    // the client to originate the call: this is used with conference and nethifier.
+    // If the user has enabled the automatic click2call then make an HTTP
+    // request directly to the phone, otherwise make a new call by asterisk
+    if (compUser.isExtenWebrtc(req.params.endpointId)) {
+      compComNethctiWs.sendCallWebrtcToClient(username, req.params.number);
+      compUtil.net.sendHttp200(IDLOG, res);
+    } else if (isSupported && compAstProxy.isAutoC2CEnabled()) {
       ajaxPhoneCall(username, req, res);
     } else {
       asteriskCall(username, req, res);
