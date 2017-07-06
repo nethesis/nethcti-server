@@ -213,19 +213,17 @@ function setCompAuthorization(ca) {
         *
         * ### <a id="down_callrecget">**`historycall/down_callrec/:id`**</a>
         *
-        * The user can downlaod the record audio file of a call. The _id_ is the call indentifier in the database
-        * (_uniqueid_ field of the _asteriskcdrdb.cdr_ database table). The user with _admin recording_
-        * authorization can download all audio files, while the user with the _recording_ permission can download only the
-        * audio file of his own calls.
+        * The user can downlaod the record audio file of a call. The _id_ is the _uniqueid_ field obtained
+        * by _historycall/interval_ api. The user with _admin recording_ authorization can download all audio
+        * files, while the user with the _recording_ permission can download only the audio file of his own calls.
         *
         * ---
         *
         * ### <a id="listen_callrecget">**`historycall/listen_callrec/:id`**</a>
         *
-        * The user can listen the record audio file of a call. The _id_ is the call indentifier in the database
-        * (_uniqueid_ field of the _asteriskcdrdb.cdr_ database table). The user with _admin recording_
-        * authorization can listen all audio files, while the user with the _recording_ permission can listen only the
-        * audio file of his own calls.
+        * The user can listen the record audio file of a call. The _id_ is the _uniqueid_ field obtained
+        * by _historycall/interval_ api. The user with _admin recording_ authorization can listen all audio
+        * files, while the user with the _recording_ permission can listen only the audio file of his own calls.
         *
         * ---
         *

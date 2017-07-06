@@ -16,6 +16,26 @@ var net = require('net');
 var pathReq = require('path');
 
 /**
+ * Emitted to a tcp client connection on extension hangup.
+ *
+ * Example:
+ *
+ *     { "extenHangup": "223" }
+ *
+ * @event extenHangup
+ * @param {object} data The data about the event
+ *
+ */
+/**
+ * The name of the extension hangup event.
+ *
+ * @property EVT_EXTEN_HANGUP
+ * @type string
+ * @default "extenHangup"
+ */
+var EVT_EXTEN_HANGUP = 'extenHangup';
+
+/**
  * Emitted to a tcp client with supported commands on login action received.
  *
  * Example:
@@ -492,6 +512,7 @@ function setAstProxyListeners() {
     if (!compAstProxy || typeof compAstProxy.on !== 'function') {
       throw new Error('wrong compAstProxy object');
     }
+    compAstProxy.on(compAstProxy.EVT_EXTEN_HANGUP, extenHangup);
     compAstProxy.on(compAstProxy.EVT_EXTEN_DIALING, extenDialing);
     compAstProxy.on(compAstProxy.EVT_EXTEN_CONNECTED, extenConnected);
   } catch (err) {
@@ -547,7 +568,7 @@ function getFilteredStreamData(username, callerNum) {
  * @method extenDialing
  * @param {object} data
  *   @param {string} data.dialingExten   The identifier of the ringing extension
- *   @param {object} data.callerIdentity The identity data of the caller
+ *   @param {string} data.callerIdentity The identity data of the caller
  * @private
  */
 function extenDialing(data) {
@@ -582,6 +603,47 @@ function extenDialing(data) {
         // } else {
         sendCallNotificationEvent(username, data, sockets[sockId]);
         // }
+      }
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Handler for the _extenHangup_ event emitted by _astproxy_ component.
+ * The extension hangup, so notify all users associated with it, with the
+ * identity data of the extension.
+ *
+ * @method extenHangup
+ * @param {object} data
+ *   @param {string} data.callerNum The identifier of the hangup extension
+ *   @param {string} data.cause The cause of hangup
+ *   @param {string} data.channelExten The extension of the channel
+ * @private
+ */
+function extenHangup(data) {
+  try {
+    // check parameters
+    if (typeof data !== 'object' ||
+      typeof data.callerNum !== 'string' ||
+      typeof data.cause !== 'string' ||
+      typeof data.channelExten !== 'string') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.info(IDLOG, 'received event "' + compAstProxy.EVT_EXTEN_HANGUP + '" for extension ' + data.channelExten + ' with caller identity');
+    var user = compUser.getUserUsingEndpointExtension(data.channelExten);
+    // emit the notification event for each logged in user associated
+    // with the ringing extension to open a desktop notification popup
+    var sockId, username;
+    for (sockId in sockets) {
+      // "sockets[sockId]" is a socket object that contains the "username", "token"
+      // and "id" properties added by "connHdlr" and "loginHdlr" methods
+      username = sockets[sockId].username;
+      // the user is associated with the ringing extension and is logged in, so send to notification event
+      if (user === username) {
+        sendHangupNotificationEvent(username, data, sockets[sockId]);
       }
     }
   } catch (err) {
@@ -754,6 +816,32 @@ function sendCallConnectedNotificationEvent(username, data, socket) {
     socket.write(JSON.stringify(evt), ENCODING, function() {
       try {
         logger.info(IDLOG, 'sent "' + EVT_EXTEN_CONNECTED + '" evt between "' + data.num1 + '" and "' + data.num2 +
+          '" to close call notification to ' + socket.username + ' with socket.id ' + socket.id);
+      } catch (err1) {
+        logger.error(IDLOG, err1.stack);
+      }
+    });
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Send the hangup event to close a desktop notification popup about an incoming call.
+ *
+ * @method sendHangupNotificationEvent
+ * @param {string} username The username of the extension
+ * @param {object} data The data about the extension
+ * @param {object} socket The TCP socket client
+ * @private
+ */
+function sendHangupNotificationEvent(username, data, socket) {
+  try {
+    var evt = {};
+    evt[EVT_EXTEN_HANGUP] = data.channelExten;
+    socket.write(JSON.stringify(evt), ENCODING, function() {
+      try {
+        logger.info(IDLOG, 'sent "' + EVT_EXTEN_HANGUP + '" evt for exten "' + data.channelExten +
           '" to close call notification to ' + socket.username + ' with socket.id ' + socket.id);
       } catch (err1) {
         logger.error(IDLOG, err1.stack);

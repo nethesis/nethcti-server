@@ -153,19 +153,23 @@ var EVT_PARKING_UPDATE = 'parkingUpdate';
 //   */
 var EVT_ANSWER_WEBRTC = 'answerWebrtc';
 
-//  /**
-//   * Emitted to a websocket client connection to call a number using webrtc extension.
-//   *
-//   * @event callWebrtc
-//   * @param {string} to The destination number to be called using WebRTC extension
-//   *
-//   */
-//  /**
-//   * The name of the event to call number using WebRTC extension
-//   *
-//   * @property EVT_CALL_WEBRTC
-//   * @type string
-//   */
+ /**
+  * Emitted to a websocket client connection to call a number using webrtc extension.
+  *
+  * Example:
+  *
+      "0721405516"
+  *
+  * @event callWebrtc
+  * @param {string} to The destination number to be called using WebRTC extension
+  *
+  */
+ /**
+  * The name of the event to call number using WebRTC extension
+  *
+  * @property EVT_CALL_WEBRTC
+  * @type string
+  */
 var EVT_CALL_WEBRTC = 'callWebrtc';
 
 //  /**
@@ -195,6 +199,8 @@ var EVT_ENDPOINT_PRESENCE_UPDATE = 'endpointPresenceUpdate';
  *
  * The "presence_onunavailable" is the presence status of the user when he does not answer
  * to an incoming call.
+ *
+ * Example:
  *
  *                         {
        "presence": {
@@ -249,6 +255,24 @@ var EVT_USER_PRESENCE_UPDATE = 'userPresenceUpdate';
  * @default "userProfileAvatarUpdate"
  */
 var EVT_USER_PROFILE_AVATAR_UPDATE = 'userProfileAvatarUpdate';
+
+/**
+ * Emitted to a websocket client connection on a streaming source update event.
+ *
+ *     { "source": "vs_gate1", "image": "1234abcdef..." }
+ *
+ * @event evtStreamingSourceUpdate
+ * @param {object} data The data about the streaming source update event
+ *
+ */
+/**
+ * The name of the streaming source update event.
+ *
+ * @property EVT_STREAMING_SOURCE_UPDATE
+ * @type string
+ * @default "streamingSourceUpdate"
+ */
+var EVT_STREAMING_SOURCE_UPDATE = 'streamingSourceUpdate';
 
 /**
  * Fired when a websocket client connection has been closed.
@@ -459,6 +483,15 @@ var compVoicemail;
 var compPostit;
 
 /**
+ * The streaming component.
+ *
+ * @property compStreaming
+ * @type object
+ * @private
+ */
+var compStreaming;
+
+/**
  * Contains all websocket identifiers of authenticated clients (http).
  * The key is the websocket identifier and the value is an object
  * containing the username and the token of the user. It's used for
@@ -582,6 +615,23 @@ function setCompPostit(comp) {
 }
 
 /**
+ * Sets the streaming module to be used.
+ *
+ * @method setCompStreaming
+ * @param {object} comp The user module.
+ */
+function setCompStreaming(comp) {
+  try {
+    if (typeof comp !== 'object') {
+      throw new Error('wrong user object');
+    }
+    compStreaming = comp;
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Set the asterisk proxy to be used by the module.
  *
  * @method setAstProxy
@@ -673,6 +723,24 @@ function setUserListeners() {
     }
     compUser.on(compUser.EVT_USER_PRESENCE_CHANGED, evtUserPresenceChanged);
     compUser.on(compUser.EVT_USER_PROFILE_AVATAR_CHANGED, evtUserProfileAvatarChanged);
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Sets the event listeners for the streaming component.
+ *
+ * @method setStreamingListeners
+ * @private
+ */
+function setStreamingListeners() {
+  try {
+    if (!compStreaming || typeof compStreaming.on !== 'function') {
+      throw new Error('wrong user object');
+    }
+    compStreaming.on(compStreaming.EVT_STREAMING_SOURCE_CHANGED, evtStreamingSourceChanged);
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -849,6 +917,31 @@ function evtUserProfileAvatarChanged(evt) {
     var sockid;
     for (sockid in wsid) {
       wsServer.sockets.sockets[sockid].emit(EVT_USER_PROFILE_AVATAR_UPDATE, evt);
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Handler for the _evtStreamingSourceChanged_ event emitted by _streaming_
+ * component. The streaming source image has been changed, so notifies all clients.
+ *
+ * @method evtStreamingSourceChanged
+ * @param {object} evt
+ *  @param {string} evt.source The streaming source
+ *  @param {string} evt.image The streaming image in base64 format
+ * @private
+ */
+function evtStreamingSourceChanged(evt) {
+  try {
+    logger.info(IDLOG, 'received event "' + compUser.EVT_STREAMING_SOURCE_CHANGED + '" for source ' + evt.source);
+    logger.info(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_UPDATE + '" for source ' + evt.source + ' to websockets');
+
+    // emits the event to all clients
+    var sockid;
+    for (sockid in wsid) {
+      wsServer.sockets.sockets[sockid].emit(EVT_STREAMING_SOURCE_UPDATE, evt);
     }
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -1440,6 +1533,9 @@ function start() {
     // set the listener for the user module
     setUserListeners();
 
+    // set the listener for the streaming module
+    setStreamingListeners();
+
     // starts the http websocket server
     startWsServer();
 
@@ -1899,6 +1995,7 @@ exports.configPrivacy = configPrivacy;
 exports.setCompPostit = setCompPostit;
 exports.setCompVoicemail = setCompVoicemail;
 exports.setCompAuthorization = setCompAuthorization;
+exports.setCompStreaming = setCompStreaming;
 exports.sendEventToAllClients = sendEventToAllClients;
 exports.sendCallWebrtcToClient = sendCallWebrtcToClient;
 exports.getNumConnectedClients = getNumConnectedClients;
