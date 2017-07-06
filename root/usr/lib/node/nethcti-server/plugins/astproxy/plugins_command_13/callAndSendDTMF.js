@@ -1,5 +1,5 @@
 /**
-* @submodule plugins_command_11
+* @submodule plugins_command_13
 */
 var action = require('../action');
 
@@ -40,7 +40,7 @@ var IDLOG = '[callAndSendDTMF]';
         /**
         * Command plugin to originate a new call and then send DTMF tones.
         *
-        * Use it with _ast\_proxy_ module as follow:
+        * Use it with _astproxy_ module as follow:
         *
         *     ast_proxy.doCmd({ command: 'callAndSendDTMF', context: 'from-internal', chanType: 'sip', exten: '301', sequence: '0*' }, function (res) {
         *         // some code
@@ -95,7 +95,7 @@ var IDLOG = '[callAndSendDTMF]';
             },
 
             /**
-            * It's called from _ast_proxy_ component for each data received
+            * It's called from _astproxy_ component for each data received
             * from asterisk and relative to this command.
             *
             * @method data
