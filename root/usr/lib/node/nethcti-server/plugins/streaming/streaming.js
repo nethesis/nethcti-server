@@ -6,6 +6,7 @@
 */
 var fs        = require('fs');
 var Streaming = require('./streaming_class').Streaming;
+var EventEmitter = require('events').EventEmitter;
 /**
 * Provides the streaming functionalities.
 *
@@ -24,6 +25,20 @@ var Streaming = require('./streaming_class').Streaming;
 * @default [streaming]
 */
 var IDLOG = '[streaming]';
+
+/**
+ * Fired when the streaming source has been sampled.
+ *
+ * @event streamingSourceChanged
+ */
+/**
+ * The name of the streaming source update event.
+ *
+ * @property EVT_STREAMING_SOURCE_CHANGED
+ * @type string
+ * @default "streamingSourceUpdate"
+ */
+var EVT_STREAMING_SOURCE_CHANGED = 'streamingSourceChanged';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -64,6 +79,15 @@ var compAstProxy;
  * @private
  */
 var compAuthorization;
+
+/**
+ * The event emitter.
+ *
+ * @property emitter
+ * @type object
+ * @private
+ */
+var emitter = new EventEmitter();
 
 /**
 * Set the logger to be used.
@@ -177,6 +201,39 @@ function config(path) {
 }
 
 /**
+ * Start to sample video streaming sources each framerate.
+ *
+ * @method start
+ */
+function start() {
+  try {
+    logger.info(IDLOG, 'start sampling video sources.');
+    var loopStep = 0;
+    var baseTime = 500;
+    setInterval(function() {
+      for (var i in streamings) {
+        if (loopStep%(streamings[i].getFramerate()/baseTime) === 0) {
+          // emit the streaming source changed event
+          streamings[i].getSample(function(err, id, img) {
+            logger.debug(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_CHANGED + '"');
+            emitter.emit(EVT_STREAMING_SOURCE_CHANGED, {
+              streaming: {
+                source: id,
+                image: img
+              }
+            });
+          });
+        }
+      }
+      loopStep = (loopStep < 600 ? loopStep+1 : 1);
+    }, baseTime);
+  } catch (err) {
+    console.error(err);
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
 * Returns all streaming sources for the user
 * object in error case.
 *
@@ -265,10 +322,46 @@ function open(streamId, callerid, cb) {
     }
 }
 
+/**
+ * Subscribe a callback function to a custom event fired by this object.
+ * It's the same of nodejs _events.EventEmitter.on_ method.
+ *
+ * @method on
+ * @param {string} type The name of the event
+ * @param {function} cb The callback to execute in response to the event
+ * @return {object} A subscription handle capable of detaching that subscription.
+ */
+function on(type, cb) {
+  try {
+    return emitter.on(type, cb);
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Emit an event. It's the same of nodejs _events.EventEmitter.emit_ method.
+ *
+ * @method emit
+ * @param {string} ev The name of the event
+ * @param {object} data The object to be emitted
+ */
+function emit(ev, data) {
+  try {
+    emitter.emit(ev, data);
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
-exports.open                   = open;
-exports.config                 = config;
-exports.setLogger              = setLogger;
-exports.setCompAstProxy        = setCompAstProxy;
-exports.setCompAuthorization   = setCompAuthorization;
-exports.getAllStreamingSources = getAllStreamingSources;
+exports.on                           = on;
+exports.emit                         = emit;
+exports.start                        = start;
+exports.open                         = open;
+exports.config                       = config;
+exports.setLogger                    = setLogger;
+exports.setCompAstProxy              = setCompAstProxy;
+exports.setCompAuthorization         = setCompAuthorization;
+exports.getAllStreamingSources       = getAllStreamingSources;
+exports.EVT_STREAMING_SOURCE_CHANGED = EVT_STREAMING_SOURCE_CHANGED;
