@@ -295,7 +295,8 @@ function setCompAuthorization(comp) {
     * The request must contains the following parameters:
     *
     * * `type: ("unavail"|"busy"|"greet") when the customized audio message has to be listen. "unavail" is to customize
-    *                                     message when the user is unavailable, "busy" is when he is busy in a conversation
+    *                                     message when the user is unavailable or when the voicemail unconditional call forward
+    *                                     has been set, "busy" is when he is busy in a conversation
     *                                     and "greet" type is to customize only the name of the person of the voicemail and
     *                                     then the default message will be listen`
     * * `audio: the audio message in base64 format. The original audio file must be wav, 8000Hz and 16 bit format mono`
