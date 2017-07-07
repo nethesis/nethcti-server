@@ -1,0 +1,9 @@
+{
+    my $nethcti = $DB->get("nethcti-server") or return;
+    my $tcp_ports = $nethcti->prop('TCPPorts') or return;
+        if ($tcp_ports eq "8179,8180,8181,8182,8183")
+        {
+                $nethcti->set_prop('TCPPorts',"8179,8181,8182,8183");
+        }
+}
+
