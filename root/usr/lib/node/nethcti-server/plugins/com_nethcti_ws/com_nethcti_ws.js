@@ -740,7 +740,10 @@ function setStreamingListeners() {
     if (!compStreaming || typeof compStreaming.on !== 'function') {
       throw new Error('wrong user object');
     }
+
     compStreaming.on(compStreaming.EVT_STREAMING_SOURCE_CHANGED, evtStreamingSourceChanged);
+    compStreaming.on(compStreaming.EVT_STREAMING_SOURCE_SUBSCRIBED, evtStreamingSourceSubscribed);
+    compStreaming.on(compStreaming.EVT_STREAMING_SOURCE_UNSUBSCRIBED, evtStreamingSourceUnsubscribed);
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -935,13 +938,78 @@ function evtUserProfileAvatarChanged(evt) {
  */
 function evtStreamingSourceChanged(evt) {
   try {
-    logger.info(IDLOG, 'received event "' + compUser.EVT_STREAMING_SOURCE_CHANGED + '" for source ' + evt.source);
-    logger.info(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_UPDATE + '" for source ' + evt.source + ' to websockets');
+    logger.info(IDLOG, 'received event "' + compUser.EVT_STREAMING_SOURCE_CHANGED + '" for source ' + evt.streaming.source);
+    logger.info(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_UPDATE + '" for source ' + evt.streaming.source + ' to websockets');
+
+    var room_name = 'STREAMING_' + evt.streaming.source.toUpperCase();
 
     // emits the event to all clients
     var sockid;
     for (sockid in wsid) {
-      wsServer.sockets.sockets[sockid].emit(EVT_STREAMING_SOURCE_UPDATE, evt);
+      wsServer.sockets.in(WS_ROOM[room_name]).emit(EVT_STREAMING_SOURCE_UPDATE, evt);
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Handler for the _evtStreamingSourceSubscribed_ event emitted by _streaming_
+ * component.
+ * The streaming source has been subscribed, so handle streaming sources rooms.
+ *
+ * @method evtStreamingSourceSubscribed
+ * @param {object} evt
+ * @param {string} evt.username The username to subscribe with
+ * @param {string} evt.streamId The streaming source identifier
+ * @private
+ */
+function evtStreamingSourceSubscribed(evt) {
+  try {
+    logger.info(IDLOG, 'received event "' + compUser.EVT_STREAMING_SOURCE_SUBSCRIBED + '" for user ' + evt.streaming.username + ' source ' + evt.streaming.streamId);
+
+    streamId = evt.streaming.streamId;
+    var room_name = 'STREAMING_' + streamId.toUpperCase();
+    WS_ROOM[room_name] = room_name.toLowerCase();
+
+    var socketId, username;
+    for (socketId in wsid) {
+      username = wsid[socketId].username;
+
+      if (username === evt.streaming.username) {
+        wsServer.sockets.sockets[socketId].join(WS_ROOM[room_name]);
+      }
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Handler for the _evtStreamingSourceUnsubscribed_ event emitted by _streaming_
+ * component.
+ * The streaming source has been unsubscribed, so handle streaming sources rooms.
+ *
+ * @method evtStreamingSourceUnsubscribed
+ * @param {object} evt
+ * @param {string} evt.username The username to subscribe with
+ * @param {string} evt.streamId The streaming source identifier
+ * @private
+ */
+function evtStreamingSourceUnsubscribed(evt) {
+  try {
+    logger.info(IDLOG, 'received event "' + compUser.EVT_STREAMING_SOURCE_UNSUBSCRIBED + '" for user ' + evt.streaming.username + ' source ' + evt.streaming.streamId);
+
+    streamId = evt.streaming.streamId;
+    var room_name = 'STREAMING_' + streamId.toUpperCase();
+
+    var socketId, username;
+    for (socketId in wsid) {
+      username = wsid[socketId].username;
+
+      if (username === evt.streaming.username) {
+        wsServer.sockets.sockets[socketId].leave(WS_ROOM[room_name]);
+      }
     }
   } catch (err) {
     logger.error(IDLOG, err.stack);
