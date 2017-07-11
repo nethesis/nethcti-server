@@ -44,10 +44,10 @@ module.exports = function (options, imports, register) {
         if (imports.logger) { logger = imports.logger; }
 
         imports.dbconn.on(imports.dbconn.EVT_READY, function () {
-            cel.setLogger(logger);
+            cel.setLogger(logger.ctilog);
             cel.setCompDbconn(imports.dbconn);
         });
     } catch (err) {
-        logger.error(IDLOG, err.stack);
+        logger.log.error(IDLOG, err.stack);
     }
 }

@@ -60,7 +60,7 @@ var astProxy;
                     if (data     && data.mailbox && data.new &&
                         data.old && data.event === 'MessageWaiting') {
 
-                        logger.info(IDLOG, 'received event ' + data.event);
+                        logger.log.info(IDLOG, 'received event ' + data.event);
 
                         // extract the information
                         context   = data.mailbox.split('@')[1];
@@ -79,7 +79,7 @@ var astProxy;
                     else if (data         && data.mailbox &&
                              data.waiting && data.event === 'MessageWaiting') {
 
-                        logger.info(IDLOG, 'received event ' + data.event);
+                        logger.log.info(IDLOG, 'received event ' + data.event);
 
                         // extract the information
                         context   = data.mailbox.split('@')[1];
@@ -92,7 +92,7 @@ var astProxy;
                     }
 
                 } catch (err) {
-                    logger.error(IDLOG, err.stack);
+                    logger.log.error(IDLOG, err.stack);
                 }
             },
 
@@ -107,16 +107,16 @@ var astProxy;
             setLogger: function (log) {
                 try {
                     if (typeof log       === 'object'   &&
-                        typeof log.info  === 'function' &&
-                        typeof log.warn  === 'function' &&
-                        typeof log.error === 'function') {
+                        typeof log.log.info === 'function' &&
+                        typeof log.log.warn === 'function' &&
+                        typeof log.log.error === 'function') {
 
                         logger = log;
                     } else {
                         throw new Error('wrong logger object');
                     }
                 } catch (err) {
-                    logger.error(IDLOG, err.stack);
+                    logger.log.error(IDLOG, err.stack);
                 }
             },
 
@@ -134,7 +134,7 @@ var astProxy;
                     }
                     astProxy = ap;
                 } catch (err) {
-                    logger.error(IDLOG, err.stack);
+                    logger.log.error(IDLOG, err.stack);
                 }
             }
         };
@@ -145,6 +145,6 @@ var astProxy;
         exports.setLogger = messagewaiting.setLogger;
 
     } catch (err) {
-        logger.error(IDLOG, err.stack);
+        logger.log.error(IDLOG, err.stack);
     }
 })();

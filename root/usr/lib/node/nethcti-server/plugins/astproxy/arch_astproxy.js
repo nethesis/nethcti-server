@@ -138,7 +138,7 @@ module.exports = function(options, imports, register) {
 
   try {
     // imports.dbconn.on(imports.dbconn.EVT_READY, function () {
-    astProxy.setLogger(logger);
+    astProxy.setLogger(logger.ctilog);
     astProxy.config('/etc/nethcti/asterisk.json');
     astProxy.configAstObjects('/etc/nethcti/ast_objects.json');
     astProxy.configExtenNames('/etc/nethcti/users.json');
@@ -149,11 +149,11 @@ module.exports = function(options, imports, register) {
     // astProxy.proxyLogic.setCompPhonebook(imports.phonebook);
     // astProxy.proxyLogic.setCompCallerNote(imports.callerNote);
     astProxy.start();
-    // queueRecallingManager.setLogger(logger);
+    // queueRecallingManager.setLogger(logger.ctilog);
     // queueRecallingManager.setCompAstProxy(astProxy);
     // queueRecallingManager.setCompDbconn(imports.dbconn);
     // });
   } catch (err) {
-    logger.error(err.stack);
+    logger.ctilog.log.error(err.stack);
   }
 };

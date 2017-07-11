@@ -107,7 +107,7 @@ var sipWebrtcConf;
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }());
 
@@ -147,10 +147,10 @@ function config(path) {
     proxyLogic.setPrefix(json.prefix);
     proxyLogic.setAutoC2CStatus(json.auto_c2c);
 
-    logger.info(IDLOG, 'configuration done by ' + path);
+    logger.log.info(IDLOG, 'configuration done by ' + path);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -200,10 +200,10 @@ function configExtenNames(path) {
       }
     }
     proxyLogic.setStaticDataExtens(obj);
-    logger.info(IDLOG, 'extension names configuration done by ' + path);
+    logger.log.info(IDLOG, 'extension names configuration done by ' + path);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -230,10 +230,10 @@ function configAstObjects(path) {
     proxyLogic.setStaticDataQueues(json.queues);
     proxyLogic.setFeatureCodes(json.feature_codes);
 
-    logger.info(IDLOG, 'asterisk objects configuration done by ' + path);
+    logger.log.info(IDLOG, 'asterisk objects configuration done by ' + path);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -263,10 +263,10 @@ function configAstCodes(path) {
     }
 
     proxyLogic.setAstCodes(json);
-    logger.info(IDLOG, 'asterisk codes successfully configured');
+    logger.log.info(IDLOG, 'asterisk codes successfully configured');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -284,7 +284,7 @@ function configRemoteSitesPrefixes(path) {
 
     // check the file presence
     if (!fs.existsSync(path)) {
-      logger.warn(IDLOG, path + ' does not exist');
+      logger.log.warn(IDLOG, path + ' does not exist');
       return;
     }
 
@@ -302,10 +302,10 @@ function configRemoteSitesPrefixes(path) {
       prefixes[json[site].prefix] = site;
     }
     proxyLogic.setRemoteSitesPrefixes(prefixes);
-    logger.info(IDLOG, 'remote sites prefixes successfully configured');
+    logger.log.info(IDLOG, 'remote sites prefixes successfully configured');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -343,10 +343,10 @@ function configSipWebrtc(path) {
       stun_server_address: json.stun_server_address
     };
 
-    logger.info(IDLOG, 'sip webrtc successfully configured');
+    logger.log.info(IDLOG, 'sip webrtc successfully configured');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -368,14 +368,14 @@ function start() {
     am.on('connection-connect', amiSocketConnected);
     am.on('connection-timeout', amiSocketTimeout);
     am.on('connection-unwritable', amiSocketUnwritable);
-    logger.info(IDLOG, 'added event listeners to asterisk manager');
-    logger.info(IDLOG, 'asterisk manager initialized');
+    logger.log.info(IDLOG, 'added event listeners to asterisk manager');
+    logger.log.info(IDLOG, 'asterisk manager initialized');
     // connect to asterisk
-    logger.info(IDLOG, 'connecting to asterisk...');
+    logger.log.info(IDLOG, 'connecting to asterisk...');
     am.connect();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -387,7 +387,7 @@ function start() {
  * @private
  */
 function amiSocketEnd() {
-  logger.warn(IDLOG, 'asterisk socket disconnected');
+  logger.log.warn(IDLOG, 'asterisk socket disconnected');
 }
 
 /**
@@ -399,7 +399,7 @@ function amiSocketEnd() {
  * @private
  */
 function amiSocketTimeout() {
-  logger.warn(IDLOG, 'asterisk socket timeout');
+  logger.log.warn(IDLOG, 'asterisk socket timeout');
 }
 
 /**
@@ -410,7 +410,7 @@ function amiSocketTimeout() {
  * @private
  */
 function amiSocketConnected() {
-  logger.warn(IDLOG, 'asterisk connected');
+  logger.log.warn(IDLOG, 'asterisk connected');
 }
 
 /**
@@ -424,7 +424,7 @@ function amiSocketConnected() {
  * transmission error
  */
 function amiSocketClose(had_error) {
-  logger.warn(IDLOG, 'asterisk socket close - had_error: ' + had_error);
+  logger.log.warn(IDLOG, 'asterisk socket close - had_error: ' + had_error);
 }
 
 /**
@@ -435,7 +435,7 @@ function amiSocketClose(had_error) {
  * @private
  */
 function amiSocketUnwritable() {
-  logger.error(IDLOG, 'asterisk socket unwritable');
+  logger.log.error(IDLOG, 'asterisk socket unwritable');
 }
 
 /**
@@ -449,9 +449,9 @@ function amiSocketUnwritable() {
  */
 function amiSocketError(err) {
   try {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
   }
 }
 
@@ -466,17 +466,17 @@ function amiSocketError(err) {
 function onLogin(err, resp) {
   try {
     if (err && resp && resp.message) {
-      logger.error(IDLOG, 'logging-in into asterisk: ' + resp.message);
+      logger.log.error(IDLOG, 'logging-in into asterisk: ' + resp.message);
       return;
     } else if (err) {
-      logger.error(IDLOG, 'logging-in into asterisk: ' + err.stack);
+      logger.log.error(IDLOG, 'logging-in into asterisk: ' + err.stack);
       return;
     }
-    logger.info(IDLOG, 'logged-in into asterisk');
+    logger.log.info(IDLOG, 'logged-in into asterisk');
     proxyLogic.start();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -525,7 +525,7 @@ function onData(data) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -556,13 +556,13 @@ function onData(data) {
 function doCmd(obj, cb) {
   try {
     if (pluginsCmd[obj.command] && typeof pluginsCmd[obj.command].execute === 'function') {
-      logger.info(IDLOG, 'execute ' + obj.command + '.execute');
+      logger.log.info(IDLOG, 'execute ' + obj.command + '.execute');
       pluginsCmd[obj.command].execute(am, obj, cb);
     } else {
-      logger.warn(IDLOG, 'no plugin for command ' + obj.command);
+      logger.log.warn(IDLOG, 'no plugin for command ' + obj.command);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -577,12 +577,12 @@ function doCmd(obj, cb) {
 function setLogger(log) {
   try {
     if (typeof log === 'object' &&
-      typeof log.info === 'function' &&
-      typeof log.warn === 'function' &&
-      typeof log.error === 'function') {
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
       // set the logger for the proxy logic
       proxyLogic.setLogger(log);
@@ -595,7 +595,7 @@ function setLogger(log) {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -617,7 +617,7 @@ function setAllPluginsEventLogger(log) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -639,7 +639,7 @@ function setAllPluginsCmdLogger(log) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -656,7 +656,7 @@ function on(type, cb) {
   try {
     return emitter.on(type, cb);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -671,7 +671,7 @@ function emit(ev, data) {
   try {
     emitter.emit(ev, data);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -685,7 +685,7 @@ function getSipWebrtcConf() {
   try {
     return sipWebrtcConf;
   } catch (e) {
-    logger.error(IDLOG, e.stack);
+    logger.log.error(IDLOG, e.stack);
   }
 }
 

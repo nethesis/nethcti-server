@@ -41,13 +41,13 @@ module.exports = function(options, imports, register) {
     if (imports.logger) {
       logger = imports.logger;
     }
-    controllerUser.setLogger(logger);
+    controllerUser.setLogger(logger.ctilog);
     controllerUser.setCompAstProxy(imports.astProxy);
     controllerUser.setCompDbconn(imports.dbconn);
     imports.astProxy.on(imports.astProxy.EVT_READY, function() {
       controllerUser.config('/etc/nethcti/users.json');
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 };

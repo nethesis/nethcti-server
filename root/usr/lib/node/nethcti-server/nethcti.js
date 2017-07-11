@@ -26,9 +26,17 @@ var IDLOG = '[nethcti]';
  * @property logger
  * @type object
  * @private
- * @default console
+ * @default {
+  ctilog: {
+    log: console
+  }
+}
  */
-var logger = console;
+var logger = {
+  ctilog: {
+    log: console
+  }
+};
 
 /**
  * The application.
@@ -43,7 +51,7 @@ try {
   fs.readdir(PLUGINS_DIRNAME, function(err, files) {
     try {
       if (err) {
-        logger.error(IDLOG, err.stack);
+        logger.ctilog.log.error(IDLOG, err.stack);
         process.exit(1);
       }
 
@@ -56,13 +64,13 @@ try {
       architect.resolveConfig(modules, __dirname, function(err, config) {
         try {
           if (err) {
-            logger.error(IDLOG, err.stack);
+            logger.ctilog.log.error(IDLOG, err.stack);
             process.exit(1);
           }
 
           app = architect.createApp(config, function(err1, app) {
             if (err1) {
-              logger.error(IDLOG, err1.stack);
+              logger.ctilog.log.error(IDLOG, err1.stack);
               process.exit(1);
             }
           });
@@ -72,40 +80,50 @@ try {
               logger = service;
             }
           });
+
           app.on('ready', function(uno, due) {
-            logger.warn(IDLOG, 'STARTED ' + process.argv[1]);
+            logger.ctilog.log.warn(IDLOG, 'STARTED ' + process.argv[1]);
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.ctilog.log.error(IDLOG, err.stack);
         }
       });
 
       process.on('uncaughtException', function(err) {
+        logger.ctilog.log.error(IDLOG, 'UncaughtException !!!');
+        logger.ctilog.log.error(IDLOG, err.stack);
         app.destroy();
-        logger.error(IDLOG, 'UncaughtException !!!');
-        logger.error(IDLOG, err.stack);
+      });
+
+      process.on('SIGUSR1', function() {
+        logger.ctilog.log.warn(IDLOG, 'received signal SIGUSR1: RELOAD all components');
+        for (var comp in app.services) {
+          if (typeof app.services[comp].reload === 'function') {
+            app.services[comp].reload();
+          }
+        }
       });
 
       process.on('SIGTERM', function() {
         app.destroy();
-        logger.warn(IDLOG, 'process halted by SIGTERM');
+        logger.ctilog.log.warn(IDLOG, 'process HALTED by SIGTERM');
         process.exit(2);
       });
 
       process.on('SIGINT', function() {
         app.destroy();
-        logger.warn(IDLOG, 'process halted by SIGINT (Ctrl+C)');
+        logger.ctilog.log.warn(IDLOG, 'process HALTED by SIGINT (Ctrl+C)');
         process.exit(2);
       });
 
       process.on('exit', function(code) {
         app.destroy();
-        logger.warn(IDLOG, 'exit with code: ' + code);
+        logger.ctilog.log.warn(IDLOG, 'exit with code: ' + code);
       });
     } catch (err) {
-      logger.error(IDLOG, err.stack);
+      logger.ctilog.log.error(IDLOG, err.stack);
     }
   });
 } catch (err) {
-  logger.error(IDLOG, err.stack);
+  logger.ctilog.log.error(IDLOG, err.stack);
 }

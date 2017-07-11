@@ -64,16 +64,16 @@ var compUtil;
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -86,9 +86,9 @@ function setLogger(log) {
 function setCompPhonebook(cp) {
   try {
     compPhonebook = cp;
-    logger.info(IDLOG, 'set phonebook architect component');
+    logger.log.info(IDLOG, 'set phonebook architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -107,10 +107,10 @@ function setCompAuthorization(comp) {
     }
 
     compAuthorization = comp;
-    logger.info(IDLOG, 'authorization component has been set');
+    logger.log.info(IDLOG, 'authorization component has been set');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -123,9 +123,9 @@ function setCompAuthorization(comp) {
 function setCompUtil(comp) {
   try {
     compUtil = comp;
-    logger.info(IDLOG, 'set util architect component');
+    logger.log.info(IDLOG, 'set util architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -657,18 +657,18 @@ function setCompUtil(comp) {
               if (err) {
                 throw err;
               } else {
-                logger.info(IDLOG, 'send to user "' + username + '" all his #' + results.length + ' speeddial contacts');
+                logger.log.info(IDLOG, 'send to user "' + username + '" all his #' + results.length + ' speeddial contacts');
                 res.send(200, results);
               }
 
             } catch (err1) {
-              logger.error(IDLOG, err1.stack);
+              logger.log.error(IDLOG, err1.stack);
               compUtil.net.sendHttp500(IDLOG, res, err1.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -702,16 +702,16 @@ function setCompUtil(comp) {
                 if (err) {
                   throw err;
                 } else {
-                  logger.info(IDLOG, 'send ' + results.count + ' (centralized + cti) phonebook contacts to user "' + username + '"');
+                  logger.log.info(IDLOG, 'send ' + results.count + ' (centralized + cti) phonebook contacts to user "' + username + '"');
                   res.send(200, results);
                 }
               } catch (err1) {
-                logger.error(IDLOG, err1.stack);
+                logger.log.error(IDLOG, err1.stack);
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
               }
             });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -744,23 +744,23 @@ function setCompUtil(comp) {
                 if (Object.keys(result).length === 0 || // the object is empty: no pb contact has been found
                   result.type === 'public' || result.owner_id === username) {
 
-                  logger.info(IDLOG, 'send cti phonebook contact details of contact id "' + req.params.id + '" to user "' + username + '"');
+                  logger.log.info(IDLOG, 'send cti phonebook contact details of contact id "' + req.params.id + '" to user "' + username + '"');
                   res.send(200, result);
 
                 } else {
-                  logger.warn(IDLOG, 'user "' + username + '" has searched cti pb contact with id "' + req.params.id + '": the contact is not owned by him or is not a public contact');
+                  logger.log.warn(IDLOG, 'user "' + username + '" has searched cti pb contact with id "' + req.params.id + '": the contact is not owned by him or is not a public contact');
                   compUtil.net.sendHttp403(IDLOG, res);
                 }
               }
 
             } catch (err1) {
-              logger.error(IDLOG, err1.stack);
+              logger.log.error(IDLOG, err1.stack);
               compUtil.net.sendHttp500(IDLOG, res, err1.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -786,17 +786,17 @@ function setCompUtil(comp) {
               if (err) {
                 throw err;
               } else {
-                logger.info(IDLOG, 'send centralized phonebook contact details of contact id "' + req.params.id +
+                logger.log.info(IDLOG, 'send centralized phonebook contact details of contact id "' + req.params.id +
                   '" to user "' + username + '"');
                 res.send(200, result);
               }
             } catch (err1) {
-              logger.error(IDLOG, err1.stack);
+              logger.log.error(IDLOG, err1.stack);
               compUtil.net.sendHttp500(IDLOG, res, err1.toString());
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -829,16 +829,16 @@ function setCompUtil(comp) {
                 if (err) {
                   throw err;
                 } else {
-                  logger.info(IDLOG, 'send ' + results.count + ' (centralized + cti) phonebook contacts to user "' + username + '"');
+                  logger.log.info(IDLOG, 'send ' + results.count + ' (centralized + cti) phonebook contacts to user "' + username + '"');
                   res.send(200, results);
                 }
               } catch (err1) {
-                logger.error(IDLOG, err1.stack);
+                logger.log.error(IDLOG, err1.stack);
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
               }
             });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -870,16 +870,16 @@ function setCompUtil(comp) {
                 if (err1) {
                   throw err1;
                 } else {
-                  logger.info(IDLOG, 'send ' + results.count + ' (centralized + cti) phonebook contacts to user "' + username + '"');
+                  logger.log.info(IDLOG, 'send ' + results.count + ' (centralized + cti) phonebook contacts to user "' + username + '"');
                   res.send(200, results);
                 }
               } catch (err2) {
-                logger.error(IDLOG, err2.stack);
+                logger.log.error(IDLOG, err2.stack);
                 compUtil.net.sendHttp500(IDLOG, res, err2.toString());
               }
             });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -917,18 +917,18 @@ function setCompUtil(comp) {
               if (err) {
                 throw err;
               } else {
-                logger.info(IDLOG, 'cti phonebook contact has been created successful from the user "' + username + '"');
+                logger.log.info(IDLOG, 'cti phonebook contact has been created successful from the user "' + username + '"');
                 compUtil.net.sendHttp201(IDLOG, res);
               }
 
             } catch (err1) {
-              logger.error(IDLOG, err1.stack);
+              logger.log.error(IDLOG, err1.stack);
               compUtil.net.sendHttp500(IDLOG, res, err1.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -968,14 +968,14 @@ function setCompUtil(comp) {
                 result.owner_id !== username &&
                 compAuthorization.authorizeAdminPhonebookUser(username) === false) {
 
-                logger.warn(IDLOG, 'deleting cti contact with db id "' + data.id + '" by the user "' + username +
+                logger.log.warn(IDLOG, 'deleting cti contact with db id "' + data.id + '" by the user "' + username +
                   '": the contact is not owned by the user');
                 compUtil.net.sendHttp403(IDLOG, res);
                 return;
 
               } else if (Object.keys(result).length === 0) {
 
-                logger.warn(IDLOG, 'deleting cti contact with db id "' + data.id + '" by the user "' + username +
+                logger.log.warn(IDLOG, 'deleting cti contact with db id "' + data.id + '" by the user "' + username +
                   '": the contact is not present');
                 compUtil.net.sendHttp403(IDLOG, res);
                 return;
@@ -986,7 +986,7 @@ function setCompUtil(comp) {
               if (Object.keys(result).length === 0 || // the object is empty: no pb contact has been found
                 (result.owner_id !== username && compAuthorization.authorizeAdminPhonebookUser(username) === false)) { // the contact is not owned by the user
 
-                logger.warn(IDLOG, 'deleting cti contact with db id "' + data.id + '" by the user "' + username +
+                logger.log.warn(IDLOG, 'deleting cti contact with db id "' + data.id + '" by the user "' + username +
                   '": the contact is not owned by the user or is not present');
                 compUtil.net.sendHttp403(IDLOG, res);
                 return;
@@ -999,25 +999,25 @@ function setCompUtil(comp) {
                   if (err3) {
                     throw err3;
                   } else {
-                    logger.info(IDLOG, 'cti phonebook contact with db id "' + data.id +
+                    logger.log.info(IDLOG, 'cti phonebook contact with db id "' + data.id +
                       '" has been successfully deleted by the user "' + username + '"');
                     compUtil.net.sendHttp200(IDLOG, res);
                   }
 
                 } catch (err4) {
-                  logger.error(IDLOG, err4.stack);
+                  logger.log.error(IDLOG, err4.stack);
                   compUtil.net.sendHttp500(IDLOG, res, err4.toString());
                 }
               });
 
             } catch (err2) {
-              logger.error(IDLOG, err2.stack);
+              logger.log.error(IDLOG, err2.stack);
               compUtil.net.sendHttp500(IDLOG, res, err2.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1057,14 +1057,14 @@ function setCompUtil(comp) {
                 result.owner_id !== username &&
                 compAuthorization.authorizeAdminPhonebookUser(username) === false) {
 
-                logger.warn(IDLOG, 'modifying cti contact with db id "' + data.id + '" by the user "' + username +
+                logger.log.warn(IDLOG, 'modifying cti contact with db id "' + data.id + '" by the user "' + username +
                   '": the contact is not owned by the user');
                 compUtil.net.sendHttp403(IDLOG, res);
                 return;
 
               } else if (Object.keys(result).length === 0) {
 
-                logger.warn(IDLOG, 'modifying cti contact with db id "' + data.id + '" by the user "' + username +
+                logger.log.warn(IDLOG, 'modifying cti contact with db id "' + data.id + '" by the user "' + username +
                   '": the contact is not present');
                 compUtil.net.sendHttp403(IDLOG, res);
                 return;
@@ -1076,25 +1076,25 @@ function setCompUtil(comp) {
                   if (err3) {
                     throw err3;
                   } else {
-                    logger.info(IDLOG, 'cti phonebook contact with db id "' + data.id +
+                    logger.log.info(IDLOG, 'cti phonebook contact with db id "' + data.id +
                       '" has been successfully modified by the user "' + username + '"');
                     compUtil.net.sendHttp200(IDLOG, res);
                   }
 
                 } catch (err4) {
-                  logger.error(IDLOG, err4.stack);
+                  logger.log.error(IDLOG, err4.stack);
                   compUtil.net.sendHttp500(IDLOG, res, err4.toString());
                 }
               });
 
             } catch (err2) {
-              logger.error(IDLOG, err2.stack);
+              logger.log.error(IDLOG, err2.stack);
               compUtil.net.sendHttp500(IDLOG, res, err2.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       }
@@ -1115,6 +1115,6 @@ function setCompUtil(comp) {
     exports.searchstartswith_digit = phonebook.searchstartswith_digit;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 })();

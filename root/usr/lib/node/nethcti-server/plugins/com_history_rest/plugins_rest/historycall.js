@@ -91,9 +91,9 @@ var compAstProxy;
 function setCompAstProxy(comp) {
   try {
     compAstProxy = comp;
-    logger.info(IDLOG, 'set asterisk proxy architect component');
+    logger.log.info(IDLOG, 'set asterisk proxy architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -108,16 +108,16 @@ function setCompAstProxy(comp) {
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -130,9 +130,9 @@ function setLogger(log) {
 function setCompStaticHttp(comp) {
   try {
     compStaticHttp = comp;
-    logger.info(IDLOG, 'set http static component');
+    logger.log.info(IDLOG, 'set http static component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -146,9 +146,9 @@ function setCompStaticHttp(comp) {
 function setCompHistory(ch) {
   try {
     compHistory = ch;
-    logger.info(IDLOG, 'set history architect component');
+    logger.log.info(IDLOG, 'set history architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -161,9 +161,9 @@ function setCompHistory(ch) {
 function setCompUtil(comp) {
   try {
     compUtil = comp;
-    logger.info(IDLOG, 'set util architect component');
+    logger.log.info(IDLOG, 'set util architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -176,9 +176,9 @@ function setCompUtil(comp) {
 function setCompUser(comp) {
   try {
     compUser = comp;
-    logger.info(IDLOG, 'set user architect component');
+    logger.log.info(IDLOG, 'set user architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -191,9 +191,9 @@ function setCompUser(comp) {
 function setCompAuthorization(ca) {
   try {
     compAuthorization = ca;
-    logger.info(IDLOG, 'set authorization architect component');
+    logger.log.info(IDLOG, 'set authorization architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -392,7 +392,7 @@ function setCompAuthorization(ca) {
           // check the "admin recording" authorization. If the user has this permission he can delete
           // all the audio files. So gets the file information and delete it
           if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
-            logger.info(IDLOG, 'deleting record call audio file: "admin recording" authorization successful for user "' + username + '"');
+            logger.log.info(IDLOG, 'deleting record call audio file: "admin recording" authorization successful for user "' + username + '"');
 
             // get the file information using the history component. The information are the creation year,
             // month, day and the filename. This data is need to delete the file using history component
@@ -406,7 +406,7 @@ function setCompAuthorization(ca) {
                 // the user isn't involved in the recorded call, so he can't delete it
                 else if (typeof result === 'boolean' && !result) {
                   var str = 'no data information about recording call with id "' + id + '" to delete by the user "' + username + '"';
-                  logger.warn(IDLOG, str);
+                  logger.log.warn(IDLOG, str);
                   compUtil.net.sendHttp500(IDLOG, res, str);
 
                 } else {
@@ -414,14 +414,14 @@ function setCompAuthorization(ca) {
                   deleteCallRecording(id, username, result, res);
                 }
               } catch (err1) {
-                logger.error(IDLOG, err1.stack);
+                logger.log.error(IDLOG, err1.stack);
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
               }
             });
           }
           // check the "recording" authorization
           else if (compAuthorization.authorizeRecordingUser(username) !== true) {
-            logger.warn(IDLOG, 'deleting record call audio file: "recording" authorization failed for user "' + username + '" !');
+            logger.log.warn(IDLOG, 'deleting record call audio file: "recording" authorization failed for user "' + username + '" !');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
@@ -442,7 +442,7 @@ function setCompAuthorization(ca) {
                 // the user isn't involved in the recorded call, so he can't delete it
                 else if (typeof result === 'boolean' && !result) {
 
-                  logger.warn(IDLOG, 'user "' + username + '" try to delete the recording call id "' + id +
+                  logger.log.warn(IDLOG, 'user "' + username + '" try to delete the recording call id "' + id +
                     '", but he is not involved in the call');
                   compUtil.net.sendHttp403(IDLOG, res);
 
@@ -452,13 +452,13 @@ function setCompAuthorization(ca) {
                 }
 
               } catch (err1) {
-                logger.error(IDLOG, err1.stack);
+                logger.log.error(IDLOG, err1.stack);
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
               }
             });
           }
         } catch (error) {
-          logger.error(IDLOG, error.stack);
+          logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
         }
       },
@@ -482,7 +482,7 @@ function setCompAuthorization(ca) {
           // check the "admin recording" authorization. If the user has this permission he can listen
           // all the audio file. So gets the file information and then return the data to the client
           if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
-            logger.info(IDLOG, 'listening record call audio file: admin recording authorization successful for user "' + username + '"');
+            logger.log.info(IDLOG, 'listening record call audio file: admin recording authorization successful for user "' + username + '"');
 
             // get the file information using the history component. The information are the creation year,
             // month, day and the filename. This data is need to listen the file using history component
@@ -496,7 +496,7 @@ function setCompAuthorization(ca) {
                 // the user isn't involved in the recorded call, so he can't listen it
                 else if (typeof result === 'boolean' && !result) {
                   var str = 'no data information about recording call with id "' + id + '" to listen by the user "' + username + '"';
-                  logger.warn(IDLOG, str);
+                  logger.log.warn(IDLOG, str);
                   compUtil.net.sendHttp500(IDLOG, res, str);
 
                 } else {
@@ -504,7 +504,7 @@ function setCompAuthorization(ca) {
                   listenCallRecording(id, username, result, res);
                 }
               } catch (err1) {
-                logger.error(IDLOG, err1.stack);
+                logger.log.error(IDLOG, err1.stack);
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
               }
             });
@@ -513,7 +513,7 @@ function setCompAuthorization(ca) {
 
           // check the "recording" authorization
           else if (compAuthorization.authorizeRecordingUser(username) !== true) {
-            logger.warn(IDLOG, 'listening record call audio file: recording authorization failed for user "' + username + '" !');
+            logger.log.warn(IDLOG, 'listening record call audio file: recording authorization failed for user "' + username + '" !');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
@@ -536,7 +536,7 @@ function setCompAuthorization(ca) {
 
                 // the user isn't involved in the recorded call, so he can't listen it
                 else if (typeof result === 'boolean' && !result) {
-                  logger.warn(IDLOG, 'user "' + username + '" try to listen the recording call id "' + id + '", but he isn\'t involved in the call');
+                  logger.log.warn(IDLOG, 'user "' + username + '" try to listen the recording call id "' + id + '", but he isn\'t involved in the call');
                   compUtil.net.sendHttp403(IDLOG, res);
 
                 } else {
@@ -545,14 +545,14 @@ function setCompAuthorization(ca) {
                 }
 
               } catch (err1) {
-                logger.error(IDLOG, err1.stack);
+                logger.log.error(IDLOG, err1.stack);
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
               }
             });
           }
 
         } catch (error) {
-          logger.error(IDLOG, error.stack);
+          logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
         }
       },
@@ -576,7 +576,7 @@ function setCompAuthorization(ca) {
           // check the "admin recording" authorization. If the user has this permission he can download
           // all the audio files. So gets the file information and then return the data to the client
           if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
-            logger.info(IDLOG, 'downloading record call audio file: "admin recording" authorization successful for user "' + username + '"');
+            logger.log.info(IDLOG, 'downloading record call audio file: "admin recording" authorization successful for user "' + username + '"');
 
             // get the file information using the history component. The information are the creation year,
             // month, day and the filename. This data is need to download the file using the history component
@@ -590,7 +590,7 @@ function setCompAuthorization(ca) {
                 // the user isn't involved in the recorded call, so he can't download it
                 else if (typeof result === 'boolean' && !result) {
                   var str = 'no data information about recording call with id "' + id + '" to download it by the user "' + username + '"';
-                  logger.warn(IDLOG, str);
+                  logger.log.warn(IDLOG, str);
                   compUtil.net.sendHttp500(IDLOG, res, str);
 
                 } else {
@@ -598,7 +598,7 @@ function setCompAuthorization(ca) {
                   downCallRecording(id, username, result, res);
                 }
               } catch (err1) {
-                logger.error(IDLOG, err1.stack);
+                logger.log.error(IDLOG, err1.stack);
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
               }
             });
@@ -607,7 +607,7 @@ function setCompAuthorization(ca) {
 
           // check the "recording" authorization
           else if (compAuthorization.authorizeRecordingUser(username) !== true) {
-            logger.warn(IDLOG, 'downloading record call audio file: "recording" authorization failed for user "' + username + '" !');
+            logger.log.warn(IDLOG, 'downloading record call audio file: "recording" authorization failed for user "' + username + '" !');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
@@ -630,7 +630,7 @@ function setCompAuthorization(ca) {
 
                 // the user isn't involved in the recorded call, so he can't download it
                 else if (typeof result === 'boolean' && !result) {
-                  logger.warn(IDLOG, 'user "' + username + '" try to download the recording call id "' + id + '", but he isn\'t involved in the call');
+                  logger.log.warn(IDLOG, 'user "' + username + '" try to download the recording call id "' + id + '", but he isn\'t involved in the call');
                   compUtil.net.sendHttp403(IDLOG, res);
 
                 } else {
@@ -639,14 +639,14 @@ function setCompAuthorization(ca) {
                 }
 
               } catch (err1) {
-                logger.error(IDLOG, err1.stack);
+                logger.log.error(IDLOG, err1.stack);
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
               }
             });
           }
 
         } catch (error) {
-          logger.error(IDLOG, error.stack);
+          logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
         }
       },
@@ -675,7 +675,7 @@ function setCompAuthorization(ca) {
 
           // check the administration cdr authorization
           if (compAuthorization.authorizeAdminCdrUser(username) === true) {
-            logger.info(IDLOG, 'getting history interval call: admin cdr authorization successful for user "' + username + '"');
+            logger.log.info(IDLOG, 'getting history interval call: admin cdr authorization successful for user "' + username + '"');
           }
           // check if the endpoint in the request is an endpoint of the
           // applicant user. The user can only see the cdr of his endpoints
@@ -683,7 +683,7 @@ function setCompAuthorization(ca) {
             req.params.type === 'extension' &&
             compAuthorization.verifyUserEndpointExten(username, req.params.target) === false) {
 
-            logger.warn(IDLOG, 'authorization cdr call failed for user "' + username + '": requested extension "' +
+            logger.log.warn(IDLOG, 'authorization cdr call failed for user "' + username + '": requested extension "' +
               req.params.target + '" not owned by him');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
@@ -693,31 +693,31 @@ function setCompAuthorization(ca) {
             req.params.type === 'user' &&
             req.params.target !== username) {
 
-            logger.warn(IDLOG, 'authorization cdr call failed for user "' + username + '": requested user "' +
+            logger.log.warn(IDLOG, 'authorization cdr call failed for user "' + username + '": requested user "' +
               req.params.target + '" not himself');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
           // check the cdr authorization
           else if (compAuthorization.authorizeCdrUser(username) !== true) {
-            logger.warn(IDLOG, 'getting history interval call: cdr authorization failed for user "' + username + '" !');
+            logger.log.warn(IDLOG, 'getting history interval call: cdr authorization failed for user "' + username + '" !');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
 
-          logger.info(IDLOG, 'cdr authorization successfully for user "' + username + '" and target ' + req.params.target);
+          logger.log.info(IDLOG, 'cdr authorization successfully for user "' + username + '" and target ' + req.params.target);
 
           // check the "administration recording" and "recording" authorizations. If it's enabled
           // the user can view also all the data about his recording audio files
           var recording = (compAuthorization.authorizeRecordingUser(username) || compAuthorization.authorizeAdminRecordingUser(username));
           if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
-            logger.info(IDLOG, 'user "' + username + '" has the "admin recording" authorization');
+            logger.log.info(IDLOG, 'user "' + username + '" has the "admin recording" authorization');
 
           } else if (compAuthorization.authorizeRecordingUser(username) === true) {
-            logger.info(IDLOG, 'user "' + username + '" has the "recording" authorization');
+            logger.log.info(IDLOG, 'user "' + username + '" has the "recording" authorization');
 
           } else {
-            logger.info(IDLOG, 'user "' + username + '" has neither the "admin recording" nor the "recording" authorization');
+            logger.log.info(IDLOG, 'user "' + username + '" has neither the "admin recording" nor the "recording" authorization');
           }
 
           var extens;
@@ -757,7 +757,7 @@ function setCompAuthorization(ca) {
               if (err1) {
                 throw err1;
               } else {
-                logger.info(IDLOG, 'send #' + results.count + ' results searching history call' +
+                logger.log.info(IDLOG, 'send #' + results.count + ' results searching history call' +
                   ' interval between ' + obj.from + ' to ' + obj.to + ' for ' +
                   req.params.type + ' "' + req.params.target + '" [' + obj.endpoints + ']' +
                   ' and filter ' + (obj.filter ? obj.filter : '""') +
@@ -767,12 +767,12 @@ function setCompAuthorization(ca) {
               }
 
             } catch (err2) {
-              logger.error(IDLOG, err2.stack);
+              logger.log.error(IDLOG, err2.stack);
               compUtil.net.sendHttp500(IDLOG, res, err2.toString());
             }
           });
         } catch (error) {
-          logger.error(IDLOG, error.stack);
+          logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
         }
       }
@@ -791,7 +791,7 @@ function setCompAuthorization(ca) {
     exports.setCompAuthorization = setCompAuthorization;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 })();
 
@@ -818,18 +818,18 @@ function listenCallRecording(id, username, data, res) {
         if (err1) {
           throw err1;
         } else {
-          logger.info(IDLOG, 'listen of the recording call with id "' + id + '" has been sent successfully to user "' + username + '"');
+          logger.log.info(IDLOG, 'listen of the recording call with id "' + id + '" has been sent successfully to user "' + username + '"');
           res.send(200, result);
         }
 
       } catch (err2) {
-        logger.error(IDLOG, err2.stack);
+        logger.log.error(IDLOG, err2.stack);
         compUtil.net.sendHttp500(IDLOG, res, err2.toString());
       }
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -857,7 +857,7 @@ function downCallRecording(id, username, data, res) {
         if (err1) {
           throw err1;
         } else {
-          logger.info(IDLOG, 'download of the recording call with id "' + id + '" has been sent successfully to user "' + username + '"');
+          logger.log.info(IDLOG, 'download of the recording call with id "' + id + '" has been sent successfully to user "' + username + '"');
           // get base path of the call recordings and then construct the filepath using the arguments
           var filename = 'recording' + id + username + 'tmpaudio.wav';
           var basepath = compAstProxy.getBaseCallRecAudioPath();
@@ -866,27 +866,27 @@ function downCallRecording(id, username, data, res) {
           compStaticHttp.copyFile(filepath, filename, function(err1) {
             try {
               if (err1) {
-                logger.warn(IDLOG, 'copying static file "' + filepath + '" -> "' + filename + '": ' + err1.toString());
+                logger.log.warn(IDLOG, 'copying static file "' + filepath + '" -> "' + filename + '": ' + err1.toString());
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
 
               } else {
-                logger.info(IDLOG, 'send recording filename to download "' + filename + '" to user "' + username + '"');
+                logger.log.info(IDLOG, 'send recording filename to download "' + filename + '" to user "' + username + '"');
                 res.send(200, filename);
               }
             } catch (err3) {
-              logger.error(IDLOG, err3.stack);
+              logger.log.error(IDLOG, err3.stack);
               compUtil.net.sendHttp500(IDLOG, res, err3.toString());
             }
           });
         }
       } catch (err2) {
-        logger.error(IDLOG, err2.stack);
+        logger.log.error(IDLOG, err2.stack);
         compUtil.net.sendHttp500(IDLOG, res, err2.toString());
       }
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -912,18 +912,18 @@ function deleteCallRecording(id, username, data, res) {
         if (err1) {
           throw err1;
         } else {
-          logger.info(IDLOG, 'the recording call with id "' + id + '" has been deleted successfully by the user "' + username + '"');
+          logger.log.info(IDLOG, 'the recording call with id "' + id + '" has been deleted successfully by the user "' + username + '"');
           res.send(200, result);
         }
 
       } catch (err2) {
-        logger.error(IDLOG, err2.stack);
+        logger.log.error(IDLOG, err2.stack);
         compUtil.net.sendHttp500(IDLOG, res, err2.toString());
       }
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }

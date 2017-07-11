@@ -32,10 +32,10 @@ module.exports = function(options, imports, register) {
 
   try {
     imports.dbconn.on(imports.dbconn.EVT_READY, function() {
-      phonebook.setLogger(logger);
+      phonebook.setLogger(logger.ctilog);
       phonebook.setDbconn(imports.dbconn);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 };

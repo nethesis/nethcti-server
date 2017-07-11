@@ -54,18 +54,18 @@ var compDbconn;
 function setLogger(log) {
     try {
         if (typeof log === 'object'
-            && typeof log.info  === 'function'
-            && typeof log.warn  === 'function'
-            && typeof log.error === 'function') {
+            && typeof log.log.info === 'function'
+            && typeof log.log.warn === 'function'
+            && typeof log.log.error === 'function') {
 
             logger = log;
-            logger.info(IDLOG, 'new logger has been set');
+            logger.log.info(IDLOG, 'new logger has been set');
 
         } else {
             throw new Error('wrong logger object');
         }
     } catch (err) {
-        logger.error(IDLOG, err.stack);
+        logger.log.error(IDLOG, err.stack);
     }
 }
 
@@ -87,11 +87,11 @@ function getCallTrace(linkedid, privacyStr, cb) {
             throw new Error('wrong parameters: ' + JSON.stringify(arguments));
         }
 
-        logger.info(IDLOG, 'search cel for linkedid "' + linkedid + '"');
+        logger.log.info(IDLOG, 'search cel for linkedid "' + linkedid + '"');
         compDbconn.getCallTrace(linkedid, privacyStr, cb);
 
     } catch (err) {
-        logger.error(IDLOG, err.stack);
+        logger.log.error(IDLOG, err.stack);
         cb(err);
     }
 }
@@ -113,11 +113,11 @@ function getCallInfo(uniqueid, privacyStr, cb) {
             throw new Error('wrong parameters: ' + JSON.stringify(arguments));
         }
 
-        logger.info(IDLOG, 'search cel for uniqueid "' + uniqueid + '"');
+        logger.log.info(IDLOG, 'search cel for uniqueid "' + uniqueid + '"');
         compDbconn.getCallInfo(uniqueid, privacyStr, cb);
 
     } catch (err) {
-        logger.error(IDLOG, err.stack);
+        logger.log.error(IDLOG, err.stack);
         cb(err);
     }
 }
@@ -132,9 +132,9 @@ function getCallInfo(uniqueid, privacyStr, cb) {
 function setCompDbconn(comp) {
     try {
         compDbconn = comp;
-        logger.info(IDLOG, 'set database architect component');
+        logger.log.info(IDLOG, 'set database architect component');
     } catch (err) {
-       logger.error(IDLOG, err.stack);
+       logger.log.error(IDLOG, err.stack);
     }
 }
 

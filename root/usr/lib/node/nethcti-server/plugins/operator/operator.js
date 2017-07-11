@@ -51,25 +51,21 @@ var groups = {};
  * Set the logger to be used.
  *
  * @method setLogger
- * @param {object} log The logger object. It must have at least
- * three methods: _info, warn and error_ as console object.
+ * @param {object} log The logger object
  * @static
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' &&
-      typeof log.info === 'function' &&
-      typeof log.warn === 'function' &&
-      typeof log.error === 'function') {
+    if (typeof log === 'object') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -90,7 +86,7 @@ function config(path) {
 
     // check file presence
     if (!fs.existsSync(path)) {
-      logger.warn(IDLOG, path + ' does not exist');
+      logger.log.warn(IDLOG, path + ' does not exist');
       return;
     }
 
@@ -106,10 +102,10 @@ function config(path) {
       newgroup.addUsers(json[g]);
       groups[g] = newgroup;
     }
-    logger.info(IDLOG, 'ended configuration by JSON file ' + path);
+    logger.log.info(IDLOG, 'ended configuration by JSON file ' + path);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -134,7 +130,7 @@ function getJSONGroups() {
     return obj;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
