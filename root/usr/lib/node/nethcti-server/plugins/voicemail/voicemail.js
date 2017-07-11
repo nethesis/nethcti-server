@@ -140,7 +140,7 @@ function setCompUser(cu) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     compUser = cu;
-    logger.log(IDLOG, 'user component has been set');
+    logger.info(IDLOG, 'user component has been set');
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }

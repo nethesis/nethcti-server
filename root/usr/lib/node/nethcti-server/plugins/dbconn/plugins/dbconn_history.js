@@ -59,7 +59,7 @@ function setCompDbconnMain(comp) {
     }
 
     compDbconnMain = comp;
-    logger.log(IDLOG, 'main dbconn component has been set');
+    logger.info(IDLOG, 'main dbconn component has been set');
 
   } catch (err) {
     logger.error(IDLOG, err.stack);

@@ -2116,7 +2116,7 @@ var compConfigManager;
           // check if the user has the authorization to hangup every calls
           if (compAuthorization.authorizeAdminHangupUser(username) === true) {
 
-            logger.log(IDLOG, 'hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
+            logger.info(IDLOG, 'hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
           }
           // check if the endpoint of the request is owned by the user
           else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
@@ -2179,7 +2179,7 @@ var compConfigManager;
 
             // check if the user has the authorization to hangup every calls
             if (compAuthorization.authorizeAdminHangupUser(username) === true) {
-              logger.log(IDLOG, 'hangup asterisk channel "' + req.params.channel + '": authorization admin hangup successful for user "' + username + '"');
+              logger.info(IDLOG, 'hangup asterisk channel "' + req.params.channel + '": authorization admin hangup successful for user "' + username + '"');
             }
             // check if the endpoint of the request is owned by the user
             else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
@@ -3008,7 +3008,7 @@ var compConfigManager;
 
           // check if the user has the authorization to pickup the specified conversation
           if (compAuthorization.authorizeAdminPickupUser(username) === true) {
-            logger.log(IDLOG, 'picking up convid "' + req.params.convid + '": admin pickup authorization successful for user "' + username + '"');
+            logger.info(IDLOG, 'picking up convid "' + req.params.convid + '": admin pickup authorization successful for user "' + username + '"');
           } else {
             logger.warn(IDLOG, 'picking up convid ' + req.params.convid + ': admin pickup authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
@@ -3220,7 +3220,7 @@ var compConfigManager;
             // check if the user has the authorization to hangup every calls
             // if (compAuthorization.authorizeAdminHangupUser(username) === true) {
             //
-            //   logger.log(IDLOG, 'force hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
+            //   logger.info(IDLOG, 'force hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
             // }
             // // check if the endpoint of the request is owned by the user
             // else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
@@ -5078,7 +5078,7 @@ function setCompAuthorization(comp) {
     }
 
     compAuthorization = comp;
-    logger.log(IDLOG, 'authorization component has been set');
+    logger.info(IDLOG, 'authorization component has been set');
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -5100,7 +5100,7 @@ function setCompComNethctiWs(comp) {
     }
 
     compComNethctiWs = comp;
-    logger.log(IDLOG, 'websocket communication component has been set');
+    logger.info(IDLOG, 'websocket communication component has been set');
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -5122,7 +5122,7 @@ function setCompUser(comp) {
     }
 
     compUser = comp;
-    logger.log(IDLOG, 'user component has been set');
+    logger.info(IDLOG, 'user component has been set');
 
   } catch (err) {
     logger.error(IDLOG, err.stack);

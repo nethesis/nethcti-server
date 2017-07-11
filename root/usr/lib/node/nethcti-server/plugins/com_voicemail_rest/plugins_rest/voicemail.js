@@ -140,7 +140,7 @@ function setCompUser(comp) {
     }
 
     compUser = comp;
-    logger.log(IDLOG, 'user component has been set');
+    logger.info(IDLOG, 'user component has been set');
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -177,7 +177,7 @@ function setCompAuthorization(comp) {
     }
 
     compAuthorization = comp;
-    logger.log(IDLOG, 'authorization component has been set');
+    logger.info(IDLOG, 'authorization component has been set');
 
   } catch (err) {
     logger.error(IDLOG, err.stack);

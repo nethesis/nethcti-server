@@ -223,7 +223,7 @@ function setCompAuthorization(ca) {
     }
 
     compAuthorization = ca;
-    logger.log(IDLOG, 'authorization component has been set');
+    logger.info(IDLOG, 'authorization component has been set');
 
   } catch (err) {
     logger.error(IDLOG, err.stack);

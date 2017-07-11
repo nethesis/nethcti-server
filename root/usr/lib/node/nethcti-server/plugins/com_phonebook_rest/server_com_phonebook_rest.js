@@ -224,7 +224,7 @@ function setCompAuthorization(comp) {
     }
 
     compAuthorization = comp;
-    logger.log(IDLOG, 'authorization component has been set');
+    logger.info(IDLOG, 'authorization component has been set');
 
     // set the authorization for all REST plugins
     setAllRestPluginsAuthorization(comp);
