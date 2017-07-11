@@ -1,3 +1,7 @@
+
+var request = require("request");
+var fs      = require('fs');
+
 /**
 * Abstraction of a streaming source.
 *
@@ -13,6 +17,7 @@
 *   @param {object} data.user       The streaming username
 *   @param {object} data.secret     The streaming password
 *   @param {object} data.frame-rate The frame rate of the streaming images
+*   @param {object} data.sample     The streaming sample
 * @constructor
 * @return {object} The streaming object.
 */
@@ -106,6 +111,14 @@ exports.Streaming = function (data) {
     function getUrl() { return url; }
 
     /**
+    * Returns the streaming source frame rate.
+    *
+    * @method getFramerate
+    * @return {string} The streaming source frame-rate.
+    */
+    function getFramerate() { return frameRate; }
+
+    /**
     * Returns the command to open the streaming device.
     *
     * @method getOpenCommand
@@ -159,12 +172,36 @@ exports.Streaming = function (data) {
         }
     }
 
+    /**
+    * Get the sample.
+    *
+    * @method getSample
+    * @param {function} cb The callback function
+    * @return {object} The sample from video source.
+    */
+    function getSample(cb) {
+      if (url) {
+        request({
+          uri: url,
+          encoding: null,
+          timeout: 2000
+        }, function(err, res, body) {
+          if (!err && res.statusCode == 200) {
+              var data = "data:" + res.headers["content-type"] + ";base64," + new Buffer(body).toString('base64');
+              cb(err, id, data);
+            }
+        });
+      }
+    }
+
     // public interface
     return {
         getUrl:         getUrl,
         toJSON:         toJSON,
         toString:       toString,
         getExtension:   getExtension,
-        getOpenCommand: getOpenCommand
+        getFramerate:   getFramerate,
+        getOpenCommand: getOpenCommand,
+        getSample:      getSample
     };
 }
