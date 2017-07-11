@@ -938,7 +938,7 @@ function evtUserProfileAvatarChanged(evt) {
  */
 function evtStreamingSourceChanged(evt) {
   try {
-    logger.info(IDLOG, 'received event "' + compUser.EVT_STREAMING_SOURCE_CHANGED + '" for source ' + evt.streaming.source);
+    logger.info(IDLOG, 'received event "' + compStreaming.EVT_STREAMING_SOURCE_CHANGED + '" for source ' + evt.streaming.source);
     logger.info(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_UPDATE + '" for source ' + evt.streaming.source + ' to websockets');
 
     var room_name = 'STREAMING_' + evt.streaming.source.toUpperCase();
@@ -968,7 +968,7 @@ function evtStreamingSourceSubscribed(evt) {
   try {
     logger.info(IDLOG, 'received event "' + compUser.EVT_STREAMING_SOURCE_SUBSCRIBED + '" for user ' + evt.streaming.username + ' source ' + evt.streaming.streamId);
 
-    streamId = evt.streaming.streamId;
+    var streamId = evt.streaming.streamId;
     var room_name = 'STREAMING_' + streamId.toUpperCase();
     WS_ROOM[room_name] = room_name.toLowerCase();
 
@@ -1000,7 +1000,7 @@ function evtStreamingSourceUnsubscribed(evt) {
   try {
     logger.info(IDLOG, 'received event "' + compUser.EVT_STREAMING_SOURCE_UNSUBSCRIBED + '" for user ' + evt.streaming.username + ' source ' + evt.streaming.streamId);
 
-    streamId = evt.streaming.streamId;
+    var streamId = evt.streaming.streamId;
     var room_name = 'STREAMING_' + streamId.toUpperCase();
 
     var socketId, username;

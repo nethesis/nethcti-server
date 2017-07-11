@@ -206,6 +206,8 @@ function setCompConfigManager(comp) {
         * ### <a id="subscribepost">**`streaming/subscribe`**</a>
         *
         * Subscribe to a streaming source.
+        * After subscribing the source the user will receive streaming events for
+        * the subscribed streaming source.
         * The request must contains the following parameters:
         *
         * * `id: the streaming source identifier`
@@ -219,6 +221,8 @@ function setCompConfigManager(comp) {
         * ### <a id="unsubscribepost">**`streaming/unsubscribe`**</a>
         *
         * Unsubscribe from a streaming source.
+        * After unsubscribing the source the user will not receive streaming events for
+        * the unsubscribed streaming source.
         * The request must contains the following parameters:
         *
         * * `id: the streaming source identifier`
@@ -372,12 +376,12 @@ function setCompConfigManager(comp) {
 
             compStreaming.subscribeSource(username, stream, function(err) {
               if (err) {
-                var str = 'subscribing streaming source "' + stream + '"';
+                var str = 'subscribing streaming source "' + stream + '" for user "' + username + '"';
                 logger.error(IDLOG, str);
                 compUtil.net.sendHttp500(IDLOG, res, str);
                 res.send(200, null);
               } else {
-                logger.info(IDLOG, 'subscribing streaming source "' + stream + '" successful');
+                logger.info(IDLOG, 'subscribing streaming source "' + stream + '" successful for user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
               }
             });
@@ -418,12 +422,12 @@ function setCompConfigManager(comp) {
 
             compStreaming.unsubscribeSource(username, stream, function(err) {
               if (err) {
-                var str = 'subscribing streaming source "' + stream + '"';
+                var str = 'subscribing streaming source "' + stream + '" for user "' + username + '"';
                 logger.error(IDLOG, str);
                 compUtil.net.sendHttp500(IDLOG, res, str);
                 res.send(200, null);
               } else {
-                logger.info(IDLOG, 'subscribing streaming source "' + stream + '" successful');
+                logger.info(IDLOG, 'subscribing streaming source "' + stream + '" successful for user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
               }
             });
