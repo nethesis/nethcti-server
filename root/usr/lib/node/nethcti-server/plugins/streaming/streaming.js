@@ -41,6 +41,34 @@ var IDLOG = '[streaming]';
 var EVT_STREAMING_SOURCE_CHANGED = 'streamingSourceChanged';
 
 /**
+ * Fired when the streaming source has been subscribed.
+ *
+ * @event streamingSourceSubscribed
+ */
+/**
+ * The name of the streaming source subscribe event.
+ *
+ * @property EVT_STREAMING_SOURCE_SUBSCRIBED
+ * @type string
+ * @default "streamingSourceSubscribed"
+ */
+var EVT_STREAMING_SOURCE_SUBSCRIBED = 'streamingSourceSubscribed';
+
+/**
+ * Fired when the streaming source has been unsubscribed.
+ *
+ * @event streamingSourceUnsubscribed
+ */
+/**
+ * The name of the streaming source unsubscribe event.
+ *
+ * @property EVT_STREAMING_SOURCE_UNSUBSCRIBED
+ * @type string
+ * @default "streamingSourceUnsubscribed"
+ */
+var EVT_STREAMING_SOURCE_UNSUBSCRIBED = 'streamingSourceUnsubscribed';
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -323,6 +351,56 @@ function open(streamId, callerid, fromExten, cb) {
 }
 
 /**
+* Subscribe to a streaming source.
+*
+* @method subscribeSource
+* @param {string}   username The username to subscribe with
+* @param {string}   streamId The streaming source identifier
+* @param {function} cb The callback function
+*/
+function subscribeSource(username, streamId, cb) {
+  try {
+    logger.debug(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_SUBSCRIBED + '"');
+    emitter.emit(EVT_STREAMING_SOURCE_SUBSCRIBED, {
+      streaming: {
+        username: username,
+        streamId: streamId
+      }
+    });
+
+    cb(null);
+  } catch (err) {
+      logger.error(IDLOG, err.stack);
+      return {};
+  }
+}
+
+/**
+* Unsubscribe from a streaming source.
+*
+* @method unsubscribeSource
+* @param {string}   username The username to subscribe with
+* @param {string}   streamId The streaming source identifier
+* @param {function} cb The callback function
+*/
+function unsubscribeSource(username, streamId, cb) {
+  try {
+    logger.debug(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_UNSUBSCRIBED + '"');
+    emitter.emit(EVT_STREAMING_SOURCE_UNSUBSCRIBED, {
+      streaming: {
+        username: username,
+        streamId: streamId
+      }
+    });
+
+    cb(null);
+  } catch (err) {
+      logger.error(IDLOG, err.stack);
+      return {};
+  }
+}
+
+/**
  * Subscribe a callback function to a custom event fired by this object.
  * It's the same of nodejs _events.EventEmitter.on_ method.
  *
@@ -355,13 +433,17 @@ function emit(ev, data) {
 }
 
 // public interface
-exports.on                           = on;
-exports.emit                         = emit;
-exports.start                        = start;
-exports.open                         = open;
-exports.config                       = config;
-exports.setLogger                    = setLogger;
-exports.setCompAstProxy              = setCompAstProxy;
-exports.setCompAuthorization         = setCompAuthorization;
-exports.getAllStreamingSources       = getAllStreamingSources;
-exports.EVT_STREAMING_SOURCE_CHANGED = EVT_STREAMING_SOURCE_CHANGED;
+exports.on                                = on;
+exports.emit                              = emit;
+exports.start                             = start;
+exports.open                              = open;
+exports.config                            = config;
+exports.setLogger                         = setLogger;
+exports.setCompAstProxy                   = setCompAstProxy;
+exports.setCompAuthorization              = setCompAuthorization;
+exports.getAllStreamingSources            = getAllStreamingSources;
+exports.subscribeSource                   = subscribeSource;
+exports.unsubscribeSource                 = unsubscribeSource;
+exports.EVT_STREAMING_SOURCE_CHANGED      = EVT_STREAMING_SOURCE_CHANGED;
+exports.EVT_STREAMING_SOURCE_SUBSCRIBED   = EVT_STREAMING_SOURCE_SUBSCRIBED;
+exports.EVT_STREAMING_SOURCE_UNSUBSCRIBED = EVT_STREAMING_SOURCE_UNSUBSCRIBED;

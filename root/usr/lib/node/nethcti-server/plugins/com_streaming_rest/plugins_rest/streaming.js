@@ -156,7 +156,11 @@ function setCompConfigManager(comp) {
         *
         * # GET requests
         *
-        * [`streaming/sources`](#sourcesget)
+        * 1. [`streaming/sources`](#sourcesget)
+        *
+        * ---
+        *
+        * ### <a id="sourcesget">**`streaming/sources`**</a>
         *
         * Returns all the streaming sources.
         *
@@ -181,10 +185,12 @@ function setCompConfigManager(comp) {
         * # POST requests
         *
         * 1. [`streaming/open`](#openpost)
+        * 2. [`streaming/subscribe`](#subscribepost)
+        * 3. [`streaming/unsubscribe`](#unsubscribepost)
         *
         * ---
         *
-        * ### <a id="streaming/openpost">**`streaming/open`**</a>
+        * ### <a id="openpost">**`streaming/open`**</a>
         *
         * Execute the command associated with the streaming to open the associated device, e.g. a door.
         * The request must contains the following parameters:
@@ -194,6 +200,38 @@ function setCompConfigManager(comp) {
         * Example JSON request parameters:
         *
         *     { "id": "door" }
+        *
+        * ---
+        *
+        * ### <a id="subscribepost">**`streaming/subscribe`**</a>
+        *
+        * Subscribe to a streaming source.
+        * After subscribing the source the user will receive streaming events for
+        * the subscribed streaming source.
+        * The request must contains the following parameters:
+        *
+        * * `id: the streaming source identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "id": "vs_gate1" }
+        *
+        * ---
+        *
+        * ### <a id="unsubscribepost">**`streaming/unsubscribe`**</a>
+        *
+        * Unsubscribe from a streaming source.
+        * After unsubscribing the source the user will not receive streaming events for
+        * the unsubscribed streaming source.
+        * The request must contains the following parameters:
+        *
+        * * `id: the streaming source identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "id": "vs_gate1" }
+        *
+        * ---
         *
         * @class plugin_rest_streaming
         * @static
@@ -222,7 +260,7 @@ function setCompConfigManager(comp) {
          *
          *   @param {string} open To execute the command associated with the streaming source
          */
-        'post': ['open'],
+        'post': ['open', 'subscribe', 'unsubscribe'],
         'head': [],
         'del': []
       },
@@ -301,20 +339,113 @@ function setCompConfigManager(comp) {
                 compUtil.net.sendHttp200(IDLOG, res);
               }
             });
-
           } else {
             logger.warn(IDLOG, 'authorization for user "' + username + '" for open streaming source "' + stream + '" has been failed !');
             compUtil.net.sendHttp403(IDLOG, res);
           }
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
 
+      /**
+       * Subscribe to a streaming source
+       * with the following REST API:
+       *
+       *     subscribe
+       *
+       * @method subscribe
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      subscribe: function(req, res, next) {
+        try {
+          // get the username from the authorization header
+          var username = req.headers.authorization_user;
+
+          // get the streaming source identifier
+          var stream = req.params.id;
+
+          // check if the user is authorized to use the streaming source
+          if (compAuthorization.authorizeStreamingSourceUser(username).filter(function(e) {
+            return e.permissionId === stream;
+          }).length > 0) {
+            logger.info(IDLOG, 'authorization for user "' + username + '" to subscribe to the streaming source "' + stream + '" has been successful');
+
+            compStreaming.subscribeSource(username, stream, function(err) {
+              if (err) {
+                var str = 'subscribing streaming source "' + stream + '" for user "' + username + '"';
+                logger.error(IDLOG, str);
+                compUtil.net.sendHttp500(IDLOG, res, str);
+                res.send(200, null);
+              } else {
+                logger.info(IDLOG, 'subscribing streaming source "' + stream + '" successful for user "' + username + '"');
+                compUtil.net.sendHttp200(IDLOG, res);
+              }
+            });
+          } else {
+            logger.warn(IDLOG, 'authorization for user "' + username + '" to subscribe to the streaming source "' + stream + '" has been failed !');
+            compUtil.net.sendHttp403(IDLOG, res);
+          }
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * Unsubscribe from a streaming source
+       * with the following REST API:
+       *
+       *     unsubscribe
+       *
+       * @method unsubscribe
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      unsubscribe: function(req, res, next) {
+        try {
+          // get the username from the authorization header
+          var username = req.headers.authorization_user;
+
+          // get the streaming source identifier
+          var stream = req.params.id;
+
+          // check if the user is authorized to use the streaming source
+          if (compAuthorization.authorizeStreamingSourceUser(username).filter(function(e) {
+            return e.permissionId === stream;
+          }).length > 0) {
+            logger.info(IDLOG, 'authorization for user "' + username + '" to subscribe to the streaming source "' + stream + '" has been successful');
+
+            compStreaming.unsubscribeSource(username, stream, function(err) {
+              if (err) {
+                var str = 'subscribing streaming source "' + stream + '" for user "' + username + '"';
+                logger.error(IDLOG, str);
+                compUtil.net.sendHttp500(IDLOG, res, str);
+                res.send(200, null);
+              } else {
+                logger.info(IDLOG, 'subscribing streaming source "' + stream + '" successful for user "' + username + '"');
+                compUtil.net.sendHttp200(IDLOG, res);
+              }
+            });
+          } else {
+            logger.warn(IDLOG, 'authorization for user "' + username + '" to subscribe to the streaming source "' + stream + '" has been failed !');
+            compUtil.net.sendHttp403(IDLOG, res);
+          }
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       }
     }
+
     exports.api = streaming.api;
     exports.open = streaming.open;
+    exports.subscribe = streaming.subscribe;
+    exports.unsubscribe = streaming.unsubscribe;
     exports.sources = streaming.sources;
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;
