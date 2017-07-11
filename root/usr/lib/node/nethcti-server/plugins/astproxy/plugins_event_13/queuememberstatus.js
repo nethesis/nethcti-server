@@ -62,7 +62,7 @@ var astProxy;
             data.paused && data.status &&
             data.event === 'QueueMemberStatus') {
 
-            logger.info(IDLOG, 'received event ' + data.event);
+            logger.log.info(IDLOG, 'received event ' + data.event);
 
             // extract the queue member identifier. e.g. data.interface is: "Local/214@from-queue/n"
             var member = data.interface.split('@')[0].split('/')[1];
@@ -80,11 +80,11 @@ var astProxy;
             });
 
           } else {
-            logger.warn(IDLOG, 'QueueMemberStatus event not recognized');
+            logger.log.warn(IDLOG, 'QueueMemberStatus event not recognized');
           }
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
         }
       },
 
@@ -99,16 +99,16 @@ var astProxy;
       setLogger: function(log) {
         try {
           if (typeof log === 'object' &&
-            typeof log.info === 'function' &&
-            typeof log.warn === 'function' &&
-            typeof log.error === 'function') {
+            typeof log.log.info === 'function' &&
+            typeof log.log.warn === 'function' &&
+            typeof log.log.error === 'function') {
 
             logger = log;
           } else {
             throw new Error('wrong logger object');
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
         }
       },
 
@@ -126,7 +126,7 @@ var astProxy;
           }
           astProxy = ap;
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
         }
       }
     };
@@ -137,6 +137,6 @@ var astProxy;
     exports.setLogger = queueMemberStatus.setLogger;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 })();

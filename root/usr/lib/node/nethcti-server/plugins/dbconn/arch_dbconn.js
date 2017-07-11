@@ -38,14 +38,14 @@ module.exports = function(options, imports, register) {
   });
 
   try {
-    dbconnMain.setLogger(logger);
+    dbconnMain.setLogger(logger.ctilog);
     dbconnMain.config('/etc/nethcti/nethcti.json');
     dbconnMain.configDbStatic('/etc/nethcti/dbstatic.d');
     dbconnMain.start();
-    dbconnPluginsManager.setLogger(logger);
+    dbconnPluginsManager.setLogger(logger.ctilog);
     dbconnPluginsManager.setCompDbconnMain(dbconnMain);
     dbconnPluginsManager.start();
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 };

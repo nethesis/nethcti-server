@@ -54,16 +54,16 @@ var dbconn;
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -89,20 +89,20 @@ function getPbContactsContains(term, username, view, offset, limit, cb) {
     dbconn.getAllContactsContains(term, username, view, offset, limit, function(err, results) {
       try {
         if (err) { // some error in the query
-          logger.error(IDLOG, err);
+          logger.log.error(IDLOG, err);
         } else { // add the result
-          logger.info(IDLOG, 'found ' + results.length + ' contacts in centralized and cti phonebooks ' +
+          logger.log.info(IDLOG, 'found ' + results.length + ' contacts in centralized and cti phonebooks ' +
             ' that contains the term ' + term);
         }
         cb(err, results);
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -131,11 +131,11 @@ function getPbContactsByNum(number, cb) { //TODO: add source param and paging
     async.parallel([
 
       function(callback) {
-        logger.info(IDLOG, 'search centralized phonebook contacts by number ' + number + ' using dbconn module');
+        logger.log.info(IDLOG, 'search centralized phonebook contacts by number ' + number + ' using dbconn module');
         dbconn.getPbContactsByNum(number, function(err, results) {
           try {
             if (err) { // some error in the query
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, err);
 
             } else { // add the result
               obj.centralized = results;
@@ -143,17 +143,17 @@ function getPbContactsByNum(number, cb) { //TODO: add source param and paging
             callback();
 
           } catch (error) {
-            logger.error(IDLOG, error.stack);
+            logger.log.error(IDLOG, error.stack);
             callback();
           }
         });
       },
       function(callback) {
-        logger.info(IDLOG, 'search cti phonebook contacts by number ' + number + ' using dbconn module');
+        logger.log.info(IDLOG, 'search cti phonebook contacts by number ' + number + ' using dbconn module');
         dbconn.getCtiPbContactsByNum(number, function(err, results) {
           try {
             if (err) { // some error in the query
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, err);
 
             } else { // add the result
               obj.nethcti = results;
@@ -161,7 +161,7 @@ function getPbContactsByNum(number, cb) { //TODO: add source param and paging
             callback();
 
           } catch (error) {
-            logger.error(IDLOG, error.stack);
+            logger.log.error(IDLOG, error.stack);
             callback();
           }
         });
@@ -169,15 +169,15 @@ function getPbContactsByNum(number, cb) { //TODO: add source param and paging
 
     ], function(err) {
       if (err) {
-        logger.error(IDLOG, err);
+        logger.log.error(IDLOG, err);
       }
 
-      logger.info(IDLOG, 'found ' + obj.centralized.length + ' contacts in centralized phonebook and ' +
+      logger.log.info(IDLOG, 'found ' + obj.centralized.length + ' contacts in centralized phonebook and ' +
         obj.nethcti.length + ' contacts in cti phonebook searching contacts by number ' + number);
       cb(err, obj);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -196,11 +196,11 @@ function getCtiPbContact(id, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    logger.info(IDLOG, 'search cti phonebook contact using db contact id "' + id + '" by means dbconn module');
+    logger.log.info(IDLOG, 'search cti phonebook contact using db contact id "' + id + '" by means dbconn module');
     dbconn.getCtiPbContact(id, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -219,11 +219,11 @@ function getPbContact(id, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    logger.info(IDLOG, 'search centralized phonebook contact using db contact id "' + id + '" by means dbconn module');
+    logger.log.info(IDLOG, 'search centralized phonebook contact using db contact id "' + id + '" by means dbconn module');
     dbconn.getPbContact(id, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -242,24 +242,24 @@ function getPbSpeeddialContacts(username, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    logger.info(IDLOG, 'search all speeddial contacts of the user "' + username + '" in the cti phonebook by means dbconn module');
+    logger.log.info(IDLOG, 'search all speeddial contacts of the user "' + username + '" in the cti phonebook by means dbconn module');
     dbconn.getCtiPbSpeeddialContacts(username, function(err, result) {
       try {
         if (err) { // some error in the query
-          logger.error(IDLOG, err);
+          logger.log.error(IDLOG, err);
           cb(err);
           return;
         }
         cb(null, result);
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -278,24 +278,24 @@ function deleteCtiPbContact(id, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    logger.info(IDLOG, 'delete cti phonebook contact using db contact id "' + id + '" by means dbconn module');
+    logger.log.info(IDLOG, 'delete cti phonebook contact using db contact id "' + id + '" by means dbconn module');
     dbconn.deleteCtiPbContact(id, function(err, result) {
       try {
         if (err) { // some error in the query
-          logger.error(IDLOG, err);
+          logger.log.error(IDLOG, err);
           cb(err);
           return;
         }
         cb(null, result);
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -342,23 +342,23 @@ function modifyCtiPbContact(data, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    logger.info(IDLOG, 'modify cti phonebook contact using db contact id "' + data.id + '" by means dbconn module');
+    logger.log.info(IDLOG, 'modify cti phonebook contact using db contact id "' + data.id + '" by means dbconn module');
     dbconn.modifyCtiPbContact(data, function(err, result) {
       try {
         if (err) { // some error in the query
-          logger.error(IDLOG, err);
+          logger.log.error(IDLOG, err);
           cb(err);
           return;
         }
         cb(null);
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -385,20 +385,20 @@ function getPbContactsStartsWith(term, username, view, offset, limit, cb) {
     dbconn.getAllContactsStartsWith(term, username, view, offset, limit, function(err, results) {
       try {
         if (err) { // some error in the query
-          logger.error(IDLOG, err);
+          logger.log.error(IDLOG, err);
         } else { // add the result
-          logger.info(IDLOG, 'found ' + results.length + ' contacts in centralized and cti phonebook ' +
+          logger.log.info(IDLOG, 'found ' + results.length + ' contacts in centralized and cti phonebook ' +
             'searching contacts "starts with" ' + 'the term ' + term);
         }
         cb(err, results);
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -424,20 +424,20 @@ function getPbContactsStartsWithDigit(username, view, offset, limit, cb) {
     dbconn.getAllContactsStartsWithDigit(username, view, offset, limit, function(err, results) {
       try {
         if (err) { // some error in the query
-          logger.error(IDLOG, err);
+          logger.log.error(IDLOG, err);
         } else { // add the result
-          logger.info(IDLOG, 'found ' + results.length + ' contacts in centralized and cti phonebook ' +
+          logger.log.info(IDLOG, 'found ' + results.length + ' contacts in centralized and cti phonebook ' +
             'searching contacts "starts with digit"');
         }
         cb(err, results);
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -455,9 +455,9 @@ function setDbconn(dbconnMod) {
       throw new Error('wrong dbconn object');
     }
     dbconn = dbconnMod;
-    logger.info(IDLOG, 'set dbconn module');
+    logger.log.info(IDLOG, 'set dbconn module');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -510,11 +510,11 @@ function saveCtiPbContact(data, cb) {
     data.owner_id = data.creator;
     delete data.creator;
 
-    logger.info(IDLOG, 'save cti phonebook contact by means dbconn module');
+    logger.log.info(IDLOG, 'save cti phonebook contact by means dbconn module');
     dbconn.saveCtiPbContact(data, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }

@@ -75,16 +75,16 @@ var compHistory;
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -97,9 +97,9 @@ function setLogger(log) {
 function setCompHistory(ch) {
   try {
     compHistory = ch;
-    logger.info(IDLOG, 'set history architect component');
+    logger.log.info(IDLOG, 'set history architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -112,9 +112,9 @@ function setCompHistory(ch) {
 function setCompUtil(comp) {
   try {
     compUtil = comp;
-    logger.info(IDLOG, 'set util architect component');
+    logger.log.info(IDLOG, 'set util architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -127,9 +127,9 @@ function setCompUtil(comp) {
 function setCompAuthorization(ca) {
   try {
     compAuthorization = ca;
-    logger.info(IDLOG, 'set authorization architect component');
+    logger.log.info(IDLOG, 'set authorization architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -271,20 +271,20 @@ function setCompAuthorization(ca) {
 
           // check the switchboard cdr authorization
           if (compAuthorization.authorizeAdminCdrUser(username) === false) {
-            logger.warn(IDLOG, 'switchboard cdr authorization failed for user "' + username + '"!');
+            logger.log.warn(IDLOG, 'switchboard cdr authorization failed for user "' + username + '"!');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
 
-          logger.info(IDLOG, 'switchboard cdr authorization successfully for user "' + username + '"');
+          logger.log.info(IDLOG, 'switchboard cdr authorization successfully for user "' + username + '"');
 
           // check the administration recording authorization. If it's enabled the user
           // can view also all data about recording audio files
           var recording = compAuthorization.authorizeAdminRecordingUser(username);
           if (recording !== true) {
-            logger.info(IDLOG, 'user "' + username + '" does not have the "admin recording" authorization');
+            logger.log.info(IDLOG, 'user "' + username + '" does not have the "admin recording" authorization');
           } else {
-            logger.info(IDLOG, 'user "' + username + '" has the "admin recording" authorization');
+            logger.log.info(IDLOG, 'user "' + username + '" has the "admin recording" authorization');
           }
 
           var obj = {
@@ -321,7 +321,7 @@ function setCompAuthorization(ca) {
               if (err) {
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
               } else {
-                logger.info(IDLOG, 'send ' + results.count + ' results searching switchboard history call ' +
+                logger.log.info(IDLOG, 'send ' + results.count + ' results searching switchboard history call ' +
                   'interval between ' + obj.from + ' to ' + obj.to + ' for all endpoints ' +
                   'and filter ' + (obj.filter ? obj.filter : '""') +
                   (obj.recording ? ' with recording data' : '') +
@@ -329,12 +329,12 @@ function setCompAuthorization(ca) {
                 res.send(200, results);
               }
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       }
@@ -348,7 +348,7 @@ function setCompAuthorization(ca) {
     exports.setCompAuthorization = setCompAuthorization;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 })();
 
@@ -361,8 +361,8 @@ function setCompAuthorization(ca) {
 function setPrivacy(str) {
   try {
     privacyStrReplace = str;
-    logger.info(IDLOG, 'set privacy with string ' + privacyStrReplace);
+    logger.log.info(IDLOG, 'set privacy with string ' + privacyStrReplace);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }

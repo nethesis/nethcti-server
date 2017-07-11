@@ -60,10 +60,10 @@ function setCompDbconnMain(comp) {
     }
 
     compDbconnMain = comp;
-    logger.info(IDLOG, 'main dbconn component has been set');
+    logger.log.info(IDLOG, 'main dbconn component has been set');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -77,16 +77,16 @@ function setCompDbconnMain(comp) {
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -116,19 +116,19 @@ function getUserSettings(username, cb) {
         results[i] = results[i].dataValues;
       }
 
-      logger.info(IDLOG, results.length + ' results getting settings of user "' + username + '"');
+      logger.log.info(IDLOG, results.length + ' results getting settings of user "' + username + '"');
       cb(null, results);
 
     }, function(err) { // manage the error
 
-      logger.error(IDLOG, 'getting settings of user "' + username + '": ' + err.toString());
+      logger.log.error(IDLOG, 'getting settings of user "' + username + '": ' + err.toString());
       cb(err.toString());
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -159,18 +159,18 @@ function getAllUsersDefaultExtension(cb) {
         results[i] = results[i].dataValues;
       }
 
-      logger.info(IDLOG, results.length + ' results getting all users default extension');
+      logger.log.info(IDLOG, results.length + ' results getting all users default extension');
       cb(null, results);
 
     }, function(err) { // manage the error
-      logger.error(IDLOG, 'getting all users default extension: ' + err.toString());
+      logger.log.error(IDLOG, 'getting all users default extension: ' + err.toString());
       cb(err.toString());
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -200,7 +200,7 @@ function saveUserNotifySetting(data, cb) {
     saveUserSetting(data.username, keyName, data.when, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -226,7 +226,7 @@ function saveUserAutoQueueLogin(data, cb) {
     saveUserSetting(data.username, 'auto_queue_login', value, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -252,7 +252,7 @@ function saveUserAutoDndOnLogout(data, cb) {
     saveUserSetting(data.username, 'auto_dndon_logout', value, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -278,7 +278,7 @@ function saveUserAutoDndOffLogin(data, cb) {
     saveUserSetting(data.username, 'auto_dndoff_login', value, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -304,7 +304,7 @@ function saveUserAutoQueueLogout(data, cb) {
     saveUserSetting(data.username, 'auto_queue_logout', value, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -329,7 +329,7 @@ function saveUserDefaultExtension(data, cb) {
     saveUserSetting(data.username, 'default_extension', data.exten, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -374,11 +374,11 @@ function saveUserSetting(username, keyName, value, cb) {
 
         userSetting.save()
           .then(function() { // the save was successful
-            logger.info(IDLOG, 'setting "' + keyName + ': ' + value + '" of user "' + username + '" saved successfully');
+            logger.log.info(IDLOG, 'setting "' + keyName + ': ' + value + '" of user "' + username + '" saved successfully');
             cb(null);
 
           }, function(err) { // manage the error
-            logger.error(IDLOG, 'saving settings "' + keyName + ': ' + value + '" of user "' + username + '": ' + err.toString());
+            logger.log.error(IDLOG, 'saving settings "' + keyName + ': ' + value + '" of user "' + username + '": ' + err.toString());
             cb(err.toString());
           });
 
@@ -391,7 +391,7 @@ function saveUserSetting(username, keyName, value, cb) {
           value: value
 
         }).then(function() {
-          logger.info(IDLOG, 'settings "' + keyName + ': ' + value + '" of user "' + username + '" has been updated successfully');
+          logger.log.info(IDLOG, 'settings "' + keyName + ': ' + value + '" of user "' + username + '" has been updated successfully');
           cb();
         });
 
@@ -400,14 +400,14 @@ function saveUserSetting(username, keyName, value, cb) {
 
     }, function(err1) { // manage the error
 
-      logger.error(IDLOG, 'search setting "' + keyName + '" for user "' + username + '" failed: ' + err1.toString());
+      logger.log.error(IDLOG, 'search setting "' + keyName + '" for user "' + username + '" failed: ' + err1.toString());
       cb(err1.toString());
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -429,17 +429,17 @@ function deleteUserSettings(username, cb) {
       where: ['username=?', username]
 
     }).then(function(numdel) {
-      logger.info(IDLOG, 'all settings (#' + numdel + ') of user "' + username + '" has been deleted successfully');
+      logger.log.info(IDLOG, 'all settings (#' + numdel + ') of user "' + username + '" has been deleted successfully');
       cb();
 
     }, function(err1) { // manage the error
-      logger.error(IDLOG, 'deleting all settings of user "' + username + '" : ' + err1.toString());
+      logger.log.error(IDLOG, 'deleting all settings of user "' + username + '" : ' + err1.toString());
       cb(err1.toString());
     });
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -477,11 +477,11 @@ function saveUserSettings(username, data, cb) {
         value: data[key]
 
       }).then(function(result) {
-        logger.info(IDLOG, 'user setting "' + key + '" has been saved successfully for user "' + username + '"');
+        logger.log.info(IDLOG, 'user setting "' + key + '" has been saved successfully for user "' + username + '"');
         callback();
 
       }, function(err1) { // manage the error
-        logger.error(IDLOG, 'saving user setting "' + key + '" for user "' + username + '": ' + err1.toString());
+        logger.log.error(IDLOG, 'saving user setting "' + key + '" for user "' + username + '": ' + err1.toString());
         callback();
       });
       compDbconnMain.incNumExecQueries();
@@ -489,17 +489,17 @@ function saveUserSettings(username, data, cb) {
     }, function(err) {
 
       if (err) {
-        logger.error(IDLOG, err);
+        logger.log.error(IDLOG, err);
         cb(err);
         return;
       }
 
-      logger.info(IDLOG, 'end saving user settings for user "' + username + '"');
+      logger.log.info(IDLOG, 'end saving user settings for user "' + username + '"');
       cb();
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -540,17 +540,17 @@ function getUserSettings(username, cb) {
         obj[results[i].key_name] = results[i].value;
       }
 
-      logger.info(IDLOG, results.length + ' user settings results for user "' + username + '"');
+      logger.log.info(IDLOG, results.length + ' user settings results for user "' + username + '"');
       cb(null, obj);
 
     }, function(err) { // manage the error
-      logger.error(IDLOG, 'getting user settings for user "' + username + '"');
+      logger.log.error(IDLOG, 'getting user settings for user "' + username + '"');
       cb(err.toString());
     });
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -579,7 +579,7 @@ function getAllUsersSettings(cb) {
       cb(null, obj);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }

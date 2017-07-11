@@ -55,17 +55,17 @@ var compUtil;
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' &&
-      typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -78,9 +78,9 @@ function setLogger(log) {
 function setCompDbConn(cp) {
   try {
     compDbConn = cp;
-    logger.info(IDLOG, 'set dbconn architect component');
+    logger.log.info(IDLOG, 'set dbconn architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -93,9 +93,9 @@ function setCompDbConn(cp) {
 function setCompUtil(comp) {
   try {
     compUtil = comp;
-    logger.info(IDLOG, 'set util architect component');
+    logger.log.info(IDLOG, 'set util architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -173,21 +173,21 @@ function setCompUtil(comp) {
           }
 
           var username = req.headers.authorization_user;
-          logger.info(IDLOG, 'user "' + username + '" requested db connection test');
+          logger.log.info(IDLOG, 'user "' + username + '" requested db connection test');
 
           compDbConn.testConnection(req.params.host, req.params.port, req.params.type,
             req.params.user, req.params.pass, req.params.name,
             function(err) {
               if (err) {
-                logger.warn(IDLOG, 'test db connection failed: ' + JSON.stringify(req.params));
+                logger.log.warn(IDLOG, 'test db connection failed: ' + JSON.stringify(req.params));
                 res.send(503);
               } else {
-                logger.info(IDLOG, 'test db connection success: ' + JSON.stringify(req.params));
+                logger.log.info(IDLOG, 'test db connection success: ' + JSON.stringify(req.params));
                 res.send(200);
               }
             });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       }
@@ -200,6 +200,6 @@ function setCompUtil(comp) {
     exports.setCompUtil = setCompUtil;
     exports.setCompDbConn = setCompDbConn;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 })();

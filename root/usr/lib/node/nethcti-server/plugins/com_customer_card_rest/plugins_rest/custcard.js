@@ -56,18 +56,18 @@ var compUtil;
 function setLogger(log) {
   try {
     if (typeof log === 'object' &&
-      typeof log.info === 'function' &&
-      typeof log.warn === 'function' &&
-      typeof log.error === 'function') {
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -80,9 +80,9 @@ function setLogger(log) {
 function setCompCustomerCard(cc) {
   try {
     compCustomerCard = cc;
-    logger.info(IDLOG, 'set customer card architect component');
+    logger.log.info(IDLOG, 'set customer card architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -95,9 +95,9 @@ function setCompCustomerCard(cc) {
 function setCompUtil(comp) {
   try {
     compUtil = comp;
-    logger.info(IDLOG, 'set util architect component');
+    logger.log.info(IDLOG, 'set util architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -228,11 +228,11 @@ function setCompUtil(comp) {
           var num = req.params.number;
 
           if (format !== 'json' && format !== 'html') {
-            logger.warn(IDLOG, 'incorrect required format "' + format + '" to get customer card');
+            logger.log.warn(IDLOG, 'incorrect required format "' + format + '" to get customer card');
             compUtil.net.sendHttp400(IDLOG, res);
           }
 
-          logger.info(IDLOG, 'get all customer cards of the user "' + username +
+          logger.log.info(IDLOG, 'get all customer cards of the user "' + username +
             '" for number "' + num + '" in "' + format + '" format');
 
           compCustomerCard.getAllCustomerCards(username, num, req.params.format, function(err, results) {
@@ -248,20 +248,20 @@ function setCompUtil(comp) {
                 }
                 ccreturned = ccreturned.substring(0, ccreturned.length - 1);
 
-                logger.info(IDLOG, 'send ' + Object.keys(results).length + ' customer cards "' + ccreturned +
+                logger.log.info(IDLOG, 'send ' + Object.keys(results).length + ' customer cards "' + ccreturned +
                   '" in "' + format + '" for user "' + username + '" searching the number ' + num +
                   ' to ' + res.connection.remoteAddress);
                 res.send(200, results);
               }
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -279,24 +279,24 @@ function setCompUtil(comp) {
       list: function(req, res, next) {
         try {
           var username = req.headers.authorization_user;
-          logger.info(IDLOG, 'get customer cards list for user "' + username + '"');
+          logger.log.info(IDLOG, 'get customer cards list for user "' + username + '"');
 
           compCustomerCard.getCustomerCardsList(username, function(err, results) {
             try {
               if (err) {
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
               } else {
-                logger.info(IDLOG, 'send cust card list ' + Object.keys(results).length + ' to user "' +
+                logger.log.info(IDLOG, 'send cust card list ' + Object.keys(results).length + ' to user "' +
                   username + '" to ' + res.connection.remoteAddress);
                 res.send(200, results);
               }
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -326,24 +326,24 @@ function setCompUtil(comp) {
           var dbconnId = req.params.dbconn_id;
           var templateName = req.params.template;
 
-          logger.info(IDLOG, 'get customer card preview for user "' + username + '"');
+          logger.log.info(IDLOG, 'get customer card preview for user "' + username + '"');
           compCustomerCard.getCustomerCardPreview(query, dbconnId, templateName, function(err, results) {
             try {
               if (err) {
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
 
               } else {
-                logger.info(IDLOG, 'send customer card preview to user "' + username + '" to ' + res.connection.remoteAddress);
+                logger.log.info(IDLOG, 'send customer card preview to user "' + username + '" to ' + res.connection.remoteAddress);
                 res.send(200, results);
               }
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       }
@@ -357,6 +357,6 @@ function setCompUtil(comp) {
     exports.setCompCustomerCard = setCompCustomerCard;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 })();

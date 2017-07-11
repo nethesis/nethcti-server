@@ -44,16 +44,16 @@ var logger = console;
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -68,10 +68,10 @@ function setLogger(log) {
 function sendHttp201(parentIdLog, resp) {
   try {
     resp.writeHead(201);
-    logger.info(parentIdLog, 'send HTTP 201 response to ' + getRemoteClientIp(resp));
+    logger.log.info(parentIdLog, 'send HTTP 201 response to ' + getRemoteClientIp(resp));
     resp.end();
   } catch (err) {
-    logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
   }
 }
 
@@ -86,10 +86,10 @@ function sendHttp201(parentIdLog, resp) {
 function sendHttp200(parentIdLog, resp) {
   try {
     resp.writeHead(200);
-    logger.info(parentIdLog, 'send HTTP 200 response to ' + getRemoteClientIp(resp));
+    logger.log.info(parentIdLog, 'send HTTP 200 response to ' + getRemoteClientIp(resp));
     resp.end();
   } catch (err) {
-    logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
   }
 }
 
@@ -104,10 +104,10 @@ function sendHttp200(parentIdLog, resp) {
 function sendHttp400(parentIdLog, resp) {
   try {
     resp.writeHead(400);
-    logger.warn(parentIdLog, 'send HTTP 400 response to ' + getRemoteClientIp(resp));
+    logger.log.warn(parentIdLog, 'send HTTP 400 response to ' + getRemoteClientIp(resp));
     resp.end();
   } catch (err) {
-    logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
   }
 }
 
@@ -122,10 +122,10 @@ function sendHttp400(parentIdLog, resp) {
 function sendHttp404(parentIdLog, resp) {
   try {
     resp.writeHead(404);
-    logger.warn(parentIdLog, 'send HTTP 404 response to ' + getRemoteClientIp(resp));
+    logger.log.warn(parentIdLog, 'send HTTP 404 response to ' + getRemoteClientIp(resp));
     resp.end();
   } catch (err) {
-    logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
   }
 }
 
@@ -148,11 +148,11 @@ function sendHttp401(parentIdLog, resp, err) {
       });
     }
 
-    logger.warn(parentIdLog, 'send HTTP 401 response to ' + getRemoteClientIp(resp) +
+    logger.log.warn(parentIdLog, 'send HTTP 401 response to ' + getRemoteClientIp(resp) +
       ':' + getRemoteClientPort(resp) + (err ? ' with message "' + err + '"' : ''));
     resp.end();
   } catch (err) {
-    logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
   }
 }
 
@@ -170,10 +170,10 @@ function sendHttp401Nonce(parentIdLog, resp, nonce) {
     resp.writeHead(401, {
       'WWW-Authenticate': 'Digest ' + nonce
     });
-    logger.info(IDLOG, 'send HTTP 401 response with nonce to ' + getRemoteClientIp(resp));
+    logger.log.info(IDLOG, 'send HTTP 401 response with nonce to ' + getRemoteClientIp(resp));
     resp.end();
   } catch (err) {
-    logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
   }
 }
 
@@ -188,10 +188,10 @@ function sendHttp401Nonce(parentIdLog, resp, nonce) {
 function sendHttp403(parentIdLog, resp) {
   try {
     resp.writeHead(403);
-    logger.info(parentIdLog, 'send HTTP 403 response to ' + getRemoteClientIp(resp));
+    logger.log.info(parentIdLog, 'send HTTP 403 response to ' + getRemoteClientIp(resp));
     resp.end();
   } catch (err) {
-    logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
   }
 }
 
@@ -212,10 +212,10 @@ function sendHttp500(parentIdLog, resp, err) {
     resp.writeHead(500, {
       error: err
     });
-    logger.error(parentIdLog, 'send HTTP 500 response to ' + getRemoteClientIp(resp));
+    logger.log.error(parentIdLog, 'send HTTP 500 response to ' + getRemoteClientIp(resp));
     resp.end();
   } catch (err) {
-    logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
   }
 }
 
@@ -239,7 +239,7 @@ function getRemoteClientIp(resp) {
       return resp.connection.remoteAddress;
     }
   } catch (err) {
-    logger.error(IDLOG, 'retrieving remote client IP: ' + err.stack);
+    logger.log.error(IDLOG, 'retrieving remote client IP: ' + err.stack);
     return resp.connection.remoteAddress;
   }
 }
@@ -257,7 +257,7 @@ function getRemoteClientPort(resp) {
   try {
     return resp.connection.remotePort;
   } catch (err) {
-    logger.error(IDLOG, 'retrieving remote client port: ' + err.stack);
+    logger.log.error(IDLOG, 'retrieving remote client port: ' + err.stack);
   }
 }
 

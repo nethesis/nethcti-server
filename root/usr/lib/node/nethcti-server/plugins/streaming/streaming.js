@@ -128,18 +128,18 @@ var emitter = new EventEmitter();
 function setLogger(log) {
     try {
         if (typeof log === 'object'
-            && typeof log.info  === 'function'
-            && typeof log.warn  === 'function'
-            && typeof log.error === 'function') {
+            && typeof log.log.info === 'function'
+            && typeof log.log.warn === 'function'
+            && typeof log.log.error === 'function') {
 
             logger = log;
-            logger.info(IDLOG, 'new logger has been set');
+            logger.log.info(IDLOG, 'new logger has been set');
 
         } else {
             throw new Error('wrong logger object');
         }
     } catch (err) {
-        logger.error(IDLOG, err.stack);
+        logger.log.error(IDLOG, err.stack);
     }
 }
 
@@ -152,9 +152,9 @@ function setLogger(log) {
 function setCompAstProxy(ap) {
     try {
         compAstProxy = ap;
-        logger.info(IDLOG, 'set asterisk proxy architect component');
+        logger.log.info(IDLOG, 'set asterisk proxy architect component');
     } catch (err) {
-       logger.error(IDLOG, err.stack);
+       logger.log.error(IDLOG, err.stack);
     }
 }
 
@@ -167,9 +167,9 @@ function setCompAstProxy(ap) {
 function setCompAuthorization(ca) {
   try {
     compAuthorization = ca;
-    logger.info(IDLOG, 'set authorization architect component');
+    logger.log.info(IDLOG, 'set authorization architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -191,11 +191,11 @@ function config(path) {
 
         // check file presence
         if (!fs.existsSync(path)) {
-            logger.warn(IDLOG, path + ' doesn\'t exist');
+            logger.log.warn(IDLOG, path + ' doesn\'t exist');
             return;
         }
 
-        logger.info(IDLOG, 'configure streaming with ' + path);
+        logger.log.info(IDLOG, 'configure streaming with ' + path);
 
         // read configuration file
         var json = require(path);
@@ -220,11 +220,11 @@ function config(path) {
             streamings[id] = newStreaming;
         }
 
-        logger.info(IDLOG, 'configured streaming sources: ' + Object.keys(streamings));
-        logger.info(IDLOG, 'streaming configuration by file ' + path + ' ended');
+        logger.log.info(IDLOG, 'configured streaming sources: ' + Object.keys(streamings));
+        logger.log.info(IDLOG, 'streaming configuration by file ' + path + ' ended');
 
     } catch (err) {
-       logger.error(IDLOG, err.stack);
+       logger.log.error(IDLOG, err.stack);
     }
 }
 
@@ -235,7 +235,7 @@ function config(path) {
  */
 function start() {
   try {
-    logger.info(IDLOG, 'start sampling video sources.');
+    logger.log.info(IDLOG, 'start sampling video sources.');
     var loopStep = 0;
     var baseTime = 500;
     setInterval(function() {
@@ -257,7 +257,7 @@ function start() {
     }, baseTime);
   } catch (err) {
     console.error(err);
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -287,7 +287,7 @@ function getAllStreamingSources(username, cb) {
 
     cb(null, results);
   } catch (err) {
-      logger.error(IDLOG, err.stack);
+      logger.log.error(IDLOG, err.stack);
       return {};
   }
 }
@@ -312,7 +312,7 @@ function open(streamId, callerid, fromExten, cb) {
 
         // check if the streaming source exists
         if (typeof streamings[streamId] !== 'object') {
-            logger.warn(IDLOG, 'opening the non existent streaming source "' + streamId + '"');
+            logger.log.warn(IDLOG, 'opening the non existent streaming source "' + streamId + '"');
             cb('error: streaming source "' + streamId + '" does not exist');
             return;
         }
@@ -324,10 +324,10 @@ function open(streamId, callerid, fromExten, cb) {
 
         // check the extension and the open command
         if (typeof exten !== 'string' || exten === '') {
-            logger.warn(IDLOG, 'opening streaming source "' + streamId + '" with no extension');
+            logger.log.warn(IDLOG, 'opening streaming source "' + streamId + '" with no extension');
         }
         if (typeof opencmd !== 'string' || opencmd === '') {
-            logger.warn(IDLOG, 'opening streaming source "' + streamId + '" with no open command');
+            logger.log.warn(IDLOG, 'opening streaming source "' + streamId + '" with no open command');
         }
 
         // sends the DTMF tones to the extension device associated
@@ -335,17 +335,17 @@ function open(streamId, callerid, fromExten, cb) {
         compAstProxy.sendDTMFSequence(exten, opencmd, callerid, fromExten, function (err) {
 
             if (err) {
-                logger.error(IDLOG, 'sending DTMF sequence "' + opencmd + '" to extension ' + exten);
+                logger.log.error(IDLOG, 'sending DTMF sequence "' + opencmd + '" to extension ' + exten);
                 cb(err);
 
             } else {
-                logger.info(IDLOG, 'sending DTMF sequence "' + opencmd + '" to extension ' + exten + ' has been successful');
+                logger.log.info(IDLOG, 'sending DTMF sequence "' + opencmd + '" to extension ' + exten + ' has been successful');
                 cb(null);
             }
         });
 
     } catch (err) {
-        logger.error(IDLOG, err.stack);
+        logger.log.error(IDLOG, err.stack);
         cb(err);
     }
 }
@@ -370,7 +370,7 @@ function subscribeSource(username, streamId, cb) {
 
     cb(null);
   } catch (err) {
-      logger.error(IDLOG, err.stack);
+      logger.log.error(IDLOG, err.stack);
       return {};
   }
 }
@@ -395,7 +395,7 @@ function unsubscribeSource(username, streamId, cb) {
 
     cb(null);
   } catch (err) {
-      logger.error(IDLOG, err.stack);
+      logger.log.error(IDLOG, err.stack);
       return {};
   }
 }
@@ -413,7 +413,7 @@ function on(type, cb) {
   try {
     return emitter.on(type, cb);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -428,7 +428,7 @@ function emit(ev, data) {
   try {
     emitter.emit(ev, data);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 

@@ -131,16 +131,16 @@ var userSettings = {};
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -158,7 +158,7 @@ function setCompDbconn(comp) {
     }
     compDbconn = comp;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -176,7 +176,7 @@ function setCompUser(comp) {
     }
     compUser = comp;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -194,7 +194,7 @@ function setCompComNethctiWs(comp) {
     }
     compComNethctiWs = comp;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -212,7 +212,7 @@ function setCompAstProxy(comp) {
     }
     compAstProxy = comp;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -238,14 +238,14 @@ function configUser(path) {
         compDbconn.getAllUsersDefaultExtension(function(err, results) {
           try {
             if (err) {
-              logger.error(IDLOG, 'getting all users default extension from db: ' + err);
+              logger.log.error(IDLOG, 'getting all users default extension from db: ' + err);
               callbackWaterfall(err);
 
             } else {
               callbackWaterfall(null, results);
             }
           } catch (error) {
-            logger.error(IDLOG, error.stack);
+            logger.log.error(IDLOG, error.stack);
             callbackWaterfall(error);
           }
         });
@@ -255,7 +255,7 @@ function configUser(path) {
       // fixes it into the database with an associated extension of the user
       function(arrDbAllUsersDefaultExtension, callbackWaterfall) {
         try {
-          logger.info(IDLOG, 'consistency checking of db default extensions');
+          logger.log.info(IDLOG, 'consistency checking of db default extensions');
           var i, username, defaultExten, replaceValue;
 
           // contains default extensions to be fixed into the database
@@ -284,11 +284,11 @@ function configUser(path) {
           }
 
           if (arrUsersToBeFixed.length === 0) {
-            logger.info(IDLOG, 'no db default extension to fix');
+            logger.log.info(IDLOG, 'no db default extension to fix');
             callbackWaterfall(null);
 
           } else {
-            logger.info(IDLOG, 'found #' + arrUsersToBeFixed.length + ' db default extension to be fixed');
+            logger.log.info(IDLOG, 'found #' + arrUsersToBeFixed.length + ' db default extension to be fixed');
 
             // replace value into the database
             async.eachSeries(arrUsersToBeFixed, function(obj, seriesCb) {
@@ -299,14 +299,14 @@ function configUser(path) {
               }, function(err) {
                 try {
                   if (err) {
-                    logger.error(IDLOG, 'fixing db default extension "' + obj.replaceValue + '" for user "' + obj.username + '"');
+                    logger.log.error(IDLOG, 'fixing db default extension "' + obj.replaceValue + '" for user "' + obj.username + '"');
                     seriesCb(err);
                   } else {
-                    logger.info(IDLOG, 'fixed db default extension "' + obj.replaceValue + '" for user "' + obj.username + '"');
+                    logger.log.info(IDLOG, 'fixed db default extension "' + obj.replaceValue + '" for user "' + obj.username + '"');
                     seriesCb(null);
                   }
                 } catch (error) {
-                  logger.error(IDLOG, error.stack);
+                  logger.log.error(IDLOG, error.stack);
                   seriesCb(error);
                 }
               });
@@ -314,7 +314,7 @@ function configUser(path) {
             }, function(err) {
 
               if (err) {
-                logger.error(IDLOG, 'fixing db default extension: ' + err.toString());
+                logger.log.error(IDLOG, 'fixing db default extension: ' + err.toString());
                 callbackWaterfall(err);
               } else {
                 callbackWaterfall(null);
@@ -323,7 +323,7 @@ function configUser(path) {
           }
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           callbackWaterfall(err);
         }
       }
@@ -331,14 +331,14 @@ function configUser(path) {
     ], function(err) {
 
       if (err) {
-        logger.error(IDLOG, err);
+        logger.log.error(IDLOG, err);
       }
-      logger.info(IDLOG, 'checking database default extensions completed');
+      logger.log.info(IDLOG, 'checking database default extensions completed');
       loadAllUsersSettings();
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -360,19 +360,19 @@ function loadAllUsersSettings() {
         compDbconn.getUserSettings(username, function(err, results) {
           try {
             if (err) {
-              logger.error(IDLOG, 'getting settings of user "' + username + '" from db: ' + err);
+              logger.log.error(IDLOG, 'getting settings of user "' + username + '" from db: ' + err);
             } else {
               userSettings[username] = results;
             }
           } catch (error) {
-            logger.error(IDLOG, error.stack);
+            logger.log.error(IDLOG, error.stack);
             cb(error);
           }
         });
       })(users[i]);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -388,17 +388,17 @@ function retrieveUsersSettings(cb) {
     compDbconn.getAllUsersSettings(function(err, results) {
       try {
         if (err) {
-          logger.error(IDLOG, 'getting settings of all users from db: ' + err);
+          logger.log.error(IDLOG, 'getting settings of all users from db: ' + err);
         } else {
           cb(results);
         }
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -418,11 +418,11 @@ function configChat(path) {
 
     // check file presence
     if (!fs.existsSync(path)) {
-      logger.warn(IDLOG, path + ' doesn\'t exist');
+      logger.log.warn(IDLOG, path + ' doesn\'t exist');
       return;
     }
 
-    logger.info(IDLOG, 'configure server chat with ' + path);
+    logger.log.info(IDLOG, 'configure server chat with ' + path);
 
     // read configuration file
     var json = require(path);
@@ -430,16 +430,16 @@ function configChat(path) {
     // check JSON file
     if (typeof json !== 'object' || typeof json.url !== 'string' || typeof json.domain !== 'string') {
 
-      logger.warn(IDLOG, 'wrong JSON file ' + path);
+      logger.log.warn(IDLOG, 'wrong JSON file ' + path);
       return;
     }
 
     chatServer.url = json.url;
     chatServer.domain = json.domain;
-    logger.info(IDLOG, 'server chat configuration by file ' + path + ' ended');
+    logger.log.info(IDLOG, 'server chat configuration by file ' + path + ' ended');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -458,7 +458,7 @@ function config(path) {
 
     // check file presence
     if (!fs.existsSync(path)) {
-      logger.warn(IDLOG, path + ' does not exist');
+      logger.log.warn(IDLOG, path + ' does not exist');
       return;
     }
 
@@ -467,7 +467,7 @@ function config(path) {
 
     // check JSON file
     if (typeof json !== 'object' || typeof json.hostname !== 'string') {
-      logger.warn(IDLOG, 'wrong ' + path + ': no "hostname" key');
+      logger.log.warn(IDLOG, 'wrong ' + path + ': no "hostname" key');
       return;
     }
     serverHostname = json.hostname;
@@ -475,10 +475,10 @@ function config(path) {
     // set the listener for the websocket communication module
     // setComNethctiWsListeners();
 
-    logger.info(IDLOG, 'configuration done by ' + path);
+    logger.log.info(IDLOG, 'configuration done by ' + path);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -501,7 +501,7 @@ function setComNethctiWsListeners() {
     compComNethctiWs.on(compComNethctiWs.EVT_ALL_WS_CLIENT_DISCONNECTION, checkAutoDndOnLogout);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -520,7 +520,7 @@ function checkQueueAutoLogin(username) {
       throw new Error('wrong username "' + username + '"');
     }
 
-    logger.info(IDLOG, 'received "new logged in user by ws" event for username "' + username + '"');
+    logger.log.info(IDLOG, 'received "new logged in user by ws" event for username "' + username + '"');
 
     // get the prefence of the user: automatic login into dynamic queues when login to cti
     var queueAutoLoginEnabled = userSettings[username][USER_CONFIG_KEYS.queue_auto_login];
@@ -542,16 +542,16 @@ function checkQueueAutoLogin(username) {
             !compAstProxy.isDynMemberLoggedInQueue(e, q)) { // check if the member is logged out from queue
 
             // login dynamic queue member into the relative queue
-            logger.info(IDLOG, 'login queue member "' + e + '" into the queue "' + q + '" due to automatic login setting');
+            logger.log.info(IDLOG, 'login queue member "' + e + '" into the queue "' + q + '" due to automatic login setting');
             compAstProxy.queueMemberAdd('extension', e, q, undefined, undefined, function(err, resp) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, err);
+                  logger.log.warn(IDLOG, err);
                 } else {
-                  logger.info(IDLOG, 'dynamic extension "' + e + '" has been added to queue "' + q + '" due to "queue auto login" setting of user "' + username + '"');
+                  logger.log.info(IDLOG, 'dynamic extension "' + e + '" has been added to queue "' + q + '" due to "queue auto login" setting of user "' + username + '"');
                 }
               } catch (err1) {
-                logger.error(IDLOG, err1.stack);
+                logger.log.error(IDLOG, err1.stack);
               }
             });
           }
@@ -559,7 +559,7 @@ function checkQueueAutoLogin(username) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -578,7 +578,7 @@ function checkAutoDndOffLogin(username) {
       throw new Error('wrong username "' + username + '"');
     }
 
-    logger.info(IDLOG, 'received "new logged in user by ws" event for username "' + username + '"');
+    logger.log.info(IDLOG, 'received "new logged in user by ws" event for username "' + username + '"');
 
     // get the prefence of the user: automatic dnd off when login to cti
     var autoDndOffLoginEnabled = userSettings[username][USER_CONFIG_KEYS.auto_dndoff_login];
@@ -588,22 +588,22 @@ function checkAutoDndOffLogin(username) {
       var e;
       for (e in extens) {
 
-        logger.info(IDLOG, 'set DND OFF for exten "' + e + '" due to automatic DND OFF on login setting');
+        logger.log.info(IDLOG, 'set DND OFF for exten "' + e + '" due to automatic DND OFF on login setting');
         compAstProxy.setDnd(e, false, function(err, resp) {
           try {
             if (err) {
-              logger.warn(IDLOG, err);
+              logger.log.warn(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'DND OFF has been set for exten "' + e + '" due to "auto dnd off login" setting of user "' + username + '"');
+              logger.log.info(IDLOG, 'DND OFF has been set for exten "' + e + '" due to "auto dnd off login" setting of user "' + username + '"');
             }
           } catch (err1) {
-            logger.error(IDLOG, err1.stack);
+            logger.log.error(IDLOG, err1.stack);
           }
         });
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -622,7 +622,7 @@ function checkQueueAutoLogout(username) {
       throw new Error('wrong username "' + username + '"');
     }
 
-    logger.info(IDLOG, 'received "new websocket disconnection" event for username "' + username + '"');
+    logger.log.info(IDLOG, 'received "new websocket disconnection" event for username "' + username + '"');
 
     // get the prefence of the user: automatic logout from dynamic queues when logout from cti
     var queueAutoLogoutEnabled = userSettings[username][USER_CONFIG_KEYS.queue_auto_logout];
@@ -644,16 +644,16 @@ function checkQueueAutoLogout(username) {
             compAstProxy.isDynMemberLoggedInQueue(e, q)) { // check if the member is logged into the queue
 
             // remove dynamic queue member from the relative queue
-            logger.info(IDLOG, 'remove queue member "' + e + '" from queue "' + q + '" due to automatic logout setting');
+            logger.log.info(IDLOG, 'remove queue member "' + e + '" from queue "' + q + '" due to automatic logout setting');
             compAstProxy.queueMemberRemove('extension', e, q, function(err, resp) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, err);
+                  logger.log.warn(IDLOG, err);
                 } else {
-                  logger.info(IDLOG, 'removed dynamic extension "' + e + '" from queue "' + q + '" due to "queue auto logout" setting of user "' + username + '"');
+                  logger.log.info(IDLOG, 'removed dynamic extension "' + e + '" from queue "' + q + '" due to "queue auto logout" setting of user "' + username + '"');
                 }
               } catch (err1) {
-                logger.error(IDLOG, err1.stack);
+                logger.log.error(IDLOG, err1.stack);
               }
             });
           }
@@ -661,7 +661,7 @@ function checkQueueAutoLogout(username) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -680,7 +680,7 @@ function checkAutoDndOnLogout(username) {
       throw new Error('wrong username "' + username + '"');
     }
 
-    logger.info(IDLOG, 'received "new websocket disconnection" event for username "' + username + '"');
+    logger.log.info(IDLOG, 'received "new websocket disconnection" event for username "' + username + '"');
 
     // get the prefence of the user: automatic dnd on when logout from cti
     var autoDndOnLogoutEnabled = userSettings[username][USER_CONFIG_KEYS.auto_dndon_logout];
@@ -690,22 +690,22 @@ function checkAutoDndOnLogout(username) {
       var e;
       for (e in extens) {
 
-        logger.info(IDLOG, 'set DND ON for exten "' + e + '" due to automatic DND ON on logout setting');
+        logger.log.info(IDLOG, 'set DND ON for exten "' + e + '" due to automatic DND ON on logout setting');
         compAstProxy.setDnd(e, true, function(err, resp) {
           try {
             if (err) {
-              logger.warn(IDLOG, err);
+              logger.log.warn(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'DND ON has been set for exten "' + e + '" due to "auto dnd on logout" setting of user "' + username + '"');
+              logger.log.info(IDLOG, 'DND ON has been set for exten "' + e + '" due to "auto dnd on logout" setting of user "' + username + '"');
             }
           } catch (err1) {
-            logger.error(IDLOG, err1.stack);
+            logger.log.error(IDLOG, err1.stack);
           }
         });
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -719,7 +719,7 @@ function getServerHostname() {
   try {
     return serverHostname;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -743,26 +743,26 @@ function configPhoneUrls(path) {
 
     // check file presence
     if (!fs.existsSync(path)) {
-      logger.warn(IDLOG, path + ' does not exist');
+      logger.log.warn(IDLOG, path + ' does not exist');
       return;
     }
 
-    logger.info(IDLOG, 'configure phone urls reading ' + path);
+    logger.log.info(IDLOG, 'configure phone urls reading ' + path);
 
     // read configuration file
     var json = require(path);
 
     // check JSON file
     if (typeof json !== 'object') {
-      logger.warn(IDLOG, 'wrong JSON file ' + path);
+      logger.log.warn(IDLOG, 'wrong JSON file ' + path);
       return;
     }
 
     phoneUrls = json;
-    logger.info(IDLOG, 'phone urls configuration by file ' + path + ' ended');
+    logger.log.info(IDLOG, 'phone urls configuration by file ' + path + ' ended');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -793,7 +793,7 @@ function getCallUrlFromAgent(agent) {
     return '';
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return '';
   }
 }
@@ -825,7 +825,7 @@ function getDtmfUrlFromAgent(agent) {
     return '';
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return '';
   }
 }
@@ -857,7 +857,7 @@ function getHoldUnholdUrlFromAgent(agent) {
     return '';
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return '';
   }
 }
@@ -888,7 +888,7 @@ function phoneSupportDtmfHttpApi(agent) {
     return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -919,7 +919,7 @@ function phoneSupportHttpApi(agent) {
     return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -951,7 +951,7 @@ function getAnswerUrlFromAgent(agent) {
     return '';
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return '';
   }
 }
@@ -966,7 +966,7 @@ function getChatConf() {
   try {
     return chatServer;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -993,7 +993,7 @@ function setUserNotifySetting(data, cb) {
     compDbconn.saveUserNotifySetting(data, function(err) {
       try {
         if (err) {
-          logger.error(IDLOG, 'saving setting "' + data.method + '" notification for "' + data.type + '" to "' + data.when + '" for user "' + data.username + '"');
+          logger.log.error(IDLOG, 'saving setting "' + data.method + '" notification for "' + data.type + '" to "' + data.when + '" for user "' + data.username + '"');
           cb(err);
         } else {
 
@@ -1002,12 +1002,12 @@ function setUserNotifySetting(data, cb) {
           cb(null);
         }
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.stack);
   }
 }
@@ -1029,7 +1029,7 @@ function getUserSettings(user) {
     return userSettings[user] || {};
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return {};
   }
 }
@@ -1051,7 +1051,7 @@ function getUserEndpointsJSON(userid) {
     return compUser.getEndpointsJSON(userid);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1065,7 +1065,7 @@ function getAllUserEndpointsJSON() {
   try {
     return compUser.getAllUsersEndpointsJSON();
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1079,7 +1079,7 @@ function getTotNumUsers() {
   try {
     return Object.keys(compUser.getAllUsersEndpointsJSON()).length;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return -1;
   }
 }
@@ -1109,7 +1109,7 @@ function setDefaultUserExtensionConf(username, exten, cb) {
     }, function(err) {
       try {
         if (err) {
-          logger.error(IDLOG, 'saving setting "default extension: ' + exten + '" for user "' + username + '"');
+          logger.log.error(IDLOG, 'saving setting "default extension: ' + exten + '" for user "' + username + '"');
           cb(err);
         } else {
           // update the configuration in mem
@@ -1117,12 +1117,12 @@ function setDefaultUserExtensionConf(username, exten, cb) {
           cb(null);
         }
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.stack);
   }
 }
@@ -1143,7 +1143,7 @@ function getDefaultUserExtensionConf(username) {
     return userSettings[username][USER_CONFIG_KEYS.default_extension];
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return '';
   }
 }
@@ -1171,7 +1171,7 @@ function setQueueAutoLogoutConf(username, enable, cb) {
     }, function(err) {
       try {
         if (err) {
-          logger.error(IDLOG, 'saving setting "auto queue logout: ' + enable + '" for user "' + username + '"');
+          logger.log.error(IDLOG, 'saving setting "auto queue logout: ' + enable + '" for user "' + username + '"');
           cb(err);
         } else {
           // update the configuration in mem
@@ -1179,12 +1179,12 @@ function setQueueAutoLogoutConf(username, enable, cb) {
           cb(null);
         }
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.stack);
   }
 }
@@ -1212,7 +1212,7 @@ function setAutoDndOffLoginConf(username, enable, cb) {
     }, function(err) {
       try {
         if (err) {
-          logger.error(IDLOG, 'saving setting "auto DND OFF login": ' + enable + '" for user "' + username + '"');
+          logger.log.error(IDLOG, 'saving setting "auto DND OFF login": ' + enable + '" for user "' + username + '"');
           cb(err);
         } else {
           // update the configuration in mem
@@ -1220,12 +1220,12 @@ function setAutoDndOffLoginConf(username, enable, cb) {
           cb(null);
         }
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.stack);
   }
 }
@@ -1253,7 +1253,7 @@ function setAutoDndOnLogoutConf(username, enable, cb) {
     }, function(err) {
       try {
         if (err) {
-          logger.error(IDLOG, 'saving setting "auto DND ON logout": ' + enable + '" for user "' + username + '"');
+          logger.log.error(IDLOG, 'saving setting "auto DND ON logout": ' + enable + '" for user "' + username + '"');
           cb(err);
         } else {
           // update the configuration in mem
@@ -1261,12 +1261,12 @@ function setAutoDndOnLogoutConf(username, enable, cb) {
           cb(null);
         }
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.stack);
   }
 }
@@ -1288,7 +1288,7 @@ function getQueueAutoLogoutConf(username) {
     return userSettings[username][USER_CONFIG_KEYS.queue_auto_logout];
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -1310,7 +1310,7 @@ function getAutoDndOnLogoutConf(username) {
     return userSettings[username][USER_CONFIG_KEYS.auto_dndon_logout];
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -1333,7 +1333,7 @@ function getAutoDndOffLoginConf(username) {
     return userSettings[username][USER_CONFIG_KEYS.auto_dndoff_login];
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -1361,7 +1361,7 @@ function setQueueAutoLoginConf(username, enable, cb) {
     }, function(err) {
       try {
         if (err) {
-          logger.error(IDLOG, 'saving setting "auto queue login: ' + enable + '" for user "' + username + '"');
+          logger.log.error(IDLOG, 'saving setting "auto queue login: ' + enable + '" for user "' + username + '"');
           cb(err);
         } else {
           // update the configuration in mem
@@ -1369,12 +1369,12 @@ function setQueueAutoLoginConf(username, enable, cb) {
           cb(null);
         }
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.stack);
   }
 }
@@ -1396,7 +1396,7 @@ function getQueueAutoLoginConf(username) {
     return userSettings[username][USER_CONFIG_KEYS.queue_auto_login];
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -1421,7 +1421,7 @@ function verifySendVoicemailNotification(username, deliveryMethod) {
     // check the configurations of the user
     if (typeof userSettings !== 'object' || typeof userSettings[username] !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications] !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail[deliveryMethod] !== 'object') {
 
-      logger.warn(IDLOG, 'checking if send voicemail notification by "' + deliveryMethod + '" for user "' + username + '": ' +
+      logger.log.warn(IDLOG, 'checking if send voicemail notification by "' + deliveryMethod + '" for user "' + username + '": ' +
         'wrong notification configurations');
       return false;
     }
@@ -1439,12 +1439,12 @@ function verifySendVoicemailNotification(username, deliveryMethod) {
         return true;
       }
     } else {
-      logger.warn(IDLOG, 'checking if send voicemail notification by "' + deliveryMethod + '" for user "' + username + '": ' +
+      logger.log.warn(IDLOG, 'checking if send voicemail notification by "' + deliveryMethod + '" for user "' + username + '": ' +
         'wrong "when" value "' + when + '"');
       return false;
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -1468,7 +1468,7 @@ function verifySendPostitNotification(username, deliveryMethod) {
     // check the configurations of the user
     if (typeof userSettings !== 'object' || typeof userSettings[username] !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications] !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit[deliveryMethod] !== 'object') {
 
-      logger.warn(IDLOG, 'checking if send new post-it notification by "' + deliveryMethod + '" for user "' + username + '": ' +
+      logger.log.warn(IDLOG, 'checking if send new post-it notification by "' + deliveryMethod + '" for user "' + username + '": ' +
         'wrong notification configurations');
       return false;
     }
@@ -1486,12 +1486,12 @@ function verifySendPostitNotification(username, deliveryMethod) {
         return true;
       }
     } else {
-      logger.warn(IDLOG, 'checking if send new post-it notification by "' + deliveryMethod + '" for user "' + username + '": ' +
+      logger.log.warn(IDLOG, 'checking if send new post-it notification by "' + deliveryMethod + '" for user "' + username + '": ' +
         'wrong "when" value "' + when + '"');
       return false;
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -1514,7 +1514,7 @@ function verifySendVoicemailNotificationByEmail(username) {
     return verifySendVoicemailNotification(username, 'email');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -1537,7 +1537,7 @@ function verifySendPostitNotificationByEmail(username) {
     return verifySendPostitNotification(username, 'email');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -1560,7 +1560,7 @@ function verifySendVoicemailNotificationBySms(username) {
     return verifySendVoicemailNotification(username, 'sms');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -1583,7 +1583,7 @@ function verifySendPostitNotificationBySms(username) {
     return verifySendPostitNotification(username, 'sms');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -1605,13 +1605,13 @@ function getVoicemailNotificationEmailTo(username) {
     // check the configurations of the user
     if (typeof userSettings !== 'object' || typeof userSettings[username] !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications] !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail.email !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail.email.to !== 'string') {
 
-      logger.warn(IDLOG, 'getting email destination for voicemail notification of user "' + username + '": wrong configurations');
+      logger.log.warn(IDLOG, 'getting email destination for voicemail notification of user "' + username + '": wrong configurations');
       return '';
     }
     return userSettings[username][USER_CONFIG_KEYS.notifications].voicemail.email.to;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return '';
   }
 }
@@ -1633,13 +1633,13 @@ function getPostitNotificationEmailTo(username) {
     // check the configurations of the user
     if (typeof userSettings !== 'object' || typeof userSettings[username] !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications] !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit.email !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit.email.to !== 'string') {
 
-      logger.warn(IDLOG, 'getting email destination for new post-it notification of user "' + username + '": wrong configurations');
+      logger.log.warn(IDLOG, 'getting email destination for new post-it notification of user "' + username + '": wrong configurations');
       return '';
     }
     return userSettings[username][USER_CONFIG_KEYS.notifications].postit.email.to;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return '';
   }
 }
@@ -1661,13 +1661,13 @@ function getVoicemailNotificationSmsTo(username) {
     // check the configurations of the user
     if (typeof userSettings !== 'object' || typeof userSettings[username] !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications] !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail.sms !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail.sms.to !== 'string') {
 
-      logger.warn(IDLOG, 'getting sms destination number for voicemail notification of user "' + username + '": wrong configurations');
+      logger.log.warn(IDLOG, 'getting sms destination number for voicemail notification of user "' + username + '": wrong configurations');
       return '';
     }
     return userSettings[username][USER_CONFIG_KEYS.notifications].voicemail.sms.to;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return '';
   }
 }
@@ -1689,13 +1689,13 @@ function getPostitNotificationSmsTo(username) {
     // check the configurations of the user
     if (typeof userSettings !== 'object' || typeof userSettings[username] !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications] !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit.sms !== 'object' || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit.sms.to !== 'string') {
 
-      logger.warn(IDLOG, 'getting sms destination number for post-it notification of user "' + username + '": wrong configurations');
+      logger.log.warn(IDLOG, 'getting sms destination number for post-it notification of user "' + username + '": wrong configurations');
       return '';
     }
     return userSettings[username][USER_CONFIG_KEYS.notifications].postit.sms.to;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return '';
   }
 }

@@ -68,10 +68,10 @@ var address = 'localhost';
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
       // set the logger for all REST plugins
       setAllRestPluginsLogger(log);
@@ -80,7 +80,7 @@ function setLogger(log) {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -99,11 +99,11 @@ function setAllRestPluginsLogger(log) {
 
       if (typeof plugins[key].setLogger === 'function') {
         plugins[key].setLogger(log);
-        logger.info(IDLOG, 'new logger has been set for rest plugin ' + key);
+        logger.log.info(IDLOG, 'new logger has been set for rest plugin ' + key);
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -130,7 +130,7 @@ function setCompStaticHttp(comp) {
     }
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -146,13 +146,13 @@ function execute(req, res, next) {
     var p = tmp[1];
     var name = tmp[2];
 
-    logger.info(IDLOG, 'execute: ' + p + '.' + name);
+    logger.log.info(IDLOG, 'execute: ' + p + '.' + name);
     plugins[p][name].apply(plugins[p], [req, res, next]);
 
     return next();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -174,7 +174,7 @@ function setCompUser(comp) {
     setAllRestPluginsCompUser(comp);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -192,11 +192,11 @@ function setAllRestPluginsCompUser(comp) {
 
       if (typeof plugins[key].setCompUser === 'function') {
         plugins[key].setCompUser(comp);
-        logger.info(IDLOG, 'user component has been set for rest plugin ' + key);
+        logger.log.info(IDLOG, 'user component has been set for rest plugin ' + key);
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -222,7 +222,7 @@ function setCompVoicemail(compVoicemail) {
     }
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -243,7 +243,7 @@ function setCompAuthorization(comp) {
     setAllRestPluginsAuthorization(comp);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -261,11 +261,11 @@ function setAllRestPluginsAuthorization(comp) {
 
       if (typeof plugins[key].setCompAuthorization === 'function') {
         plugins[key].setCompAuthorization(comp);
-        logger.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
+        logger.log.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -297,7 +297,7 @@ function config(path) {
     port = json.voicemail.port;
 
   } else {
-    logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
+    logger.log.warn(IDLOG, 'no port has been specified in JSON file ' + path);
   }
 
   // initialize the address of the REST server
@@ -305,9 +305,9 @@ function config(path) {
     address = json.voicemail.address;
 
   } else {
-    logger.warn(IDLOG, 'no address has been specified in JSON file ' + path);
+    logger.log.warn(IDLOG, 'no address has been specified in JSON file ' + path);
   }
-  logger.info(IDLOG, 'configuration by file ' + path + ' ended');
+  logger.log.info(IDLOG, 'configuration by file ' + path + ' ended');
 }
 
 /**
@@ -348,26 +348,26 @@ function start() {
 
       // add routing functions
       for (k in get) {
-        logger.info(IDLOG, 'Binding GET: /' + root + '/' + get[k]);
+        logger.log.info(IDLOG, 'Binding GET: /' + root + '/' + get[k]);
         server.get('/' + root + '/' + get[k], execute);
       }
       for (k in post) {
-        logger.info(IDLOG, 'Binding POST: /' + root + '/' + post[k]);
+        logger.log.info(IDLOG, 'Binding POST: /' + root + '/' + post[k]);
         server.post('/' + root + '/' + post[k], execute);
       }
       for (k in del) {
-        logger.info(IDLOG, 'Binding DEL: /' + root + '/' + del[k]);
+        logger.log.info(IDLOG, 'Binding DEL: /' + root + '/' + del[k]);
         server.del('/' + root + '/' + del[k], execute);
       }
     }
 
     // start the REST server
     server.listen(port, address, function() {
-      logger.info(IDLOG, server.name + ' listening at ' + server.url);
+      logger.log.info(IDLOG, server.name + ' listening at ' + server.url);
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -393,7 +393,7 @@ function setCompUtil(comp) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 

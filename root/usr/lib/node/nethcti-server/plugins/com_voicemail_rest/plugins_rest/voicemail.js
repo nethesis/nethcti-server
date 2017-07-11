@@ -82,16 +82,16 @@ var compStaticHttp;
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -104,9 +104,9 @@ function setLogger(log) {
 function setCompVoicemail(cp) {
   try {
     compVoicemail = cp;
-    logger.info(IDLOG, 'set voicemail architect component');
+    logger.log.info(IDLOG, 'set voicemail architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -119,9 +119,9 @@ function setCompVoicemail(cp) {
 function setCompUtil(comp) {
   try {
     compUtil = comp;
-    logger.info(IDLOG, 'set util architect component');
+    logger.log.info(IDLOG, 'set util architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -140,10 +140,10 @@ function setCompUser(comp) {
     }
 
     compUser = comp;
-    logger.info(IDLOG, 'user component has been set');
+    logger.log.info(IDLOG, 'user component has been set');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -156,9 +156,9 @@ function setCompUser(comp) {
 function setCompStaticHttp(comp) {
   try {
     compStaticHttp = comp;
-    logger.info(IDLOG, 'set http static component');
+    logger.log.info(IDLOG, 'set http static component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -177,10 +177,10 @@ function setCompAuthorization(comp) {
     }
 
     compAuthorization = comp;
-    logger.info(IDLOG, 'authorization component has been set');
+    logger.log.info(IDLOG, 'authorization component has been set');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -405,21 +405,21 @@ function setCompAuthorization(comp) {
           compVoicemail.getVoiceMessagesByUser(username, type, offset, limit, function(err, results) {
             try {
               if (err) {
-                logger.error(IDLOG, 'getting all voice messages of user "' + username + '"');
+                logger.log.error(IDLOG, 'getting all voice messages of user "' + username + '"');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
 
-              logger.info(IDLOG, 'send the number of voice messages of all voicemailes to user ' + username);
+              logger.log.info(IDLOG, 'send the number of voice messages of all voicemailes to user ' + username);
               res.send(200, results);
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -441,7 +441,7 @@ function setCompAuthorization(comp) {
 
           // check if the user has the "extension" authorization
           if (compAuthorization.authorizePresencePanelUser(username) !== true) {
-            logger.warn(IDLOG, 'requesting new voice message counter of all voicemails: authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'requesting new voice message counter of all voicemails: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
@@ -449,21 +449,21 @@ function setCompAuthorization(comp) {
           compVoicemail.getAllNewVoiceMessageCount(function(err1, results) {
             try {
               if (err1) {
-                logger.error(IDLOG, 'getting the number of new voice messages of all voicemailes for user "' + username + '"');
+                logger.log.error(IDLOG, 'getting the number of new voice messages of all voicemailes for user "' + username + '"');
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                 return;
               }
 
-              logger.info(IDLOG, 'send the number of new voice messages of all voicemailes to user "' + username + '"');
+              logger.log.info(IDLOG, 'send the number of new voice messages of all voicemailes to user "' + username + '"');
               res.send(200, results);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -488,14 +488,14 @@ function setCompAuthorization(comp) {
           compVoicemail.getVmIdFromDbId(req.params.id, function(err1, vmid) {
             try {
               if (err1) {
-                logger.error(IDLOG, 'listening voice message: getting voicemail id (mailbox) from db voice message id "' + req.params.id + '"');
+                logger.log.error(IDLOG, 'listening voice message: getting voicemail id (mailbox) from db voice message id "' + req.params.id + '"');
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                 return;
               }
 
               // check the authorization to listen the voice message checking if the voicemail endpoint is owned by the user
               if (compUser.hasVoicemailEndpoint(username, vmid) !== true) {
-                logger.warn(IDLOG, 'user "' + username + '" tried to listen voice message with db id "' + req.params.id + '" of the voicemail "' + vmid + '" not owned by him');
+                logger.log.warn(IDLOG, 'user "' + username + '" tried to listen voice message with db id "' + req.params.id + '" of the voicemail "' + vmid + '" not owned by him');
                 compUtil.net.sendHttp403(IDLOG, res);
                 return;
               }
@@ -504,28 +504,28 @@ function setCompAuthorization(comp) {
               compVoicemail.listenVoiceMessage(req.params.id, function(err2, result) {
                 try {
                   if (err2) {
-                    logger.error(IDLOG, 'listening voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" by the user "' + username + '"');
+                    logger.log.error(IDLOG, 'listening voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" by the user "' + username + '"');
                     compUtil.net.sendHttp500(IDLOG, res, err2.toString());
                     return;
                   }
 
-                  logger.info(IDLOG, 'listen voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" successfully by the user "' + username + '"');
+                  logger.log.info(IDLOG, 'listen voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" successfully by the user "' + username + '"');
                   res.send(200, result);
 
                 } catch (err3) {
-                  logger.error(IDLOG, err3.stack);
+                  logger.log.error(IDLOG, err3.stack);
                   compUtil.net.sendHttp500(IDLOG, res, err3.toString());
                 }
               });
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -554,7 +554,7 @@ function setCompAuthorization(comp) {
           var vm = compUser.getEndpointVoicemail(username);
           if (typeof vm !== 'object' || typeof vm.getId !== 'function') {
             var str = 'customizing voicemail message: no voicemail for user "' + username + '": "' + JSON.stringify(vm) + '"';
-            logger.warn(IDLOG, str);
+            logger.log.warn(IDLOG, str);
             compUtil.net.sendHttp500(IDLOG, res, str);
             return;
           }
@@ -562,24 +562,24 @@ function setCompAuthorization(comp) {
           compVoicemail.listenCustomMessage(vm, req.params.type, function(err, result) {
             try {
               if (err) {
-                logger.error(IDLOG, 'listening customized vm "' + req.params.type + '" message for user "' + username + '" for vm "' + vm + '"');
+                logger.log.error(IDLOG, 'listening customized vm "' + req.params.type + '" message for user "' + username + '" for vm "' + vm + '"');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
               if (err === null && result === null) {
-                logger.warn(IDLOG, 'listen custom message "' + req.params.type + '" for user "' + username + '" for vm "' + vm + '": not found');
+                logger.log.warn(IDLOG, 'listen custom message "' + req.params.type + '" for user "' + username + '" for vm "' + vm + '": not found');
                 compUtil.net.sendHttp404(IDLOG, res);
               } else {
-                logger.info(IDLOG, 'sent listen custom message "' + req.params.type + '" for user "' + username + '" for vm "' + vm + '"');
+                logger.log.info(IDLOG, 'sent listen custom message "' + req.params.type + '" for user "' + username + '" for vm "' + vm + '"');
                 res.send(200, result);
               }
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -604,14 +604,14 @@ function setCompAuthorization(comp) {
           compVoicemail.getVmIdFromDbId(req.params.id, function(err1, vmid) {
             try {
               if (err1) {
-                logger.error(IDLOG, 'downloading voice message: getting voicemail id (mailbox) from db with voice message id "' + req.params.id + '" by user "' + username + '"');
+                logger.log.error(IDLOG, 'downloading voice message: getting voicemail id (mailbox) from db with voice message id "' + req.params.id + '" by user "' + username + '"');
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                 return;
               }
 
               // check the authorization to download the voice message checking if the voicemail endpoint is owned by the user
               if (compUser.hasVoicemailEndpoint(username, vmid) !== true) {
-                logger.warn(IDLOG, 'user "' + username + '" has tried to download voice message with db id "' + req.params.id + '" of the voicemail "' + vmid + '" not owned by him');
+                logger.log.warn(IDLOG, 'user "' + username + '" has tried to download voice message with db id "' + req.params.id + '" of the voicemail "' + vmid + '" not owned by him');
                 compUtil.net.sendHttp403(IDLOG, res);
                 return;
               }
@@ -620,30 +620,30 @@ function setCompAuthorization(comp) {
               compVoicemail.listenVoiceMessage(req.params.id, function(err2, result) {
                 try {
                   if (err2) {
-                    logger.error(IDLOG, 'downloading voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" by the user "' + username + '"');
+                    logger.log.error(IDLOG, 'downloading voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" by the user "' + username + '"');
                     compUtil.net.sendHttp500(IDLOG, res, err2.toString());
                     return;
                   }
 
-                  logger.info(IDLOG, 'download voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" successfully by the user "' + username + '"');
+                  logger.log.info(IDLOG, 'download voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" successfully by the user "' + username + '"');
                   var filename = 'voicemail' + req.params.id + username + 'tmpaudio.wav';
                   compStaticHttp.saveFile(filename, result);
                   res.send(200, filename);
 
                 } catch (err3) {
-                  logger.error(IDLOG, err3.stack);
+                  logger.log.error(IDLOG, err3.stack);
                   compUtil.net.sendHttp500(IDLOG, res, err3.toString());
                 }
               });
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -673,7 +673,7 @@ function setCompAuthorization(comp) {
           var vm = compUser.getEndpointVoicemail(username);
           if (typeof vm !== 'object' || typeof vm.getId !== 'function') {
             var str = 'customizing voicemail message: no voicemail for user "' + username + '": "' + JSON.stringify(vm) + '"';
-            logger.warn(IDLOG, str);
+            logger.log.warn(IDLOG, str);
             compUtil.net.sendHttp500(IDLOG, res, str);
             return;
           }
@@ -681,22 +681,22 @@ function setCompAuthorization(comp) {
           compVoicemail.listenCustomMessage(vm, req.params.type, function(err, result) {
             try {
               if (err) {
-                logger.error(IDLOG, 'downloading custom message "' + req.params.type + '" of vm "' + vm + '" by the user "' + username + '"');
+                logger.log.error(IDLOG, 'downloading custom message "' + req.params.type + '" of vm "' + vm + '" by the user "' + username + '"');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'download custom message "' + req.params.type + '" of vm "' + vm + '" successfully by the user "' + username + '"');
+              logger.log.info(IDLOG, 'download custom message "' + req.params.type + '" of vm "' + vm + '" successfully by the user "' + username + '"');
               var filename = 'custom_msg_vm_' + vm + '' + username + '_' + req.params.type + '.wav';
               compStaticHttp.saveFile(filename, result);
               res.send(200, filename);
 
             } catch (err3) {
-              logger.error(IDLOG, err3.stack);
+              logger.log.error(IDLOG, err3.stack);
               compUtil.net.sendHttp500(IDLOG, res, err3.toString());
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -721,14 +721,14 @@ function setCompAuthorization(comp) {
           compVoicemail.getVmIdFromDbId(req.params.id, function(err1, vmid) {
             try {
               if (err1) {
-                logger.error(IDLOG, 'deleting voice message: getting voicemail id (mailbox) from db voice message id "' + req.params.id + '"');
+                logger.log.error(IDLOG, 'deleting voice message: getting voicemail id (mailbox) from db voice message id "' + req.params.id + '"');
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                 return;
               }
 
               // check the authorization to delete the voice message checking if the voicemail endpoint is owned by the user
               if (compUser.hasVoicemailEndpoint(username, vmid) !== true) {
-                logger.warn(IDLOG, 'user "' + username + '" tried to delete voice message with db id "' + req.params.id + '" of the voicemail "' + vmid + '" not owned by him');
+                logger.log.warn(IDLOG, 'user "' + username + '" tried to delete voice message with db id "' + req.params.id + '" of the voicemail "' + vmid + '" not owned by him');
                 compUtil.net.sendHttp403(IDLOG, res);
                 return;
               }
@@ -738,28 +738,28 @@ function setCompAuthorization(comp) {
                 try {
 
                   if (err2) {
-                    logger.error(IDLOG, 'deleting voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" by the user "' + username + '"');
+                    logger.log.error(IDLOG, 'deleting voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" by the user "' + username + '"');
                     compUtil.net.sendHttp500(IDLOG, res, err2.toString());
                     return;
                   }
 
-                  logger.info(IDLOG, 'voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" has been deleted successfully by the user "' + username + '"');
+                  logger.log.info(IDLOG, 'voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" has been deleted successfully by the user "' + username + '"');
                   res.send(200);
 
                 } catch (err3) {
-                  logger.error(IDLOG, err3.stack);
+                  logger.log.error(IDLOG, err3.stack);
                   compUtil.net.sendHttp500(IDLOG, res, err3.toString());
                 }
               });
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -782,10 +782,10 @@ function setCompAuthorization(comp) {
           } else if (req.method.toLowerCase() === 'post') {
             customMsgPost(req, res, next);
           } else {
-            logger.warn(IDLOG, 'unknown requested method ' + req.method);
+            logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       }
@@ -807,7 +807,7 @@ function setCompAuthorization(comp) {
     exports.download_custom_msg = voicemail.download_custom_msg;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 })();
 
@@ -833,7 +833,7 @@ function customMsgPost(req, res, next) {
     var vm = compUser.getEndpointVoicemail(username);
     if (typeof vm !== 'object' || typeof vm.getId !== 'function') {
       var str = 'customizing voicemail message: no voicemail for user "' + username + '": "' + JSON.stringify(vm) + '"';
-      logger.warn(IDLOG, str);
+      logger.log.warn(IDLOG, str);
       compUtil.net.sendHttp500(IDLOG, res, str);
       return;
     }
@@ -841,19 +841,19 @@ function customMsgPost(req, res, next) {
     compVoicemail.setCustomVmAudioMsg(vm, req.params.type, req.params.audio, function(err) {
       try {
         if (err) {
-          logger.error(IDLOG, 'setting customized vm "' + req.params.type + '" message for user "' + username + '" for vm "' + vm + '"');
+          logger.log.error(IDLOG, 'setting customized vm "' + req.params.type + '" message for user "' + username + '" for vm "' + vm + '"');
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
           return;
         }
-        logger.info(IDLOG, 'customized vm "' + req.params.type + '" message for user "' + username + '" for vm "' + vm + '" has been set successfully');
+        logger.log.info(IDLOG, 'customized vm "' + req.params.type + '" message for user "' + username + '" for vm "' + vm + '" has been set successfully');
         res.send(200);
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         compUtil.net.sendHttp500(IDLOG, res, error.toString());
       }
     });
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -880,7 +880,7 @@ function customMsgDelete(req, res, next) {
     var vm = compUser.getEndpointVoicemail(username);
     if (typeof vm !== 'object' || typeof vm.getId !== 'function') {
       var str = 'deleting voicemail message: no voicemail for user "' + username + '": "' + JSON.stringify(vm) + '"';
-      logger.warn(IDLOG, str);
+      logger.log.warn(IDLOG, str);
       compUtil.net.sendHttp500(IDLOG, res, str);
       return;
     }
@@ -888,24 +888,24 @@ function customMsgDelete(req, res, next) {
     compVoicemail.deleteCustomMessage(vm, req.params.type, function(err, result) {
       try {
         if (err) {
-          logger.error(IDLOG, 'deleting custom message "' + req.params.type + '" of vm "' + vm + '" by the user "' + username + '"');
+          logger.log.error(IDLOG, 'deleting custom message "' + req.params.type + '" of vm "' + vm + '" by the user "' + username + '"');
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
           return;
         }
         if (err === null && result === null) {
-          logger.warn(IDLOG, 'deleting custom message "' + req.params.type + '" of vm "' + vm + '" by user "' + username + '": entry not found');
+          logger.log.warn(IDLOG, 'deleting custom message "' + req.params.type + '" of vm "' + vm + '" by user "' + username + '": entry not found');
           compUtil.net.sendHttp404(IDLOG, res);
         } else {
-          logger.info(IDLOG, 'deleted custom message "' + req.params.type + '" of vm "' + vm + '" successfully by the user "' + username + '"');
+          logger.log.info(IDLOG, 'deleted custom message "' + req.params.type + '" of vm "' + vm + '" successfully by the user "' + username + '"');
           res.send(200);
         }
       } catch (err) {
-        logger.error(IDLOG, err.stack);
+        logger.log.error(IDLOG, err.stack);
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
       }
     });
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }

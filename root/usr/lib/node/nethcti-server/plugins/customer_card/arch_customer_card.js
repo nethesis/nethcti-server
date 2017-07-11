@@ -32,7 +32,7 @@ module.exports = function(options, imports, register) {
 
   try {
     imports.dbconn.on(imports.dbconn.EVT_READY, function() {
-      customerCard.setLogger(logger);
+      customerCard.setLogger(logger.ctilog);
       customerCard.config('/etc/nethcti/services.json');
       customerCard.configPrivacy('/etc/nethcti/nethcti.json');
       customerCard.setCompAuthorization(imports.authorization);
@@ -41,6 +41,6 @@ module.exports = function(options, imports, register) {
       customerCard.start();
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 };

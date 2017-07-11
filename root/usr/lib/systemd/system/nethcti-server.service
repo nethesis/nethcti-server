@@ -10,6 +10,7 @@ User=asterisk
 Restart=always
 RestartSec=10
 ExecStart=/usr/bin/node /usr/lib/node/nethcti-server/nethcti.js
+ExecReload=/bin/kill -SIGUSR1 $MAINPID
 
 [Install]
 WantedBy=multi-user.target

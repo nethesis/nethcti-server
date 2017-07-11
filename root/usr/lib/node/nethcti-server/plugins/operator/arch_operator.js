@@ -30,9 +30,9 @@ module.exports = function(options, imports, register) {
   });
 
   try {
-    operator.setLogger(logger);
+    operator.setLogger(logger.ctilog);
     operator.config('/etc/nethcti/operator.json');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 };

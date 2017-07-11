@@ -31,7 +31,7 @@ module.exports = function(options, imports, register) {
   });
 
   try {
-    authorization.setLogger(logger);
+    authorization.setLogger(logger.ctilog);
     // authorization.setCompDbconn(imports.dbconn);
     authorization.setCompUser(imports.user);
     authorization.config({
@@ -40,6 +40,6 @@ module.exports = function(options, imports, register) {
     });
     // authorization.configRemoteOperators('/etc/nethcti/remote_operators.json');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 };

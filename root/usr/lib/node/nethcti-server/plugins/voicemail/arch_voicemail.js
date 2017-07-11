@@ -31,7 +31,7 @@ module.exports = function(options, imports, register) {
   });
 
   try {
-    voicemail.setLogger(logger);
+    voicemail.setLogger(logger.ctilog);
 
     // wait for the creation of the users
     imports.user.on(imports.user.EVT_USERS_READY, function() {
@@ -44,6 +44,6 @@ module.exports = function(options, imports, register) {
       voicemail.setDbconn(imports.dbconn);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 };

@@ -72,7 +72,7 @@ function setCompDbconnMain(comp) {
     setAllPluginsDbconnMain(comp);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -91,11 +91,11 @@ function setAllPluginsDbconnMain(comp) {
 
       if (typeof plugins[key].setCompDbconnMain === 'function') {
         plugins[key].setCompDbconnMain(comp);
-        logger.info(IDLOG, 'new main dbconn has been set for plugin ' + key);
+        logger.log.info(IDLOG, 'new main dbconn has been set for plugin ' + key);
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -109,10 +109,10 @@ function setAllPluginsDbconnMain(comp) {
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
       // set the logger for all plugins
       setAllPluginsLogger(log);
@@ -121,7 +121,7 @@ function setLogger(log) {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -140,11 +140,11 @@ function setAllPluginsLogger(log) {
 
       if (typeof plugins[key].setLogger === 'function') {
         plugins[key].setLogger(log);
-        logger.info(IDLOG, 'new logger has been set for plugin ' + key);
+        logger.log.info(IDLOG, 'new logger has been set for plugin ' + key);
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -168,7 +168,7 @@ function start() {
     compDbconnMain.emit(compDbconnMain.EVT_READY);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
