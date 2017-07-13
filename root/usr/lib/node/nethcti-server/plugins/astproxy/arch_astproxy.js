@@ -24,10 +24,11 @@ module.exports = function(options, imports, register) {
   if (imports.logger) {
     logger = imports.logger;
   }
-
   // public interface for other architect components
   register(null, {
     astProxy: {
+      reload: astProxy.reload,
+
       on: astProxy.on,
       doCmd: astProxy.doCmd,
       setCfb: astProxy.proxyLogic.setCfb,
@@ -102,6 +103,7 @@ module.exports = function(options, imports, register) {
       EVT_EXTEN_HANGUP: astProxy.proxyLogic.EVT_EXTEN_HANGUP,
       EVT_NEW_CDR: astProxy.proxyLogic.EVT_NEW_CDR,
       EVT_READY: astProxy.proxyLogic.EVT_READY,
+      EVT_RELOADED: astProxy.proxyLogic.EVT_RELOADED,
       EVT_QUEUE_MEMBER_CHANGED: astProxy.proxyLogic.EVT_QUEUE_MEMBER_CHANGED,
       EVT_MEETME_CONF_END: astProxy.proxyLogic.EVT_MEETME_CONF_END,
       EVT_MEETME_CONF_CHANGED: astProxy.proxyLogic.EVT_MEETME_CONF_CHANGED,

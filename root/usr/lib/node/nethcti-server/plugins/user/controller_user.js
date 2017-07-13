@@ -31,6 +31,15 @@ var endpointTypes = require('./endpoint_types');
 var IDLOG = '[controller_user]';
 
 /**
+ * The configuration file path of the users.
+ *
+ * @property USERS_CONF_FILEPATH
+ * @type string
+ * @private
+ */
+var USERS_CONF_FILEPATH;
+
+/**
  * Fired when the creation of the _User_ objects is completed.
  *
  * @event usersReady
@@ -43,6 +52,20 @@ var IDLOG = '[controller_user]';
  * @default "usersReady"
  */
 var EVT_USERS_READY = 'usersReady';
+
+/**
+ * Fired when the componente has been reloaded.
+ *
+ * @event reloaded
+ */
+/**
+ * The name of the reloaded event.
+ *
+ * @property EVT_RELOADED
+ * @type string
+ * @default "reloaded"
+ */
+var EVT_RELOADED = 'reloaded';
 
 /**
  * Fired when the client user has changed his own avatar picture.
@@ -71,6 +94,17 @@ var EVT_USER_PROFILE_AVATAR_CHANGED = 'userProfileAvatarChanged';
  * @default "userPresenceChanged"
  */
 var EVT_USER_PRESENCE_CHANGED = 'userPresenceChanged';
+
+/**
+ * True if the component has been started. Used to emit EVT_RELOADED
+ * instead of EVT_READY
+ *
+ * @property ready
+ * @type boolean
+ * @private
+ * @default false
+ */
+var ready = false;
 
 /**
  * The logger. It must have at least three methods: _info, warn and error._
@@ -191,9 +225,10 @@ function config(path) {
     if (!fs.existsSync(path)) {
       throw new Error(path + ' does not exist');
     }
+    USERS_CONF_FILEPATH = path;
 
     // read JSON file with the user/endpoint associations
-    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
+    var json = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
 
     // initialize user objects
     var userid, newuser;
@@ -212,12 +247,51 @@ function config(path) {
     // initialize asterisk proxy listeners
     initializeAstProxyListeners();
 
-    // emit the event for tell to other modules that the user objects are ready
-    logger.log.info(IDLOG, 'emit event "' + EVT_USERS_READY + '"');
-    emitter.emit(EVT_USERS_READY);
+    if (!ready) {
+      // emit the event for tell to other modules that the user objects are ready
+      logger.log.info(IDLOG, 'emit event "' + EVT_USERS_READY + '"');
+      emitter.emit(EVT_USERS_READY);
+      ready = true;
+    } else {
+      logger.log.info(IDLOG, 'emit event "' + EVT_RELOADED + '"');
+      emitter.emit(EVT_RELOADED);
+    }
+    logger.log.info(IDLOG, 'configuration done by ' + USERS_CONF_FILEPATH);
 
-    logger.log.info(IDLOG, 'configuration done by ' + path);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
 
+/**
+ * Reload the component.
+ *
+ * @method reset
+ * @private
+ */
+function reset() {
+  try {
+    var k;
+    for (k in users) {
+      delete users[k];
+    }
+    users = {};
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ * @private
+ */
+function reload() {
+  try {
+    reset();
+    config(USERS_CONF_FILEPATH);
+    logger.log.warn(IDLOG, 'reloaded');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2164,7 +2238,7 @@ function getVoicemailList(username) {
  * @return {object} The endpoints of the user in JSON format.
  */
 function getEndpointsJSON(userid) {
-  try {    // check parameter
+  try { // check parameter
     if (typeof userid !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
@@ -2673,9 +2747,11 @@ function getUserSettings(username, cb) {
 // public interface
 exports.on = on;
 exports.config = config;
+exports.reload = reload;
 exports.setLogger = setLogger;
 exports.setPresence = setPresence;
 exports.getPresence = getPresence;
+exports.EVT_RELOADED = EVT_RELOADED;
 exports.saveSettings = saveSettings;
 exports.getUsernames = getUsernames;
 exports.isUserPresent = isUserPresent;

@@ -60,6 +60,20 @@ var IDLOG = '[proxy_logic_13]';
 var EVT_READY = 'ready';
 
 /**
+ * Fired when the component has been reloaded.
+ *
+ * @event reloaded
+ */
+/**
+ * The name of the reloaded event.
+ *
+ * @property EVT_RELOADED
+ * @type string
+ * @default "reloaded"
+ */
+var EVT_RELOADED = 'reloaded';
+
+/**
  * Fired when something changed in an extension.
  *
  * @event extenChanged
@@ -391,6 +405,17 @@ var INTERVAL_UPDATE_QUEUE_DETAILS = 60000;
  * @default "/var/spool/asterisk/outgoing/"
  */
 var AST_ALARMS_DIRPATH = '/var/spool/asterisk/outgoing/';
+
+/**
+ * True if the component has been started. Used to emit EVT_RELOADED
+ * instead of EVT_READY
+ *
+ * @property ready
+ * @type boolean
+ * @private
+ * @default false
+ */
+var ready = false;
 
 /**
  * The logger. It must have at least three methods: _info, warn and error._
@@ -1096,6 +1121,50 @@ function setStaticDataExtens(obj) {
 }
 
 /**
+ * Reset the component.
+ *
+ * @method reset
+ * @static
+ */
+function reset() {
+  try {
+    var k;
+    for (k in extensions) {
+      delete extensions[k];
+    }
+    extensions = {};
+
+    for (k in trunks) {
+      delete trunks[k];
+    }
+    trunks = {};
+
+    for (k in queues) {
+      delete queues[k];
+    }
+    queues = {};
+
+    for (k in parkings) {
+      delete parkings[k];
+    }
+    parkings = {};
+
+    for (k in parkedChannels) {
+      delete parkedChannels[k];
+    }
+    parkedChannels = {};
+
+    astCodes = {};
+    staticDataExtens = {};
+    staticDataTrunks = {};
+    staticDataQueues = {};
+    featureCodes = {};
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * It is called when the asterisk connection is fully booted.
  *
  * @method start
@@ -1461,6 +1530,26 @@ function updateParkedCallerForAllParkings(err, resp) {
 }
 
 /**
+ * Get the details of a queue.
+ *
+ * @method getQueueDetails
+ * @param {string} qid The queue identifier
+ * @return {function} The function to be called by _initializeQueues_.
+ * @private
+ */
+function getQueueDetails(qid) {
+  return function(callback) {
+    astProxy.doCmd({
+      command: 'queueDetails',
+      queue: qid
+    }, function(err, resp) {
+      queueDetails(err, resp, callback);
+      callback(null);
+    });
+  };
+}
+
+/**
  * Initialize all queues as _Queue_ object into the _queues_ property.
  *
  * @method initializeQueues
@@ -1475,21 +1564,23 @@ function initializeQueues(err, results) {
       return;
     }
 
+    var arr = [];
     var k, q;
     for (k in results) {
 
       q = new Queue(results[k].queue);
       q.setName(staticDataQueues[results[k].queue].name);
-
       // store the new queue object
       queues[q.getQueue()] = q;
-
-      // request details for the current queue
-      astProxy.doCmd({
-        command: 'queueDetails',
-        queue: q.getQueue()
-      }, queueDetails);
+      arr.push(getQueueDetails(q.getQueue()));
     }
+    async.parallel(arr,
+      function(err) {
+        if (err) {
+          logger.log.error(IDLOG, err);
+        }
+      }
+    );
 
     logger.log.info(IDLOG, 'start the interval period to update the details of all the queues each ' + INTERVAL_UPDATE_QUEUE_DETAILS + ' msec');
     startIntervalUpdateQueuesDetails(INTERVAL_UPDATE_QUEUE_DETAILS);
@@ -2456,8 +2547,15 @@ function initializePjsipExten(err, results) {
         if (err) {
           logger.log.error(IDLOG, err);
         }
-        logger.log.info(IDLOG, 'emit "' + EVT_READY + '" event');
-        astProxy.emit(EVT_READY);
+        if (!ready) {
+          logger.log.info(IDLOG, 'emit "' + EVT_READY + '" event');
+          astProxy.emit(EVT_READY);
+          ready = true;
+        } else {
+          logger.log.warn(IDLOG, 'reloaded');
+          logger.log.info(IDLOG, 'emit "' + EVT_RELOADED + '" event');
+          astProxy.emit(EVT_RELOADED);
+        }
       }
     );
   } catch (error) {
@@ -8668,6 +8766,7 @@ exports.on = on;
 exports.call = call;
 exports.start = start;
 exports.visit = visit;
+exports.reset = reset;
 exports.setCfb = setCfb;
 exports.setCfu = setCfu;
 exports.setDnd = setDnd;
@@ -8692,6 +8791,7 @@ exports.setAstCodes = setAstCodes;
 exports.EVT_NEW_CDR = EVT_NEW_CDR;
 exports.createAlarm = createAlarm;
 exports.deleteAlarm = deleteAlarm;
+exports.EVT_RELOADED = EVT_RELOADED;
 exports.isExtenCfbVm = isExtenCfbVm;
 exports.isExtenCfuVm = isExtenCfuVm;
 exports.setCompDbconn = setCompDbconn;

@@ -227,7 +227,7 @@ function config(path) {
       throw new Error(path + ' does not exist');
     }
 
-    var json = require(path); // read the file
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
     logger.log.info(IDLOG, 'file ' + path + ' has been read');
 
     if ((typeof json === 'object' && json.loglevel.toLowerCase() === 'info') ||
@@ -264,7 +264,7 @@ function configDbStatic(dirPath) {
     var i, k, json;
     for (i = 0; i < files.length; i++) {
 
-      json = require(path.join(dirPath, files[i]));
+      json = JSON.parse(fs.readFileSync(path.join(dirPath, files[i]), 'utf8'));
       logger.log.info(IDLOG, 'file ' + files[i] + ' has been read');
 
       // transfer the file content into the memory
@@ -302,7 +302,6 @@ function start() {
         logger.log.info(IDLOG, 'initialized database connections for customer card');
       }
     });
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -873,9 +872,27 @@ function incNumExecQueries() {
   }
 }
 
+/**
+ * Reset the component.
+ *
+ * @method reset
+ */
+function reset() {
+  try {
+    dbConfig = {};
+    models = {};
+    dbConfigCustCardData = {};
+    custCardTemplatesData = {};
+    dbConnCustCard = {};
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.emit = emit;
+exports.reset = reset;
 exports.start = start;
 exports.models = models;
 exports.config = config;

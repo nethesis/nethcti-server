@@ -27,6 +27,17 @@ module.exports = function(options, imports, register) {
   }
 
   // attach some extra static apis
+  dbconnPluginsManager.apiDbconn.reload = function() {
+    try {
+      dbconnMain.reset();
+      dbconnMain.config('/etc/nethcti/nethcti.json');
+      dbconnMain.configDbStatic('/etc/nethcti/dbstatic.d');
+      dbconnMain.start();
+      logger.ctilog.log.warn(IDLOG, 'reloaded');
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+    }
+  };
   dbconnPluginsManager.apiDbconn.on = dbconnMain.on;
   dbconnPluginsManager.apiDbconn.getStats = dbconnMain.getStats;
   dbconnPluginsManager.apiDbconn.testConnection = dbconnMain.testConnection;

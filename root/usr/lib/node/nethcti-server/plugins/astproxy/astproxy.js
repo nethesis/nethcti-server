@@ -79,6 +79,33 @@ var emitter = new EventEmitter();
 var astConf;
 
 /**
+ * The asterisk configuration file path.
+ *
+ * @property AST_CONF_FILEPATH
+ * @type string
+ * @private
+ */
+var AST_CONF_FILEPATH;
+
+/**
+ * The configuration file path of the asterisk objects.
+ *
+ * @property AST_OBJECTS_FILEPATH
+ * @type string
+ * @private
+ */
+var AST_OBJECTS_FILEPATH;
+
+/**
+ * The configuration file path of the users.
+ *
+ * @property USERS_CONF_FILEPATH
+ * @type string
+ * @private
+ */
+var USERS_CONF_FILEPATH;
+
+/**
  * The sip WebRCT configuration.
  *
  * @property sipWebrtcConf
@@ -126,15 +153,16 @@ function config(path) {
     if (!fs.existsSync(path)) {
       throw new Error(path + ' does not exist');
     }
+    AST_CONF_FILEPATH = path;
 
     // initialize asterisk configuration
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(AST_CONF_FILEPATH, 'utf8'));
     if (typeof json.user !== 'string' ||
       typeof json.auto_c2c !== 'string' ||
       typeof json.pass !== 'string' || typeof json.prefix !== 'string' ||
       typeof json.host !== 'string' || typeof json.port !== 'string') {
 
-      throw new Error(path + ' wrong file format');
+      throw new Error(AST_CONF_FILEPATH + ' wrong file format');
     }
     astConf = {
       port: json.port,
@@ -147,7 +175,7 @@ function config(path) {
     proxyLogic.setPrefix(json.prefix);
     proxyLogic.setAutoC2CStatus(json.auto_c2c);
 
-    logger.log.info(IDLOG, 'configuration done by ' + path);
+    logger.log.info(IDLOG, 'configuration done by ' + AST_CONF_FILEPATH);
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -168,9 +196,11 @@ function configExtenNames(path) {
     if (!fs.existsSync(path)) {
       throw new Error(path + ' does not exist');
     }
-    var json = require(path);
+    USERS_CONF_FILEPATH = path;
+
+    var json = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
     if (typeof json !== 'object') {
-      throw new Error(path + ' wrong file format');
+      throw new Error(USERS_CONF_FILEPATH + ' wrong file format');
     }
 
     var u, e, i, allextens;
@@ -200,7 +230,7 @@ function configExtenNames(path) {
       }
     }
     proxyLogic.setStaticDataExtens(obj);
-    logger.log.info(IDLOG, 'extension names configuration done by ' + path);
+    logger.log.info(IDLOG, 'extension names configuration done by ' + USERS_CONF_FILEPATH);
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -221,16 +251,16 @@ function configAstObjects(path) {
     if (!fs.existsSync(path)) {
       throw new Error(path + ' does not exist');
     }
+    AST_OBJECTS_FILEPATH = path;
 
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(AST_OBJECTS_FILEPATH, 'utf8'));
     if (typeof json.trunks !== 'object' || typeof json.queues !== 'object') {
-      throw new Error(path + ' wrong file format');
+      throw new Error(AST_OBJECTS_FILEPATH + ' wrong file format');
     }
     proxyLogic.setStaticDataTrunks(json.trunks);
     proxyLogic.setStaticDataQueues(json.queues);
     proxyLogic.setFeatureCodes(json.feature_codes);
-
-    logger.log.info(IDLOG, 'asterisk objects configuration done by ' + path);
+    logger.log.info(IDLOG, 'asterisk objects configuration done by ' + AST_OBJECTS_FILEPATH);
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -255,7 +285,7 @@ function configAstCodes(path) {
     }
 
     // read the configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     // check the configuration file content
     if (typeof json !== 'object') {
@@ -289,7 +319,7 @@ function configRemoteSitesPrefixes(path) {
     }
 
     // read the configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     // check the configuration file content
     if (typeof json !== 'object') {
@@ -327,7 +357,7 @@ function configSipWebrtc(path) {
     }
 
     // read the configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     // check the configuration file content
     if (typeof json !== 'object' ||
@@ -359,7 +389,40 @@ function configSipWebrtc(path) {
 function start() {
   try {
     am = new ast(astConf);
-    // add event listeners to asterisk manager
+    addAstListeners();
+    logger.log.info(IDLOG, 'asterisk manager initialized');
+    logger.log.info(IDLOG, 'connecting to asterisk...');
+    am.connect();
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ */
+function reload() {
+  try {
+    reset();
+    config(AST_CONF_FILEPATH);
+    configAstObjects(AST_OBJECTS_FILEPATH);
+    configExtenNames(USERS_CONF_FILEPATH);
+    start();
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Add asterisk event listeners.
+ *
+ * @method addAstListeners
+ */
+function addAstListeners() {
+  try {
     am.on('data', onData);
     am.on('login', onLogin);
     am.on('connection-end', amiSocketEnd);
@@ -369,11 +432,22 @@ function start() {
     am.on('connection-timeout', amiSocketTimeout);
     am.on('connection-unwritable', amiSocketUnwritable);
     logger.log.info(IDLOG, 'added event listeners to asterisk manager');
-    logger.log.info(IDLOG, 'asterisk manager initialized');
-    // connect to asterisk
-    logger.log.info(IDLOG, 'connecting to asterisk...');
-    am.connect();
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
 
+/**
+ * Reset the component.
+ *
+ * @method reset
+ */
+function reset() {
+  try {
+    proxyLogic.reset();
+    am.removeAllListeners();
+    am.disconnect();
+    am = null;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -692,8 +766,10 @@ function getSipWebrtcConf() {
 // public interface
 exports.on = on;
 exports.emit = emit;
+exports.reset = reset;
 exports.doCmd = doCmd;
 exports.start = start;
+exports.reload = reload;
 exports.config = config;
 exports.setLogger = setLogger;
 exports.proxyLogic = proxyLogic;

@@ -177,14 +177,12 @@ config();
 /**
  * Reload the component.
  *
- * @method getUserSettings
- * @param {string} username The username
- * @param {function} cb The callback function
+ * @method reload
  */
 function reload() {
   try {
     config();
-    ctilog.log.warn(IDLOG, 'reload done');
+    ctilog.log.warn(IDLOG, 'reloaded');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }

@@ -47,6 +47,9 @@ module.exports = function(options, imports, register) {
     imports.astProxy.on(imports.astProxy.EVT_READY, function() {
       controllerUser.config('/etc/nethcti/users.json');
     });
+    imports.astProxy.on(imports.astProxy.EVT_RELOADED, function() {
+      controllerUser.reload();
+    });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
