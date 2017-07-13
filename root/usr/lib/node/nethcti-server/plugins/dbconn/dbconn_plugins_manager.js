@@ -160,13 +160,12 @@ function start() {
     // load plugins
     var apiName, p;
     for (p in plugins) {
-
       for (apiName in plugins[p].apiList) {
         apiDbconn[apiName] = plugins[p].apiList[apiName];
       }
     }
     compDbconnMain.emit(compDbconnMain.EVT_READY);
-
+    compDbconnMain.setReady(true);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }

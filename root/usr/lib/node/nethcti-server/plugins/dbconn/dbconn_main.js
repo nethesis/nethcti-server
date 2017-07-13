@@ -33,6 +33,17 @@ var EventEmitter = require('events').EventEmitter;
 var IDLOG = '[dbconn]';
 
 /**
+ * True if the component has been started. Used to emit EVT_RELOADED
+ * instead of EVT_READY
+ *
+ * @property ready
+ * @type boolean
+ * @private
+ * @default false
+ */
+var ready = false;
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -60,7 +71,20 @@ var numExecQueries = 0;
  * @private
  */
 var emitter = new EventEmitter();
-emitter.setMaxListeners(20);
+
+/**
+ * Fired when the component has been reloaded.
+ *
+ * @event reloaded
+ */
+/**
+ * The name of the reloaded event.
+ *
+ * @property EVT_RELOADED
+ * @type string
+ * @default "reloaded"
+ */
+var EVT_RELOADED = 'reloaded';
 
 /**
  * Fired when the component is ready.
@@ -597,9 +621,7 @@ function initConnections() {
         if (!logSequelize) {
           config.logging = false;
         }
-
         sequelize = new Sequelize(dbConfig[k].dbname, dbConfig[k].dbuser, dbConfig[k].dbpassword, config);
-
         dbConn[k] = sequelize;
         logger.log.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
 
@@ -610,9 +632,22 @@ function initConnections() {
         initMssqlConn(k, getMssqlTdsVersion(dbConfig[k].dbtype));
       }
     }
+    if (ready) {
+      emit(EVT_RELOADED);
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
+}
+
+/**
+ * set the component as ready.
+ *
+ * @method setReady
+ * @private
+ */
+function setReady(value) {
+  ready = value;
 }
 
 /**
@@ -900,6 +935,7 @@ exports.dbConn = dbConn;
 exports.dbConfig = dbConfig;
 exports.getStats = getStats;
 exports.EVT_READY = EVT_READY;
+exports.EVT_RELOADED = EVT_RELOADED;
 exports.Sequelize = Sequelize;
 exports.JSON_KEYS = JSON_KEYS;
 exports.setLogger = setLogger;
@@ -911,3 +947,4 @@ exports.readCustomerCard = readCustomerCard;
 exports.incNumExecQueries = incNumExecQueries;
 exports.dbConfigCustCardData = dbConfigCustCardData
 exports.custCardTemplatesData = custCardTemplatesData;
+exports.setReady = setReady

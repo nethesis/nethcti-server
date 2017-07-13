@@ -42,6 +42,7 @@ module.exports = function(options, imports, register) {
   dbconnPluginsManager.apiDbconn.getStats = dbconnMain.getStats;
   dbconnPluginsManager.apiDbconn.testConnection = dbconnMain.testConnection;
   dbconnPluginsManager.apiDbconn.EVT_READY = dbconnMain.EVT_READY;
+  dbconnPluginsManager.apiDbconn.EVT_RELOADED = dbconnMain.EVT_RELOADED;
 
   // public interface for other architect components
   register(null, {

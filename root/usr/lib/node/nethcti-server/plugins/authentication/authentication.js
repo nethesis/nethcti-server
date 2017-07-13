@@ -18,6 +18,17 @@ var EventEmitter = require('events').EventEmitter;
 var childProcess = require('child_process');
 
 /**
+ * True if the component has been started. Used to emit EVT_RELOADED
+ * instead of EVT_READY
+ *
+ * @property ready
+ * @type boolean
+ * @private
+ * @default false
+ */
+var ready = false;
+
+/**
  * Fired when the component is ready.
  *
  * @event ready
@@ -42,6 +53,15 @@ var EVT_COMP_READY = 'ready';
  * @default [authentication]
  */
 var IDLOG = '[authentication]';
+
+/**
+ * The file path of the configuration file.
+ *
+ * @property CONFIG_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_FILEPATH;
 
 /**
  * The event emitter.
@@ -280,11 +300,12 @@ function config(path) {
   if (!fs.existsSync(path)) {
     throw new Error(path + ' does not exist');
   }
+  CONFIG_FILEPATH = path;
 
   // read configuration file
-  var json = JSON.parse(fs.readFileSync(path, 'utf8'));
+  var json = JSON.parse(fs.readFileSync(CONFIG_FILEPATH, 'utf8'));
 
-  logger.log.info(IDLOG, 'configuring authentication by ' + path);
+  logger.log.info(IDLOG, 'configuring authentication by ' + CONFIG_FILEPATH);
 
   // set the authentication type
   authenticationType = json.type;
@@ -305,10 +326,44 @@ function config(path) {
 
   startIntervalRemoveExpiredTokens();
 
-  // emit the event to tell other modules that the component is ready to be used
-  logger.log.info(IDLOG, 'emit "' + EVT_COMP_READY + '" event');
-  emitter.emit(EVT_COMP_READY);
-  logger.log.info(IDLOG, 'configuration done by ' + path);
+  if (!ready) {
+    // emit the event to tell other modules that the component is ready to be used
+    logger.log.info(IDLOG, 'emit "' + EVT_COMP_READY + '" event');
+    emitter.emit(EVT_COMP_READY);
+    ready = true;
+  }
+  logger.log.info(IDLOG, 'configuration done by ' + CONFIG_FILEPATH);
+}
+
+/**
+ * Reset the component.
+ *
+ * @method reset
+ * @static
+ */
+function reset() {
+  try {
+    clearInterval(intervalRemoveExpiredTokens);
+    intervalRemoveExpiredTokens = null;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ */
+function reload() {
+  try {
+    reset();
+    config(CONFIG_FILEPATH);
+    initFreepbxAdminAuthentication();
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
 }
 
 /**
@@ -397,7 +452,7 @@ function startIntervalRemoveExpiredTokens() {
   try {
     logger.log.info(IDLOG, 'start remove expired tokens interval each ' + expires + ' msec');
 
-    setInterval(function() {
+    intervalRemoveExpiredTokens = setInterval(function() {
       try {
         var username, userTokens, tokenid;
         var currentTimestamp = (new Date()).getTime();
@@ -968,6 +1023,7 @@ function on(type, cb) {
 // public interface
 exports.on = on;
 exports.config = config;
+exports.reload = reload;
 exports.getNonce = getNonce;
 exports.setLogger = setLogger;
 exports.verifyToken = verifyToken;

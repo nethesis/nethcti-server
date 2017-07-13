@@ -38,6 +38,9 @@ module.exports = function(options, imports, register) {
       authentication.config('/etc/nethcti/authentication.json');
       authentication.initFreepbxAdminAuthentication();
     });
+    imports.dbconn.on(imports.dbconn.EVT_RELOADED, function() {
+      authentication.reload();
+    });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }

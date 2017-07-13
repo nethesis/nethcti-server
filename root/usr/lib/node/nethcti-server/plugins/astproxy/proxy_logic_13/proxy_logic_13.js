@@ -437,6 +437,16 @@ var logger = console;
 var compPhonebook;
 
 /**
+ * The identifier of the interval used to update queues details.
+ *
+ * @property intervalUpdateQueuesDetails
+ * @type number
+ * @private
+ */
+var intervalUpdateQueuesDetails;
+
+
+/**
  * The database component.
  *
  * @property compDbconn
@@ -1128,6 +1138,9 @@ function setStaticDataExtens(obj) {
  */
 function reset() {
   try {
+    clearInterval(intervalUpdateQueuesDetails);
+    intervalUpdateQueuesDetails = null;
+
     var k;
     for (k in extensions) {
       delete extensions[k];
@@ -1604,7 +1617,7 @@ function startIntervalUpdateQueuesDetails(interval) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    setInterval(function() {
+    intervalUpdateQueuesDetails = setInterval(function() {
 
       var q;
       for (q in queues) {
