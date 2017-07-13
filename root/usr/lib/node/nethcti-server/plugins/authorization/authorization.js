@@ -137,7 +137,7 @@ function setLogger(log) {
 function config(obj) {
   try {
     if (typeof obj !== 'object' || typeof obj.users !== 'string' || typeof obj.profiles !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (!fs.existsSync(obj.users)) {
       throw new Error(obj.users + ' does not exist');
@@ -190,7 +190,7 @@ function config(obj) {
 function getUserProfileJSON(username) {
   try {
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (mapUserProfile[username]) {
       var profileId = mapUserProfile[username].profile_id;
@@ -212,7 +212,7 @@ function setCompDbconn(comp) {
   try {
     // check parameter
     if (typeof comp !== 'object') {
-      throw new TypeError('wrong parameter');
+      throw new TypeError('wrong parameters: ' + JSON.stringify(arguments));
     }
     compDbconn = comp;
 
@@ -232,7 +232,7 @@ function setCompUser(comp) {
   try {
     // check parameter
     if (typeof comp !== 'object') {
-      throw new TypeError('wrong parameter');
+      throw new TypeError('wrong parameters: ' + JSON.stringify(arguments));
     }
     compUser = comp;
 
@@ -252,7 +252,7 @@ function setCompUser(comp) {
 function configRemoteOperators(path) {
   try {
     if (typeof path !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (!fs.existsSync(path)) {
@@ -288,7 +288,7 @@ function authorizePhonebookUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return profiles[getUserProfileId(username)].macro_permissions.phonebook.value === true;
@@ -311,7 +311,7 @@ function authorizeAdminPhonebookUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -339,7 +339,7 @@ function authorizeRecordingUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -367,7 +367,7 @@ function authorizeLostQueueCallsUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.lost_queue_calls, username);
@@ -390,7 +390,7 @@ function authorizeAdminRecordingUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -418,7 +418,7 @@ function authorizePostitUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.postit, username);
@@ -441,7 +441,7 @@ function authorizeAdminPostitUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.admin_postit, username);
@@ -464,7 +464,7 @@ function authorizeAdminQueuesUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -491,7 +491,7 @@ function authorizeOffhourUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.offhour, username);
@@ -514,7 +514,7 @@ function authorizeAdminOffhourUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.admin_offhour, username);
@@ -537,7 +537,7 @@ function authorizeAdminHangupUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -565,7 +565,7 @@ function authorizeAdminPickupUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -594,7 +594,7 @@ function authorizeCdrUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -618,7 +618,7 @@ function authorizeSmsUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.sms, username);
@@ -688,7 +688,7 @@ function authorizeAdminSmsUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.admin_sms, username);
@@ -711,7 +711,7 @@ function authorizeSpyUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -740,7 +740,7 @@ function authorizeIntrudeUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -748,6 +748,35 @@ function authorizeIntrudeUser(username) {
     return (
       profiles[profid].macro_permissions.presence_panel.value === true &&
       profiles[profid].macro_permissions.presence_panel.permissions.intrude.value === true
+    );
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    // in the case of exception it returns false for security reasons
+    return false;
+  }
+}
+
+/**
+ * Returns true if the specified user has the authorization to view and
+ * set the call forward status of his endpoints.
+ *
+ * @method authorizeCfUser
+ * @param {string} username The username
+ * @return {boolean} True if the user has the call forward authorization.
+ */
+function authorizeCfUser(username) {
+  try {
+    // check parameter
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid].macro_permissions.settings.value === true &&
+      profiles[profid].macro_permissions.settings.permissions.call_forward.value === true
     );
 
   } catch (err) {
@@ -769,10 +798,15 @@ function authorizeDndUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.dnd, username);
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid].macro_permissions.settings.value === true &&
+      profiles[profid].macro_permissions.settings.permissions.dnd.value === true
+    );
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -815,7 +849,7 @@ function authorizePhoneRedirectUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.phone_redirect, username);
@@ -838,7 +872,7 @@ function authorizeAdminTransferUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -867,7 +901,7 @@ function authorizeOpParkingsUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -896,7 +930,7 @@ function authorizeOpTrunksUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.trunks, username);
@@ -920,7 +954,7 @@ function authorizeRemoteSiteUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.remote_site, username);
@@ -944,7 +978,7 @@ function authorizeQueuesUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     return profiles[getUserProfileId(username)].macro_permissions.queue_agent.value === true;
 
@@ -967,7 +1001,7 @@ function authorizeOperatorGroupsUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get cusomter card authorization from the user
@@ -1003,7 +1037,7 @@ function authorizeAdminCdrUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -1032,7 +1066,7 @@ function authorizeAdminParkingsUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -1061,7 +1095,7 @@ function authorizeAdminPhoneUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -1090,7 +1124,7 @@ function authorizeCallerNoteUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return authorizePostitUser(username);
@@ -1114,7 +1148,7 @@ function authorizeAdminCallerNoteUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return authorizeAdminPostitUser(username);
@@ -1137,7 +1171,7 @@ function authorizeChatUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.chat, username);
@@ -1163,7 +1197,7 @@ function authorizeUser(type, username) {
   try {
     // check parameter
     if (typeof type !== 'string' || typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get authorization type from the user
@@ -1201,7 +1235,7 @@ function authorizeCustomerCardUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     return profiles[getUserProfileId(username)].macro_permissions.customer_card.value === true;
 
@@ -1260,7 +1294,7 @@ function authorizeStreamingUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     return profiles[getUserProfileId(username)].macro_permissions.streaming.value === true;
 
@@ -1283,7 +1317,7 @@ function authorizeStreamingSourceUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var permissionId;
     var arr = [];
@@ -1335,7 +1369,7 @@ function getAuthorizedRemoteOperatorGroups(site) {
   try {
     // check parameter
     if (typeof site !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var gname;
@@ -1365,7 +1399,7 @@ function getAuthorizedOperatorGroups(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get operator groups authorization from the user
@@ -1402,7 +1436,7 @@ function authorizedCustomerCards(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var permissionId;
     var arr = [];
@@ -1537,7 +1571,7 @@ function getUserAuthorizations(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // object to return
@@ -1712,6 +1746,7 @@ exports.reload = reload;
 exports.setLogger = setLogger;
 exports.setCompUser = setCompUser;
 exports.setCompDbconn = setCompDbconn;
+exports.authorizeCfUser = authorizeCfUser;
 exports.authorizeSpyUser = authorizeSpyUser;
 exports.authorizeDndUser = authorizeDndUser;
 exports.authorizeCdrUser = authorizeCdrUser;

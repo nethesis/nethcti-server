@@ -1183,6 +1183,25 @@ function presenceSet(req, res, next) {
       return;
     }
 
+    if (status === compUser.USER_PRESENCE_STATUS.dnd &&
+      !compAuthorization.authorizeDndUser(username)) {
+
+      logger.log.warn(IDLOG, 'setting dnd to user "' + username + '": permission denied');
+      compUtil.net.sendHttp403(IDLOG, res);
+      return;
+
+    } else if (!compAuthorization.authorizeCfUser(username) &&
+      (
+        status === compUser.USER_PRESENCE_STATUS.call_forward ||
+        status === compUser.USER_PRESENCE_STATUS.voicemail ||
+        status === compUser.USER_PRESENCE_STATUS.cellphone
+      )) {
+
+      logger.log.warn(IDLOG, 'setting cf to user "' + username + '": permission denied');
+      compUtil.net.sendHttp403(IDLOG, res);
+      return;
+    }
+
     compUser.setPresence({
         username: username,
         status: status,
