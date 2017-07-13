@@ -1064,6 +1064,18 @@ function presenceOnBusySet(req, res, next) {
       return;
     }
 
+    if (!compAuthorization.authorizeCfUser(username) &&
+      (
+        status === compUser.USER_PRESENCE_ONBUSY_STATUS.call_forward ||
+        status === compUser.USER_PRESENCE_ONBUSY_STATUS.voicemail ||
+        status === compUser.USER_PRESENCE_ONBUSY_STATUS.cellphone
+      )) {
+
+      logger.log.warn(IDLOG, 'setting presence on busy cf to user "' + username + '": permission denied');
+      compUtil.net.sendHttp403(IDLOG, res);
+      return;
+    }
+
     compUser.setPresenceOnBusy({
         username: username,
         status: status,
@@ -1109,6 +1121,18 @@ function presenceOnUnavailableSet(req, res, next) {
       (status === compUser.USER_PRESENCE_ONUNAVAILABLE_STATUS.callforward && typeof destination !== 'string')) {
 
       compUtil.net.sendHttp400(IDLOG, res);
+      return;
+    }
+
+    if (!compAuthorization.authorizeCfUser(username) &&
+      (
+        status === compUser.USER_PRESENCE_ONUNAVAILABLE_STATUS.call_forward ||
+        status === compUser.USER_PRESENCE_ONUNAVAILABLE_STATUS.voicemail ||
+        status === compUser.USER_PRESENCE_ONUNAVAILABLE_STATUS.cellphone
+      )) {
+
+      logger.log.warn(IDLOG, 'setting presence on unavailable cf to user "' + username + '": permission denied');
+      compUtil.net.sendHttp403(IDLOG, res);
       return;
     }
 
@@ -1186,7 +1210,7 @@ function presenceSet(req, res, next) {
     if (status === compUser.USER_PRESENCE_STATUS.dnd &&
       !compAuthorization.authorizeDndUser(username)) {
 
-      logger.log.warn(IDLOG, 'setting dnd to user "' + username + '": permission denied');
+      logger.log.warn(IDLOG, 'setting presence dnd to user "' + username + '": permission denied');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
 
@@ -1197,7 +1221,7 @@ function presenceSet(req, res, next) {
         status === compUser.USER_PRESENCE_STATUS.cellphone
       )) {
 
-      logger.log.warn(IDLOG, 'setting cf to user "' + username + '": permission denied');
+      logger.log.warn(IDLOG, 'setting presence cf to user "' + username + '": permission denied');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
     }
