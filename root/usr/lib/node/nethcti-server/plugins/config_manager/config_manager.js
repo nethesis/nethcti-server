@@ -425,7 +425,7 @@ function configChat(path) {
     logger.log.info(IDLOG, 'configure server chat with ' + path);
 
     // read configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     // check JSON file
     if (typeof json !== 'object' || typeof json.url !== 'string' || typeof json.domain !== 'string') {
@@ -463,7 +463,7 @@ function config(path) {
     }
 
     // read configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     // check JSON file
     if (typeof json !== 'object' || typeof json.hostname !== 'string') {
@@ -750,7 +750,7 @@ function configPhoneUrls(path) {
     logger.log.info(IDLOG, 'configure phone urls reading ' + path);
 
     // read configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     // check JSON file
     if (typeof json !== 'object') {

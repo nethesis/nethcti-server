@@ -449,7 +449,7 @@ function config(path) {
   }
 
   // read configuration file
-  var json = require(path).rest;
+  var json = (JSON.parse(fs.readFileSync(path, 'utf8'))).rest;
 
   // initialize the port of the REST server
   if (json.astproxy && json.astproxy.port) {
@@ -489,7 +489,7 @@ function configPrivacy(path) {
     }
 
     // read configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     if (json.privacy_numbers) {
       setAllRestPluginsPrivacy(json.privacy_numbers);

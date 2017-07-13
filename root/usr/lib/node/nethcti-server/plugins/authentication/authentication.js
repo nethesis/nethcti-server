@@ -234,8 +234,7 @@ function configRemoteAuthentications(path) {
     }
 
     logger.log.info(IDLOG, 'configure remote sites authentication by ' + path);
-
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     if (typeof json !== 'object') {
       logger.log.error(IDLOG, 'wrong ' + path);
@@ -283,7 +282,7 @@ function config(path) {
   }
 
   // read configuration file
-  var json = require(path);
+  var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
   logger.log.info(IDLOG, 'configuring authentication by ' + path);
 

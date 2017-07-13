@@ -1530,7 +1530,7 @@ function config(path) {
     }
 
     // read configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     // initialize the port of the websocket server (http)
     if (json.websocket && json.websocket.http_port) {
@@ -1571,7 +1571,7 @@ function configPrivacy(path) {
     }
 
     // read configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     // initialize the string used to hide last digits of phone numbers
     if (json.privacy_numbers) {

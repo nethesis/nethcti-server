@@ -241,7 +241,7 @@ function configRemoteOperators(path) {
     }
 
     // read the file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     if (typeof json !== 'object' ||
       typeof json.groups !== 'object') {

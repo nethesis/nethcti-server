@@ -553,7 +553,7 @@ function config(path) {
       return;
     }
 
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     // check the configuration file
     if (typeof json !== 'object' ||
@@ -593,7 +593,7 @@ function configPrivacy(path) {
     }
 
     // read configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     // initialize the string used to hide last digits of phone numbers
     if (json.privacy_numbers) {

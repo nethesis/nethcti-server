@@ -872,7 +872,7 @@ function config(path) {
     }
 
     // read configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     // initialize the port of the tcp server
     if (json && json.tcp && json.tcp.port) {
@@ -921,7 +921,7 @@ function configWinPopup(path) {
     }
 
     // read configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     if (json && json.stream && json.stream.width) {
       streamNotifSize.width = json.stream.width;

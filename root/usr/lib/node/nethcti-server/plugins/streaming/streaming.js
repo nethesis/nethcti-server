@@ -198,7 +198,7 @@ function config(path) {
         logger.log.info(IDLOG, 'configure streaming with ' + path);
 
         // read configuration file
-        var json = require(path);
+        var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
         // check JSON file
         if (typeof json !== 'object') {
