@@ -26,6 +26,24 @@ var fs = require('fs');
 var IDLOG = '[authorization]';
 
 /**
+ * The configuration file path of the users.
+ *
+ * @property USERS_CONF_FILEPATH
+ * @type string
+ * @private
+ */
+var USERS_CONF_FILEPATH;
+
+/**
+ * The configuration file path of the profiles.
+ *
+ * @property PROFILES_CONF_FILEPATH
+ * @type string
+ * @private
+ */
+var PROFILES_CONF_FILEPATH;
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -127,15 +145,17 @@ function config(obj) {
     if (!fs.existsSync(obj.profiles)) {
       throw new Error(obj.profiles + ' does not exist');
     }
+    USERS_CONF_FILEPATH = obj.users;
+    PROFILES_CONF_FILEPATH = obj.profiles;
     // initialize mapping between user and authorization profile
     var u;
-    mapUserProfile = JSON.parse(fs.readFileSync(obj.users, 'utf8'));
+    mapUserProfile = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
     for (u in mapUserProfile) {
       delete mapUserProfile[u].name;
       delete mapUserProfile[u].endpoints;
     }
     // initialize profiles. The keys are the profile "id" and the value the profile object itself
-    profiles = JSON.parse(fs.readFileSync(obj.profiles, 'utf8'));
+    profiles = JSON.parse(fs.readFileSync(PROFILES_CONF_FILEPATH, 'utf8'));
     // fix the permission keys to be an object instead of an array
     var i, mp, id, temp;
     for (id in profiles) {
@@ -153,7 +173,7 @@ function config(obj) {
         profiles[id].macro_permissions[mp].permissions = temp;
       }
     }
-    logger.log.info(IDLOG, 'configuration done by ' + obj.users + ' ' + obj.profiles);
+    logger.log.info(IDLOG, 'configuration done by ' + USERS_CONF_FILEPATH + ' ' + PROFILES_CONF_FILEPATH);
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1649,8 +1669,46 @@ function verifyOffhourUserAnnouncement(username, announcementId, cb) {
   }
 }
 
+/**
+ * Reset the component.
+ *
+ * @method reset
+ */
+function reset() {
+  try {
+    var k;
+    for (k in mapUserProfile) {
+      delete mapUserProfile[k];
+    }
+    for (k in profiles) {
+      delete profiles[k];
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ */
+function reload() {
+  try {
+    reset();
+    config({
+      users: USERS_CONF_FILEPATH,
+      profiles: PROFILES_CONF_FILEPATH
+    });
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.config = config;
+exports.reload = reload;
 exports.setLogger = setLogger;
 exports.setCompUser = setCompUser;
 exports.setCompDbconn = setCompDbconn;
