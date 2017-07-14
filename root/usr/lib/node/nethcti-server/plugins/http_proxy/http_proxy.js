@@ -157,7 +157,7 @@ function config(path) {
     throw new Error(path + ' does not exist');
   }
 
-  var json = require(path).http_proxy;
+  var json = (JSON.parse(fs.readFileSync(path, 'utf8'))).http_proxy;
 
   if (json.router) {
     router = json.router;

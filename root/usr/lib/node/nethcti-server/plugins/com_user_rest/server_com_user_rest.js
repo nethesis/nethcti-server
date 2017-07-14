@@ -243,7 +243,8 @@ function config(path) {
     throw new Error(path + ' does not exist');
   }
 
-  var json = require(path).rest;
+  var json = (JSON.parse(fs.readFileSync(path, 'utf8'))).rest;
+
   // initialize the port of the REST server
   if (json.user && json.user.port) {
     port = json.user.port;

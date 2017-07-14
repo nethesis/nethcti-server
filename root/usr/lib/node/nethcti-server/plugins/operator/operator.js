@@ -91,7 +91,7 @@ function config(path) {
     }
 
     // read groups part from the JSON file
-    var json = require(path).groups;
+    var json = (JSON.parse(fs.readFileSync(path, 'utf8'))).groups;
 
     // create the Group objects
     var g, newgroup;
