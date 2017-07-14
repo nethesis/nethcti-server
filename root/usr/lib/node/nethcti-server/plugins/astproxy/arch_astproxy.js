@@ -28,7 +28,6 @@ module.exports = function(options, imports, register) {
   register(null, {
     astProxy: {
       reload: astProxy.reload,
-
       on: astProxy.on,
       doCmd: astProxy.doCmd,
       setCfb: astProxy.proxyLogic.setCfb,

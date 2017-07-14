@@ -31,6 +31,24 @@ var USER_CONFIG_KEYS = require('./user_config_keys').USER_CONFIG_KEYS;
 var IDLOG = '[config_manager]';
 
 /**
+ * The configuration file path.
+ *
+ * @property CONFIG_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_FILEPATH;
+
+/**
+ * The configuration file path of the phone urls.
+ *
+ * @property PHONE_URLS_FILEPATH
+ * @type string
+ * @private
+ */
+var PHONE_URLS_FILEPATH;
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -217,11 +235,12 @@ function setCompAstProxy(comp) {
 }
 
 /**
- * Initialize all user settings reading data from the _nethcti3.user\_settings_ database.
+ * Initialize all user settings reading data from the
+ * _nethcti3.user\_settings_ database.
  *
  * @method configUser
  */
-function configUser(path) {
+function configUser() {
   try {
     // sequentially executes two operations:
     //     1. sanitize default user extensions on "nethcti3.user_settings" db
@@ -461,13 +480,14 @@ function config(path) {
       logger.log.warn(IDLOG, path + ' does not exist');
       return;
     }
+    CONFIG_FILEPATH = path;
 
     // read configuration file
-    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
+    var json = JSON.parse(fs.readFileSync(CONFIG_FILEPATH, 'utf8'));
 
     // check JSON file
     if (typeof json !== 'object' || typeof json.hostname !== 'string') {
-      logger.log.warn(IDLOG, 'wrong ' + path + ': no "hostname" key');
+      logger.log.warn(IDLOG, 'wrong ' + CONFIG_FILEPATH + ': no "hostname" key');
       return;
     }
     serverHostname = json.hostname;
@@ -475,7 +495,7 @@ function config(path) {
     // set the listener for the websocket communication module
     // setComNethctiWsListeners();
 
-    logger.log.info(IDLOG, 'configuration done by ' + path);
+    logger.log.info(IDLOG, 'configuration done by ' + CONFIG_FILEPATH);
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -746,20 +766,21 @@ function configPhoneUrls(path) {
       logger.log.warn(IDLOG, path + ' does not exist');
       return;
     }
+    PHONE_URLS_FILEPATH = path;
 
-    logger.log.info(IDLOG, 'configure phone urls reading ' + path);
+    logger.log.info(IDLOG, 'configure phone urls reading ' + PHONE_URLS_FILEPATH);
 
     // read configuration file
-    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
+    var json = JSON.parse(fs.readFileSync(PHONE_URLS_FILEPATH, 'utf8'));
 
     // check JSON file
     if (typeof json !== 'object') {
-      logger.log.warn(IDLOG, 'wrong JSON file ' + path);
+      logger.log.warn(IDLOG, 'wrong JSON file ' + PHONE_URLS_FILEPATH);
       return;
     }
 
     phoneUrls = json;
-    logger.log.info(IDLOG, 'phone urls configuration by file ' + path + ' ended');
+    logger.log.info(IDLOG, 'phone urls configuration by file ' + PHONE_URLS_FILEPATH + ' ended');
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1700,8 +1721,56 @@ function getPostitNotificationSmsTo(username) {
   }
 }
 
+/**
+ * Reload the component.
+ *
+ * @method reset
+ * @private
+ */
+function reset() {
+  try {
+    var k;
+    for (k in chatServer) {
+      delete chatServer[k];
+    }
+    chatServer = {};
+
+    for (k in phoneUrls) {
+      delete phoneUrls[k];
+    }
+    phoneUrls = {};
+
+    for (k in userSettings) {
+      delete userSettings[k];
+    }
+    userSettings = {};
+    serverHostname = '';
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ * @private
+ */
+function reload() {
+  try {
+    reset();
+    config(CONFIG_FILEPATH);
+    configUser();
+    configPhoneUrls(PHONE_URLS_FILEPATH);
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.config = config;
+exports.reload = reload;
 exports.setLogger = setLogger;
 exports.configUser = configUser;
 exports.configChat = configChat;
