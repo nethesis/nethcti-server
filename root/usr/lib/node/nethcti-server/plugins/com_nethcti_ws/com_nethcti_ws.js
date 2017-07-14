@@ -381,6 +381,15 @@ var WS_ROOM = {
 };
 
 /**
+ * The configuration file path of the privacy.
+ *
+ * @property CONFIG_PRIVACY_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_PRIVACY_FILEPATH;
+
+/**
  * The event emitter.
  *
  * @property emitter
@@ -1569,9 +1578,10 @@ function configPrivacy(path) {
     if (!fs.existsSync(path)) {
       throw new Error(path + ' does not exist');
     }
+    CONFIG_PRIVACY_FILEPATH = path;
 
     // read configuration file
-    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
+    var json = JSON.parse(fs.readFileSync(CONFIG_PRIVACY_FILEPATH, 'utf8'));
 
     // initialize the string used to hide last digits of phone numbers
     if (json.privacy_numbers) {
@@ -1579,7 +1589,7 @@ function configPrivacy(path) {
     } else {
       logger.log.warn(IDLOG, 'wrong ' + file + ': no "privacy_numbers" key');
     }
-    logger.log.info(IDLOG, 'privacy configuration done by ' + path);
+    logger.log.info(IDLOG, 'privacy configuration done by ' + CONFIG_PRIVACY_FILEPATH);
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -2054,9 +2064,41 @@ function stop() {
   wsServer.close();
 }
 
+/**
+ * Reload the component.
+ *
+ * @method reset
+ * @private
+ */
+function reset() {
+  try {
+    privacyStrReplace = '';
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ * @private
+ */
+function reload() {
+  try {
+    reset();
+    configPrivacy(CONFIG_PRIVACY_FILEPATH);
+    logger.log.warn(IDLOG, 'reloaded');
+    console.log(privacyStrReplace);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.start = start;
+exports.reload = reload;
 exports.stop = stop;
 exports.config = config;
 exports.setAuthe = setAuthe;
