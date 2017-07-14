@@ -27,6 +27,15 @@ var Group = require('./group').Group;
 var IDLOG = '[operator]';
 
 /**
+ * The configuration file path.
+ *
+ * @property CONFIG_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_FILEPATH;
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -89,9 +98,10 @@ function config(path) {
       logger.log.warn(IDLOG, path + ' does not exist');
       return;
     }
+    CONFIG_FILEPATH = path;
 
     // read groups part from the JSON file
-    var json = (JSON.parse(fs.readFileSync(path, 'utf8'))).groups;
+    var json = (JSON.parse(fs.readFileSync(CONFIG_FILEPATH, 'utf8'))).groups;
 
     // create the Group objects
     var g, newgroup;
@@ -102,7 +112,7 @@ function config(path) {
       newgroup.addUsers(json[g]);
       groups[g] = newgroup;
     }
-    logger.log.info(IDLOG, 'ended configuration by JSON file ' + path);
+    logger.log.info(IDLOG, 'ended configuration by JSON file ' + CONFIG_FILEPATH);
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -134,7 +144,42 @@ function getJSONGroups() {
   }
 }
 
+/**
+ * Reload the component.
+ *
+ * @method reset
+ * @private
+ */
+function reset() {
+  try {
+    var k;
+    for (k in groups) {
+      delete groups[k];
+    }
+    groups = {};
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ * @private
+ */
+function reload() {
+  try {
+    reset();
+    config(CONFIG_FILEPATH);
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.config = config;
+exports.reload = reload;
 exports.setLogger = setLogger;
 exports.getJSONGroups = getJSONGroups;
