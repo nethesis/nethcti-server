@@ -29,6 +29,15 @@ var childProcess = require('child_process');
 var ready = false;
 
 /**
+ * The identifier of the interval used to remove expired tokens.
+ *
+ * @property intervalRemoveExpiredTokens
+ * @type number
+ * @private
+ */
+var intervalRemoveExpiredTokens;
+
+/**
  * Fired when the component is ready.
  *
  * @event ready

@@ -27,6 +27,15 @@ var EventEmitter = require('events').EventEmitter;
 var IDLOG = '[streaming]';
 
 /**
+ * The configuration file path.
+ *
+ * @property CONFIG_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_FILEPATH;
+
+/**
  * Fired when the streaming source has been sampled.
  *
  * @event streamingSourceChanged
@@ -77,6 +86,15 @@ var EVT_STREAMING_SOURCE_UNSUBSCRIBED = 'streamingSourceUnsubscribed';
  * @default console
  */
 var logger = console;
+
+/**
+ * The identifier of the interval used to get the source samples.
+ *
+ * @property intervalGetSourceSample
+ * @type number
+ * @private
+ */
+var intervalGetSourceSample;
 
 /**
  * The streaming objects. The keys are the streaming identifiers and the
@@ -191,15 +209,15 @@ function config(path) {
       logger.log.warn(IDLOG, path + ' doesn\'t exist');
       return;
     }
-
-    logger.log.info(IDLOG, 'configure streaming with ' + path);
+    CONFIG_FILEPATH = path;
+    logger.log.info(IDLOG, 'configure streaming with ' + CONFIG_FILEPATH);
 
     // read configuration file
-    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
+    var json = JSON.parse(fs.readFileSync(CONFIG_FILEPATH, 'utf8'));
 
     // check JSON file
     if (typeof json !== 'object') {
-      throw new Error('wrong JSON file ' + path);
+      throw new Error('wrong JSON file ' + CONFIG_FILEPATH);
     }
 
     // creates the Streaming objects and store them
@@ -218,7 +236,7 @@ function config(path) {
     }
 
     logger.log.info(IDLOG, 'configured streaming sources: ' + Object.keys(streamings));
-    logger.log.info(IDLOG, 'streaming configuration by file ' + path + ' ended');
+    logger.log.info(IDLOG, 'streaming configuration by file ' + CONFIG_FILEPATH + ' ended');
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -235,12 +253,12 @@ function start() {
     logger.log.info(IDLOG, 'start sampling video sources.');
     var loopStep = 0;
     var baseTime = 500;
-    setInterval(function() {
+    intervalGetSourceSample = setInterval(function() {
       for (var i in streamings) {
         if (loopStep % (streamings[i].getFramerate() / baseTime) === 0) {
           // emit the streaming source changed event
           streamings[i].getSample(function(err, id, img) {
-            logger.debug(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_CHANGED + '"');
+            logger.log.info(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_CHANGED + '"');
             emitter.emit(EVT_STREAMING_SOURCE_CHANGED, {
               streaming: {
                 source: id,
@@ -357,7 +375,7 @@ function open(streamId, callerid, fromExten, cb) {
  */
 function subscribeSource(username, streamId, cb) {
   try {
-    logger.debug(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_SUBSCRIBED + '"');
+    logger.log.info(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_SUBSCRIBED + '"');
     emitter.emit(EVT_STREAMING_SOURCE_SUBSCRIBED, {
       streaming: {
         username: username,
@@ -382,7 +400,7 @@ function subscribeSource(username, streamId, cb) {
  */
 function unsubscribeSource(username, streamId, cb) {
   try {
-    logger.debug(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_UNSUBSCRIBED + '"');
+    logger.log.info(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_UNSUBSCRIBED + '"');
     emitter.emit(EVT_STREAMING_SOURCE_UNSUBSCRIBED, {
       streaming: {
         username: username,
@@ -429,8 +447,47 @@ function emit(ev, data) {
   }
 }
 
+/**
+ * Reload the component.
+ *
+ * @method reset
+ * @private
+ */
+function reset() {
+  try {
+    clearInterval(intervalGetSourceSample);
+    intervalGetSourceSample = null;
+
+    var k;
+    for (k in streamings) {
+      delete streamings[k];
+    }
+    streamings = {};
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ * @private
+ */
+function reload() {
+  try {
+    reset();
+    config(CONFIG_FILEPATH);
+    start();
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.on = on;
+exports.reload = reload;
 exports.emit = emit;
 exports.start = start;
 exports.open = open;
