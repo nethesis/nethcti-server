@@ -1128,7 +1128,8 @@ function setDefaultUserExtensionConf(username, exten, cb) {
 }
 
 /**
- * Returns the default extension of the user.
+ * Returns the default extension of the user or the main extension
+ * if the user has never expressed the preference.
  *
  * @method getDefaultUserExtensionConf
  * @param  {string} username The username to get the default extension
@@ -1140,7 +1141,9 @@ function getDefaultUserExtensionConf(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameter');
     }
-    return userSettings[username][USER_CONFIG_KEYS.default_extension];
+    return userSettings[username][USER_CONFIG_KEYS.default_extension] ?
+      userSettings[username][USER_CONFIG_KEYS.default_extension] :
+      compUser.getEndpointMainExtension(username).getId();
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
