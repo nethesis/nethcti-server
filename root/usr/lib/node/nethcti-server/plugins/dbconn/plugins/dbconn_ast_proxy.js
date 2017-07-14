@@ -844,7 +844,7 @@ function deleteCallRecording(uniqueid, cb) {
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].find({
       where: ['uniqueid=?', uniqueid]
 
-    }).success(function(task) {
+    }).then(function(task) {
       try {
 
         if (task) {
@@ -852,7 +852,7 @@ function deleteCallRecording(uniqueid, cb) {
           // empty the content of the "recordingfile" field
           task.updateAttributes({
             recordingfile: ''
-          }, ['recordingfile']).success(function() {
+          }, ['recordingfile']).then(function() {
 
             logger.log.info(IDLOG, '"recordingfile" field of the call with uniqueid "' + uniqueid + '" has been emptied successfully from asteriskcdrdb.cdr table');
             cb();
@@ -869,7 +869,7 @@ function deleteCallRecording(uniqueid, cb) {
         cb(error);
       }
 
-    }).error(function(err) { // manage the error
+    }, function(err) { // manage the error
 
       logger.log.error(IDLOG, 'emptying "recordingfile" of the call with uniqueid "' + uniqueid + '" from asteriskcdrdb.cdr table: not found: ' + err.toString());
       cb(err.toString());
