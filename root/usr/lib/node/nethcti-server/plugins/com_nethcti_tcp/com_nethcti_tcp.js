@@ -159,6 +159,15 @@ var IDLOG = '[com_nethcti_tcp]';
 var ENCODING = 'utf8';
 
 /**
+ * The configuration file path of the windows popup.
+ *
+ * @property CONFIG_WINPOPUP_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_WINPOPUP_FILEPATH;
+
+/**
  * The name of the template file for a call notification popup.
  *
  * @property CALL_NOTIF_TEMPLATE_NAME
@@ -919,53 +928,54 @@ function configWinPopup(path) {
       logger.log.warn(IDLOG, 'win popup configuration file ' + path + ' does not exist: use default values');
       return;
     }
+    CONFIG_WINPOPUP_FILEPATH = path;
 
     // read configuration file
-    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
+    var json = JSON.parse(fs.readFileSync(CONFIG_WINPOPUP_FILEPATH, 'utf8'));
 
     if (json && json.stream && json.stream.width) {
       streamNotifSize.width = json.stream.width;
     } else {
-      logger.log.warn(IDLOG, 'no win stream popup width has been specified in ' + path + ': use default ' + streamNotifSize.width);
+      logger.log.warn(IDLOG, 'no win stream popup width has been specified in ' + CONFIG_WINPOPUP_FILEPATH + ': use default ' + streamNotifSize.width);
     }
 
     if (json && json.stream && json.stream.height) {
       streamNotifSize.height = json.stream.height;
     } else {
-      logger.log.warn(IDLOG, 'no win stream popup height has been specified in ' + path + ': use default ' + streamNotifSize.height);
+      logger.log.warn(IDLOG, 'no win stream popup height has been specified in ' + CONFIG_WINPOPUP_FILEPATH + ': use default ' + streamNotifSize.height);
     }
 
     if (json && json.call && json.call.width) {
       callNotifSize.width = json.call.width;
     } else {
-      logger.log.warn(IDLOG, 'no win call popup width has been specified in ' + path + ': use default ' + callNotifSize.width);
+      logger.log.warn(IDLOG, 'no win call popup width has been specified in ' + CONFIG_WINPOPUP_FILEPATH + ': use default ' + callNotifSize.width);
     }
 
     if (json && json.call && json.call.height) {
       callNotifSize.height = json.call.height;
     } else {
-      logger.log.warn(IDLOG, 'no win call popup height has been specified in ' + path + ': use default ' + callNotifSize.height);
+      logger.log.warn(IDLOG, 'no win call popup height has been specified in ' + CONFIG_WINPOPUP_FILEPATH + ': use default ' + callNotifSize.height);
     }
 
     if (json && json.close_timeout) {
       notifCloseTimeout = json.close_timeout;
     } else {
-      logger.log.warn(IDLOG, 'no win close popup timeout has been specified in ' + path + ': use default ' + notifCloseTimeout);
+      logger.log.warn(IDLOG, 'no win close popup timeout has been specified in ' + CONFIG_WINPOPUP_FILEPATH + ': use default ' + notifCloseTimeout);
     }
 
     if (json && json.commands && typeof json.commands === 'object') {
       notifSupportedCommands = json.commands;
     } else {
-      logger.log.warn(IDLOG, 'wrong win popup commands in ' + path);
+      logger.log.warn(IDLOG, 'wrong win popup commands in ' + CONFIG_WINPOPUP_FILEPATH);
     }
 
     // initialize the protocol used by windows notification popup to open the cti app
     if (json && json.cti_proto && (json.cti_proto === 'https' || json.cti_proto === 'http')) {
       ctiProto = json.cti_proto;
     } else {
-      logger.log.warn(IDLOG, 'bad "cti_proto" for win popup in ' + path + ': use default ' + ctiProto);
+      logger.log.warn(IDLOG, 'bad "cti_proto" for win popup in ' + CONFIG_WINPOPUP_FILEPATH + ': use default ' + ctiProto);
     }
-    logger.log.info(IDLOG, 'configuration of notification popup done by ' + path);
+    logger.log.info(IDLOG, 'configuration of notification popup done by ' + CONFIG_WINPOPUP_FILEPATH);
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1438,9 +1448,50 @@ function getNumConnectedClients() {
   }
 }
 
+/**
+ * Reload the component.
+ *
+ * @method reset
+ * @private
+ */
+function reset() {
+  try {
+    streamNotifSize = {
+      width: 400,
+      height: 400
+    };
+    callNotifSize = {
+      width: 400,
+      height: 96
+    };
+    notifSupportedCommands = {};
+    notifCloseTimeout = 10;
+    ctiProto = 'https';
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ * @private
+ */
+function reload() {
+  try {
+    reset();
+    configWinPopup(CONFIG_WINPOPUP_FILEPATH);
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.start = start;
 exports.config = config;
+exports.reload = reload;
 exports.setLogger = setLogger;
 exports.setAstProxy = setAstProxy;
 exports.setCompUser = setCompUser;
