@@ -92,7 +92,6 @@ try {
       process.on('uncaughtException', function(err) {
         logger.ctilog.log.error(IDLOG, 'UncaughtException !!!');
         logger.ctilog.log.error(IDLOG, err.stack);
-        app.destroy();
       });
 
       process.on('SIGUSR1', function() {
