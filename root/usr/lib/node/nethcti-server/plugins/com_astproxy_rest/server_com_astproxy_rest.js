@@ -28,6 +28,15 @@ var plugins = require('jsplugs')().require('./plugins/com_astproxy_rest/plugins_
 var IDLOG = '[server_com_astproxy_rest]';
 
 /**
+ * The configuration file path of the privacy.
+ *
+ * @property CONFIG_PRIVACY_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_PRIVACY_FILEPATH;
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -487,17 +496,18 @@ function configPrivacy(path) {
     if (!fs.existsSync(path)) {
       throw new Error(path + ' does not exist');
     }
+    CONFIG_PRIVACY_FILEPATH = path;
 
     // read configuration file
-    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
+    var json = JSON.parse(fs.readFileSync(CONFIG_PRIVACY_FILEPATH, 'utf8'));
 
     if (json.privacy_numbers) {
       setAllRestPluginsPrivacy(json.privacy_numbers);
     } else {
-      logger.log.warn(IDLOG, 'wrong ' + path + ': no "privacy_numbers" key');
+      logger.log.warn(IDLOG, 'wrong ' + CONFIG_PRIVACY_FILEPATH + ': no "privacy_numbers" key');
     }
 
-    logger.log.info(IDLOG, 'configuration privacy done by ' + path);
+    logger.log.info(IDLOG, 'configuration privacy done by ' + CONFIG_PRIVACY_FILEPATH);
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -587,8 +597,24 @@ function start() {
   }
 }
 
+/**
+ * Reload the component.
+ *
+ * @method reload
+ * @private
+ */
+function reload() {
+  try {
+    configPrivacy(CONFIG_PRIVACY_FILEPATH);
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.start = start;
+exports.reload = reload;
 exports.config = config;
 exports.setLogger = setLogger;
 exports.setCompUtil = setCompUtil;
