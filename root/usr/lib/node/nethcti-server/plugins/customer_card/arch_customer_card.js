@@ -40,6 +40,9 @@ module.exports = function(options, imports, register) {
       customerCard.setDbconn(imports.dbconn);
       customerCard.start();
     });
+    imports.dbconn.on(imports.dbconn.EVT_RELOADED, function() {
+      customerCard.reload();
+    });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }

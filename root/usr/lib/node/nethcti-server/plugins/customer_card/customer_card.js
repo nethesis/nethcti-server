@@ -29,6 +29,24 @@ var async = require('async');
 var IDLOG = '[customer_card]';
 
 /**
+ * The configuration file path of the privacy.
+ *
+ * @property CONFIG_PRIVACY_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_PRIVACY_FILEPATH;
+
+/**
+ * The configuration file path.
+ *
+ * @property CONFIG_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_FILEPATH;
+
+/**
  * The default file extension of the customer cards templates.
  *
  * @property TEMPLATE_EXTENSION
@@ -552,8 +570,9 @@ function config(path) {
       logger.log.error(IDLOG, path + ' does not exist');
       return;
     }
+    CONFIG_FILEPATH = path;
 
-    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
+    var json = JSON.parse(fs.readFileSync(CONFIG_FILEPATH, 'utf8'));
 
     // check the configuration file
     if (typeof json !== 'object' ||
@@ -561,12 +580,12 @@ function config(path) {
       typeof json.rest.customer_card !== 'object' ||
       typeof json.rest.customer_card.templates_customercards !== 'string') {
 
-      logger.log.warn(IDLOG, path + ': wrong "customer_card" key in rest section');
+      logger.log.warn(IDLOG, CONFIG_FILEPATH + ': wrong "customer_card" key in rest section');
       return;
     }
 
     templatesPath = json.rest.customer_card.templates_customercards;
-    logger.log.info(IDLOG, 'configuration done by ' + path);
+    logger.log.info(IDLOG, 'configuration done by ' + CONFIG_FILEPATH);
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -591,20 +610,58 @@ function configPrivacy(path) {
     if (!fs.existsSync(path)) {
       throw new Error(path + ' does not exist');
     }
+    CONFIG_PRIVACY_FILEPATH = path;
 
     // read configuration file
-    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
+    var json = JSON.parse(fs.readFileSync(CONFIG_PRIVACY_FILEPATH, 'utf8'));
 
     // initialize the string used to hide last digits of phone numbers
     if (json.privacy_numbers) {
       privacyStrReplace = json.privacy_numbers;
-
     } else {
-      logger.log.warn(IDLOG, 'no privacy string has been specified in JSON file ' + path);
+      logger.log.warn(IDLOG, 'no privacy string has been specified in JSON file ' + CONFIG_PRIVACY_FILEPATH);
     }
+    logger.log.info(IDLOG, 'privacy configuration by file ' + CONFIG_PRIVACY_FILEPATH + ' ended');
 
-    logger.log.info(IDLOG, 'privacy configuration by file ' + path + ' ended');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
 
+/**
+ * Reload the component.
+ *
+ * @method reset
+ * @private
+ */
+function reset() {
+  try {
+    var k;
+    for (k in ejsTemplates) {
+      delete ejsTemplates[k];
+    }
+    ejsTemplates = {};
+
+    templatesPath = null;
+    privacyStrReplace = 'xxx';
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ * @private
+ */
+function reload() {
+  try {
+    reset();
+    config(CONFIG_FILEPATH);
+    configPrivacy(CONFIG_PRIVACY_FILEPATH);
+    start();
+    logger.log.warn(IDLOG, 'reloaded');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -612,6 +669,7 @@ function configPrivacy(path) {
 
 // public interface
 exports.start = start;
+exports.reload = reload;
 exports.config = config;
 exports.setLogger = setLogger;
 exports.setDbconn = setDbconn;
