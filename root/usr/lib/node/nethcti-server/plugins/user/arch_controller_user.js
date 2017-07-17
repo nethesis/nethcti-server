@@ -23,19 +23,67 @@ var IDLOG = '[arch_controller_user]';
 module.exports = function(options, imports, register) {
 
   var logger;
-  var user = controllerUser;
-  user.ENDPOINT_TYPES = endpointTypes.TYPES;
-  user.isValidUserPresence = userPresence.isValidUserPresence;
-  user.isValidUserPresenceOnBusy = userPresence.isValidUserPresenceOnBusy;
-  user.isValidUserPresenceOnUnavailable = userPresence.isValidUserPresenceOnUnavailable;
-  user.USER_PRESENCE_STATUS = userPresence.STATUS;
-  user.USER_PRESENCE_ONBUSY_STATUS = userPresence.STATUS_ONBUSY;
-  user.USER_PRESENCE_ONUNAVAILABLE_STATUS = userPresence.STATUS_ONUNAVAILABLE;
 
   // public interface for other architect components
   register(null, {
-    user: user
+    user: {
+      ENDPOINT_TYPES: endpointTypes.TYPES,
+      isValidUserPresence: userPresence.isValidUserPresence,
+      isValidUserPresenceOnBusy: userPresence.isValidUserPresenceOnBusy,
+      isValidUserPresenceOnUnavailable: userPresence.isValidUserPresenceOnUnavailable,
+      USER_PRESENCE_STATUS: userPresence.STATUS,
+      USER_PRESENCE_ONBUSY_STATUS: userPresence.STATUS_ONBUSY,
+      USER_PRESENCE_ONUNAVAILABLE_STATUS: userPresence.STATUS_ONUNAVAILABLE,
+      on: controllerUser.on,
+      config: controllerUser.config,
+      setLogger: controllerUser.setLogger,
+      setPresence: controllerUser.setPresence,
+      getPresence: controllerUser.getPresence,
+      EVT_RELOADED: controllerUser.EVT_RELOADED,
+      saveSettings: controllerUser.saveSettings,
+      getUsernames: controllerUser.getUsernames,
+      isUserPresent: controllerUser.isUserPresent,
+      isExtenWebrtc: controllerUser.isExtenWebrtc,
+      setCompDbconn: controllerUser.setCompDbconn,
+      deleteSettings: controllerUser.deleteSettings,
+      getUserSettings: controllerUser.getUserSettings,
+      getUserInfoJSON: controllerUser.getUserInfoJSON,
+      EVT_USERS_READY: controllerUser.EVT_USERS_READY,
+      getPhoneWebUser: controllerUser.getPhoneWebUser,
+      setCompAstProxy: controllerUser.setCompAstProxy,
+      getPresenceList: controllerUser.getPresenceList,
+      getPhoneWebPass: controllerUser.getPhoneWebPass,
+      getEndpointsJSON: controllerUser.getEndpointsJSON,
+      getVoicemailList: controllerUser.getVoicemailList,
+      setPresenceOnBusy: controllerUser.setPresenceOnBusy,
+      getPresenceOnBusy: controllerUser.getPresenceOnBusy,
+      getConfigurations: controllerUser.getConfigurations,
+      setConfigurations: controllerUser.setConfigurations,
+      getAllEndpointsEmail: controllerUser.getAllEndpointsEmail,
+      hasExtensionEndpoint: controllerUser.hasExtensionEndpoint,
+      hasCellphoneEndpoint: controllerUser.hasCellphoneEndpoint,
+      getEndpointVoicemail: controllerUser.getEndpointVoicemail,
+      hasVoicemailEndpoint: controllerUser.hasVoicemailEndpoint,
+      getUsernamesWithData: controllerUser.getUsernamesWithData,
+      getPresenceListOnBusy: controllerUser.getPresenceListOnBusy,
+      getPresenceOnUnavailable: controllerUser.getPresenceOnUnavailable,
+      setPresenceOnUnavailable: controllerUser.setPresenceOnUnavailable,
+      getPresenceCallforwardTo: controllerUser.getPresenceCallforwardTo,
+      getAllEndpointsExtension: controllerUser.getAllEndpointsExtension,
+      getAllEndpointsCellphone: controllerUser.getAllEndpointsCellphone,
+      getEndpointMainExtension: controllerUser.getEndpointMainExtension,
+      getAllUsersEndpointsJSON: controllerUser.getAllUsersEndpointsJSON,
+      EVT_USER_PRESENCE_CHANGED: controllerUser.EVT_USER_PRESENCE_CHANGED,
+      getPresenceListOnUnavailable: controllerUser.getPresenceListOnUnavailable,
+      getAllUsersEndpointsExtension: controllerUser.getAllUsersEndpointsExtension,
+      getUserUsingEndpointExtension: controllerUser.getUserUsingEndpointExtension,
+      getUsersUsingEndpointVoicemail: controllerUser.getUsersUsingEndpointVoicemail,
+      getPresenceOnBusyCallforwardTo: controllerUser.getPresenceOnBusyCallforwardTo,
+      EVT_USER_PROFILE_AVATAR_CHANGED: controllerUser.EVT_USER_PROFILE_AVATAR_CHANGED,
+      getPresenceOnUnavailableCallforwardTo: controllerUser.getPresenceOnUnavailableCallforwardTo
+    }
   });
+
   try {
     logger = console;
     if (imports.logger) {

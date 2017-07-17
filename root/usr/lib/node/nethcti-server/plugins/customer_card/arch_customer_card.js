@@ -27,7 +27,19 @@ module.exports = function(options, imports, register) {
 
   // public interface for other architect components
   register(null, {
-    customerCard: customerCard
+    customerCard: {
+      start: customerCard.start,
+      config: customerCard.config,
+      setLogger: customerCard.setLogger,
+      setDbconn: customerCard.setDbconn,
+      setCompUser: customerCard.setCompUser,
+      configPrivacy: customerCard.configPrivacy,
+      getAllCustomerCards: customerCard.getAllCustomerCards,
+      getCustomerCardByNum: customerCard.getCustomerCardByNum,
+      getCustomerCardsList: customerCard.getCustomerCardsList,
+      setCompAuthorization: customerCard.setCompAuthorization,
+      getCustomerCardPreview: customerCard.getCustomerCardPreview
+    }
   });
 
   try {

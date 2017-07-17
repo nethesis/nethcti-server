@@ -27,7 +27,28 @@ module.exports = function(options, imports, register) {
 
   // public interface for other architect components
   register(null, {
-    authentication: authentication
+    authentication: {
+      on: authentication.on,
+      config: authentication.config,
+      getNonce: authentication.getNonce,
+      setLogger: authentication.setLogger,
+      verifyToken: authentication.verifyToken,
+      removeToken: authentication.removeToken,
+      authenticate: authentication.authenticate,
+      setCompDbconn: authentication.setCompDbconn,
+      EVT_COMP_READY: authentication.EVT_COMP_READY,
+      calculateToken: authentication.calculateToken,
+      getRemoteSiteName: authentication.getRemoteSiteName,
+      updateTokenExpires: authentication.updateTokenExpires,
+      isUnautheCallEnabled: authentication.isUnautheCallEnabled,
+      authenticateRemoteSite: authentication.authenticateRemoteSite,
+      isAutoUpdateTokenExpires: authentication.isAutoUpdateTokenExpires,
+      authenticateFreepbxAdmin: authentication.authenticateFreepbxAdmin,
+      getTokenExpirationTimeout: authentication.getTokenExpirationTimeout,
+      configRemoteAuthentications: authentication.configRemoteAuthentications,
+      isRemoteSiteAlreadyLoggedIn: authentication.isRemoteSiteAlreadyLoggedIn,
+      initFreepbxAdminAuthentication: authentication.initFreepbxAdminAuthentication
+    }
   });
 
   try {
