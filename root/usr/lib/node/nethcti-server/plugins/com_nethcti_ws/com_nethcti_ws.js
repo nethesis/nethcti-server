@@ -2089,7 +2089,6 @@ function reload() {
     reset();
     configPrivacy(CONFIG_PRIVACY_FILEPATH);
     logger.log.warn(IDLOG, 'reloaded');
-    console.log(privacyStrReplace);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }

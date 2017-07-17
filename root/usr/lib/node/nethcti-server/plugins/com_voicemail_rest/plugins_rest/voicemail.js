@@ -660,7 +660,6 @@ function setCompAuthorization(comp) {
        */
       download_custom_msg: function(req, res, next) {
         try {
-          console.log(req.params);
           // extract the username added in the authentication step
           var username = req.headers.authorization_user;
           if (typeof req.params !== 'object' ||
