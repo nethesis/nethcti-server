@@ -802,18 +802,21 @@ function initMssqlConnCustCard(data, tdsVersion) {
       user: data.user,
       password: data.pass,
       database: data.name,
+      pool: {
+        idleTimeoutMillis: 300000,
+        max: 10
+      },
       options: {
         encrypt: false,
         tdsVersion: tdsVersion
       }
     };
-
     var connection = new mssql.Connection(config, function(err1) {
       try {
         if (err1) {
           logger.log.error(IDLOG, 'initializing db connection with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port + ' - ' + err1.stack);
-
         } else {
+          connection.db_type = 'mssql';
           dbConnCustCard[data.id] = connection;
           logger.log.info(IDLOG, 'initialized db connection with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port + ' (id: ' + data.id + ')');
         }
@@ -842,6 +845,10 @@ function initMssqlConn(name, tdsVersion) {
       user: dbConfig[name].dbuser,
       password: dbConfig[name].dbpassword,
       database: dbConfig[name].dbname,
+      pool: {
+        idleTimeoutMillis: 300000,
+        max: 10
+      },
       options: {
         encrypt: false,
         tdsVersion: tdsVersion
@@ -854,6 +861,7 @@ function initMssqlConn(name, tdsVersion) {
           logger.log.error(IDLOG, 'initializing db connection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport + ' - ' + err1.stack);
 
         } else {
+          connection.db_type = 'mssql';
           dbConn[name] = connection;
           logger.log.info(IDLOG, 'initialized db connection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport);
         }
@@ -951,7 +959,7 @@ function reset() {
     for (k in dbConn) {
       if (dbConn[k].db_type === 'postgres') {
         dbConn[k].end(function(err) {
-          logger.log.warn(IDLOG, dbConn[k].db_type + ' connection "' + k + '" closed during reset');
+          logger.log.info(IDLOG, dbConn[k].db_type + ' connection "' + k + '" closed during reset');
           if (err) {
             logger.log.error(IDLOG, 'closing ' + dbConn[k].db_type + ' connection "' + k + '": ' + err.stack);
           }
@@ -962,7 +970,30 @@ function reset() {
     for (k in dbConnCustCard) {
       if (dbConnCustCard[k].db_type === 'postgres') {
         dbConnCustCard[k].end(function(err) {
-          logger.log.warn(IDLOG, dbConnCustCard[k].db_type + ' connection "' + k + '" closed during reset');
+          logger.log.info(IDLOG, dbConnCustCard[k].db_type + ' connection "' + k + '" closed during reset');
+          if (err) {
+            logger.log.error(IDLOG, 'closing ' + dbConnCustCard[k].db_type + ' connection "' + k + '": ' + err.stack);
+          }
+          delete dbConnCustCard[k];
+        });
+      }
+    }
+    // close mssql connections
+    for (k in dbConn) {
+      if (dbConn[k].db_type === 'mssql') {
+        dbConn[k].close(function(err) {
+          logger.log.info(IDLOG, dbConn[k].db_type + ' connection "' + k + '" closed during reset');
+          if (err) {
+            logger.log.error(IDLOG, 'closing ' + dbConn[k].db_type + ' connection "' + k + '": ' + err.stack);
+          }
+          delete dbConn[k];
+        });
+      }
+    }
+    for (k in dbConnCustCard) {
+      if (dbConnCustCard[k].db_type === 'mssql') {
+        dbConnCustCard[k].close(function(err) {
+          logger.log.info(IDLOG, dbConnCustCard[k].db_type + ' connection "' + k + '" closed during reset');
           if (err) {
             logger.log.error(IDLOG, 'closing ' + dbConnCustCard[k].db_type + ' connection "' + k + '": ' + err.stack);
           }
