@@ -460,7 +460,7 @@ function initCustCardConnections() {
         }
 
         sequelize = new Sequelize(dbConfigCustCardData[ccName].name, dbConfigCustCardData[ccName].user, dbConfigCustCardData[ccName].pass, config);
-
+        sequelize.db_type = 'mysql';
         dbConnCustCard[dbConfigCustCardData[ccName].id] = sequelize;
         logger.log.info(IDLOG, 'initialized db connection for customer card (id: ' + dbConfigCustCardData[ccName].id + ', ' +
           dbConfigCustCardData[ccName].type + ', ' + dbConfigCustCardData[ccName].name + ', ' + dbConfigCustCardData[ccName].host + ':' + dbConfigCustCardData[ccName].port + ')');
@@ -622,6 +622,7 @@ function initConnections() {
           config.logging = false;
         }
         sequelize = new Sequelize(dbConfig[k].dbname, dbConfig[k].dbuser, dbConfig[k].dbpassword, config);
+        sequelize.db_type = 'mysql';
         dbConn[k] = sequelize;
         logger.log.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
 
@@ -678,10 +679,20 @@ function initPostgresConnCustCard(data) {
       if (err) {
         logger.log.error(IDLOG, 'initializing ' + data.type + ' db connection ' + data.name + ' ' + data.host + ':' + data.port + ' - ' + err.stacname);
       } else {
+        client.db_type = 'postgres'; // used for disconnection
         dbConnCustCard[data.id] = client;
         logger.log.info(IDLOG, 'initialized db connection with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port + ' (id: ' + data.id + ')');
       }
     });
+
+    client.on('end', function() {
+      logger.log.warn(IDLOG, 'db disconnection with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port + ' (id: ' + data.id + ')');
+    });
+    client.on('error', function(err) {
+      logger.log.error(IDLOG, 'db error with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port +
+        ' (id: ' + data.id + '): ' + err.stack);
+    });
+
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -708,10 +719,20 @@ function initPostgresConn(name) {
       if (err) {
         logger.log.error(IDLOG, 'initializing ' + dbConfig[name].dbtype + ' db connection ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport + ' - ' + err.stacname);
       } else {
+        client.db_type = 'postgres'; // used for disconnection
         dbConn[name] = client;
         logger.log.info(IDLOG, 'initialized db connection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport);
       }
     });
+
+    client.on('end', function() {
+      logger.log.warn(IDLOG, 'db disconnection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport);
+    });
+    client.on('error', function(err) {
+      logger.log.error(IDLOG, 'db disconnection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' +
+        dbConfig[name].dbhost + ':' + dbConfig[name].dbport + ': ' + err.stack);
+    });
+
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -914,11 +935,46 @@ function incNumExecQueries() {
  */
 function reset() {
   try {
+    var k;
+    // mysql connections are not closed, beacuse it uses a pool
+    for (k in dbConn) {
+      if (dbConn[k].db_type === 'mysql') {
+        delete dbConn[k];
+      }
+    }
+    for (k in dbConnCustCard) {
+      if (dbConnCustCard[k].db_type === 'mysql') {
+        delete dbConnCustCard[k];
+      }
+    }
+    // close postgres connections
+    for (k in dbConn) {
+      if (dbConn[k].db_type === 'postgres') {
+        dbConn[k].end(function(err) {
+          logger.log.warn(IDLOG, dbConn[k].db_type + ' connection "' + k + '" closed during reset');
+          if (err) {
+            logger.log.error(IDLOG, 'closing ' + dbConn[k].db_type + ' connection "' + k + '": ' + err.stack);
+          }
+          delete dbConn[k];
+        });
+      }
+    }
+    for (k in dbConnCustCard) {
+      if (dbConnCustCard[k].db_type === 'postgres') {
+        dbConnCustCard[k].end(function(err) {
+          logger.log.warn(IDLOG, dbConnCustCard[k].db_type + ' connection "' + k + '" closed during reset');
+          if (err) {
+            logger.log.error(IDLOG, 'closing ' + dbConnCustCard[k].db_type + ' connection "' + k + '": ' + err.stack);
+          }
+          delete dbConnCustCard[k];
+        });
+      }
+    }
     dbConfig = {};
     models = {};
     dbConfigCustCardData = {};
     custCardTemplatesData = {};
-    dbConnCustCard = {};
+
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
