@@ -37,3 +37,11 @@ event_templates('hostname-modify', qw(
 event_services('hostname-modify', qw(
                nethcti-server restart
 ));
+
+#
+# nethserver-freepbx-update
+#
+#
+event_services('nethserver-freepbx-update', qw(
+               nethcti-server restart
+));
