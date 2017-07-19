@@ -57,7 +57,7 @@ var astProxy;
           if (data.channel &&
             data.position && data.event === 'QueueCallerLeave') {
 
-            logger.info(IDLOG, 'received event ' + data.event);
+            logger.log.info(IDLOG, 'received event ' + data.event);
             astProxy.proxyLogic.evtRemoveQueueWaitingCaller({
               queue: data.queue,
               channel: data.channel,
@@ -67,7 +67,7 @@ var astProxy;
             });
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
         }
       },
 
@@ -82,16 +82,16 @@ var astProxy;
       setLogger: function(log) {
         try {
           if (typeof log === 'object' &&
-            typeof log.info === 'function' &&
-            typeof log.warn === 'function' &&
-            typeof log.error === 'function') {
+            typeof log.log.info === 'function' &&
+            typeof log.log.warn === 'function' &&
+            typeof log.log.error === 'function') {
 
             logger = log;
           } else {
             throw new Error('wrong logger object');
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
         }
       },
 
@@ -109,7 +109,7 @@ var astProxy;
           }
           astProxy = ap;
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
         }
       }
     };
@@ -120,6 +120,6 @@ var astProxy;
     exports.setLogger = queueCallerLeave.setLogger;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 })();

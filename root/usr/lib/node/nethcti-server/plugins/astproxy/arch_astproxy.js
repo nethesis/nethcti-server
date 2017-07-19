@@ -24,10 +24,10 @@ module.exports = function(options, imports, register) {
   if (imports.logger) {
     logger = imports.logger;
   }
-
   // public interface for other architect components
   register(null, {
     astProxy: {
+      reload: astProxy.reload,
       on: astProxy.on,
       doCmd: astProxy.doCmd,
       setCfb: astProxy.proxyLogic.setCfb,
@@ -102,6 +102,7 @@ module.exports = function(options, imports, register) {
       EVT_EXTEN_HANGUP: astProxy.proxyLogic.EVT_EXTEN_HANGUP,
       EVT_NEW_CDR: astProxy.proxyLogic.EVT_NEW_CDR,
       EVT_READY: astProxy.proxyLogic.EVT_READY,
+      EVT_RELOADED: astProxy.proxyLogic.EVT_RELOADED,
       EVT_QUEUE_MEMBER_CHANGED: astProxy.proxyLogic.EVT_QUEUE_MEMBER_CHANGED,
       EVT_MEETME_CONF_END: astProxy.proxyLogic.EVT_MEETME_CONF_END,
       EVT_MEETME_CONF_CHANGED: astProxy.proxyLogic.EVT_MEETME_CONF_CHANGED,
@@ -138,7 +139,7 @@ module.exports = function(options, imports, register) {
 
   try {
     // imports.dbconn.on(imports.dbconn.EVT_READY, function () {
-    astProxy.setLogger(logger);
+    astProxy.setLogger(logger.ctilog);
     astProxy.config('/etc/nethcti/asterisk.json');
     astProxy.configAstObjects('/etc/nethcti/ast_objects.json');
     astProxy.configExtenNames('/etc/nethcti/users.json');
@@ -149,11 +150,11 @@ module.exports = function(options, imports, register) {
     // astProxy.proxyLogic.setCompPhonebook(imports.phonebook);
     // astProxy.proxyLogic.setCompCallerNote(imports.callerNote);
     astProxy.start();
-    // queueRecallingManager.setLogger(logger);
+    // queueRecallingManager.setLogger(logger.ctilog);
     // queueRecallingManager.setCompAstProxy(astProxy);
     // queueRecallingManager.setCompDbconn(imports.dbconn);
     // });
   } catch (err) {
-    logger.error(err.stack);
+    logger.ctilog.log.error(err.stack);
   }
 };

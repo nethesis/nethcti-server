@@ -125,17 +125,17 @@ var router = {};
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' &&
-      typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -157,20 +157,20 @@ function config(path) {
     throw new Error(path + ' does not exist');
   }
 
-  var json = require(path).http_proxy;
+  var json = (JSON.parse(fs.readFileSync(path, 'utf8'))).http_proxy;
 
   if (json.router) {
     router = json.router;
   } else {
-    logger.warn(IDLOG, 'wrong ' + path + ': no "router" key into "http_proxy"');
+    logger.log.warn(IDLOG, 'wrong ' + path + ': no "router" key into "http_proxy"');
   }
 
   if (json.http_port) {
     port = json.http_port;
   } else {
-    logger.warn(IDLOG, 'wrong ' + path + ': no "http_port" key into "http_proxy"');
+    logger.log.warn(IDLOG, 'wrong ' + path + ': no "http_port" key into "http_proxy"');
   }
-  logger.info(IDLOG, 'configuration done by ' + path);
+  logger.log.info(IDLOG, 'configuration done by ' + path);
 }
 
 /**
@@ -182,9 +182,9 @@ function config(path) {
 function setCompAuthentication(comp) {
   try {
     compAuthentication = comp;
-    logger.info(IDLOG, 'set authentication architect component');
+    logger.log.info(IDLOG, 'set authentication architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -203,7 +203,7 @@ function start() {
 
     httpServer = http.createServer(function(req, res) {
       try {
-        logger.info(IDLOG, getProxyLog(req));
+        logger.log.info(IDLOG, getProxyLog(req));
 
         if (req.method === 'OPTIONS') {
           var headers = {};
@@ -318,21 +318,21 @@ function start() {
         compUtil.net.sendHttp404(IDLOG, res);
 
       } catch (err) {
-        logger.error(IDLOG, err.stack);
+        logger.log.error(IDLOG, err.stack);
       }
     }).listen(port, address);
 
     httpServer.on('listening', function() {
-      logger.warn(IDLOG, 'listening on ' + httpServer.address().address + ':' + httpServer.address().port);
+      logger.log.warn(IDLOG, 'listening on ' + httpServer.address().address + ':' + httpServer.address().port);
     });
     httpServer.on('error', function(e) {
-      logger.error(IDLOG, e.stack);
+      logger.log.error(IDLOG, e.stack);
     });
     httpServer.on('close', function() {
-      logger.warn(IDLOG, 'stop listening');
+      logger.log.warn(IDLOG, 'stop listening');
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -352,7 +352,7 @@ function setCompUser(comp) {
     compUser = comp;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -374,7 +374,7 @@ function getProxyLog(req) {
       ' -> ', req.headers.host
     ].join('');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -387,9 +387,9 @@ function getProxyLog(req) {
 function setCompUtil(comp) {
   try {
     compUtil = comp;
-    logger.info(IDLOG, 'set util architect component');
+    logger.log.info(IDLOG, 'set util architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -402,10 +402,10 @@ function setCompUtil(comp) {
 function setCompAstProxy(comp) {
   try {
     compAstProxy = comp;
-    logger.info(IDLOG, 'set asterisk proxy architect component');
+    logger.log.info(IDLOG, 'set asterisk proxy architect component');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 

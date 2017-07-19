@@ -60,10 +60,10 @@ function setCompDbconnMain(comp) {
     }
 
     compDbconnMain = comp;
-    logger.info(IDLOG, 'main dbconn component has been set');
+    logger.log.info(IDLOG, 'main dbconn component has been set');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -78,18 +78,18 @@ function setCompDbconnMain(comp) {
 function setLogger(log) {
   try {
     if (typeof log === 'object' &&
-      typeof log.info === 'function' &&
-      typeof log.warn === 'function' &&
-      typeof log.error === 'function') {
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -113,23 +113,23 @@ function getFpbxAdminSha1Pwd(cb) {
     }).then(function(result) {
       // extract result to return in the callback function
       if (result) {
-        logger.info(IDLOG, 'found sha1 password of freepbx admin user');
+        logger.log.info(IDLOG, 'found sha1 password of freepbx admin user');
         cb(null, result.password_sha1);
 
       } else {
-        logger.info(IDLOG, 'no sha1 password of freepbx admin user has been found');
+        logger.log.info(IDLOG, 'no sha1 password of freepbx admin user has been found');
         cb(null, false);
       }
 
     }, function(error) { // manage the error
-      logger.error(IDLOG, 'getting sha1 password of freepbx admin user');
+      logger.log.error(IDLOG, 'getting sha1 password of freepbx admin user');
       cb(error.toString());
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -184,19 +184,19 @@ function getCallInfo(uniqueid, privacyStr, cb) {
         results[i] = results[i].selectedValues;
       }
 
-      logger.info(IDLOG, results.length + ' results searching CEL on uniqueid "' + uniqueid + '"');
+      logger.log.info(IDLOG, results.length + ' results searching CEL on uniqueid "' + uniqueid + '"');
       cb(null, results);
 
     }).error(function(err) { // manage the error
 
-      logger.error(IDLOG, 'searching CEL on uniqueid "' + uniqueid + '"');
+      logger.log.error(IDLOG, 'searching CEL on uniqueid "' + uniqueid + '"');
       cb(err.toString());
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -233,15 +233,15 @@ function getQueuesQOS(day, cb) {
 
         }).success(function(results) {
           if (results) {
-            logger.info(IDLOG, 'get queues answered qos has been successful');
+            logger.log.info(IDLOG, 'get queues answered qos has been successful');
             callback(null, results);
           } else {
-            logger.info(IDLOG, 'get queues answered qos: not found');
+            logger.log.info(IDLOG, 'get queues answered qos: not found');
             callback(null, {});
           }
 
         }).error(function(err1) { // manage the error
-          logger.error(IDLOG, 'get queues answered qos: ' + err1.toString());
+          logger.log.error(IDLOG, 'get queues answered qos: ' + err1.toString());
           callback(err1, {});
         });
       },
@@ -256,7 +256,7 @@ function getQueuesQOS(day, cb) {
           order: ['agent', 'queuename']
         }).success(function(results) {
           if (results) {
-            logger.info(IDLOG, 'get ring no answered queues qos has been successful');
+            logger.log.info(IDLOG, 'get ring no answered queues qos has been successful');
             var res = {};
 
             for (var i in results) {
@@ -268,11 +268,11 @@ function getQueuesQOS(day, cb) {
 
             callback(null, res);
           } else {
-            logger.info(IDLOG, 'get ring no answered queues qos: not found');
+            logger.log.info(IDLOG, 'get ring no answered queues qos: not found');
             callback(null, {});
           }
         }).error(function(err1) { // manage the error
-          logger.error(IDLOG, 'get ring no answered queues qos: ' + err1.toString());
+          logger.log.error(IDLOG, 'get ring no answered queues qos: ' + err1.toString());
           callback(err1, {});
         });
       },
@@ -289,7 +289,7 @@ function getQueuesQOS(day, cb) {
           order: ['agent', 'queuename']
         }).success(function(results) {
           if (results) {
-            logger.info(IDLOG, 'get last call time queues qos has been successful');
+            logger.log.info(IDLOG, 'get last call time queues qos has been successful');
             var res = {};
 
             for (var i in results) {
@@ -301,11 +301,11 @@ function getQueuesQOS(day, cb) {
 
             callback(null, res);
           } else {
-            logger.error(IDLOG, 'get last call time queues qos: not found');
+            logger.log.error(IDLOG, 'get last call time queues qos: not found');
             callback(null, {});
           }
         }).error(function(err1) { // manage the error
-          logger.info(IDLOG, 'get last call time queues qos: ' + err1.toString());
+          logger.log.info(IDLOG, 'get last call time queues qos: ' + err1.toString());
           callback(err1, {});
         });
       }
@@ -341,7 +341,7 @@ function getQueuesQOS(day, cb) {
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -383,18 +383,18 @@ function getQueueRecallInfo(data, cb) {
     ].join('');
 
     compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).success(function(results) {
-      logger.info(IDLOG, results.length + ' results searching details about queue recall on cid "' + data.cid + '"');
+      logger.log.info(IDLOG, results.length + ' results searching details about queue recall on cid "' + data.cid + '"');
       cb(null, results);
 
     }).error(function(err1) {
-      logger.error(IDLOG, 'searching details about queue recall on cid "' + data.cid + '"');
+      logger.log.error(IDLOG, 'searching details about queue recall on cid "' + data.cid + '"');
       cb(err.toString(), {});
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -493,7 +493,7 @@ function getQueueRecallQueryTable(type, val) {
     return query;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return '';
   }
 }
@@ -537,19 +537,19 @@ function getQueueRecall(data, cb) {
     ].join('');
 
     compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).success(function(results) {
-      logger.info(IDLOG, 'get queue ' + data.qid + ' recall of last ' + data.hours +
+      logger.log.info(IDLOG, 'get queue ' + data.qid + ' recall of last ' + data.hours +
         ' hours has been successful: ' + results.length + ' results');
       cb(null, results);
 
     }).error(function(err1) {
-      logger.error(IDLOG, 'get queue ' + data.qid + ' recall of last ' + data.hours + ' hours: ' + err1.toString());
+      logger.log.error(IDLOG, 'get queue ' + data.qid + ' recall of last ' + data.hours + ' hours: ' + err1.toString());
       cb(err1, {});
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -604,19 +604,19 @@ function getCallTrace(linkedid, privacyStr, cb) {
         results[i] = results[i].selectedValues;
       }
 
-      logger.info(IDLOG, results.length + ' results searching CEL on linkedid "' + linkedid + '"');
+      logger.log.info(IDLOG, results.length + ' results searching CEL on linkedid "' + linkedid + '"');
       cb(null, results);
 
     }).error(function(err) { // manage the error
 
-      logger.error(IDLOG, 'searching CEL on linkedid "' + linkedid + '"');
+      logger.log.error(IDLOG, 'searching CEL on linkedid "' + linkedid + '"');
       cb(err.toString());
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -654,7 +654,7 @@ function getQueuesStats(day, cb) {
         }).success(function(results) {
 
           if (results) {
-            logger.info(IDLOG, 'get extended queues statistics has been successful');
+            logger.log.info(IDLOG, 'get extended queues statistics has been successful');
 
             var stats = {};
 
@@ -702,7 +702,7 @@ function getQueuesStats(day, cb) {
         }).success(function(results) {
 
           if (results) {
-            logger.info(IDLOG, 'get extended queues statistics has been successful');
+            logger.log.info(IDLOG, 'get extended queues statistics has been successful');
 
             var stats = {};
 
@@ -715,7 +715,7 @@ function getQueuesStats(day, cb) {
             callback(null, stats);
 
           } else {
-            logger.info(IDLOG, 'get extended queues statistics: not found');
+            logger.log.info(IDLOG, 'get extended queues statistics: not found');
             cb(null, {});
           }
         });
@@ -727,7 +727,7 @@ function getQueuesStats(day, cb) {
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -820,7 +820,7 @@ function getAgentsStats(day, cb) {
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -854,31 +854,31 @@ function deleteCallRecording(uniqueid, cb) {
             recordingfile: ''
           }, ['recordingfile']).success(function() {
 
-            logger.info(IDLOG, '"recordingfile" field of the call with uniqueid "' + uniqueid + '" has been emptied successfully from asteriskcdrdb.cdr table');
+            logger.log.info(IDLOG, '"recordingfile" field of the call with uniqueid "' + uniqueid + '" has been emptied successfully from asteriskcdrdb.cdr table');
             cb();
           });
 
         } else {
           var str = 'emptying "recordingfile" of the call with uniqueid "' + uniqueid + '" from asteriskcdrdb.cdr table: entry not found';
-          logger.warn(IDLOG, str);
+          logger.log.warn(IDLOG, str);
           cb(str);
         }
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
 
     }).error(function(err) { // manage the error
 
-      logger.error(IDLOG, 'emptying "recordingfile" of the call with uniqueid "' + uniqueid + '" from asteriskcdrdb.cdr table: not found: ' + err.toString());
+      logger.log.error(IDLOG, 'emptying "recordingfile" of the call with uniqueid "' + uniqueid + '" from asteriskcdrdb.cdr table: not found: ' + err.toString());
       cb(err.toString());
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -913,21 +913,21 @@ function getCallRecordingFileData(uniqueid, cb) {
     }).then(function(result) {
       // extract result to return in the callback function
       if (result) {
-        logger.info(IDLOG, 'found data information about recording call with uniqueid ' + uniqueid);
+        logger.log.info(IDLOG, 'found data information about recording call with uniqueid ' + uniqueid);
         cb(null, result.dataValues);
 
       } else {
-        logger.info(IDLOG, 'no data information about recording call with uniqueid ' + uniqueid);
+        logger.log.info(IDLOG, 'no data information about recording call with uniqueid ' + uniqueid);
         cb(null, false);
       }
     }, function(err) { // manage the error
-      logger.error(IDLOG, 'getting data information about recording call with uniqueid ' + uniqueid);
+      logger.log.error(IDLOG, 'getting data information about recording call with uniqueid ' + uniqueid);
       cb(err.toString());
     });
 
     compDbconnMain.incNumExecQueries();
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -970,7 +970,7 @@ function getQueueMemberLastPausedInData(memberName, queueId, memberId, cb) {
 
       if (result && result.selectedValues) {
 
-        logger.info(IDLOG, 'get last "paused in" data of member "' + memberName + '" of the queue "' + queueId + '" has been successful');
+        logger.log.info(IDLOG, 'get last "paused in" data of member "' + memberName + '" of the queue "' + queueId + '" has been successful');
 
         // if the queue member has never started a pause, the timestamp isn't present in the database. So check its presence
         if (result.selectedValues.timestamp) {
@@ -984,20 +984,20 @@ function getQueueMemberLastPausedInData(memberName, queueId, memberId, cb) {
         cb(null, result.selectedValues);
 
       } else {
-        logger.info(IDLOG, 'get last "paused in" data of member "' + memberName + '" of the queue "' + queueId + '": not found');
+        logger.log.info(IDLOG, 'get last "paused in" data of member "' + memberName + '" of the queue "' + queueId + '": not found');
         cb(null, {});
       }
 
     }, function(err1) { // manage the error
 
-      logger.error(IDLOG, 'get last "paused in" data of member "' + memberName + '" of the queue "' + queueId + '" failed: ' + err1.toString());
+      logger.log.error(IDLOG, 'get last "paused in" data of member "' + memberName + '" of the queue "' + queueId + '" failed: ' + err1.toString());
       cb(err1);
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -1038,7 +1038,7 @@ function getQueueMemberLastPausedOutData(memberName, queueId, memberId, cb) {
 
       if (result && result.selectedValues) {
 
-        logger.info(IDLOG, 'get last "paused out" data of member "' + memberName + '" of the queue "' + queueId + '" has been successful');
+        logger.log.info(IDLOG, 'get last "paused out" data of member "' + memberName + '" of the queue "' + queueId + '" has been successful');
 
         // if the queue member has never ended a pause, the timestamp isn't present in the database. So check its presence
         if (result.selectedValues.timestamp) {
@@ -1052,20 +1052,20 @@ function getQueueMemberLastPausedOutData(memberName, queueId, memberId, cb) {
         cb(null, result.selectedValues);
 
       } else {
-        logger.info(IDLOG, 'get last "paused out" data of member "' + memberName + '" of the queue "' + queueId + '": not found');
+        logger.log.info(IDLOG, 'get last "paused out" data of member "' + memberName + '" of the queue "' + queueId + '": not found');
         cb(null, {});
       }
 
     }, function(err1) { // manage the error
 
-      logger.error(IDLOG, 'get last "paused out" data of member "' + memberName + '" of the queue "' + queueId + '" failed: ' + err1.toString());
+      logger.log.error(IDLOG, 'get last "paused out" data of member "' + memberName + '" of the queue "' + queueId + '" failed: ' + err1.toString());
       cb(err1);
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }

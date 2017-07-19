@@ -381,6 +381,15 @@ var WS_ROOM = {
 };
 
 /**
+ * The configuration file path of the privacy.
+ *
+ * @property CONFIG_PRIVACY_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_PRIVACY_FILEPATH;
+
+/**
  * The event emitter.
  *
  * @property emitter
@@ -523,13 +532,17 @@ var updateTokenExpirationInterval;
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' &&
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
+
       logger = log;
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -546,7 +559,7 @@ function setAuthe(autheMod) {
     }
     compAuthe = autheMod;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -563,7 +576,7 @@ function setCompUser(comp) {
     }
     compUser = comp;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -580,7 +593,7 @@ function setCompAuthorization(comp) {
     }
     compAuthorization = comp;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -593,9 +606,9 @@ function setCompAuthorization(comp) {
 function setCompVoicemail(cv) {
   try {
     compVoicemail = cv;
-    logger.info(IDLOG, 'set voicemail architect component');
+    logger.log.info(IDLOG, 'set voicemail architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -608,9 +621,9 @@ function setCompVoicemail(cv) {
 function setCompPostit(comp) {
   try {
     compPostit = comp;
-    logger.info(IDLOG, 'set post-it architect component');
+    logger.log.info(IDLOG, 'set post-it architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -627,7 +640,7 @@ function setCompStreaming(comp) {
     }
     compStreaming = comp;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -644,7 +657,7 @@ function setAstProxy(comp) {
     }
     astProxy = comp;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -669,7 +682,7 @@ function setAstProxyListeners() {
     astProxy.on(astProxy.EVT_MEETME_CONF_CHANGED, meetmeConfChanged); // a meetme conference has changed
     astProxy.on(astProxy.EVT_QUEUE_MEMBER_CHANGED, queueMemberChanged); // a queue member has changed
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -687,7 +700,7 @@ function setVoicemailListeners() {
     compVoicemail.on(compVoicemail.EVT_UPDATE_NEW_VOICE_MESSAGES, updateNewVoiceMessagesListener);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -706,7 +719,7 @@ function setPostitListeners() {
     compPostit.on(compPostit.EVT_UPDATE_NEW_POSTIT, updateNewPostitListener);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -725,7 +738,7 @@ function setUserListeners() {
     compUser.on(compUser.EVT_USER_PROFILE_AVATAR_CHANGED, evtUserProfileAvatarChanged);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -746,7 +759,7 @@ function setStreamingListeners() {
     compStreaming.on(compStreaming.EVT_STREAMING_SOURCE_UNSUBSCRIBED, evtStreamingSourceUnsubscribed);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -761,7 +774,7 @@ function setStreamingListeners() {
  */
 function updateNewVoiceMessagesListener(data) {
   try {
-    logger.info(IDLOG, 'received "new voicemail" event for voicemail ' + data.voicemail);
+    logger.log.info(IDLOG, 'received "new voicemail" event for voicemail ' + data.voicemail);
 
     // get all users associated with the voicemail. Only the user with the associated voicemail
     // receives the list of all new voice messages
@@ -776,7 +789,7 @@ function updateNewVoiceMessagesListener(data) {
       // the user is associated with the voicemail is logged in
       if (users.indexOf(username) !== -1) {
         // emits the event with the list of all new voice messages of the voicemail
-        logger.info(IDLOG, 'emit event "updateNewVoiceMessages" for voicemail ' + data.voicemail + ' to user "' + username + '"');
+        logger.log.info(IDLOG, 'emit event "updateNewVoiceMessages" for voicemail ' + data.voicemail + ' to user "' + username + '"');
         // object to return with the event
         var obj = {};
         obj[data.voicemail] = {
@@ -796,7 +809,7 @@ function updateNewVoiceMessagesListener(data) {
     for (socketId in wsid) {
       username = wsid[socketId].username;
       // emits the event "newVoiceMessageCounter" with the number of new voice messages of the user
-      logger.info(IDLOG, 'emit event "newVoiceMessageCounter" ' + data.countNew + ' to user "' + username + '"');
+      logger.log.info(IDLOG, 'emit event "newVoiceMessageCounter" ' + data.countNew + ' to user "' + username + '"');
 
       if (wsServer.sockets.sockets[socketId]) {
         wsServer.sockets.sockets[socketId].emit('newVoiceMessageCounter', {
@@ -806,7 +819,7 @@ function updateNewVoiceMessagesListener(data) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -825,7 +838,7 @@ function updateNewPostitListener(recipient, list) {
     if (typeof recipient !== 'string' || list === undefined || list instanceof Array === false) {
       throw new Error('wrong arguments');
     }
-    logger.info(IDLOG, 'received "updateNewPostit" event for recipient user ' + recipient);
+    logger.log.info(IDLOG, 'received "updateNewPostit" event for recipient user ' + recipient);
     // emit the "updateNewPostit" event for the recipient user. The events contains all the new post-it with their details
     var socketId, username;
     for (socketId in wsid) {
@@ -833,7 +846,7 @@ function updateNewPostitListener(recipient, list) {
       // the user is the recipient of the new post-it message
       if (username === recipient) {
         // emits the event with the list of all new post-it messages of the user
-        logger.info(IDLOG, 'emit event "updateNewPostit" to the recipient user "' + recipient + '"');
+        logger.log.info(IDLOG, 'emit event "updateNewPostit" to the recipient user "' + recipient + '"');
 
         if (wsServer.sockets.sockets[socketId]) {
           wsServer.sockets.sockets[socketId].emit('updateNewPostit', list);
@@ -846,7 +859,7 @@ function updateNewPostitListener(recipient, list) {
     for (socketId in wsid) {
       username = wsid[socketId].username;
       // emits the event with the number of new post-it of the recipient user
-      logger.info(IDLOG, 'emit event "newPostitCounter" ' + list.length + ' to recipient user "' + username + '"');
+      logger.log.info(IDLOG, 'emit event "newPostitCounter" ' + list.length + ' to recipient user "' + username + '"');
 
       if (wsServer.sockets.sockets[socketId]) {
         wsServer.sockets.sockets[socketId].emit('newPostitCounter', {
@@ -856,7 +869,7 @@ function updateNewPostitListener(recipient, list) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -882,8 +895,8 @@ function evtUserPresenceChanged(evt) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.info(IDLOG, 'received event "' + compUser.EVT_USER_PRESENCE_CHANGED + '" ' + JSON.stringify(evt));
-    logger.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_UPDATE + '" ' + JSON.stringify(evt) + ' to websockets');
+    logger.log.info(IDLOG, 'received event "' + compUser.EVT_USER_PRESENCE_CHANGED + '" ' + JSON.stringify(evt));
+    logger.log.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_UPDATE + '" ' + JSON.stringify(evt) + ' to websockets');
 
     // emits the event to all users
     var sockid;
@@ -891,7 +904,7 @@ function evtUserPresenceChanged(evt) {
       wsServer.sockets.sockets[sockid].emit(EVT_USER_PRESENCE_UPDATE, evt);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -913,8 +926,8 @@ function evtUserProfileAvatarChanged(evt) {
 
       throw new Error('wrong parameter: ' + JSON.stringify(arguments));
     }
-    logger.info(IDLOG, 'received event "' + compUser.EVT_USER_PROFILE_AVATAR_CHANGED + '" for user ' + evt.username);
-    logger.info(IDLOG, 'emit event "' + EVT_USER_PROFILE_AVATAR_UPDATE + '" for user ' + evt.username + ' to websockets');
+    logger.log.info(IDLOG, 'received event "' + compUser.EVT_USER_PROFILE_AVATAR_CHANGED + '" for user ' + evt.username);
+    logger.log.info(IDLOG, 'emit event "' + EVT_USER_PROFILE_AVATAR_UPDATE + '" for user ' + evt.username + ' to websockets');
 
     // emits the event to all users
     var sockid;
@@ -922,7 +935,7 @@ function evtUserProfileAvatarChanged(evt) {
       wsServer.sockets.sockets[sockid].emit(EVT_USER_PROFILE_AVATAR_UPDATE, evt);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -938,8 +951,8 @@ function evtUserProfileAvatarChanged(evt) {
  */
 function evtStreamingSourceChanged(evt) {
   try {
-    logger.info(IDLOG, 'received event "' + compStreaming.EVT_STREAMING_SOURCE_CHANGED + '" for source ' + evt.streaming.source);
-    logger.info(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_UPDATE + '" for source ' + evt.streaming.source + ' to websockets');
+    logger.log.info(IDLOG, 'received event "' + compStreaming.EVT_STREAMING_SOURCE_CHANGED + '" for source ' + evt.streaming.source);
+    logger.log.info(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_UPDATE + '" for source ' + evt.streaming.source + ' to websockets');
 
     var room_name = 'STREAMING_' + evt.streaming.source.toUpperCase();
 
@@ -949,7 +962,7 @@ function evtStreamingSourceChanged(evt) {
       wsServer.sockets.in(WS_ROOM[room_name]).emit(EVT_STREAMING_SOURCE_UPDATE, evt);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -966,7 +979,7 @@ function evtStreamingSourceChanged(evt) {
  */
 function evtStreamingSourceSubscribed(evt) {
   try {
-    logger.info(IDLOG, 'received event "' + compUser.EVT_STREAMING_SOURCE_SUBSCRIBED + '" for user ' + evt.streaming.username + ' source ' + evt.streaming.streamId);
+    logger.log.info(IDLOG, 'received event "' + compUser.EVT_STREAMING_SOURCE_SUBSCRIBED + '" for user ' + evt.streaming.username + ' source ' + evt.streaming.streamId);
 
     var streamId = evt.streaming.streamId;
     var room_name = 'STREAMING_' + streamId.toUpperCase();
@@ -981,7 +994,7 @@ function evtStreamingSourceSubscribed(evt) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -998,7 +1011,7 @@ function evtStreamingSourceSubscribed(evt) {
  */
 function evtStreamingSourceUnsubscribed(evt) {
   try {
-    logger.info(IDLOG, 'received event "' + compUser.EVT_STREAMING_SOURCE_UNSUBSCRIBED + '" for user ' + evt.streaming.username + ' source ' + evt.streaming.streamId);
+    logger.log.info(IDLOG, 'received event "' + compUser.EVT_STREAMING_SOURCE_UNSUBSCRIBED + '" for user ' + evt.streaming.username + ' source ' + evt.streaming.streamId);
 
     var streamId = evt.streaming.streamId;
     var room_name = 'STREAMING_' + streamId.toUpperCase();
@@ -1012,7 +1025,7 @@ function evtStreamingSourceUnsubscribed(evt) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1037,7 +1050,7 @@ function sendEventToAllClients(evname, data, fn, fnData) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.info(IDLOG, 'emit event "' + evname + '" to all local clients with permission enabled');
+    logger.log.info(IDLOG, 'emit event "' + evname + '" to all local clients with permission enabled');
 
     // cycle in each websocket to send the event
     var sockid, username, copyData;
@@ -1057,7 +1070,7 @@ function sendEventToAllClients(evname, data, fn, fnData) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1072,8 +1085,8 @@ function sendEventToAllClients(evname, data, fn, fnData) {
  */
 function extenChanged(exten) {
   try {
-    logger.info(IDLOG, 'received event "' + astProxy.EVT_EXTEN_CHANGED + '" for extension ' + exten.getExten());
-    logger.info(IDLOG, 'emit event "' + EVT_EXTEN_UPDATE + '" for extension ' + exten.getExten() + ' to websockets');
+    logger.log.info(IDLOG, 'received event "' + astProxy.EVT_EXTEN_CHANGED + '" for extension ' + exten.getExten());
+    logger.log.info(IDLOG, 'emit event "' + EVT_EXTEN_UPDATE + '" for extension ' + exten.getExten() + ' to websockets');
 
     // cycle in each websocket to send the event about an extension update. If the websocket user
     // is associated with the extension or the user has the privacy permission disabled, then it
@@ -1112,7 +1125,7 @@ function extenChanged(exten) {
       wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, extJson);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1125,7 +1138,7 @@ function extenChanged(exten) {
  */
 function extenHangup(data) {
   try {
-    logger.info(IDLOG, 'received event "' + astProxy.EVT_EXTEN_HANGUP + '" for extension ' + data.channelExten);
+    logger.log.info(IDLOG, 'received event "' + astProxy.EVT_EXTEN_HANGUP + '" for extension ' + data.channelExten);
 
     // get the user associated with the hangupped extension
     var user = compUser.getUserUsingEndpointExtension(data.channelExten);
@@ -1138,7 +1151,7 @@ function extenHangup(data) {
       // the user is associated with the hangupped extension and it is logged in
       if (user === username) {
         // emits the event with the hangup data
-        logger.info(IDLOG, 'emit event "' + astProxy.EVT_EXTEN_HANGUP + '" for extension ' + data.channelExten + ' to user "' + username + '"');
+        logger.log.info(IDLOG, 'emit event "' + astProxy.EVT_EXTEN_HANGUP + '" for extension ' + data.channelExten + ' to user "' + username + '"');
 
         if (wsServer.sockets.sockets[socketId]) {
           wsServer.sockets.sockets[socketId].emit(astProxy.EVT_EXTEN_HANGUP, data);
@@ -1146,7 +1159,7 @@ function extenHangup(data) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1161,14 +1174,14 @@ function extenHangup(data) {
  */
 function queueMemberChanged(member) {
   try {
-    logger.info(IDLOG, 'received event queueMemberChanged for member ' + member.getMember() + ' of queue ' + member.getQueue());
-    logger.info(IDLOG, 'emit event ' + EVT_QUEUE_MEMBER_UPDATE + ' for member ' + member.getMember() + ' of queue ' + member.getQueue() + ' to websockets');
+    logger.log.info(IDLOG, 'received event queueMemberChanged for member ' + member.getMember() + ' of queue ' + member.getQueue());
+    logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_MEMBER_UPDATE + ' for member ' + member.getMember() + ' of queue ' + member.getQueue() + ' to websockets');
     // emits the event with clear numbers to all users with privacy disabled
     wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_CLEAR).emit(EVT_QUEUE_MEMBER_UPDATE, member.toJSON());
     // emits the event with hide numbers to all users with privacy enabled
     wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_PRIVACY).emit(EVT_QUEUE_MEMBER_UPDATE, member.toJSON(privacyStrReplace));
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1183,11 +1196,11 @@ function queueMemberChanged(member) {
  */
 function meetmeConfChanged(conf) {
   try {
-    logger.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_CHANGED + '" for conf id ' + conf.getId());
-    logger.info(IDLOG, 'emit event "meetmeConfUpdate" for conf id ' + conf.getId() + ' to websockets');
+    logger.log.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_CHANGED + '" for conf id ' + conf.getId());
+    logger.log.info(IDLOG, 'emit event "meetmeConfUpdate" for conf id ' + conf.getId() + ' to websockets');
     sendEvtToUserWithExtenId('meetmeConfUpdate', conf.toJSON(), conf.getId());
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1202,13 +1215,13 @@ function meetmeConfChanged(conf) {
  */
 function meetmeConfEnd(confId) {
   try {
-    logger.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_END + '" for conf id ' + confId);
-    logger.info(IDLOG, 'emit event "meetmeConfEnd" for conf id ' + confId + ' to websockets');
+    logger.log.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_END + '" for conf id ' + confId);
+    logger.log.info(IDLOG, 'emit event "meetmeConfEnd" for conf id ' + confId + ' to websockets');
     sendEvtToUserWithExtenId('meetmeConfEnd', {
       id: confId
     }, confId);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1234,7 +1247,7 @@ function sendEvtToUserWithExtenId(evtName, evtObj, extenId) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1249,14 +1262,14 @@ function sendEvtToUserWithExtenId(evtName, evtObj, extenId) {
  */
 function trunkChanged(trunk) {
   try {
-    logger.info(IDLOG, 'received event trunkChanged for trunk ' + trunk.getExten());
-    logger.info(IDLOG, 'emit event trunkUpdate for trunk ' + trunk.getExten() + ' to websockets');
+    logger.log.info(IDLOG, 'received event trunkChanged for trunk ' + trunk.getExten());
+    logger.log.info(IDLOG, 'emit event trunkUpdate for trunk ' + trunk.getExten() + ' to websockets');
     // emits the event with clear numbers to all users with privacy disabled
     wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('trunkUpdate', trunk.toJSON());
     // emits the event with hide numbers to all users with privacy enabled
     wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('trunkUpdate', trunk.toJSON(privacyStrReplace));
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1352,7 +1365,7 @@ function getFilteredCallerIndentity(username, callerIdentity) {
     return filteredIdentityCaller;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1374,7 +1387,7 @@ function sendAnswerWebrtcToClient(username, extenId) {
     for (socketId in wsid) {
 
       if (wsid[socketId].username === username) {
-        logger.info(IDLOG, 'emit event "' + EVT_ANSWER_WEBRTC + '" for webrtc extension ' + extenId + ' to user "' + username + '"');
+        logger.log.info(IDLOG, 'emit event "' + EVT_ANSWER_WEBRTC + '" for webrtc extension ' + extenId + ' to user "' + username + '"');
 
         if (wsServer.sockets.sockets[socketId]) {
           wsServer.sockets.sockets[socketId].emit(EVT_ANSWER_WEBRTC, extenId);
@@ -1382,7 +1395,7 @@ function sendAnswerWebrtcToClient(username, extenId) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1403,7 +1416,7 @@ function sendCallWebrtcToClient(username, to) {
     for (socketId in wsid) {
 
       if (wsid[socketId].username === username) {
-        logger.info(IDLOG, 'emit event "' + EVT_CALL_WEBRTC + '" to number ' + to + ' to user "' + username + '"');
+        logger.log.info(IDLOG, 'emit event "' + EVT_CALL_WEBRTC + '" to number ' + to + ' to user "' + username + '"');
 
         if (wsServer.sockets.sockets[socketId]) {
           wsServer.sockets.sockets[socketId].emit(EVT_CALL_WEBRTC, to);
@@ -1411,7 +1424,7 @@ function sendCallWebrtcToClient(username, to) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1432,7 +1445,7 @@ function extenDialing(data) {
     if (typeof data !== 'object' || typeof data.dialingExten !== 'string' || typeof data.callerIdentity !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.info(IDLOG, 'received event extenDialing for extension ' + data.dialingExten + ' with the caller identity');
+    logger.log.info(IDLOG, 'received event extenDialing for extension ' + data.dialingExten + ' with the caller identity');
 
     // get the user associated with the ringing extension
     var user = compUser.getUserUsingEndpointExtension(data.dialingExten);
@@ -1449,7 +1462,7 @@ function extenDialing(data) {
         filteredCallerIdentity = getFilteredCallerIndentity(username, data.callerIdentity);
 
         // emits the event with the caller identity data
-        logger.info(IDLOG, 'emit event extenRinging for extension ' + data.dialingExten + ' to user "' + username + '" with the caller identity');
+        logger.log.info(IDLOG, 'emit event extenRinging for extension ' + data.dialingExten + ' to user "' + username + '" with the caller identity');
 
         if (wsServer.sockets.sockets[socketId]) {
           wsServer.sockets.sockets[socketId].emit('extenRinging', filteredCallerIdentity);
@@ -1457,7 +1470,7 @@ function extenDialing(data) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1472,14 +1485,14 @@ function extenDialing(data) {
  */
 function queueChanged(queue) {
   try {
-    logger.info(IDLOG, 'received event queueChanged for queue ' + queue.getQueue());
-    logger.info(IDLOG, 'emit event ' + EVT_QUEUE_UPDATE + ' for queue ' + queue.getQueue() + ' to websockets');
+    logger.log.info(IDLOG, 'received event queueChanged for queue ' + queue.getQueue());
+    logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_UPDATE + ' for queue ' + queue.getQueue() + ' to websockets');
     // emits the event with clear numbers to all users with privacy disabled
     wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_CLEAR).emit(EVT_QUEUE_UPDATE, queue.toJSON());
     // emits the event with hide numbers to all users with privacy enabled
     wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_PRIVACY).emit(EVT_QUEUE_UPDATE, queue.toJSON(privacyStrReplace));
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1494,15 +1507,15 @@ function queueChanged(queue) {
  */
 function parkingChanged(parking) {
   try {
-    logger.info(IDLOG, 'received event parkingChanged for parking ' + parking.getParking());
-    logger.info(IDLOG, 'emit event ' + EVT_PARKING_UPDATE + ' for parking ' + parking.getParking() + ' to websockets');
+    logger.log.info(IDLOG, 'received event parkingChanged for parking ' + parking.getParking());
+    logger.log.info(IDLOG, 'emit event ' + EVT_PARKING_UPDATE + ' for parking ' + parking.getParking() + ' to websockets');
 
     // emits the event with clear numbers to all users with privacy disabled
     wsServer.sockets.in(WS_ROOM.PARKINGS_AST_EVT_CLEAR).emit(EVT_PARKING_UPDATE, parking.toJSON());
     // emits the event with hide numbers to all users with privacy enabled
     wsServer.sockets.in(WS_ROOM.PARKINGS_AST_EVT_PRIVACY).emit(EVT_PARKING_UPDATE, parking.toJSON(privacyStrReplace));
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1526,13 +1539,13 @@ function config(path) {
     }
 
     // read configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     // initialize the port of the websocket server (http)
     if (json.websocket && json.websocket.http_port) {
       wsPort = json.websocket.http_port;
     } else {
-      logger.warn(IDLOG, 'wrong ' + path + ': no ws "http_port"');
+      logger.log.warn(IDLOG, 'wrong ' + path + ': no ws "http_port"');
     }
 
     // initialize the interval at which update the token expiration of all users
@@ -1540,10 +1553,10 @@ function config(path) {
     var expires = compAuthe.getTokenExpirationTimeout();
     updateTokenExpirationInterval = expires / 2;
 
-    logger.info(IDLOG, 'configuration done by ' + path);
+    logger.log.info(IDLOG, 'configuration done by ' + path);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1565,20 +1578,21 @@ function configPrivacy(path) {
     if (!fs.existsSync(path)) {
       throw new Error(path + ' does not exist');
     }
+    CONFIG_PRIVACY_FILEPATH = path;
 
     // read configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(CONFIG_PRIVACY_FILEPATH, 'utf8'));
 
     // initialize the string used to hide last digits of phone numbers
     if (json.privacy_numbers) {
       privacyStrReplace = json.privacy_numbers;
     } else {
-      logger.warn(IDLOG, 'wrong ' + file + ': no "privacy_numbers" key');
+      logger.log.warn(IDLOG, 'wrong ' + file + ': no "privacy_numbers" key');
     }
-    logger.info(IDLOG, 'privacy configuration done by ' + path);
+    logger.log.info(IDLOG, 'privacy configuration done by ' + CONFIG_PRIVACY_FILEPATH);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1614,7 +1628,7 @@ function start() {
     }, updateTokenExpirationInterval);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1636,10 +1650,10 @@ function startWsServer() {
 
     // add websocket listeners
     wsServer.on('connection', wsConnHdlr);
-    logger.warn(IDLOG, 'websocket server (ws) listening on port ' + wsPort);
+    logger.log.warn(IDLOG, 'websocket server (ws) listening on port ' + wsPort);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1651,13 +1665,13 @@ function startWsServer() {
  */
 function updateTokenExpirationOfAllWebsocketUsers() {
   try {
-    logger.info(IDLOG, 'update token expiration of all websocket users (http)');
+    logger.log.info(IDLOG, 'update token expiration of all websocket users (http)');
     var id;
     for (id in wsid) {
       compAuthe.updateTokenExpires(wsid[id].username, wsid[id].token);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1671,9 +1685,9 @@ function updateTokenExpirationOfAllWebsocketUsers() {
 function wsConnHdlr(socket) {
   try {
     // this event is emitted when a client websocket has been connected
-    logger.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_CONNECTED + '"');
+    logger.log.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_CONNECTED + '"');
     emitter.emit(EVT_WS_CLIENT_CONNECTED, socket);
-    logger.info(IDLOG, 'new local websocket connection (http) from ' + getWebsocketEndpoint(socket));
+    logger.log.info(IDLOG, 'new local websocket connection (http) from ' + getWebsocketEndpoint(socket));
     // set the listeners for the new http socket connection
     socket.on('login', function(data) {
       loginHdlr(socket, data);
@@ -1681,9 +1695,9 @@ function wsConnHdlr(socket) {
     socket.on('disconnect', function(data) {
       disconnHdlr(socket);
     });
-    logger.info(IDLOG, 'listeners for new http websocket connection have been set');
+    logger.log.info(IDLOG, 'listeners for new http websocket connection have been set');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1707,7 +1721,7 @@ function sendError(socket, obj) {
     }
     socket.emit('error', obj);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1720,9 +1734,9 @@ function sendError(socket, obj) {
 function badRequest(socket) {
   try {
     socket.emit('bad_request');
-    logger.warn('received bad request from ' + getWebsocketEndpoint(socket));
+    logger.log.warn(IDLOG, 'received bad request from ' + getWebsocketEndpoint(socket));
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1739,7 +1753,7 @@ function getWebsocketEndpoint(socket) {
   try {
     return socket.handshake.address.address + ':' + socket.handshake.address.port;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1756,7 +1770,7 @@ function unauthorized(socket) {
     send401(socket); // send 401 unauthorized response to the client
     socket.disconnect();
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1774,7 +1788,7 @@ function loginHdlr(socket, obj) {
   try {
     // check parameters
     if (typeof socket !== 'object' || typeof obj !== 'object' || typeof obj.token !== 'string' || typeof obj.accessKeyId !== 'string') {
-      logger.warn(IDLOG, 'bad authentication login request from ' + getWebsocketEndpoint(socket));
+      logger.log.warn(IDLOG, 'bad authentication login request from ' + getWebsocketEndpoint(socket));
       unauthorized(socket);
       return;
     }
@@ -1786,7 +1800,7 @@ function loginHdlr(socket, obj) {
         obj.accessKeyId = compUser.getUserUsingEndpointExtension(obj.accessKeyId);
       }
 
-      logger.info(IDLOG, 'user "' + obj.accessKeyId + '" successfully authenticated from ' + getWebsocketEndpoint(socket) +
+      logger.log.info(IDLOG, 'user "' + obj.accessKeyId + '" successfully authenticated from ' + getWebsocketEndpoint(socket) +
         ' with socket id ' + socket.id);
 
       // add websocket id for future fast authentication for each request from the clients
@@ -1805,7 +1819,7 @@ function loginHdlr(socket, obj) {
 
         // sets the origin application (cti) property to the client socket
         socket.nethcti.userAgent = USER_AGENT;
-        logger.info(IDLOG, 'setted userAgent property "' + USER_AGENT + '" to the socket ' + socket.id);
+        logger.log.info(IDLOG, 'setted userAgent property "' + USER_AGENT + '" to the socket ' + socket.id);
       }
 
       // sets username property to the client socket
@@ -1870,16 +1884,16 @@ function loginHdlr(socket, obj) {
       }
 
       // emits the event for a logged in client. This event is emitted when a user has been logged in by a websocket connection
-      logger.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_LOGGEDIN + '" for username "' + obj.accessKeyId + '"');
+      logger.log.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_LOGGEDIN + '" for username "' + obj.accessKeyId + '"');
       emitter.emit(EVT_WS_CLIENT_LOGGEDIN, obj.accessKeyId);
 
     } else { // authentication failed
-      logger.warn(IDLOG, 'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
+      logger.log.warn(IDLOG, 'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
         ' with id ' + socket.id);
       unauthorized(socket);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     unauthorized(socket);
   }
 }
@@ -1893,7 +1907,7 @@ function loginHdlr(socket, obj) {
  */
 function disconnHdlr(socket) {
   try {
-    logger.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket));
+    logger.log.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket));
 
     var username;
     // when the user is not authenticated but connected by websocket,
@@ -1917,7 +1931,7 @@ function disconnHdlr(socket) {
         username = wsid[socket.id].username;
         // emits the event for the disconnected client. This event is emitted when
         // all the websocket connections of the user has been closed.
-        logger.info(IDLOG, 'emit event "' + EVT_ALL_WS_CLIENT_DISCONNECTION + '" for username ' + username);
+        logger.log.info(IDLOG, 'emit event "' + EVT_ALL_WS_CLIENT_DISCONNECTION + '" for username ' + username);
         emitter.emit(EVT_ALL_WS_CLIENT_DISCONNECTION, username);
       }
     }
@@ -1925,7 +1939,7 @@ function disconnHdlr(socket) {
     removeWebsocketId(socket.id);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1942,10 +1956,10 @@ function removeWebsocketId(socketId) {
       var userTemp = wsid[socketId].username;
       var tokenTemp = wsid[socketId].token;
       delete wsid[socketId];
-      logger.info(IDLOG, 'removed client websocket ' + socketId + ' for the user ' + userTemp + ' with token ' + tokenTemp);
+      logger.log.info(IDLOG, 'removed client websocket ' + socketId + ' for the user ' + userTemp + ' with token ' + tokenTemp);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1965,10 +1979,10 @@ function addWebsocketId(user, token, socketId) {
       username: user,
       token: token
     };
-    logger.info(IDLOG, 'added client websocket identifier ' + socketId + ' for user ' + user + ' with token ' + token);
+    logger.log.info(IDLOG, 'added client websocket identifier ' + socketId + ' for user ' + user + ' with token ' + token);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1981,12 +1995,12 @@ function addWebsocketId(user, token, socketId) {
  */
 function send401(socket) {
   try {
-    logger.warn(IDLOG, 'send 401 unauthorized to ' + getWebsocketEndpoint(socket));
+    logger.log.warn(IDLOG, 'send 401 unauthorized to ' + getWebsocketEndpoint(socket));
     socket.emit('401', {
       message: 'unauthorized access'
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -2002,9 +2016,9 @@ function sendAutheSuccess(socket) {
     socket.emit('authe_ok', {
       message: 'authorized successfully'
     });
-    logger.info(IDLOG, 'sent authorized successfully ("authe_ok") to "' + socket.nethcti.username + '" ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
+    logger.log.info(IDLOG, 'sent authorized successfully ("authe_ok") to "' + socket.nethcti.username + '" ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -2019,7 +2033,7 @@ function getNumConnectedClients() {
   try {
     return Object.keys(wsid).length;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return -1;
   }
 }
@@ -2037,7 +2051,7 @@ function on(type, cb) {
   try {
     return emitter.on(type, cb);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -2050,9 +2064,40 @@ function stop() {
   wsServer.close();
 }
 
+/**
+ * Reload the component.
+ *
+ * @method reset
+ * @private
+ */
+function reset() {
+  try {
+    privacyStrReplace = '';
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ * @private
+ */
+function reload() {
+  try {
+    reset();
+    configPrivacy(CONFIG_PRIVACY_FILEPATH);
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.start = start;
+exports.reload = reload;
 exports.stop = stop;
 exports.config = config;
 exports.setAuthe = setAuthe;

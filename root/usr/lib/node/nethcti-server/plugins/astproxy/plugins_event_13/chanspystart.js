@@ -59,7 +59,7 @@ var astProxy;
         try {
           if (data && data.spyerchannel && data.event === 'ChanSpyStart') {
 
-            logger.info(IDLOG, 'received event ' + data.event);
+            logger.log.info(IDLOG, 'received event ' + data.event);
 
             var spierId = utilChannel13.extractExtensionFromChannel(data.spyerchannel);
 
@@ -68,13 +68,13 @@ var astProxy;
                 spierId: spierId
               });
             } else {
-              logger.warn(IDLOG, 'event ChanSpyStart with unknown spier channel ' + data.spyerchannel);
+              logger.log.warn(IDLOG, 'event ChanSpyStart with unknown spier channel ' + data.spyerchannel);
             }
           } else {
-            logger.warn(IDLOG, 'ChanSpyStart event not recognized');
+            logger.log.warn(IDLOG, 'ChanSpyStart event not recognized');
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
         }
       },
 
@@ -89,16 +89,16 @@ var astProxy;
       setLogger: function(log) {
         try {
           if (typeof log === 'object' &&
-            typeof log.info === 'function' &&
-            typeof log.warn === 'function' &&
-            typeof log.error === 'function') {
+            typeof log.log.info === 'function' &&
+            typeof log.log.warn === 'function' &&
+            typeof log.log.error === 'function') {
 
             logger = log;
           } else {
             throw new Error('wrong logger object');
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
         }
       },
 
@@ -116,7 +116,7 @@ var astProxy;
           }
           astProxy = ap;
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
         }
       }
     };
@@ -127,6 +127,6 @@ var astProxy;
     exports.setLogger = chanspystart.setLogger;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 })();

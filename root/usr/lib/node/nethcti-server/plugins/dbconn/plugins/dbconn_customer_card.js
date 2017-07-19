@@ -60,10 +60,10 @@ function setCompDbconnMain(comp) {
     }
 
     compDbconnMain = comp;
-    logger.info(IDLOG, 'main dbconn component has been set');
+    logger.log.info(IDLOG, 'main dbconn component has been set');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -78,18 +78,18 @@ function setCompDbconnMain(comp) {
 function setLogger(log) {
   try {
     if (typeof log === 'object' &&
-      typeof log.info === 'function' &&
-      typeof log.warn === 'function' &&
-      typeof log.error === 'function') {
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -122,7 +122,7 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
     if (compDbconnMain.dbConnCustCard[dbConnId] === undefined) {
       var strError = 'no db connection for customer card ' + ccName + ' (permission_id: ' + permissionId +
         ') for num ' + num + ' (dbConnId: ' + dbConnId + ')';
-      logger.warn(IDLOG, strError);
+      logger.log.warn(IDLOG, strError);
       cb(strError);
       return;
     }
@@ -138,13 +138,13 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
 
       compDbconnMain.dbConnCustCard[dbConnId].query(query).then(function(results) {
 
-        logger.info(IDLOG, results[0].length + ' results by searching cust card "' + ccName +
+        logger.log.info(IDLOG, results[0].length + ' results by searching cust card "' + ccName +
           '" (permission_id: ' + permissionId + ') by num ' + num);
         cb(null, results[0]);
 
       }, function(err1) { // manage the error
 
-        logger.error(IDLOG, 'searching cust card "' + ccName + '" (permission_id: ' + permissionId + ') by num ' +
+        logger.log.error(IDLOG, 'searching cust card "' + ccName + '" (permission_id: ' + permissionId + ') by num ' +
           num + ': ' + err1.toString());
         cb(err1.toString());
       });
@@ -154,12 +154,12 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
       query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$NUMBER/g, num);
       compDbconnMain.dbConnCustCard[dbConnId].query(query, function(err2, results) {
         if (err2) {
-          logger.error(IDLOG, 'searching cust card "' + ccName + '" (permission_id: ' + permissionId + ') by num ' +
+          logger.log.error(IDLOG, 'searching cust card "' + ccName + '" (permission_id: ' + permissionId + ') by num ' +
             num + ': ' + err2.toString());
           cb(err2.toString());
 
         } else {
-          logger.info(IDLOG, results.rows.length + ' results by searching cust card "' + ccName +
+          logger.log.info(IDLOG, results.rows.length + ' results by searching cust card "' + ccName +
             '" (permission_id: ' + permissionId + ') by num ' + num);
           cb(null, results.rows);
         }
@@ -172,17 +172,17 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
       request.query(query, function(err2, recordset) {
         try {
           if (err2) {
-            logger.error(IDLOG, 'searching cust card "' + ccName + '" (permission_id: ' + permissionId +
+            logger.log.error(IDLOG, 'searching cust card "' + ccName + '" (permission_id: ' + permissionId +
               ') by num ' + num + ': ' + err2.toString());
             cb(err2.toString());
 
           } else {
-            logger.info(IDLOG, recordset.length + ' results by searching cust card "' + ccName +
+            logger.log.info(IDLOG, recordset.length + ' results by searching cust card "' + ccName +
               '" (permission_id: ' + permissionId + ') by num ' + num);
             cb(null, recordset);
           }
         } catch (err3) {
-          logger.error(IDLOG, err3.stack);
+          logger.log.error(IDLOG, err3.stack);
           cb(err3.toString());
         }
       });
@@ -190,7 +190,7 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
     compDbconnMain.incNumExecQueries();
 
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     cb(error.toString());
   }
 }
@@ -205,7 +205,7 @@ function getCustCardNames(cb) {
   try {
     compDbconnMain.readCustomerCard(function(err, results) {
       if (err) {
-        logger.warn(IDLOG, 'getting customer card names');
+        logger.log.warn(IDLOG, 'getting customer card names');
         cb(err);
         return;
       }
@@ -217,7 +217,7 @@ function getCustCardNames(cb) {
       cb(null, arr);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -242,7 +242,7 @@ function checkDbconnCustCard(permissionId) {
     return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -265,7 +265,7 @@ function checkDbconnCustCardByConnId(connid) {
     return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -286,7 +286,7 @@ function getCustCardTemplateName(permissionId) {
       return compDbconnMain.custCardTemplatesData[permissionId].template;
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -306,7 +306,7 @@ function getCustCardNameDescr(permissionId) {
       return compDbconnMain.custCardTemplatesData[permissionId].name;
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -333,7 +333,7 @@ function getCustomerCardPreview(query, dbConnId, templateName, cb) {
     // check the connection presence
     if (compDbconnMain.dbConnCustCard[dbConnId] === undefined) {
       var strError = 'no db connection for customer card preview';
-      logger.warn(IDLOG, strError);
+      logger.log.warn(IDLOG, strError);
       cb(strError);
       return;
     }
@@ -342,12 +342,12 @@ function getCustomerCardPreview(query, dbConnId, templateName, cb) {
 
       compDbconnMain.dbConnCustCard[dbConnId].query(query).then(function(results) {
 
-        logger.info(IDLOG, results[0].length + ' results for cust card preview');
+        logger.log.info(IDLOG, results[0].length + ' results for cust card preview');
         cb(null, results[0]);
 
       }, function(err1) { // manage the error
 
-        logger.error(IDLOG, 'searching cust card preview: ' + err1.toString());
+        logger.log.error(IDLOG, 'searching cust card preview: ' + err1.toString());
         cb(err1.toString());
       });
 
@@ -355,11 +355,11 @@ function getCustomerCardPreview(query, dbConnId, templateName, cb) {
 
       compDbconnMain.dbConnCustCard[dbConnId].query(query, function(err2, results) {
         if (err2) {
-          logger.error(IDLOG, 'searching cust card preview: ' + err2.toString());
+          logger.log.error(IDLOG, 'searching cust card preview: ' + err2.toString());
           cb(err2.toString());
 
         } else {
-          logger.info(IDLOG, results.rows.length + ' results by searching cust card preview');
+          logger.log.info(IDLOG, results.rows.length + ' results by searching cust card preview');
           cb(null, results.rows);
         }
       });
@@ -370,15 +370,15 @@ function getCustomerCardPreview(query, dbConnId, templateName, cb) {
       request.query(query, function(err2, recordset) {
         try {
           if (err2) {
-            logger.error(IDLOG, 'searching cust card preview: ' + err2.toString());
+            logger.log.error(IDLOG, 'searching cust card preview: ' + err2.toString());
             cb(err2.toString());
 
           } else {
-            logger.info(IDLOG, recordset.length + ' results by searching cust card preview');
+            logger.log.info(IDLOG, recordset.length + ' results by searching cust card preview');
             cb(null, recordset);
           }
         } catch (err3) {
-          logger.error(IDLOG, err3.stack);
+          logger.log.error(IDLOG, err3.stack);
           cb(err3.toString());
         }
       });
@@ -386,7 +386,7 @@ function getCustomerCardPreview(query, dbConnId, templateName, cb) {
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 

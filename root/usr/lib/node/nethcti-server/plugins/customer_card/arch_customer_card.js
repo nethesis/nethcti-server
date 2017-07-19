@@ -27,12 +27,24 @@ module.exports = function(options, imports, register) {
 
   // public interface for other architect components
   register(null, {
-    customerCard: customerCard
+    customerCard: {
+      start: customerCard.start,
+      config: customerCard.config,
+      setLogger: customerCard.setLogger,
+      setDbconn: customerCard.setDbconn,
+      setCompUser: customerCard.setCompUser,
+      configPrivacy: customerCard.configPrivacy,
+      getAllCustomerCards: customerCard.getAllCustomerCards,
+      getCustomerCardByNum: customerCard.getCustomerCardByNum,
+      getCustomerCardsList: customerCard.getCustomerCardsList,
+      setCompAuthorization: customerCard.setCompAuthorization,
+      getCustomerCardPreview: customerCard.getCustomerCardPreview
+    }
   });
 
   try {
     imports.dbconn.on(imports.dbconn.EVT_READY, function() {
-      customerCard.setLogger(logger);
+      customerCard.setLogger(logger.ctilog);
       customerCard.config('/etc/nethcti/services.json');
       customerCard.configPrivacy('/etc/nethcti/nethcti.json');
       customerCard.setCompAuthorization(imports.authorization);
@@ -40,7 +52,10 @@ module.exports = function(options, imports, register) {
       customerCard.setDbconn(imports.dbconn);
       customerCard.start();
     });
+    imports.dbconn.on(imports.dbconn.EVT_RELOADED, function() {
+      customerCard.reload();
+    });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 };

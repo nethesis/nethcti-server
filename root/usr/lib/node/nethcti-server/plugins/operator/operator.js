@@ -27,6 +27,15 @@ var Group = require('./group').Group;
 var IDLOG = '[operator]';
 
 /**
+ * The configuration file path.
+ *
+ * @property CONFIG_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_FILEPATH;
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -51,25 +60,21 @@ var groups = {};
  * Set the logger to be used.
  *
  * @method setLogger
- * @param {object} log The logger object. It must have at least
- * three methods: _info, warn and error_ as console object.
+ * @param {object} log The logger object
  * @static
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' &&
-      typeof log.info === 'function' &&
-      typeof log.warn === 'function' &&
-      typeof log.error === 'function') {
+    if (typeof log === 'object') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -90,12 +95,13 @@ function config(path) {
 
     // check file presence
     if (!fs.existsSync(path)) {
-      logger.warn(IDLOG, path + ' does not exist');
+      logger.log.warn(IDLOG, path + ' does not exist');
       return;
     }
+    CONFIG_FILEPATH = path;
 
     // read groups part from the JSON file
-    var json = require(path).groups;
+    var json = (JSON.parse(fs.readFileSync(CONFIG_FILEPATH, 'utf8'))).groups;
 
     // create the Group objects
     var g, newgroup;
@@ -106,10 +112,10 @@ function config(path) {
       newgroup.addUsers(json[g]);
       groups[g] = newgroup;
     }
-    logger.info(IDLOG, 'ended configuration by JSON file ' + path);
+    logger.log.info(IDLOG, 'ended configuration by JSON file ' + CONFIG_FILEPATH);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -134,11 +140,46 @@ function getJSONGroups() {
     return obj;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reset
+ * @private
+ */
+function reset() {
+  try {
+    var k;
+    for (k in groups) {
+      delete groups[k];
+    }
+    groups = {};
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ * @private
+ */
+function reload() {
+  try {
+    reset();
+    config(CONFIG_FILEPATH);
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
 // public interface
 exports.config = config;
+exports.reload = reload;
 exports.setLogger = setLogger;
 exports.getJSONGroups = getJSONGroups;

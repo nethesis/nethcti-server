@@ -65,18 +65,18 @@ var compAstProxy;
 function setLogger(log) {
   try {
     if (typeof log === 'object' &&
-      typeof log.info === 'function' &&
-      typeof log.warn === 'function' &&
-      typeof log.error === 'function') {
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -93,9 +93,9 @@ function setDbconn(dbconnMod) {
       throw new Error('wrong dbconn object');
     }
     dbconn = dbconnMod;
-    logger.info(IDLOG, 'set dbconn module');
+    logger.log.info(IDLOG, 'set dbconn module');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -108,9 +108,9 @@ function setDbconn(dbconnMod) {
 function setCompAstProxy(comp) {
   try {
     compAstProxy = comp;
-    logger.info(IDLOG, 'set asterisk proxy architect component');
+    logger.log.info(IDLOG, 'set asterisk proxy architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -146,14 +146,14 @@ function getHistoryCallInterval(data, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    logger.info(IDLOG, 'search history call between ' + data.from + ' to ' + data.to + ' for ' +
+    logger.log.info(IDLOG, 'search history call between ' + data.from + ' to ' + data.to + ' for ' +
       'endpoints ' + data.endpoints + ' and filter ' + (data.filter ? data.filter : '""') +
       (data.recording ? ' with recording data' : ''));
 
     dbconn.getHistoryCallInterval(data, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -190,7 +190,7 @@ function getHistorySwitchCallInterval(data, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    logger.info(IDLOG, 'search switchboard history call between ' + data.from + ' to ' + data.to + ' for ' +
+    logger.log.info(IDLOG, 'search switchboard history call between ' + data.from + ' to ' + data.to + ' for ' +
       'all endpoints and filter ' + (data.filter ? data.filter : '""') +
       (data.recording ? ' with recording data' : ''));
 
@@ -198,7 +198,7 @@ function getHistorySwitchCallInterval(data, cb) {
     dbconn.getHistorySwitchCallInterval(data, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -218,11 +218,11 @@ function isAtLeastExtenInCallRecording(id, extensions, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    logger.info(IDLOG, 'check if at least one extension ' + extensions.toString() + ' is involved in the call recording with id "' + id + '"');
+    logger.log.info(IDLOG, 'check if at least one extension ' + extensions.toString() + ' is involved in the call recording with id "' + id + '"');
     dbconn.isAtLeastExtenInCall(id, extensions, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -240,11 +240,11 @@ function getCallRecordingFileData(id, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    logger.info(IDLOG, 'get the data information about call recording audio file of the call with id "' + id + '"');
+    logger.log.info(IDLOG, 'get the data information about call recording audio file of the call with id "' + id + '"');
     dbconn.getCallRecordingFileData(id, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -273,13 +273,13 @@ function getCallRecordingContent(data, cb) {
     var filepath = path.join(basepath, data.year, data.month, data.day, data.filename);
 
     // read the audio file using base64 enconding
-    logger.info(IDLOG, 'read call recording file ' + filepath);
+    logger.log.info(IDLOG, 'read call recording file ' + filepath);
     fs.readFile(filepath, 'base64', function(err, result) {
       cb(err, result);
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -310,30 +310,30 @@ function deleteCallRecording(id, data, cb) {
     var filepath = path.join(basepath, data.year, data.month, data.day, data.filename);
 
     // delete the audio file from the filesystem
-    logger.info(IDLOG, 'delete call recording file ' + filepath);
+    logger.log.info(IDLOG, 'delete call recording file ' + filepath);
     fs.unlink(filepath, function(err) {
       try {
         if (err) {
-          logger.error(IDLOG, 'removing call recording file ' + filepath);
+          logger.log.error(IDLOG, 'removing call recording file ' + filepath);
           cb(err);
         }
 
         // update the database entry of the call to remove the link to the file
         else {
-          logger.info(IDLOG, 'delete call recording from the database for call with id ' + id);
+          logger.log.info(IDLOG, 'delete call recording from the database for call with id ' + id);
           dbconn.deleteCallRecording(id, function(err) {
             cb(err);
           });
         }
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }

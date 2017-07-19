@@ -32,7 +32,7 @@ module.exports = function(options, imports, register) {
 
   try {
     imports.user.on(imports.user.EVT_USERS_READY, function() {
-      configManager.setLogger(logger);
+      configManager.setLogger(logger.ctilog);
       configManager.setCompUser(imports.user);
       configManager.setCompAstProxy(imports.astProxy);
       configManager.setCompComNethctiWs(imports.com_nethcti_ws);
@@ -46,6 +46,6 @@ module.exports = function(options, imports, register) {
       configManager.setCompDbconn(imports.dbconn);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 };

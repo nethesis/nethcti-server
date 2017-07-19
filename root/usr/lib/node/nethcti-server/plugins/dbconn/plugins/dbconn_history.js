@@ -59,10 +59,10 @@ function setCompDbconnMain(comp) {
     }
 
     compDbconnMain = comp;
-    logger.info(IDLOG, 'main dbconn component has been set');
+    logger.log.info(IDLOG, 'main dbconn component has been set');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -76,16 +76,16 @@ function setCompDbconnMain(comp) {
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -106,7 +106,7 @@ function getAllUserHistorySmsInterval(data, cb) {
   try {
     getHistorySmsInterval(data, cb);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -249,14 +249,14 @@ function getHistoryCallInterval(data, cb) {
       order: (data.sort ? data.sort : 'time desc')
 
     }).then(function(results) {
-      logger.info(IDLOG, results.count + ' results searching history call interval between ' +
+      logger.log.info(IDLOG, results.count + ' results searching history call interval between ' +
         data.from + ' to ' + data.to + ' and filter ' + data.filter +
         (data.endpoints ? (' for endpoints ' + data.endpoints) : ''));
       cb(null, results);
 
     }, function(err) { // manage the error
 
-      logger.error(IDLOG, 'searching history call interval between ' + data.from + ' to ' + data.to +
+      logger.log.error(IDLOG, 'searching history call interval between ' + data.from + ' to ' + data.to +
         ' for endpoints ' + data.endpoints + ' and filter ' + data.filter + ': ' + err.toString());
       cb(err.toString());
     });
@@ -264,7 +264,7 @@ function getHistoryCallInterval(data, cb) {
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -417,13 +417,13 @@ function getHistorySwitchCallInterval(data, cb) {
 
     }).then(function(results) {
 
-      logger.info(IDLOG, results.count + ' results searching switchboard history call interval between ' +
+      logger.log.info(IDLOG, results.count + ' results searching switchboard history call interval between ' +
         data.from + ' to ' + data.to + ' and filter ' + data.filter);
       cb(null, results);
 
     }, function(err) { // manage the error
 
-      logger.error(IDLOG, 'searching switchboard history call interval between ' + data.from + ' to ' + data.to +
+      logger.log.error(IDLOG, 'searching switchboard history call interval between ' + data.from + ' to ' + data.to +
         ' with filter ' + data.filter + ': ' + err.toString());
       cb(err.toString());
     });
@@ -431,7 +431,7 @@ function getHistorySwitchCallInterval(data, cb) {
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -516,13 +516,13 @@ function getHistorySmsInterval(data, cb) {
         results[i] = results[i].selectedValues;
       }
 
-      logger.info(IDLOG, results.length + ' results searching history sms interval between ' +
+      logger.log.info(IDLOG, results.length + ' results searching history sms interval between ' +
         data.from + ' to ' + data.to + ' sent by username "' + data.username + '" and filter ' + data.filter);
       cb(null, results);
 
     }, function(err) { // manage the error
 
-      logger.error(IDLOG, 'searching history sms interval between ' + data.from + ' to ' + data.to +
+      logger.log.error(IDLOG, 'searching history sms interval between ' + data.from + ' to ' + data.to +
         ' sent by username "' + data.username + '" and filter ' + data.filter + ': ' + err.toString());
       cb(err.toString());
     });
@@ -530,7 +530,7 @@ function getHistorySmsInterval(data, cb) {
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -568,24 +568,24 @@ function isAtLeastExtenInCall(uniqueid, extensions, cb) {
 
       // extract result to return in the callback function
       if (result && result.dataValues) {
-        logger.info(IDLOG, 'at least one extensions ' + extensions.toString() + ' is involved in the call with uniqueid ' + uniqueid);
+        logger.log.info(IDLOG, 'at least one extensions ' + extensions.toString() + ' is involved in the call with uniqueid ' + uniqueid);
         cb(null, result.dataValues);
 
       } else {
-        logger.info(IDLOG, 'none of the extensions ' + extensions.toString() + ' is involved in the call with uniqueid ' + uniqueid);
+        logger.log.info(IDLOG, 'none of the extensions ' + extensions.toString() + ' is involved in the call with uniqueid ' + uniqueid);
         cb(null, false);
       }
 
     }, function(err) { // manage the error
 
-      logger.error(IDLOG, 'checking if at least one extension of ' + extensions.toString() + ' is involved in the call with uniqueid ' + uniqueid);
+      logger.log.error(IDLOG, 'checking if at least one extension of ' + extensions.toString() + ' is involved in the call with uniqueid ' + uniqueid);
       cb(err.toString());
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }

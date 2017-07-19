@@ -31,6 +31,15 @@ var endpointTypes = require('./endpoint_types');
 var IDLOG = '[controller_user]';
 
 /**
+ * The configuration file path of the users.
+ *
+ * @property USERS_CONF_FILEPATH
+ * @type string
+ * @private
+ */
+var USERS_CONF_FILEPATH;
+
+/**
  * Fired when the creation of the _User_ objects is completed.
  *
  * @event usersReady
@@ -43,6 +52,20 @@ var IDLOG = '[controller_user]';
  * @default "usersReady"
  */
 var EVT_USERS_READY = 'usersReady';
+
+/**
+ * Fired when the componente has been reloaded.
+ *
+ * @event reloaded
+ */
+/**
+ * The name of the reloaded event.
+ *
+ * @property EVT_RELOADED
+ * @type string
+ * @default "reloaded"
+ */
+var EVT_RELOADED = 'reloaded';
 
 /**
  * Fired when the client user has changed his own avatar picture.
@@ -71,6 +94,17 @@ var EVT_USER_PROFILE_AVATAR_CHANGED = 'userProfileAvatarChanged';
  * @default "userPresenceChanged"
  */
 var EVT_USER_PRESENCE_CHANGED = 'userPresenceChanged';
+
+/**
+ * True if the component has been started. Used to emit EVT_RELOADED
+ * instead of EVT_READY
+ *
+ * @property ready
+ * @type boolean
+ * @private
+ * @default false
+ */
+var ready = false;
 
 /**
  * The logger. It must have at least three methods: _info, warn and error._
@@ -130,16 +164,14 @@ var users = {};
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
-
+    if (typeof log === 'object') {
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
-
+      logger.log.info(IDLOG, 'new logger has been set');
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -152,9 +184,9 @@ function setLogger(log) {
 function setCompDbconn(comp) {
   try {
     compDbconn = comp;
-    logger.info(IDLOG, 'set dbconn architect component');
+    logger.log.info(IDLOG, 'set dbconn architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -167,9 +199,9 @@ function setCompDbconn(comp) {
 function setCompAstProxy(comp) {
   try {
     compAstProxy = comp;
-    logger.info(IDLOG, 'set asterisk proxy architect component');
+    logger.log.info(IDLOG, 'set asterisk proxy architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -193,9 +225,10 @@ function config(path) {
     if (!fs.existsSync(path)) {
       throw new Error(path + ' does not exist');
     }
+    USERS_CONF_FILEPATH = path;
 
     // read JSON file with the user/endpoint associations
-    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
+    var json = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
 
     // initialize user objects
     var userid, newuser;
@@ -203,9 +236,9 @@ function config(path) {
       // add new user in memory
       newuser = new User(userid, json[userid].name);
       users[userid] = newuser;
-      logger.info(IDLOG, 'new user "' + newuser.getUsername() + '" has been created');
+      logger.log.info(IDLOG, 'new user "' + newuser.getUsername() + '" has been created');
     }
-    logger.info(IDLOG, Object.keys(users).length + ' users has been created');
+    logger.log.info(IDLOG, Object.keys(users).length + ' users has been created');
 
     // set endpoints to the users
     initializeEndpointsUsersByJSON(json);
@@ -214,14 +247,53 @@ function config(path) {
     // initialize asterisk proxy listeners
     initializeAstProxyListeners();
 
-    // emit the event for tell to other modules that the user objects are ready
-    logger.info(IDLOG, 'emit event "' + EVT_USERS_READY + '"');
-    emitter.emit(EVT_USERS_READY);
-
-    logger.info(IDLOG, 'configuration done by ' + path);
+    if (!ready) {
+      // emit the event for tell to other modules that the user objects are ready
+      logger.log.info(IDLOG, 'emit event "' + EVT_USERS_READY + '"');
+      emitter.emit(EVT_USERS_READY);
+      ready = true;
+    } else {
+      logger.log.info(IDLOG, 'emit event "' + EVT_RELOADED + '"');
+      emitter.emit(EVT_RELOADED);
+    }
+    logger.log.info(IDLOG, 'configuration done by ' + USERS_CONF_FILEPATH);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reset
+ * @private
+ */
+function reset() {
+  try {
+    var k;
+    for (k in users) {
+      delete users[k];
+    }
+    users = {};
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ * @private
+ */
+function reload() {
+  try {
+    reset();
+    config(USERS_CONF_FILEPATH);
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -242,7 +314,7 @@ function evtExtenDndChanged(data) {
     if (typeof data !== 'object' || typeof data.exten !== 'string' || typeof data.enabled !== 'boolean') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_DND_CHANGED + '" event for exten "' + data.exten + '"');
+    logger.log.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_DND_CHANGED + '" event for exten "' + data.exten + '"');
 
     var i, e;
     var username = getUserFromExten(data.exten);
@@ -260,9 +332,9 @@ function evtExtenDndChanged(data) {
 
           compAstProxy.setDnd(allext[i], false, function(err) {
             if (err) {
-              logger.error(IDLOG, 'disabling dnd of extension "' + allext[i] + '"');
+              logger.log.error(IDLOG, 'disabling dnd of extension "' + allext[i] + '"');
             } else {
-              logger.info(IDLOG, 'disabled dnd of extension "' + allext[i] + '"');
+              logger.log.info(IDLOG, 'disabled dnd of extension "' + allext[i] + '"');
             }
             updateUserPresence(username);
           });
@@ -276,9 +348,9 @@ function evtExtenDndChanged(data) {
 
         compAstProxy.setDnd(mainExtId, true, function(err) {
           if (err) {
-            logger.error(IDLOG, 'enabling dnd of main extension "' + e + '"');
+            logger.log.error(IDLOG, 'enabling dnd of main extension "' + e + '"');
           } else {
-            logger.info(IDLOG, 'enabled dnd of main extension "' + e + '"');
+            logger.log.info(IDLOG, 'enabled dnd of main extension "' + e + '"');
           }
           updateUserPresence(username);
         });
@@ -288,7 +360,7 @@ function evtExtenDndChanged(data) {
     updateUserPresence(username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -309,7 +381,7 @@ function evtExtenCfChanged(data) {
     if (typeof data !== 'object' || typeof data.exten !== 'string' || typeof data.enabled !== 'boolean') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CF_CHANGED + '" event for exten "' + data.exten + '"');
+    logger.log.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CF_CHANGED + '" event for exten "' + data.exten + '"');
 
     var i, e;
     var username = getUserFromExten(data.exten);
@@ -327,9 +399,9 @@ function evtExtenCfChanged(data) {
 
           compAstProxy.setUnconditionalCf(allext[i], false, null, function(err) {
             if (err) {
-              logger.error(IDLOG, 'disabling cf of extension "' + allext[i] + '"');
+              logger.log.error(IDLOG, 'disabling cf of extension "' + allext[i] + '"');
             } else {
-              logger.info(IDLOG, 'disabled cf of extension "' + allext[i] + '"');
+              logger.log.info(IDLOG, 'disabled cf of extension "' + allext[i] + '"');
             }
             updateUserPresence(username);
           });
@@ -343,9 +415,9 @@ function evtExtenCfChanged(data) {
 
         compAstProxy.setUnconditionalCf(mainExtId, true, data.to, function(err) {
           if (err) {
-            logger.error(IDLOG, 'enabling cf of main extension "' + e + '" to "' + data.to + '"');
+            logger.log.error(IDLOG, 'enabling cf of main extension "' + e + '" to "' + data.to + '"');
           } else {
-            logger.info(IDLOG, 'enabled cf of main extension "' + e + '" to "' + data.to + '"');
+            logger.log.info(IDLOG, 'enabled cf of main extension "' + e + '" to "' + data.to + '"');
           }
           updateUserPresence(username);
         });
@@ -355,7 +427,7 @@ function evtExtenCfChanged(data) {
     updateUserPresence(username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -379,7 +451,7 @@ function evtExtenCfbChanged(data) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CFB_CHANGED + '" event for exten "' + data.exten + '"');
+    logger.log.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CFB_CHANGED + '" event for exten "' + data.exten + '"');
 
     var i, e;
     var username = getUserFromExten(data.exten);
@@ -397,9 +469,9 @@ function evtExtenCfbChanged(data) {
 
           compAstProxy.setCfb(allext[i], false, null, function(err) {
             if (err) {
-              logger.error(IDLOG, 'disabling cfb of extension "' + allext[i] + '"');
+              logger.log.error(IDLOG, 'disabling cfb of extension "' + allext[i] + '"');
             } else {
-              logger.info(IDLOG, 'disabled cfb of extension "' + allext[i] + '"');
+              logger.log.info(IDLOG, 'disabled cfb of extension "' + allext[i] + '"');
             }
             updateCondUserPresence(username);
           });
@@ -412,9 +484,9 @@ function evtExtenCfbChanged(data) {
 
         compAstProxy.setCfb(mainExtId, true, data.to, function(err) {
           if (err) {
-            logger.error(IDLOG, 'enabling cfb of main extension "' + e + '" to "' + data.to + '"');
+            logger.log.error(IDLOG, 'enabling cfb of main extension "' + e + '" to "' + data.to + '"');
           } else {
-            logger.info(IDLOG, 'enabled cfb of main extension "' + e + '" to "' + data.to + '"');
+            logger.log.info(IDLOG, 'enabled cfb of main extension "' + e + '" to "' + data.to + '"');
           }
           updateCondUserPresence(username);
         });
@@ -423,7 +495,7 @@ function evtExtenCfbChanged(data) {
     updateCondUserPresence(username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -447,7 +519,7 @@ function evtExtenCfuChanged(data) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CFU_CHANGED + '" event for exten "' + data.exten + '"');
+    logger.log.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CFU_CHANGED + '" event for exten "' + data.exten + '"');
 
     var i, e;
     var username = getUserFromExten(data.exten);
@@ -465,9 +537,9 @@ function evtExtenCfuChanged(data) {
 
           compAstProxy.setCfu(allext[i], false, null, function(err) {
             if (err) {
-              logger.error(IDLOG, 'disabling cfu of extension "' + allext[i] + '"');
+              logger.log.error(IDLOG, 'disabling cfu of extension "' + allext[i] + '"');
             } else {
-              logger.info(IDLOG, 'disabled cfu of extension "' + allext[i] + '"');
+              logger.log.info(IDLOG, 'disabled cfu of extension "' + allext[i] + '"');
             }
             updateCondUserPresence(username);
           });
@@ -480,9 +552,9 @@ function evtExtenCfuChanged(data) {
 
         compAstProxy.setCfu(mainExtId, true, data.to, function(err) {
           if (err) {
-            logger.error(IDLOG, 'enabling cfu of main extension "' + e + '" to "' + data.to + '"');
+            logger.log.error(IDLOG, 'enabling cfu of main extension "' + e + '" to "' + data.to + '"');
           } else {
-            logger.info(IDLOG, 'enabled cfu of main extension "' + e + '" to "' + data.to + '"');
+            logger.log.info(IDLOG, 'enabled cfu of main extension "' + e + '" to "' + data.to + '"');
           }
           updateCondUserPresence(username);
         });
@@ -491,7 +563,7 @@ function evtExtenCfuChanged(data) {
     updateCondUserPresence(username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -512,7 +584,7 @@ function evtExtenCfVmChanged(data) {
     if (typeof data !== 'object' || typeof data.exten !== 'string' || typeof data.enabled !== 'boolean') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CFVM_CHANGED + '" event for exten "' + data.exten + '"');
+    logger.log.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CFVM_CHANGED + '" event for exten "' + data.exten + '"');
 
     var i, e;
     var username = getUserFromExten(data.exten);
@@ -530,9 +602,9 @@ function evtExtenCfVmChanged(data) {
 
           compAstProxy.setUnconditionalCfVm(allext[i], false, null, function(err) {
             if (err) {
-              logger.error(IDLOG, 'disabling cfvm of extension "' + allext[i] + '"');
+              logger.log.error(IDLOG, 'disabling cfvm of extension "' + allext[i] + '"');
             } else {
-              logger.info(IDLOG, 'disabled cfvm of extension "' + allext[i] + '"');
+              logger.log.info(IDLOG, 'disabled cfvm of extension "' + allext[i] + '"');
             }
             updateUserPresence(username);
           });
@@ -546,9 +618,9 @@ function evtExtenCfVmChanged(data) {
 
         compAstProxy.setUnconditionalCfVm(mainExtId, true, data.vm, function(err) {
           if (err) {
-            logger.error(IDLOG, 'enabling cfvm of main extension "' + e + '" to "' + data.vm + '"');
+            logger.log.error(IDLOG, 'enabling cfvm of main extension "' + e + '" to "' + data.vm + '"');
           } else {
-            logger.info(IDLOG, 'enabled cfvm of main extension "' + e + '" to "' + data.vm + '"');
+            logger.log.info(IDLOG, 'enabled cfvm of main extension "' + e + '" to "' + data.vm + '"');
           }
           updateUserPresence(username);
         });
@@ -558,7 +630,7 @@ function evtExtenCfVmChanged(data) {
     updateUserPresence(username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -582,7 +654,7 @@ function isMainExtension(extenId) {
     return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -607,7 +679,7 @@ function getUserFromExten(extenId) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -624,9 +696,9 @@ function initializeAstProxyListeners() {
     compAstProxy.on(compAstProxy.EVT_EXTEN_CFU_CHANGED, evtExtenCfuChanged);
     compAstProxy.on(compAstProxy.EVT_EXTEN_CFVM_CHANGED, evtExtenCfVmChanged);
     compAstProxy.on(compAstProxy.EVT_EXTEN_DND_CHANGED, evtExtenDndChanged);
-    logger.info(IDLOG, 'set asterisk proxy listeners done');
+    logger.log.info(IDLOG, 'set asterisk proxy listeners done');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -723,7 +795,7 @@ function enableCfbExten(ext, destination, username) {
       compAstProxy.setCfb(ext, true, destination, callback);
     } else {
       var str = 'setting "' + userPresence.COND_STATUS.cf_busy + '" presence to user "' + username + '": no destination passed "' + destination + '"';
-      logger.warn(IDLOG, str);
+      logger.log.warn(IDLOG, str);
       callback(str);
     }
   };
@@ -757,7 +829,7 @@ function enableCfuExten(ext, destination, username) {
       compAstProxy.setCfu(ext, true, destination, callback);
     } else {
       var str = 'setting "' + userPresence.COND_STATUS.cf_unavailable + '" presence to user "' + username + '": no destination passed "' + destination + '"';
-      logger.warn(IDLOG, str);
+      logger.log.warn(IDLOG, str);
       callback(str);
     }
   };
@@ -794,7 +866,7 @@ function enableCfVmExten(ext, username) {
       compAstProxy.setUnconditionalCfVm(ext, true, vmId, callback);
     } else {
       var str = 'setting "' + userPresence.STATUS.voicemail + '" presence to user "' + username + '": no voicemail associated';
-      logger.warn(IDLOG, str);
+      logger.log.warn(IDLOG, str);
       callback(str);
     }
   };
@@ -818,7 +890,7 @@ function enableCfbVmExten(ext, username) {
       compAstProxy.setCfbVm(ext, true, vmId, callback);
     } else {
       var str = 'setting "' + userPresence.STATUS_ONBUSY.voicemail + '" presence on busy to user "' + username + '": no voicemail associated';
-      logger.warn(IDLOG, str);
+      logger.log.warn(IDLOG, str);
       callback(str);
     }
   };
@@ -842,7 +914,7 @@ function enableCfuVmExten(ext, username) {
       compAstProxy.setCfuVm(ext, true, vmId, callback);
     } else {
       var str = 'setting "' + userPresence.STATUS_ONUNAVAILABLE.voicemail + '" presence on unavailable to user "' + username + '": no voicemail associated';
-      logger.warn(IDLOG, str);
+      logger.log.warn(IDLOG, str);
       callback(str);
     }
   };
@@ -866,7 +938,7 @@ function enableCfCellphoneExten(ext, username) {
       compAstProxy.setUnconditionalCf(ext, true, cellphoneId, callback);
     } else {
       var str = 'setting "' + userPresence.STATUS.cellphone + '" presence to user "' + username + '": no cellphone associated';
-      logger.warn(IDLOG, str);
+      logger.log.warn(IDLOG, str);
       callback(str);
     }
   };
@@ -890,7 +962,7 @@ function enableCfbCellphoneExten(ext, username) {
       compAstProxy.setCfb(ext, true, cellphoneId, callback);
     } else {
       var str = 'setting "' + userPresence.STATUS_ONBUSY.cellphone + '" presence on busy to user "' + username + '": no cellphone associated';
-      logger.warn(IDLOG, str);
+      logger.log.warn(IDLOG, str);
       callback(str);
     }
   };
@@ -914,7 +986,7 @@ function enableCfuCellphoneExten(ext, username) {
       compAstProxy.setCfu(ext, true, cellphoneId, callback);
     } else {
       var str = 'setting "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '" presence on unavailable to user "' + username + '": no cellphone associated';
-      logger.warn(IDLOG, str);
+      logger.log.warn(IDLOG, str);
       callback(str);
     }
   };
@@ -935,7 +1007,7 @@ function enableCfbNumberExten(ext, destination, username) {
       compAstProxy.setCfb(ext, true, destination, callback);
     } else {
       var str = 'setting "' + userPresence.STATUS_ONBUSY.callforward + '" presence on busy to user "' + username + '": no destination passed "' + destination + '"';
-      logger.warn(IDLOG, str);
+      logger.log.warn(IDLOG, str);
       callback(str);
     }
   };
@@ -956,7 +1028,7 @@ function enableCfuNumberExten(ext, destination, username) {
       compAstProxy.setCfu(ext, true, destination, callback);
     } else {
       var str = 'setting "' + userPresence.STATUS_ONUNAVAILABLE.callforward + '" presence on unavailable to user "' + username + '": no destination passed "' + destination + '"';
-      logger.warn(IDLOG, str);
+      logger.log.warn(IDLOG, str);
       callback(str);
     }
   };
@@ -977,7 +1049,7 @@ function enableCfNumberExten(ext, destination, username) {
       compAstProxy.setUnconditionalCf(ext, true, destination, callback);
     } else {
       var str = 'setting "' + userPresence.STATUS.callforward + '" presence to user "' + username + '": no destination passed "' + destination + '"';
-      logger.warn(IDLOG, str);
+      logger.log.warn(IDLOG, str);
       callback(str);
     }
   };
@@ -1001,11 +1073,11 @@ function getAllUserExtensions(username) {
         .concat(Object.keys(endpoints[endpointTypes.TYPES.mainextension]));
 
     } else {
-      logger.warn(IDLOG, 'getting all user extensions: user "' + username + '" not exists');
+      logger.log.warn(IDLOG, 'getting all user extensions: user "' + username + '" not exists');
       return [];
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return [];
   }
 }
@@ -1046,10 +1118,10 @@ function setPresenceOnBusy(param, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence on busy of user "' + param.username + '" to "' + userPresence.STATUS_ONBUSY.online + '"');
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, 'setting presence on busy of user "' + param.username + '" to "' + userPresence.STATUS_ONBUSY.online + '"');
+              logger.log.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence on busy "' + userPresence.STATUS_ONBUSY.online + '" to user "' + param.username + '"');
+              logger.log.info(IDLOG, 'set presence on busy "' + userPresence.STATUS_ONBUSY.online + '" to user "' + param.username + '"');
             }
           }
         );
@@ -1064,10 +1136,10 @@ function setPresenceOnBusy(param, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence on busy of user "' + param.username + '" to "' + userPresence.STATUS_ONBUSY.cellphone + '"');
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, 'setting presence on busy of user "' + param.username + '" to "' + userPresence.STATUS_ONBUSY.cellphone + '"');
+              logger.log.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence on busy "' + userPresence.STATUS_ONBUSY.cellphone + '" to user "' + param.username + '"');
+              logger.log.info(IDLOG, 'set presence on busy "' + userPresence.STATUS_ONBUSY.cellphone + '" to user "' + param.username + '"');
             }
           }
         );
@@ -1082,10 +1154,10 @@ function setPresenceOnBusy(param, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence on busy of user "' + param.username + '" to "' + userPresence.STATUS_ONBUSY.voicemail + '"');
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, 'setting presence on busy of user "' + param.username + '" to "' + userPresence.STATUS_ONBUSY.voicemail + '"');
+              logger.log.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence on busy "' + userPresence.STATUS_ONBUSY.voicemail + '" to user "' + param.username + '"');
+              logger.log.info(IDLOG, 'set presence on busy "' + userPresence.STATUS_ONBUSY.voicemail + '" to user "' + param.username + '"');
             }
           }
         );
@@ -1100,21 +1172,21 @@ function setPresenceOnBusy(param, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence on busy of user "' + param.username + '" to "' + userPresence.STATUS_ONBUSY.callforward + '" to "' + param.destination + '"');
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, 'setting presence on busy of user "' + param.username + '" to "' + userPresence.STATUS_ONBUSY.callforward + '" to "' + param.destination + '"');
+              logger.log.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence on busy "' + userPresence.STATUS_ONBUSY.callforward + '" to "' + param.destination + '" to user "' + param.username + '"');
+              logger.log.info(IDLOG, 'set presence on busy "' + userPresence.STATUS_ONBUSY.callforward + '" to "' + param.destination + '" to user "' + param.username + '"');
             }
           }
         );
       } else {
         var str = 'unknown status presence on busy "' + param.status + '" to be set';
-        logger.warn(IDLOG, str);
+        logger.log.warn(IDLOG, str);
         cb(str);
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -1155,10 +1227,10 @@ function setPresenceOnUnavailable(param, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.online + '"');
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.online + '"');
+              logger.log.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.online + '" to user "' + param.username + '"');
+              logger.log.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.online + '" to user "' + param.username + '"');
             }
           }
         );
@@ -1173,10 +1245,10 @@ function setPresenceOnUnavailable(param, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '"');
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '"');
+              logger.log.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '" to user "' + param.username + '"');
+              logger.log.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '" to user "' + param.username + '"');
             }
           }
         );
@@ -1191,10 +1263,10 @@ function setPresenceOnUnavailable(param, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.voicemail + '"');
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.voicemail + '"');
+              logger.log.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.voicemail + '" to user "' + param.username + '"');
+              logger.log.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.voicemail + '" to user "' + param.username + '"');
             }
           }
         );
@@ -1209,21 +1281,21 @@ function setPresenceOnUnavailable(param, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.callforward + '" to "' + param.destination + '"');
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.callforward + '" to "' + param.destination + '"');
+              logger.log.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.callforward + '" to "' + param.destination + '" to user "' + param.username + '"');
+              logger.log.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.callforward + '" to "' + param.destination + '" to user "' + param.username + '"');
             }
           }
         );
       } else {
         var str = 'unknown status presence on unavailable "' + param.status + '" to be set';
-        logger.warn(IDLOG, str);
+        logger.log.warn(IDLOG, str);
         cb(str);
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -1274,10 +1346,10 @@ function setPresence(param, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.online + '"');
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.online + '"');
+              logger.log.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.online + '" to user "' + param.username + '"');
+              logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.online + '" to user "' + param.username + '"');
             }
           }
         );
@@ -1300,10 +1372,10 @@ function setPresence(param, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.dnd + '"');
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.dnd + '"');
+              logger.log.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.dnd + '" to user "' + param.username + '"');
+              logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.dnd + '" to user "' + param.username + '"');
             }
           }
         );
@@ -1325,10 +1397,10 @@ function setPresence(param, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.cellphone + '"');
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.cellphone + '"');
+              logger.log.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.cellphone + '" to user "' + param.username + '"');
+              logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.cellphone + '" to user "' + param.username + '"');
             }
           }
         );
@@ -1350,10 +1422,10 @@ function setPresence(param, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.voicemail + '"');
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.voicemail + '"');
+              logger.log.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.voicemail + '" to user "' + param.username + '"');
+              logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.voicemail + '" to user "' + param.username + '"');
             }
           }
         );
@@ -1375,21 +1447,21 @@ function setPresence(param, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.callforward + '" to "' + param.destination + '"');
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.callforward + '" to "' + param.destination + '"');
+              logger.log.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.callforward + '" to "' + param.destination + '" to user "' + param.username + '"');
+              logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.callforward + '" to "' + param.destination + '" to user "' + param.username + '"');
             }
           }
         );
       } else {
         var str = 'unknown status presence "' + param.status + '"';
-        logger.warn(IDLOG, str);
+        logger.log.warn(IDLOG, str);
         cb(str);
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -1410,7 +1482,7 @@ function getPresenceOnBusy(username) {
       return users[username].getPresenceOnBusy();
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1430,7 +1502,7 @@ function getPresenceOnUnavailable(username) {
       return users[username].getPresenceOnUnavailable();
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1450,7 +1522,7 @@ function getPresenceCallforwardTo(username) {
       return users[username].getPresenceCallforwardTo();
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1470,7 +1542,7 @@ function getPresenceOnBusyCallforwardTo(username) {
       return users[username].getPresenceOnBusyCallforwardTo();
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1490,7 +1562,7 @@ function getPresenceOnUnavailableCallforwardTo(username) {
       return users[username].getPresenceOnUnavailableCallforwardTo();
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1510,7 +1582,7 @@ function getPresence(username) {
       return users[username].getPresence();
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1541,7 +1613,7 @@ function getPresenceList(username) {
     return result;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1559,7 +1631,7 @@ function getPresenceListOnUnavailable(username) {
     }
     return Object.keys(userPresence.STATUS_ONUNAVAILABLE);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return [];
   }
 }
@@ -1579,7 +1651,7 @@ function getPresenceListOnBusy(username) {
     return Object.keys(userPresence.STATUS_ONBUSY);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return [];
   }
 }
@@ -1610,7 +1682,7 @@ function getUserInfoJSON(username) {
     return result;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1635,7 +1707,7 @@ function initializeEndpointsUsersByJSON(json) {
 
         // check the validity of the endpoint type
         if (endpointTypes.isValidEndpointType(endpoType) === false) {
-          logger.error(IDLOG, 'wrong users config file: invalid endpoint type "' + endpoType + '" for user "' + userid + '"');
+          logger.log.error(IDLOG, 'wrong users config file: invalid endpoint type "' + endpoType + '" for user "' + userid + '"');
         } else {
           // add all endpoints of the current type to the user
           addEndpointsToUser(userid, endpoType, json[userid].endpoints[endpoType]);
@@ -1643,7 +1715,7 @@ function initializeEndpointsUsersByJSON(json) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1661,7 +1733,7 @@ function getEndpointMainExtension(username) {
     }
     // check the user existence
     if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'getting main extension endpoint: user "' + username + '" does not exist');
+      logger.log.warn(IDLOG, 'getting main extension endpoint: user "' + username + '" does not exist');
       return {};
     }
     // gets all endpoints, extracts the main extension endpoint
@@ -1670,7 +1742,7 @@ function getEndpointMainExtension(username) {
       Object.keys(endpoints[endpointTypes.TYPES.mainextension])[0]
     ];
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return {};
   }
 }
@@ -1689,7 +1761,7 @@ function getEndpointVoicemail(username) {
     }
     // check the user existence
     if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'getting voicemail endpoint: user "' + username + '" does not exist');
+      logger.log.warn(IDLOG, 'getting voicemail endpoint: user "' + username + '" does not exist');
       return {};
     }
     // gets all endpoints, extracts the voicemail endpoint
@@ -1698,7 +1770,7 @@ function getEndpointVoicemail(username) {
       Object.keys(endpoints[endpointTypes.TYPES.voicemail])[0]
     ];
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return {};
   }
 }
@@ -1732,25 +1804,25 @@ function updateUserPresence(username) {
 
     // set presence
     if (dnd) {
-      logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.dnd + '"');
+      logger.log.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.dnd + '"');
       users[username].setPresence(userPresence.STATUS.dnd);
     } else if (cf && cfval === cellphone) {
-      logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.cellphone + '"');
+      logger.log.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.cellphone + '"');
       users[username].setPresence(userPresence.STATUS.cellphone);
     } else if (cf && cfval !== cellphone) {
-      logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.callforward + '"');
+      logger.log.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.callforward + '"');
       users[username].setPresence(userPresence.STATUS.callforward);
       users[username].setPresenceCallforwardTo(cfval);
     } else if (cfvm) {
-      logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.voicemail + '"');
+      logger.log.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.voicemail + '"');
       users[username].setPresence(userPresence.STATUS.voicemail);
     } else {
-      logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.online + '"');
+      logger.log.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.online + '"');
       users[username].setPresence(userPresence.STATUS.online);
     }
 
     // emit the event for tell to other modules that the user presence has changed
-    logger.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_CHANGED + '"');
+    logger.log.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_CHANGED + '"');
     emitter.emit(EVT_USER_PRESENCE_CHANGED, {
       presence: {
         username: username,
@@ -1759,7 +1831,7 @@ function updateUserPresence(username) {
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1778,7 +1850,7 @@ function updateCondUserPresence(username) {
     updateUserPresenceOnBusy(username);
     updateUserPresenceOnUnavailable(username);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1810,22 +1882,22 @@ function updateUserPresenceOnUnavailable(username) {
 
     // set presence
     if (cfu && cfuval === cellphone) {
-      logger.info(IDLOG, 'set user presence on unavailable of "' + username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '"');
+      logger.log.info(IDLOG, 'set user presence on unavailable of "' + username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '"');
       users[username].setPresenceOnUnavailable(userPresence.STATUS_ONUNAVAILABLE.cellphone);
     } else if (cfu && cfuval !== cellphone) {
-      logger.info(IDLOG, 'set user presence on unavailable of "' + username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.callforward + '" to "' + cfuval + '"');
+      logger.log.info(IDLOG, 'set user presence on unavailable of "' + username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.callforward + '" to "' + cfuval + '"');
       users[username].setPresenceOnUnavailable(userPresence.STATUS_ONUNAVAILABLE.callforward);
       users[username].setPresenceOnUnavailableCallforwardTo(cfuval);
     } else if (cfuvm) {
-      logger.info(IDLOG, 'set user presence on unavailable of "' + username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.voicemail + '"');
+      logger.log.info(IDLOG, 'set user presence on unavailable of "' + username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.voicemail + '"');
       users[username].setPresenceOnUnavailable(userPresence.STATUS_ONUNAVAILABLE.voicemail);
     } else {
-      logger.info(IDLOG, 'set user presence on unavailable of "' + username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.online + '"');
+      logger.log.info(IDLOG, 'set user presence on unavailable of "' + username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.online + '"');
       users[username].setPresenceOnUnavailable(userPresence.STATUS_ONUNAVAILABLE.online);
     }
 
     // emit the event for tell to other modules that the user presence has changed
-    logger.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_CHANGED + '"');
+    logger.log.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_CHANGED + '"');
     emitter.emit(EVT_USER_PRESENCE_CHANGED, {
       presence_onunavailable: {
         username: username,
@@ -1834,7 +1906,7 @@ function updateUserPresenceOnUnavailable(username) {
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1866,22 +1938,22 @@ function updateUserPresenceOnBusy(username) {
 
     // set presence
     if (cfb && cfbval === cellphone) {
-      logger.info(IDLOG, 'set user presence on busy of "' + username + '" to "' + userPresence.STATUS_ONBUSY.cellphone + '"');
+      logger.log.info(IDLOG, 'set user presence on busy of "' + username + '" to "' + userPresence.STATUS_ONBUSY.cellphone + '"');
       users[username].setPresenceOnBusy(userPresence.STATUS_ONBUSY.cellphone);
     } else if (cfb && cfbval !== cellphone) {
-      logger.info(IDLOG, 'set user presence on busy of "' + username + '" to "' + userPresence.STATUS_ONBUSY.callforward + '" to "' + cfbval + '"');
+      logger.log.info(IDLOG, 'set user presence on busy of "' + username + '" to "' + userPresence.STATUS_ONBUSY.callforward + '" to "' + cfbval + '"');
       users[username].setPresenceOnBusy(userPresence.STATUS_ONBUSY.callforward);
       users[username].setPresenceOnBusyCallforwardTo(cfbval);
     } else if (cfbvm) {
-      logger.info(IDLOG, 'set user presence on busy of "' + username + '" to "' + userPresence.STATUS_ONBUSY.voicemail + '"');
+      logger.log.info(IDLOG, 'set user presence on busy of "' + username + '" to "' + userPresence.STATUS_ONBUSY.voicemail + '"');
       users[username].setPresenceOnBusy(userPresence.STATUS_ONBUSY.voicemail);
     } else {
-      logger.info(IDLOG, 'set user presence on busy of "' + username + '" to "' + userPresence.STATUS_ONBUSY.online + '"');
+      logger.log.info(IDLOG, 'set user presence on busy of "' + username + '" to "' + userPresence.STATUS_ONBUSY.online + '"');
       users[username].setPresenceOnBusy(userPresence.STATUS_ONBUSY.online);
     }
 
     // emit the event for tell to other modules that the user presence has changed
-    logger.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_CHANGED + '"');
+    logger.log.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_CHANGED + '"');
     emitter.emit(EVT_USER_PRESENCE_CHANGED, {
       presence_onbusy: {
         username: username,
@@ -1890,7 +1962,7 @@ function updateUserPresenceOnBusy(username) {
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1907,9 +1979,9 @@ function initializeUsersPresence() {
       updateUserPresence(username);
       updateCondUserPresence(username);
     }
-    logger.info(IDLOG, 'set all users presence done');
+    logger.log.info(IDLOG, 'set all users presence done');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1931,10 +2003,10 @@ function addEndpointsToUser(userid, endpoType, obj) {
     var id;
     for (id in obj) { // cycle endpoints
       users[userid].addEndpoint(endpoType, id, obj[id]);
-      logger.info(IDLOG, 'added endpoint "' + endpoType + ' ' + id + '" to user "' + users[userid].getUsername() + '"');
+      logger.log.info(IDLOG, 'added endpoint "' + endpoType + ' ' + id + '" to user "' + users[userid].getUsername() + '"');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1955,12 +2027,12 @@ function setConfigurations(userid, config) {
 
     if (users[userid] !== undefined) { // the user exists
       users[userid].setConfigurations(config);
-      logger.info(IDLOG, 'configurations has been set for user "' + userid + '"');
+      logger.log.info(IDLOG, 'configurations has been set for user "' + userid + '"');
     } else {
       throw new Error('setting configurations of unknown user "' + userid + '"');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     throw err;
   }
 }
@@ -1979,13 +2051,13 @@ function getConfigurations(userid) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (users[userid] !== undefined) { // the user exits
-      logger.info(IDLOG, 'return configurations of user "' + userid + '"');
+      logger.log.info(IDLOG, 'return configurations of user "' + userid + '"');
       return users[userid].getConfigurations();
     } else {
       throw new Error('getting configurations of unknown user "' + userid + '"');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return {};
   }
 }
@@ -2001,7 +2073,7 @@ function emit(ev, data) {
   try {
     emitter.emit(ev, data);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -2018,7 +2090,7 @@ function on(type, cb) {
   try {
     return emitter.on(type, cb);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -2038,7 +2110,7 @@ function hasExtensionEndpoint(username, exten) {
     }
 
     if (users[username] === undefined) { // the user is not present
-      logger.warn(IDLOG, 'checking the user-extension endpoint association: no user "' + username + '" is present');
+      logger.log.warn(IDLOG, 'checking the user-extension endpoint association: no user "' + username + '" is present');
       return false;
     }
     var i;
@@ -2051,7 +2123,7 @@ function hasExtensionEndpoint(username, exten) {
     return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -2072,7 +2144,7 @@ function hasCellphoneEndpoint(username, cellphone) {
     }
 
     if (users[username] === undefined) { // the user is not present
-      logger.warn(IDLOG, 'checking the user-cellphone endpoint association: no user "' + username + '" is present');
+      logger.log.warn(IDLOG, 'checking the user-cellphone endpoint association: no user "' + username + '" is present');
       return false;
     }
     var cel;
@@ -2085,7 +2157,7 @@ function hasCellphoneEndpoint(username, cellphone) {
     return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -2119,7 +2191,7 @@ function hasVoicemailEndpoint(username, voicemail) {
     return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -2153,7 +2225,7 @@ function getVoicemailList(username) {
     return Object.keys(evms);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     throw err;
   }
 }
@@ -2166,7 +2238,7 @@ function getVoicemailList(username) {
  * @return {object} The endpoints of the user in JSON format.
  */
 function getEndpointsJSON(userid) {
-  try {    // check parameter
+  try { // check parameter
     if (typeof userid !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
@@ -2179,7 +2251,7 @@ function getEndpointsJSON(userid) {
     return users[userid].getAllEndpointsJSON();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     throw err;
   }
 }
@@ -2202,7 +2274,7 @@ function getAllUsersEndpointsJSON() {
     return obj;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     throw err;
   }
 }
@@ -2217,7 +2289,7 @@ function getUsernames() {
   try {
     return Object.keys(users);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return [];
   }
 }
@@ -2241,7 +2313,7 @@ function isUserPresent(username) {
     return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -2269,7 +2341,7 @@ function isExtenWebrtc(exten) {
     }
     return false;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -2292,7 +2364,7 @@ function getUsernamesWithData() {
     return obj;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return {};
   }
 }
@@ -2313,7 +2385,7 @@ function getAllEndpointsEmail(username) {
 
     // check the user existence
     if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'gettings all the email endpoints: the user "' + username + '" doesn\'t exist');
+      logger.log.warn(IDLOG, 'gettings all the email endpoints: the user "' + username + '" doesn\'t exist');
       return {};
     }
 
@@ -2322,7 +2394,7 @@ function getAllEndpointsEmail(username) {
     return endpoints[endpointTypes.TYPES.email];
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return {};
   }
 }
@@ -2343,7 +2415,7 @@ function getAllEndpointsCellphone(username) {
 
     // check the user existence
     if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'gettings all the cellphone endpoints: the user "' + username + '" does not exist');
+      logger.log.warn(IDLOG, 'gettings all the cellphone endpoints: the user "' + username + '" does not exist');
       return {};
     }
 
@@ -2352,7 +2424,7 @@ function getAllEndpointsCellphone(username) {
     return endpoints[endpointTypes.TYPES.cellphone];
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return {};
   }
 }
@@ -2373,7 +2445,7 @@ function getAllEndpointsVoicemail(username) {
 
     // check the user existence
     if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'gettings all the voicemail endpoints: the user "' + username + '" does not exist');
+      logger.log.warn(IDLOG, 'gettings all the voicemail endpoints: the user "' + username + '" does not exist');
       return {};
     }
     // gets all endpoints, extracts the voicemail endpoints
@@ -2381,7 +2453,7 @@ function getAllEndpointsVoicemail(username) {
     return endpoints[endpointTypes.TYPES.voicemail];
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return {};
   }
 }
@@ -2402,7 +2474,7 @@ function getAllEndpointsExtension(username) {
 
     // check the user existence
     if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'gettings all the extension endpoints: the user "' + username + '" does not exist');
+      logger.log.warn(IDLOG, 'gettings all the extension endpoints: the user "' + username + '" does not exist');
       return {};
     }
 
@@ -2419,7 +2491,7 @@ function getAllEndpointsExtension(username) {
     return result;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return {};
   }
 }
@@ -2441,7 +2513,7 @@ function getAllUsersEndpointsExtension() {
     return res;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return {};
   }
 }
@@ -2473,7 +2545,7 @@ function getUserUsingEndpointExtension(exten) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -2507,7 +2579,7 @@ function getUsersUsingEndpointVoicemail(voicemail) {
     return result;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return [];
   }
 }
@@ -2528,7 +2600,7 @@ function getPhoneWebPass(username, exten) {
 
     // check the user existence
     if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'getting the phone web username: the user "' + username + '" does not exist');
+      logger.log.warn(IDLOG, 'getting the phone web username: the user "' + username + '" does not exist');
       return {};
     }
 
@@ -2541,7 +2613,7 @@ function getPhoneWebPass(username, exten) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -2561,7 +2633,7 @@ function getPhoneWebUser(username, exten) {
 
     // check the user existence
     if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'getting the phone web username: the user "' + username + '" does not exist');
+      logger.log.warn(IDLOG, 'getting the phone web username: the user "' + username + '" does not exist');
       return {};
     }
 
@@ -2574,7 +2646,7 @@ function getPhoneWebUser(username, exten) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -2594,14 +2666,14 @@ function deleteSettings(username, cb) {
     // check the user existence
     if (typeof users[username] !== 'object') {
       var msg = 'deleting user settings: user "' + username + '" does not exist';
-      logger.warn(IDLOG, msg);
+      logger.log.warn(IDLOG, msg);
       cb(msg);
       return;
     }
     compDbconn.deleteUserSettings(username, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -2625,7 +2697,7 @@ function saveSettings(username, data, cb) {
     // check the user existence
     if (typeof users[username] !== 'object') {
       var msg = 'saving user settings: user "' + username + '" does not exist';
-      logger.warn(IDLOG, msg);
+      logger.log.warn(IDLOG, msg);
       cb(msg);
       return;
     }
@@ -2634,7 +2706,7 @@ function saveSettings(username, data, cb) {
       // if the key saved is "avatar" it launches an event
       if (!err && (Object.keys(data)).indexOf('avatar') !== -1) {
         // emit the event for tell to other modules that the user profile avatar has changed
-        logger.info(IDLOG, 'emit event "' + EVT_USER_PROFILE_AVATAR_CHANGED + '"');
+        logger.log.info(IDLOG, 'emit event "' + EVT_USER_PROFILE_AVATAR_CHANGED + '"');
         emitter.emit(EVT_USER_PROFILE_AVATAR_CHANGED, {
           username: username,
           avatar: data.avatar
@@ -2642,7 +2714,7 @@ function saveSettings(username, data, cb) {
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -2661,23 +2733,25 @@ function getUserSettings(username, cb) {
     // check the user existence
     if (typeof users[username] !== 'object') {
       var msg = 'gettings user settings: user "' + username + '" does not exist';
-      logger.warn(IDLOG, msg);
+      logger.log.warn(IDLOG, msg);
       cb(msg);
       return;
     }
     compDbconn.getUserSettings(username, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
 // public interface
 exports.on = on;
 exports.config = config;
+exports.reload = reload;
 exports.setLogger = setLogger;
 exports.setPresence = setPresence;
 exports.getPresence = getPresence;
+exports.EVT_RELOADED = EVT_RELOADED;
 exports.saveSettings = saveSettings;
 exports.getUsernames = getUsernames;
 exports.isUserPresent = isUserPresent;

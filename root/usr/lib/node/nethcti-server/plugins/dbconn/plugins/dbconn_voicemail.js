@@ -89,10 +89,10 @@ function setCompDbconnMain(comp) {
     }
 
     compDbconnMain = comp;
-    logger.info(IDLOG, 'main dbconn component has been set');
+    logger.log.info(IDLOG, 'main dbconn component has been set');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -107,18 +107,18 @@ function setCompDbconnMain(comp) {
 function setLogger(log) {
   try {
     if (typeof log === 'object' &&
-      typeof log.info === 'function' &&
-      typeof log.warn === 'function' &&
-      typeof log.error === 'function') {
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -155,16 +155,16 @@ function getVoicemailMsg(vmId, type, offset, limit, cb) {
       limit: (limit ? parseInt(limit) : null)
     }).then(function(results) {
       // extract results to return in the callback function
-      logger.info(IDLOG, results.count + ' results searching voice messages of voicemail "' + vmId + '"');
+      logger.log.info(IDLOG, results.count + ' results searching voice messages of voicemail "' + vmId + '"');
       cb(null, results);
     }, function(err) { // manage the error
-      logger.error(IDLOG, 'searching voice messages of voicemail "' + vmId + '"');
+      logger.log.error(IDLOG, 'searching voice messages of voicemail "' + vmId + '"');
       cb(err.toString());
     });
 
     compDbconnMain.incNumExecQueries();
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -191,34 +191,34 @@ function deleteVoiceMessage(dbid, cb) {
         if (task) {
 
           task.destroy().then(function() {
-            logger.info(IDLOG, 'voice message with db id "' + dbid + '" has been deleted successfully');
+            logger.log.info(IDLOG, 'voice message with db id "' + dbid + '" has been deleted successfully');
             cb();
 
             // emits the event for a deleted voice message
-            logger.info(IDLOG, 'emit event "' + EVT_DELETED_VOICE_MESSAGE + '" for voicemail ' + task.selectedValues.mailboxuser);
+            logger.log.info(IDLOG, 'emit event "' + EVT_DELETED_VOICE_MESSAGE + '" for voicemail ' + task.selectedValues.mailboxuser);
             emitter.emit(EVT_DELETED_VOICE_MESSAGE, task.selectedValues.mailboxuser);
           });
 
         } else {
           var str = 'deleting voice message with db id "' + dbid + '": entry not found';
-          logger.warn(IDLOG, str);
+          logger.log.warn(IDLOG, str);
           cb(str);
         }
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
 
     }, function(err) { // manage the error
-      logger.error(IDLOG, 'searching voice message with db id "' + dbid + '" to delete not found: ' + err.toString());
+      logger.log.error(IDLOG, 'searching voice message with db id "' + dbid + '" to delete not found: ' + err.toString());
       cb(err.toString());
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -243,26 +243,26 @@ function deleteCustomMessage(vm, type, cb) {
       try {
         if (task) {
           task.destroy().then(function() {
-            logger.info(IDLOG, 'deleted custom message "' + type + '" for vm "' + vm + '"');
+            logger.log.info(IDLOG, 'deleted custom message "' + type + '" for vm "' + vm + '"');
             cb();
           });
         } else {
           var str = 'deleting custom message "' + type + '" for vm "' + vm + '": entry not found';
-          logger.warn(IDLOG, str);
+          logger.log.warn(IDLOG, str);
           cb(null, null);
         }
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     }, function(err) { // manage the error
-      logger.error(IDLOG, 'custom message "' + type + '" for vm "' + vm + '" with db id "' + dbid + '" to delete not found: ' + err.toString());
+      logger.log.error(IDLOG, 'custom message "' + type + '" for vm "' + vm + '" with db id "' + dbid + '" to delete not found: ' + err.toString());
       cb(err.toString());
     });
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -286,7 +286,7 @@ function listenVoiceMessage(dbid, cb) {
       where: ['id=?', dbid]
     }).then(function(result) {
       if (result && result.dataValues && result.dataValues.recording) {
-        logger.info(IDLOG, 'obtained voicemail audio file from voicemail db id "' + dbid + '"');
+        logger.log.info(IDLOG, 'obtained voicemail audio file from voicemail db id "' + dbid + '"');
         cb(null, result.dataValues.recording);
         // if the voice message has never been read, it updates its status as "read".
         // If the message has never been read the "dir" field contains the "INBOX" string.
@@ -297,27 +297,27 @@ function listenVoiceMessage(dbid, cb) {
           result.updateAttributes({
             dir: dir.substring(0, dir.length - 5) + 'Old'
           }, ['dir']).then(function() {
-            logger.info(IDLOG, 'read status of the voice message with db id "' + dbid + '" has been updated successfully');
+            logger.log.info(IDLOG, 'read status of the voice message with db id "' + dbid + '" has been updated successfully');
 
             // emits the event for a listened voice message
-            logger.info(IDLOG, 'emit event "' + EVT_LISTENED_VOICE_MESSAGE + '" for voicemail ' + result.dataValues.mailboxuser);
+            logger.log.info(IDLOG, 'emit event "' + EVT_LISTENED_VOICE_MESSAGE + '" for voicemail ' + result.dataValues.mailboxuser);
             emitter.emit(EVT_LISTENED_VOICE_MESSAGE, result.dataValues.mailboxuser);
           });
         }
       } else {
         var str = 'getting voicemail audio file from db voice message id "' + dbid + '"';
-        logger.warn(IDLOG, str);
+        logger.log.warn(IDLOG, str);
         cb(str);
       }
     }, function(err) { // manage the error
-      logger.error(IDLOG, 'searching voicemail audio file from voicemail db id "' + dbid + '"');
+      logger.log.error(IDLOG, 'searching voicemail audio file from voicemail db id "' + dbid + '"');
       cb(err.toString());
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -340,21 +340,21 @@ function listenCustomMessage(vm, type, cb) {
       where: ['dir=? AND mailboxuser=?', path, vm]
     }).then(function(result) {
       if (result && result.dataValues && result.dataValues.recording) {
-        logger.info(IDLOG, 'obtained listen custom message "' + type + '" for vm "' + vm + '"');
+        logger.log.info(IDLOG, 'obtained listen custom message "' + type + '" for vm "' + vm + '"');
         cb(null, result.dataValues.recording);
       } else {
         var str = 'getting listen custom message "' + type + '" for vm "' + vm + '": not found';
-        logger.warn(IDLOG, str);
+        logger.log.warn(IDLOG, str);
         cb(null, null);
       }
     }, function(err) { // manage the error
-      logger.error(IDLOG, 'getting listen custom message "' + type + '" for vm "' + vm + '"');
+      logger.log.error(IDLOG, 'getting listen custom message "' + type + '" for vm "' + vm + '"');
       cb(err.toString());
     });
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -379,25 +379,25 @@ function getVmMailboxFromDbId(dbid, cb) {
       attributes: ['mailboxuser']
     }).then(function(result) {
       if (result instanceof Array && result[0]) {
-        logger.info(IDLOG, 'obtained voicemail mailbox "' + result[0].dataValues.mailboxuser + '" from voicemail db id "' + dbid + '"');
+        logger.log.info(IDLOG, 'obtained voicemail mailbox "' + result[0].dataValues.mailboxuser + '" from voicemail db id "' + dbid + '"');
         cb(null, result[0].dataValues.mailboxuser);
 
       } else {
         var str = 'getting voicemail mailbox from db voice message id "' + dbid + '"';
-        logger.warn(IDLOG, str);
+        logger.log.warn(IDLOG, str);
         cb(str);
       }
 
     }, function(err) { // manage the error
 
-      logger.error(IDLOG, 'searching voicemail mailbox from voicemail db id "' + dbid + '"');
+      logger.log.error(IDLOG, 'searching voicemail mailbox from voicemail db id "' + dbid + '"');
       cb(err.toString());
     });
 
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -418,7 +418,7 @@ function getCustomAudioMsgPath(vm, type) {
     }
     return '/var/spool/asterisk/voicemail/default/' + vm + '/' + type;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -460,11 +460,11 @@ function setCustomVmAudioMsg(vm, type, audio, cb) {
         var entry = compDbconnMain.models[compDbconnMain.JSON_KEYS.VOICEMAIL].build(objEntry);
         entry.save()
           .then(function() {
-            logger.info(IDLOG, 'saved custom audio msg "' + type + '" for vm "' + vm + '"');
+            logger.log.info(IDLOG, 'saved custom audio msg "' + type + '" for vm "' + vm + '"');
             cb(null);
 
           }, function(err) {
-            logger.error(IDLOG, 'saving custom audio msg "' + type + '" for vm "' + vm + '": ' + err.toString());
+            logger.log.error(IDLOG, 'saving custom audio msg "' + type + '" for vm "' + vm + '": ' + err.toString());
             cb(err.toString());
           });
         compDbconnMain.incNumExecQueries();
@@ -472,20 +472,20 @@ function setCustomVmAudioMsg(vm, type, audio, cb) {
       } else {
         // the entry is already present, so updates it
         result.updateAttributes(objEntry).then(function() {
-          logger.info(IDLOG, 'updated custom audio msg "' + type + '" for vm "' + vm + '"');
+          logger.log.info(IDLOG, 'updated custom audio msg "' + type + '" for vm "' + vm + '"');
           cb();
         });
         compDbconnMain.incNumExecQueries();
       }
 
     }, function(err1) { // manage the error
-      logger.error(IDLOG, 'search setting "' + keyName + '" for user "' + username + '" failed: ' + err1.toString());
+      logger.log.error(IDLOG, 'search setting "' + keyName + '" for user "' + username + '" failed: ' + err1.toString());
       cb(err1.toString());
     });
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }

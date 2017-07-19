@@ -31,7 +31,7 @@ module.exports = function(options, imports, register) {
   });
 
   try {
-    httpProxy.setLogger(logger);
+    httpProxy.setLogger(logger.ctilog);
     httpProxy.config('/etc/nethcti/services.json');
     httpProxy.setCompUtil(imports.util);
     httpProxy.setCompAuthentication(imports.authentication);
@@ -39,6 +39,6 @@ module.exports = function(options, imports, register) {
     httpProxy.setCompUser(imports.user);
     httpProxy.start();
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }

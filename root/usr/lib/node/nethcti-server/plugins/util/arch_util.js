@@ -30,9 +30,9 @@ module.exports = function(options, imports, register) {
     if (imports.logger) {
       logger = imports.logger;
     }
-    util.setLogger(logger);
+    util.setLogger(logger.ctilog);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }

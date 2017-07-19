@@ -29,7 +29,7 @@ module.exports = function(options, imports, register) {
 
   try {
     imports.user.on(imports.user.EVT_USERS_READY, function() {
-      serverRest.setLogger(logger);
+      serverRest.setLogger(logger.ctilog);
       serverRest.config('/etc/nethcti/services.json');
       serverRest.setCompUtil(imports.util);
       serverRest.setCompUser(imports.user);
@@ -38,6 +38,6 @@ module.exports = function(options, imports, register) {
       serverRest.start();
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }

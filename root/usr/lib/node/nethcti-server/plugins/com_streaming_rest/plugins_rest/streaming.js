@@ -74,18 +74,18 @@ var compConfigManager;
 function setLogger(log) {
   try {
     if (typeof log === 'object' &&
-      typeof log.info === 'function' &&
-      typeof log.warn === 'function' &&
-      typeof log.error === 'function') {
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -98,9 +98,9 @@ function setLogger(log) {
 function setCompStreaming(cp) {
   try {
     compStreaming = cp;
-    logger.info(IDLOG, 'set streaming architect component');
+    logger.log.info(IDLOG, 'set streaming architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -113,9 +113,9 @@ function setCompStreaming(cp) {
 function setCompUtil(comp) {
   try {
     compUtil = comp;
-    logger.info(IDLOG, 'set util architect component');
+    logger.log.info(IDLOG, 'set util architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -128,9 +128,9 @@ function setCompUtil(comp) {
 function setCompAuthorization(ca) {
   try {
     compAuthorization = ca;
-    logger.info(IDLOG, 'set authorization architect component');
+    logger.log.info(IDLOG, 'set authorization architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -143,9 +143,9 @@ function setCompAuthorization(ca) {
 function setCompConfigManager(comp) {
   try {
     compConfigManager = comp;
-    logger.info(IDLOG, 'set config manager architect component');
+    logger.log.info(IDLOG, 'set config manager architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -282,15 +282,15 @@ function setCompConfigManager(comp) {
 
           compStreaming.getAllStreamingSources(username, function(err, results) {
             try {
-              logger.info(IDLOG, 'send authorized streaming sources "' + results + '" to the user "' + username + '"');
+              logger.log.info(IDLOG, 'send authorized streaming sources "' + results + '" to the user "' + username + '"');
               res.send(200, results);
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -316,9 +316,10 @@ function setCompConfigManager(comp) {
 
           // check if the user is authorized to use the streaming source
           if (compAuthorization.authorizeStreamingSourceUser(username).filter(function(e) {
-              return e.permissionId === stream;
-            }).length > 0) {
-            logger.info(IDLOG, 'authorization for user "' + username + '" to open streaming source "' + stream + '" has been successful');
+            return e.permissionId === stream;
+          }).length > 0) {
+
+            logger.log.info(IDLOG, 'authorization for user "' + username + '" to open streaming source "' + stream + '" has been successful');
 
             // create the caller identifier
             var defaultExten = compConfigManager.getDefaultUserExtensionConf(username);
@@ -331,20 +332,20 @@ function setCompConfigManager(comp) {
 
               if (err) {
                 var str = 'opening streaming source "' + stream + '"';
-                logger.error(IDLOG, str);
+                logger.log.error(IDLOG, str);
                 compUtil.net.sendHttp500(IDLOG, res, str);
 
               } else {
-                logger.warn(IDLOG, 'streaming source "' + stream + '" opened successfully by user "' + username + '"');
+                logger.log.warn(IDLOG, 'streaming source "' + stream + '" opened successfully by user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
               }
             });
           } else {
-            logger.warn(IDLOG, 'authorization for user "' + username + '" for open streaming source "' + stream + '" has been failed !');
+            logger.log.warn(IDLOG, 'authorization for user "' + username + '" for open streaming source "' + stream + '" has been failed !');
             compUtil.net.sendHttp403(IDLOG, res);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -370,27 +371,28 @@ function setCompConfigManager(comp) {
 
           // check if the user is authorized to use the streaming source
           if (compAuthorization.authorizeStreamingSourceUser(username).filter(function(e) {
-              return e.permissionId === stream;
-            }).length > 0) {
-            logger.info(IDLOG, 'authorization for user "' + username + '" to subscribe to the streaming source "' + stream + '" has been successful');
+            return e.permissionId === stream;
+          }).length > 0) {
+
+            logger.log.info(IDLOG, 'authorization for user "' + username + '" to subscribe to the streaming source "' + stream + '" has been successful');
 
             compStreaming.subscribeSource(username, stream, function(err) {
               if (err) {
                 var str = 'subscribing streaming source "' + stream + '" for user "' + username + '"';
-                logger.error(IDLOG, str);
+                logger.log.error(IDLOG, str);
                 compUtil.net.sendHttp500(IDLOG, res, str);
                 res.send(200, null);
               } else {
-                logger.info(IDLOG, 'subscribing streaming source "' + stream + '" successful for user "' + username + '"');
+                logger.log.info(IDLOG, 'subscribing streaming source "' + stream + '" successful for user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
               }
             });
           } else {
-            logger.warn(IDLOG, 'authorization for user "' + username + '" to subscribe to the streaming source "' + stream + '" has been failed !');
+            logger.log.warn(IDLOG, 'authorization for user "' + username + '" to subscribe to the streaming source "' + stream + '" has been failed !');
             compUtil.net.sendHttp403(IDLOG, res);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -416,27 +418,28 @@ function setCompConfigManager(comp) {
 
           // check if the user is authorized to use the streaming source
           if (compAuthorization.authorizeStreamingSourceUser(username).filter(function(e) {
-              return e.permissionId === stream;
-            }).length > 0) {
-            logger.info(IDLOG, 'authorization for user "' + username + '" to subscribe to the streaming source "' + stream + '" has been successful');
+            return e.permissionId === stream;
+          }).length > 0) {
+
+            logger.log.info(IDLOG, 'authorization for user "' + username + '" to subscribe to the streaming source "' + stream + '" has been successful');
 
             compStreaming.unsubscribeSource(username, stream, function(err) {
               if (err) {
                 var str = 'subscribing streaming source "' + stream + '" for user "' + username + '"';
-                logger.error(IDLOG, str);
+                logger.log.error(IDLOG, str);
                 compUtil.net.sendHttp500(IDLOG, res, str);
                 res.send(200, null);
               } else {
-                logger.info(IDLOG, 'subscribing streaming source "' + stream + '" successful for user "' + username + '"');
+                logger.log.info(IDLOG, 'subscribing streaming source "' + stream + '" successful for user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
               }
             });
           } else {
-            logger.warn(IDLOG, 'authorization for user "' + username + '" to subscribe to the streaming source "' + stream + '" has been failed !');
+            logger.log.warn(IDLOG, 'authorization for user "' + username + '" to subscribe to the streaming source "' + stream + '" has been failed !');
             compUtil.net.sendHttp403(IDLOG, res);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       }
@@ -454,6 +457,6 @@ function setCompConfigManager(comp) {
     exports.setCompConfigManager = setCompConfigManager;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 })();

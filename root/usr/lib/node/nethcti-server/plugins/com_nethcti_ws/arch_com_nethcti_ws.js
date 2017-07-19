@@ -35,7 +35,7 @@ module.exports = function(options, imports, register) {
 
     // wait for the authentication component ready event
     imports.authentication.on(imports.authentication.EVT_COMP_READY, function() {
-      comNethctiWs.setLogger(logger);
+      comNethctiWs.setLogger(logger.ctilog);
       comNethctiWs.setAuthe(imports.authentication);
       comNethctiWs.config('/etc/nethcti/services.json');
       comNethctiWs.configPrivacy('/etc/nethcti/nethcti.json');
@@ -48,6 +48,6 @@ module.exports = function(options, imports, register) {
       comNethctiWs.start();
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 };

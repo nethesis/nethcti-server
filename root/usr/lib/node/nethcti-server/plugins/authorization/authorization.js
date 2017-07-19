@@ -26,6 +26,24 @@ var fs = require('fs');
 var IDLOG = '[authorization]';
 
 /**
+ * The configuration file path of the users.
+ *
+ * @property USERS_CONF_FILEPATH
+ * @type string
+ * @private
+ */
+var USERS_CONF_FILEPATH;
+
+/**
+ * The configuration file path of the profiles.
+ *
+ * @property PROFILES_CONF_FILEPATH
+ * @type string
+ * @private
+ */
+var PROFILES_CONF_FILEPATH;
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -93,18 +111,18 @@ var compDbconn;
 function setLogger(log) {
   try {
     if (typeof log === 'object' &&
-      typeof log.info === 'function' &&
-      typeof log.warn === 'function' &&
-      typeof log.error === 'function') {
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -119,7 +137,7 @@ function setLogger(log) {
 function config(obj) {
   try {
     if (typeof obj !== 'object' || typeof obj.users !== 'string' || typeof obj.profiles !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (!fs.existsSync(obj.users)) {
       throw new Error(obj.users + ' does not exist');
@@ -127,15 +145,17 @@ function config(obj) {
     if (!fs.existsSync(obj.profiles)) {
       throw new Error(obj.profiles + ' does not exist');
     }
+    USERS_CONF_FILEPATH = obj.users;
+    PROFILES_CONF_FILEPATH = obj.profiles;
     // initialize mapping between user and authorization profile
     var u;
-    mapUserProfile = JSON.parse(fs.readFileSync(obj.users, 'utf8'));
+    mapUserProfile = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
     for (u in mapUserProfile) {
       delete mapUserProfile[u].name;
       delete mapUserProfile[u].endpoints;
     }
     // initialize profiles. The keys are the profile "id" and the value the profile object itself
-    profiles = JSON.parse(fs.readFileSync(obj.profiles, 'utf8'));
+    profiles = JSON.parse(fs.readFileSync(PROFILES_CONF_FILEPATH, 'utf8'));
     // fix the permission keys to be an object instead of an array
     var i, mp, id, temp;
     for (id in profiles) {
@@ -153,10 +173,10 @@ function config(obj) {
         profiles[id].macro_permissions[mp].permissions = temp;
       }
     }
-    logger.info(IDLOG, 'configuration done by ' + obj.users + ' ' + obj.profiles);
+    logger.log.info(IDLOG, 'configuration done by ' + USERS_CONF_FILEPATH + ' ' + PROFILES_CONF_FILEPATH);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -170,14 +190,14 @@ function config(obj) {
 function getUserProfileJSON(username) {
   try {
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (mapUserProfile[username]) {
       var profileId = mapUserProfile[username].profile_id;
       return profiles[profileId];
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -192,12 +212,12 @@ function setCompDbconn(comp) {
   try {
     // check parameter
     if (typeof comp !== 'object') {
-      throw new TypeError('wrong parameter');
+      throw new TypeError('wrong parameters: ' + JSON.stringify(arguments));
     }
     compDbconn = comp;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -212,12 +232,12 @@ function setCompUser(comp) {
   try {
     // check parameter
     if (typeof comp !== 'object') {
-      throw new TypeError('wrong parameter');
+      throw new TypeError('wrong parameters: ' + JSON.stringify(arguments));
     }
     compUser = comp;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -232,28 +252,28 @@ function setCompUser(comp) {
 function configRemoteOperators(path) {
   try {
     if (typeof path !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (!fs.existsSync(path)) {
-      logger.error(path + ' does not exist');
+      logger.log.error(path + ' does not exist');
       return;
     }
 
     // read the file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     if (typeof json !== 'object' ||
       typeof json.groups !== 'object') {
 
-      logger.warn(IDLOG, 'wrong content in ' + path);
+      logger.log.warn(IDLOG, 'wrong content in ' + path);
       return;
     }
     remoteOperatorsAutho = json.groups;
-    logger.info(IDLOG, 'configuration of operator authorizations for remote sites by file ' + path + ' ended');
+    logger.log.info(IDLOG, 'configuration of operator authorizations for remote sites by file ' + path + ' ended');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -268,13 +288,13 @@ function authorizePhonebookUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return profiles[getUserProfileId(username)].macro_permissions.phonebook.value === true;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -291,7 +311,7 @@ function authorizeAdminPhonebookUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -302,7 +322,7 @@ function authorizeAdminPhonebookUser(username) {
     );
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -319,7 +339,7 @@ function authorizeRecordingUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -330,7 +350,7 @@ function authorizeRecordingUser(username) {
     );
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -347,13 +367,13 @@ function authorizeLostQueueCallsUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.lost_queue_calls, username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -370,7 +390,7 @@ function authorizeAdminRecordingUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -381,7 +401,7 @@ function authorizeAdminRecordingUser(username) {
     );
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -398,13 +418,13 @@ function authorizePostitUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.postit, username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -421,13 +441,13 @@ function authorizeAdminPostitUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.admin_postit, username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -444,7 +464,7 @@ function authorizeAdminQueuesUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -454,7 +474,7 @@ function authorizeAdminQueuesUser(username) {
       profiles[profid].macro_permissions.queue_agent.permissions.ad_queue_agent.value === true
     );
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -471,13 +491,13 @@ function authorizeOffhourUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.offhour, username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -494,13 +514,13 @@ function authorizeAdminOffhourUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.admin_offhour, username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -517,7 +537,7 @@ function authorizeAdminHangupUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -528,7 +548,7 @@ function authorizeAdminHangupUser(username) {
     );
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -545,7 +565,7 @@ function authorizeAdminPickupUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -556,7 +576,7 @@ function authorizeAdminPickupUser(username) {
     );
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -574,14 +594,14 @@ function authorizeCdrUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
     return profiles[profid].macro_permissions.cdr.value === true;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -598,13 +618,13 @@ function authorizeSmsUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.sms, username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -627,7 +647,7 @@ function getUserProfileId(username) {
     return mapUserProfile[username].profile_id;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -651,7 +671,7 @@ function isPrivacyEnabled(username) {
       profiles[profid].macro_permissions.settings.permissions.privacy.value === true
     );
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns true for security reasons
     return true;
   }
@@ -668,13 +688,13 @@ function authorizeAdminSmsUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.admin_sms, username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -691,7 +711,7 @@ function authorizeSpyUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -702,7 +722,7 @@ function authorizeSpyUser(username) {
     );
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -720,7 +740,7 @@ function authorizeIntrudeUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -731,7 +751,36 @@ function authorizeIntrudeUser(username) {
     );
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
+    // in the case of exception it returns false for security reasons
+    return false;
+  }
+}
+
+/**
+ * Returns true if the specified user has the authorization to view and
+ * set the call forward status of his endpoints.
+ *
+ * @method authorizeCfUser
+ * @param {string} username The username
+ * @return {boolean} True if the user has the call forward authorization.
+ */
+function authorizeCfUser(username) {
+  try {
+    // check parameter
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid].macro_permissions.settings.value === true &&
+      profiles[profid].macro_permissions.settings.permissions.call_forward.value === true
+    );
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -749,13 +798,18 @@ function authorizeDndUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.dnd, username);
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid].macro_permissions.settings.value === true &&
+      profiles[profid].macro_permissions.settings.permissions.dnd.value === true
+    );
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -778,7 +832,7 @@ function authorizePresencePanelUser(username) {
     return profiles[getUserProfileId(username)].macro_permissions.presence_panel.value === true;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -795,13 +849,13 @@ function authorizePhoneRedirectUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.phone_redirect, username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -818,7 +872,7 @@ function authorizeAdminTransferUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -829,7 +883,7 @@ function authorizeAdminTransferUser(username) {
     );
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -847,7 +901,7 @@ function authorizeOpParkingsUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -858,7 +912,7 @@ function authorizeOpParkingsUser(username) {
     );
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -876,13 +930,13 @@ function authorizeOpTrunksUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.trunks, username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -900,13 +954,13 @@ function authorizeRemoteSiteUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.remote_site, username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -924,12 +978,12 @@ function authorizeQueuesUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     return profiles[getUserProfileId(username)].macro_permissions.queue_agent.value === true;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -947,7 +1001,7 @@ function authorizeOperatorGroupsUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get cusomter card authorization from the user
@@ -966,7 +1020,7 @@ function authorizeOperatorGroupsUser(username) {
     // return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -983,7 +1037,7 @@ function authorizeAdminCdrUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -994,7 +1048,7 @@ function authorizeAdminCdrUser(username) {
     );
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -1012,7 +1066,7 @@ function authorizeAdminParkingsUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -1023,7 +1077,7 @@ function authorizeAdminParkingsUser(username) {
     );
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -1041,7 +1095,7 @@ function authorizeAdminPhoneUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var profid = getUserProfileId(username);
@@ -1052,7 +1106,7 @@ function authorizeAdminPhoneUser(username) {
     );
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -1070,13 +1124,13 @@ function authorizeCallerNoteUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return authorizePostitUser(username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -1094,13 +1148,13 @@ function authorizeAdminCallerNoteUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return authorizeAdminPostitUser(username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -1117,13 +1171,13 @@ function authorizeChatUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // return authorizeUser(authorizationTypes.TYPES.chat, username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -1143,13 +1197,13 @@ function authorizeUser(type, username) {
   try {
     // check parameter
     if (typeof type !== 'string' || typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get authorization type from the user
     var autho = compUser.getAuthorization(username, type);
     if (autho === undefined) {
-      logger.warn(IDLOG, 'try to authorize non existent user "' + username + '" for authorization "' + type + '"');
+      logger.log.warn(IDLOG, 'try to authorize non existent user "' + username + '" for authorization "' + type + '"');
       return false;
     }
 
@@ -1164,7 +1218,7 @@ function authorizeUser(type, username) {
     }
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -1181,12 +1235,12 @@ function authorizeCustomerCardUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     return profiles[getUserProfileId(username)].macro_permissions.customer_card.value === true;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -1223,7 +1277,7 @@ function authorizePickupUser(username, endpointId) {
     // return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -1240,12 +1294,12 @@ function authorizeStreamingUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     return profiles[getUserProfileId(username)].macro_permissions.streaming.value === true;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -1263,7 +1317,7 @@ function authorizeStreamingSourceUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var permissionId;
     var arr = [];
@@ -1298,7 +1352,7 @@ function authorizeStreamingSourceUser(username) {
     // return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
   }
@@ -1315,7 +1369,7 @@ function getAuthorizedRemoteOperatorGroups(site) {
   try {
     // check parameter
     if (typeof site !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var gname;
@@ -1328,7 +1382,7 @@ function getAuthorizedRemoteOperatorGroups(site) {
     return result;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns and empty object
     return {};
   }
@@ -1345,7 +1399,7 @@ function getAuthorizedOperatorGroups(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get operator groups authorization from the user
@@ -1365,7 +1419,7 @@ function getAuthorizedOperatorGroups(username) {
     // return result;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns and empty object
     return {};
   }
@@ -1382,7 +1436,7 @@ function authorizedCustomerCards(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var permissionId;
     var arr = [];
@@ -1402,7 +1456,7 @@ function authorizedCustomerCards(username) {
     return arr;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns an empty array for security reasons
     return [];
   }
@@ -1426,7 +1480,7 @@ function verifyUserEndpointExten(username, endpoint) {
     return compUser.hasExtensionEndpoint(username, endpoint);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false value for security reasons
     return false;
   }
@@ -1450,7 +1504,7 @@ function verifyUserEndpointCellphone(username, endpoint) {
     return compUser.hasCellphoneEndpoint(username, endpoint);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false value for security reasons
     return false;
   }
@@ -1474,7 +1528,7 @@ function verifyUserEndpointVoicemail(username, endpoint) {
     return compUser.hasVoicemailEndpoint(username, endpoint);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false value for security reasons
     return false;
   }
@@ -1500,7 +1554,7 @@ function getAllUsersAuthorizations() {
     return result;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns an empty object for security reasons
     return {};
   }
@@ -1517,7 +1571,7 @@ function getUserAuthorizations(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // object to return
@@ -1546,17 +1600,17 @@ function getUserAuthorizations(username) {
           result[type] = false;
 
         } else {
-          logger.warn(IDLOG, 'wrong value for authorization "' + type + '" of the user "' + username + '"');
+          logger.log.warn(IDLOG, 'wrong value for authorization "' + type + '" of the user "' + username + '"');
         }
 
       } else {
-        logger.warn(IDLOG, 'wrong "' + type + '" authorization result for user "' + username + '"');
+        logger.log.warn(IDLOG, 'wrong "' + type + '" authorization result for user "' + username + '"');
       }
     }
     return result;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns an empty object for security reasons
     return {};
   }
@@ -1585,7 +1639,7 @@ function verifyOffhourListenAnnouncement(username, announcementId, cb) {
       try {
         if (err) {
           var str = 'checking audio announcement id "' + announcementId + '" for user "' + username + '": ' + err;
-          logger.warn(IDLOG, str);
+          logger.log.warn(IDLOG, str);
           cb(err);
 
         } else {
@@ -1596,12 +1650,12 @@ function verifyOffhourListenAnnouncement(username, announcementId, cb) {
           }
         }
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -1628,7 +1682,7 @@ function verifyOffhourUserAnnouncement(username, announcementId, cb) {
       try {
         if (err) {
           var str = 'checking audio announcement id "' + announcementId + '" for user "' + username + '": ' + err;
-          logger.warn(IDLOG, str);
+          logger.log.warn(IDLOG, str);
           cb(err);
 
         } else {
@@ -1639,21 +1693,60 @@ function verifyOffhourUserAnnouncement(username, announcementId, cb) {
           }
         }
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
+  }
+}
+
+/**
+ * Reset the component.
+ *
+ * @method reset
+ */
+function reset() {
+  try {
+    var k;
+    for (k in mapUserProfile) {
+      delete mapUserProfile[k];
+    }
+    for (k in profiles) {
+      delete profiles[k];
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ */
+function reload() {
+  try {
+    reset();
+    config({
+      users: USERS_CONF_FILEPATH,
+      profiles: PROFILES_CONF_FILEPATH
+    });
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
 // public interface
 exports.config = config;
+exports.reload = reload;
 exports.setLogger = setLogger;
 exports.setCompUser = setCompUser;
 exports.setCompDbconn = setCompDbconn;
+exports.authorizeCfUser = authorizeCfUser;
 exports.authorizeSpyUser = authorizeSpyUser;
 exports.authorizeDndUser = authorizeDndUser;
 exports.authorizeCdrUser = authorizeCdrUser;

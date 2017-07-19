@@ -27,10 +27,22 @@ module.exports = function(options, imports, register) {
   }
 
   // attach some extra static apis
+  dbconnPluginsManager.apiDbconn.reload = function() {
+    try {
+      dbconnMain.reset();
+      dbconnMain.config('/etc/nethcti/nethcti.json');
+      dbconnMain.configDbStatic('/etc/nethcti/dbstatic.d');
+      dbconnMain.start();
+      logger.ctilog.log.warn(IDLOG, 'reloaded');
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+    }
+  };
   dbconnPluginsManager.apiDbconn.on = dbconnMain.on;
   dbconnPluginsManager.apiDbconn.getStats = dbconnMain.getStats;
   dbconnPluginsManager.apiDbconn.testConnection = dbconnMain.testConnection;
   dbconnPluginsManager.apiDbconn.EVT_READY = dbconnMain.EVT_READY;
+  dbconnPluginsManager.apiDbconn.EVT_RELOADED = dbconnMain.EVT_RELOADED;
 
   // public interface for other architect components
   register(null, {
@@ -38,14 +50,14 @@ module.exports = function(options, imports, register) {
   });
 
   try {
-    dbconnMain.setLogger(logger);
+    dbconnMain.setLogger(logger.ctilog);
     dbconnMain.config('/etc/nethcti/nethcti.json');
     dbconnMain.configDbStatic('/etc/nethcti/dbstatic.d');
     dbconnMain.start();
-    dbconnPluginsManager.setLogger(logger);
+    dbconnPluginsManager.setLogger(logger.ctilog);
     dbconnPluginsManager.setCompDbconnMain(dbconnMain);
     dbconnPluginsManager.start();
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 };

@@ -28,7 +28,7 @@ module.exports = function(options, imports, register) {
   }
 
   try {
-    serverRest.setLogger(logger);
+    serverRest.setLogger(logger.ctilog);
     serverRest.config('/etc/nethcti/services.json');
     serverRest.setCompUtil(imports.util);
     serverRest.setCompAuthorization(imports.authorization);
@@ -36,6 +36,6 @@ module.exports = function(options, imports, register) {
     serverRest.setCompUser(imports.user);
     serverRest.start();
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 };

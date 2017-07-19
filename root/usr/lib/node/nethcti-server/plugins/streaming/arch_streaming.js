@@ -30,12 +30,12 @@ module.exports = function(options, imports, register) {
   });
 
   try {
-    streaming.setLogger(logger);
+    streaming.setLogger(logger.ctilog);
     streaming.config('/etc/nethcti/streaming.json');
     streaming.setCompAstProxy(imports.astProxy);
     streaming.setCompAuthorization(imports.authorization);
     streaming.start();
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 };

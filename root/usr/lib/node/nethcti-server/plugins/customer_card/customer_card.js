@@ -29,6 +29,24 @@ var async = require('async');
 var IDLOG = '[customer_card]';
 
 /**
+ * The configuration file path of the privacy.
+ *
+ * @property CONFIG_PRIVACY_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_PRIVACY_FILEPATH;
+
+/**
+ * The configuration file path.
+ *
+ * @property CONFIG_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_FILEPATH;
+
+/**
  * The default file extension of the customer cards templates.
  *
  * @property TEMPLATE_EXTENSION
@@ -121,16 +139,16 @@ var privacyStrReplace = 'xxx';
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -147,9 +165,9 @@ function setDbconn(dbconnMod) {
       throw new Error('wrong dbconn object');
     }
     dbconn = dbconnMod;
-    logger.info(IDLOG, 'set dbconn module');
+    logger.log.info(IDLOG, 'set dbconn module');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -173,14 +191,14 @@ function getCustomerCardPreview(query, dbconnId, templateName, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    logger.info(IDLOG, 'get customer card preview with template name "' + templateName + '"');
+    logger.log.info(IDLOG, 'get customer card preview with template name "' + templateName + '"');
 
     if (!dbconn.checkDbconnCustCardByConnId(dbconnId)) {
-      logger.warn(IDLOG, 'no db connection for customer card preview (dbconnId: "' + dbconnId + '")');
+      logger.log.warn(IDLOG, 'no db connection for customer card preview (dbconnId: "' + dbconnId + '")');
       cb('no db connection for customer card preview (dbconnId: "' + dbconnId + '")');
 
     } else if (!ejsTemplates[templateName]) {
-      logger.warn(IDLOG, 'no template ejs ("' + templateName + '") for customer card preview');
+      logger.log.warn(IDLOG, 'no template ejs ("' + templateName + '") for customer card preview');
       cb('no template ejs ("' + templateName + '") for customer card preview');
 
     } else {
@@ -188,7 +206,7 @@ function getCustomerCardPreview(query, dbconnId, templateName, cb) {
       dbconn.getCustomerCardPreview(query, dbconnId, templateName, function(err, results) {
         try {
           if (err) { // some error in the query
-            logger.error(IDLOG, err);
+            logger.log.error(IDLOG, err);
             cb(err);
 
           } else { // add the result
@@ -200,13 +218,13 @@ function getCustomerCardPreview(query, dbconnId, templateName, cb) {
             cb(null, obj);
           }
         } catch (error) {
-          logger.error(IDLOG, error.stack);
+          logger.log.error(IDLOG, error.stack);
           cb(error);
         }
       });
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -231,25 +249,25 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    logger.info(IDLOG, 'search customer card "' + ccName + '" (permission_id: ' + permissionId +
+    logger.log.info(IDLOG, 'search customer card "' + ccName + '" (permission_id: ' + permissionId +
       ') by number ' + num + ' by means dbconn module');
 
     dbconn.getCustomerCardByNum(permissionId, ccName, num, function(err1, results) {
       try {
         if (err1) {
-          logger.error(IDLOG, 'getting customer card "' + ccName + '" (permission_id: ' + permissionId + ') by num "' + num + '"');
+          logger.log.error(IDLOG, 'getting customer card "' + ccName + '" (permission_id: ' + permissionId + ') by num "' + num + '"');
           cb(err1);
           return;
         }
         cb(null, results);
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -269,7 +287,7 @@ function getCustomerCardsList(username, cb) {
     // get the list of the authorized customer cards. It is an array with
     // the identifiers of customer cards as strings
     var allowedCC = compAuthorization.authorizedCustomerCards(username);
-    logger.info(IDLOG, 'user "' + username + '" is authorized to view customer cards: "' + JSON.stringify(allowedCC) + '"');
+    logger.log.info(IDLOG, 'user "' + username + '" is authorized to view customer cards: "' + JSON.stringify(allowedCC) + '"');
     var obj = {}; // object with all results
     var i;
     for (i = 0; i < allowedCC.length; i++) {
@@ -277,11 +295,11 @@ function getCustomerCardsList(username, cb) {
         descr: dbconn.getCustCardNameDescr(allowedCC[i].permissionId)
       };
     }
-    logger.info(IDLOG, Object.keys(obj).length + ' customer cards obtained for user "' + username + '"');
+    logger.log.info(IDLOG, Object.keys(obj).length + ' customer cards obtained for user "' + username + '"');
     cb(null, obj);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -295,9 +313,9 @@ function getCustomerCardsList(username, cb) {
 function setCompAuthorization(ca) {
   try {
     compAuthorization = ca;
-    logger.info(IDLOG, 'set authorization architect component');
+    logger.log.info(IDLOG, 'set authorization architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -310,9 +328,9 @@ function setCompAuthorization(ca) {
 function setCompUser(comp) {
   try {
     compUser = comp;
-    logger.info(IDLOG, 'set user architect component');
+    logger.log.info(IDLOG, 'set user architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -337,7 +355,7 @@ function getCustomerCardHTML(templateName, nameDescr, data) {
       results: data
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return '';
   }
 }
@@ -365,7 +383,7 @@ function getAllCustomerCards(username, num, format, cb) {
     // get the list of the authorized customer cards. It is an array with
     // the identifiers of customer cards as strings
     var allowedCC = compAuthorization.authorizedCustomerCards(username);
-    logger.info(IDLOG, 'user "' + username + '" is authorized to view customer cards: "' + JSON.stringify(allowedCC) + '"');
+    logger.log.info(IDLOG, 'user "' + username + '" is authorized to view customer cards: "' + JSON.stringify(allowedCC) + '"');
 
     var obj = {}; // object with all results
 
@@ -376,11 +394,11 @@ function getAllCustomerCards(username, num, format, cb) {
       var ccNameDescr = dbconn.getCustCardNameDescr(cc.permissionId);
 
       if (!dbconn.checkDbconnCustCard(cc.permissionId)) {
-        logger.warn(IDLOG, 'no db connection for customer card "' + cc.name + '"');
+        logger.log.warn(IDLOG, 'no db connection for customer card "' + cc.name + '"');
         callback('no db connection for customer card "' + cc.name + '"');
 
       } else if (!ejsTemplates[templateName]) {
-        logger.warn(IDLOG, 'no template ejs for customer card "' + cc.name + '"');
+        logger.log.warn(IDLOG, 'no template ejs for customer card "' + cc.name + '"');
         callback('no template ejs for customer card "' + cc.name + '"');
 
       } else {
@@ -388,7 +406,7 @@ function getAllCustomerCards(username, num, format, cb) {
         getCustomerCardByNum(cc.permissionId, cc.name, num, function(err, result) { // get one customer card
           try {
             if (err) { // some error in the query
-              logger.error(IDLOG, err);
+              logger.log.error(IDLOG, err);
 
             } else { // add the result
 
@@ -409,7 +427,7 @@ function getAllCustomerCards(username, num, format, cb) {
             callback();
 
           } catch (error) {
-            logger.error(IDLOG, error.stack);
+            logger.log.error(IDLOG, error.stack);
             callback();
           }
         });
@@ -417,7 +435,7 @@ function getAllCustomerCards(username, num, format, cb) {
 
     }, function(err) {
       if (err) {
-        logger.error(IDLOG, err);
+        logger.log.error(IDLOG, err);
         cb(err);
         return;
       }
@@ -429,12 +447,12 @@ function getAllCustomerCards(username, num, format, cb) {
         str += k + ',';
       }
       str = str.substring(0, str.length - 1);
-      logger.info(IDLOG, objKeys.length + ' customer cards "' + str + '" obtained for user "' + username + '" searching num ' + num);
+      logger.log.info(IDLOG, objKeys.length + ' customer cards "' + str + '" obtained for user "' + username + '" searching num ' + num);
 
       cb(null, obj);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -470,7 +488,7 @@ function filterPrivacyCcCalls(username, num, calls) {
     return calls;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -485,7 +503,7 @@ function start() {
     initEjsTemplates();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -525,12 +543,12 @@ function initEjsTemplates() {
       ejsTemplates[ccname] = {
         content: content
       };
-      logger.info(IDLOG, 'ejs template ' + filepath + ' has been read');
+      logger.log.info(IDLOG, 'ejs template ' + filepath + ' has been read');
     }
-    logger.info(IDLOG, 'initialized ejs customer cards templates');
+    logger.log.info(IDLOG, 'initialized ejs customer cards templates');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -549,11 +567,12 @@ function config(path) {
 
     // check the file existence
     if (!fs.existsSync(path)) {
-      logger.error(IDLOG, path + ' does not exist');
+      logger.log.error(IDLOG, path + ' does not exist');
       return;
     }
+    CONFIG_FILEPATH = path;
 
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(CONFIG_FILEPATH, 'utf8'));
 
     // check the configuration file
     if (typeof json !== 'object' ||
@@ -561,15 +580,15 @@ function config(path) {
       typeof json.rest.customer_card !== 'object' ||
       typeof json.rest.customer_card.templates_customercards !== 'string') {
 
-      logger.warn(IDLOG, path + ': wrong "customer_card" key in rest section');
+      logger.log.warn(IDLOG, CONFIG_FILEPATH + ': wrong "customer_card" key in rest section');
       return;
     }
 
     templatesPath = json.rest.customer_card.templates_customercards;
-    logger.info(IDLOG, 'configuration done by ' + path);
+    logger.log.info(IDLOG, 'configuration done by ' + CONFIG_FILEPATH);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -591,27 +610,66 @@ function configPrivacy(path) {
     if (!fs.existsSync(path)) {
       throw new Error(path + ' does not exist');
     }
+    CONFIG_PRIVACY_FILEPATH = path;
 
     // read configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(CONFIG_PRIVACY_FILEPATH, 'utf8'));
 
     // initialize the string used to hide last digits of phone numbers
     if (json.privacy_numbers) {
       privacyStrReplace = json.privacy_numbers;
-
     } else {
-      logger.warn(IDLOG, 'no privacy string has been specified in JSON file ' + path);
+      logger.log.warn(IDLOG, 'no privacy string has been specified in JSON file ' + CONFIG_PRIVACY_FILEPATH);
     }
-
-    logger.info(IDLOG, 'privacy configuration by file ' + path + ' ended');
+    logger.log.info(IDLOG, 'privacy configuration by file ' + CONFIG_PRIVACY_FILEPATH + ' ended');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reset
+ * @private
+ */
+function reset() {
+  try {
+    var k;
+    for (k in ejsTemplates) {
+      delete ejsTemplates[k];
+    }
+    ejsTemplates = {};
+
+    templatesPath = null;
+    privacyStrReplace = 'xxx';
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ * @private
+ */
+function reload() {
+  try {
+    reset();
+    config(CONFIG_FILEPATH);
+    configPrivacy(CONFIG_PRIVACY_FILEPATH);
+    start();
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
 // public interface
 exports.start = start;
+exports.reload = reload;
 exports.config = config;
 exports.setLogger = setLogger;
 exports.setDbconn = setDbconn;

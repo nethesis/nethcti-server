@@ -18,6 +18,26 @@ var EventEmitter = require('events').EventEmitter;
 var childProcess = require('child_process');
 
 /**
+ * True if the component has been started. Used to emit EVT_RELOADED
+ * instead of EVT_READY
+ *
+ * @property ready
+ * @type boolean
+ * @private
+ * @default false
+ */
+var ready = false;
+
+/**
+ * The identifier of the interval used to remove expired tokens.
+ *
+ * @property intervalRemoveExpiredTokens
+ * @type number
+ * @private
+ */
+var intervalRemoveExpiredTokens;
+
+/**
  * Fired when the component is ready.
  *
  * @event ready
@@ -42,6 +62,15 @@ var EVT_COMP_READY = 'ready';
  * @default [authentication]
  */
 var IDLOG = '[authentication]';
+
+/**
+ * The file path of the configuration file.
+ *
+ * @property CONFIG_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_FILEPATH;
 
 /**
  * The event emitter.
@@ -181,18 +210,18 @@ var grants = {};
 function setLogger(log) {
   try {
     if (typeof log === 'object' &&
-      typeof log.info === 'function' &&
-      typeof log.warn === 'function' &&
-      typeof log.error === 'function') {
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -205,9 +234,9 @@ function setLogger(log) {
 function setCompDbconn(comp) {
   try {
     compDbconn = comp;
-    logger.info(IDLOG, 'set database architect component');
+    logger.log.info(IDLOG, 'set database architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -229,16 +258,15 @@ function configRemoteAuthentications(path) {
 
     // check file presence
     if (!fs.existsSync(path)) {
-      logger.error(IDLOG, path + ' does not exist');
+      logger.log.error(IDLOG, path + ' does not exist');
       return;
     }
 
-    logger.info(IDLOG, 'configure remote sites authentication by ' + path);
-
-    var json = require(path);
+    logger.log.info(IDLOG, 'configure remote sites authentication by ' + path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     if (typeof json !== 'object') {
-      logger.error(IDLOG, 'wrong ' + path);
+      logger.log.error(IDLOG, 'wrong ' + path);
       return;
     }
 
@@ -248,7 +276,7 @@ function configRemoteAuthentications(path) {
         typeof json[user].password !== 'string' ||
         (json[user].allowed_ip instanceof Array) !== true) {
 
-        logger.error(IDLOG, 'wrong ' + path + ': authentication content for "' + user + '"');
+        logger.log.error(IDLOG, 'wrong ' + path + ': authentication content for "' + user + '"');
       } else {
         authRemoteSites[user] = {
           username: json[user].username,
@@ -257,9 +285,9 @@ function configRemoteAuthentications(path) {
         };
       }
     }
-    logger.info(IDLOG, 'configuration done for remote sites by ' + path);
+    logger.log.info(IDLOG, 'configuration done for remote sites by ' + path);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -281,11 +309,12 @@ function config(path) {
   if (!fs.existsSync(path)) {
     throw new Error(path + ' does not exist');
   }
+  CONFIG_FILEPATH = path;
 
   // read configuration file
-  var json = require(path);
+  var json = JSON.parse(fs.readFileSync(CONFIG_FILEPATH, 'utf8'));
 
-  logger.info(IDLOG, 'configuring authentication by ' + path);
+  logger.log.info(IDLOG, 'configuring authentication by ' + CONFIG_FILEPATH);
 
   // set the authentication type
   authenticationType = json.type;
@@ -295,21 +324,55 @@ function config(path) {
 
   if (json.type === AUTH_TYPE.pam) {
     // configure authentication with PAM
-    logger.info(IDLOG, 'configure authentication with pam');
+    logger.log.info(IDLOG, 'configure authentication with pam');
   }
 
   // if (json.unauthe_call !== 'disabled' && json.unauthe_call !== 'enabled') {
-  //   logger.warn(IDLOG, 'wrong ' + path + ': bad "unauthe_call" key: use default "' + unauthenticatedCall + '"');
+  //   logger.log.warn(IDLOG, 'wrong ' + path + ': bad "unauthe_call" key: use default "' + unauthenticatedCall + '"');
   // } else {
   //   unauthenticatedCall = json.unauthe_call;
   // }
 
   startIntervalRemoveExpiredTokens();
 
-  // emit the event to tell other modules that the component is ready to be used
-  logger.info(IDLOG, 'emit "' + EVT_COMP_READY + '" event');
-  emitter.emit(EVT_COMP_READY);
-  logger.info(IDLOG, 'configuration done by ' + path);
+  if (!ready) {
+    // emit the event to tell other modules that the component is ready to be used
+    logger.log.info(IDLOG, 'emit "' + EVT_COMP_READY + '" event');
+    emitter.emit(EVT_COMP_READY);
+    ready = true;
+  }
+  logger.log.info(IDLOG, 'configuration done by ' + CONFIG_FILEPATH);
+}
+
+/**
+ * Reset the component.
+ *
+ * @method reset
+ * @static
+ */
+function reset() {
+  try {
+    clearInterval(intervalRemoveExpiredTokens);
+    intervalRemoveExpiredTokens = null;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ */
+function reload() {
+  try {
+    reset();
+    config(CONFIG_FILEPATH);
+    initFreepbxAdminAuthentication();
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
 }
 
 /**
@@ -325,11 +388,11 @@ function initFreepbxAdminAuthentication() {
     compDbconn.getFpbxAdminSha1Pwd(function(err, resp) {
       try {
         if (err) {
-          logger.warn(IDLOG, 'getting sha1 password of freepbx admin user for authentication');
+          logger.log.warn(IDLOG, 'getting sha1 password of freepbx admin user for authentication');
           return;
         }
         if (resp === false) {
-          logger.warn(IDLOG, 'sha1 password of freepbx admin user for authentication not found');
+          logger.log.warn(IDLOG, 'sha1 password of freepbx admin user for authentication not found');
           return;
         }
 
@@ -338,7 +401,7 @@ function initFreepbxAdminAuthentication() {
 
         // get admin secret from file
         if (!fs.existsSync(SECRET_FILE_PATH)) {
-          logger.warn(IDLOG, 'getting admin secret for authentication: ' + SECRET_FILE_PATH + ' does not exist');
+          logger.log.warn(IDLOG, 'getting admin secret for authentication: ' + SECRET_FILE_PATH + ' does not exist');
           return;
         }
         var data = fs.readFileSync(SECRET_FILE_PATH, 'utf8');
@@ -355,15 +418,15 @@ function initFreepbxAdminAuthentication() {
 
         // calculate the secret key
         fpbxAdminSecretKey = calculateAdminSecretKey('admin', sha1pwd, secret);
-        logger.info(IDLOG, 'initialization of freepbx admin user authentication done');
+        logger.log.info(IDLOG, 'initialization of freepbx admin user authentication done');
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         return false;
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -382,7 +445,7 @@ function isUnautheCallEnabled() {
     return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -396,9 +459,9 @@ function isUnautheCallEnabled() {
  */
 function startIntervalRemoveExpiredTokens() {
   try {
-    logger.info(IDLOG, 'start remove expired tokens interval each ' + expires + ' msec');
+    logger.log.info(IDLOG, 'start remove expired tokens interval each ' + expires + ' msec');
 
-    setInterval(function() {
+    intervalRemoveExpiredTokens = setInterval(function() {
       try {
         var username, userTokens, tokenid;
         var currentTimestamp = (new Date()).getTime();
@@ -414,18 +477,18 @@ function startIntervalRemoveExpiredTokens() {
             // check the token expiration
             if (currentTimestamp > userTokens[tokenid].expires) {
 
-              logger.info(IDLOG, 'the token "' + tokenid + '" of user "' + username + '" has expired: remove it');
+              logger.log.info(IDLOG, 'the token "' + tokenid + '" of user "' + username + '" has expired: remove it');
               removeToken(username, tokenid); // remove the token
             }
           }
         }
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
       }
     }, expires);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -449,7 +512,7 @@ function calculateAdminSecretKey(username, sha1Pwd, secret) {
     return crypto.createHash('sha1').update(tohash).digest('hex');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -475,7 +538,7 @@ function calculateToken(username, password, nonce) {
     return crypto.createHmac('sha1', password).update(tohash).digest('hex');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -501,7 +564,7 @@ function getRemoteSiteName(username, token) {
       return grants[username][token].siteName;
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -553,10 +616,10 @@ function newToken(username, password, nonce, isRemoteSite) {
       }
     }
     grants[username][token] = newTokenObj;
-    logger.info(IDLOG, 'new token has been generated for username ' + username);
+    logger.log.info(IDLOG, 'new token has been generated for username ' + username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -593,7 +656,7 @@ function isRemoteSiteAlreadyLoggedIn(username) {
     return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -628,11 +691,11 @@ function getNonce(username, password, isRemoteSite, extension) {
       //generate a token also for the extension user supplied for login
       newToken(extension, password, nonce, isRemoteSite);
     }
-    logger.info(IDLOG, 'nonce has been generated for username ' + username);
+    logger.log.info(IDLOG, 'nonce has been generated for username ' + username);
     return nonce;
 
   } catch (err) {
-    logger.error(err.stack);
+    logger.log.error(err.stack);
   }
 }
 
@@ -657,11 +720,11 @@ function authenticateRemoteSite(username, password, remoteIp, cb) {
     }
 
     // authenticate remote site by credentials read from the file
-    logger.info(IDLOG, 'authenticate remote site "' + username + '" "' + remoteIp + '" by credentials file');
+    logger.log.info(IDLOG, 'authenticate remote site "' + username + '" "' + remoteIp + '" by credentials file');
     authRemoteSiteByFile(username, password, remoteIp, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -684,7 +747,7 @@ function authenticateFreepbxAdmin(secretkey) {
     return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -709,13 +772,13 @@ function authenticate(username, password, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (authenticationType === AUTH_TYPE.pam) {
-      logger.info(IDLOG, 'authenticating user "' + username + '" by pam');
+      logger.log.info(IDLOG, 'authenticating user "' + username + '" by pam');
       authByPam(username, password, cb);
     } else {
-      logger.error(IDLOG, 'unknown authentication type "' + authenticationType + '"');
+      logger.log.error(IDLOG, 'unknown authentication type "' + authenticationType + '"');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     throw err;
   }
 }
@@ -751,7 +814,7 @@ function authByPam(username, password, cb) {
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb('pam authentication failed for user "' + username + '"');
   }
 }
@@ -788,15 +851,15 @@ function authRemoteSiteByFile(username, password, remoteIp, cb) {
       }
     }
     if (authenticated) {
-      logger.info(IDLOG, 'remote site "' + username + '" ' + remoteIp + ' has been authenticated successfully with file');
+      logger.log.info(IDLOG, 'remote site "' + username + '" ' + remoteIp + ' has been authenticated successfully with file');
       cb(null);
     } else {
       var strerr = 'file authentication failed for remote site "' + username + '"';
-      logger.warn(IDLOG, strerr);
+      logger.log.warn(IDLOG, strerr);
       cb(strerr);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb('file authentication failed for remote site "' + username + '"');
   }
 }
@@ -818,7 +881,7 @@ function removeToken(username, token) {
     // check the grant presence
     if (grants[username]) {
       delete grants[username][token];
-      logger.info(IDLOG, 'removed token "' + token + '" for username ' + username);
+      logger.log.info(IDLOG, 'removed token "' + token + '" for username ' + username);
     }
 
     if (grants[username][token] === undefined) {
@@ -827,7 +890,7 @@ function removeToken(username, token) {
     return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -847,21 +910,21 @@ function updateTokenExpires(username, token) {
 
     // check grants presence
     if (!grants[username]) {
-      logger.warn(IDLOG, 'update token expiration "' + token + '" failed: no grants for username ' + username);
+      logger.log.warn(IDLOG, 'update token expiration "' + token + '" failed: no grants for username ' + username);
       return;
     }
 
     // check token presence
     if (!grants[username][token]) {
-      logger.warn(IDLOG, 'update token expiration "' + token + '" failed: token is not present for username ' + username);
+      logger.log.warn(IDLOG, 'update token expiration "' + token + '" failed: token is not present for username ' + username);
       return;
     }
 
     grants[username][token].expires = (new Date()).getTime() + expires;
-    logger.info(IDLOG, 'token expiration "' + token + '" has been updated for username ' + username);
+    logger.log.info(IDLOG, 'token expiration "' + token + '" has been updated for username ' + username);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -876,7 +939,7 @@ function isAutoUpdateTokenExpires() {
   try {
     return autoUpdateTokenExpires;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -900,7 +963,7 @@ function verifyToken(username, token, isRemote) {
     }
     // check the grant presence
     if (!grants[username]) {
-      logger.warn(IDLOG, 'authentication failed for ' + (isRemote ? 'remote site ' : 'local ') + 'username: "' + username + '": no grant is present');
+      logger.log.warn(IDLOG, 'authentication failed for ' + (isRemote ? 'remote site ' : 'local ') + 'username: "' + username + '": no grant is present');
       return false;
     }
 
@@ -909,14 +972,14 @@ function verifyToken(username, token, isRemote) {
     if (!userTokens[token] ||
       (userTokens[token] && userTokens[token].remoteSite !== isRemote)) {
 
-      logger.warn(IDLOG, 'authentication failed for ' + (isRemote ? 'remote site ' : 'local ') + 'username "' + username + '": wrong token');
+      logger.log.warn(IDLOG, 'authentication failed for ' + (isRemote ? 'remote site ' : 'local ') + 'username "' + username + '": wrong token');
       return false;
     }
 
     // check the token expiration
     if ((new Date()).getTime() > userTokens[token].expires) {
       removeToken(username, token); // remove the token
-      logger.info(IDLOG, 'the token "' + token + '" has expired for ' + (isRemote ? 'remote site ' : 'local ') + 'username ' + username);
+      logger.log.info(IDLOG, 'the token "' + token + '" has expired for ' + (isRemote ? 'remote site ' : 'local ') + 'username ' + username);
       return false;
     }
 
@@ -926,11 +989,11 @@ function verifyToken(username, token, isRemote) {
     }
 
     // authentication successfull
-    logger.info(IDLOG, (isRemote ? 'remote site ' : 'local ') + 'username "' + username + '" has been successfully authenticated with token "' + token + '"');
+    logger.log.info(IDLOG, (isRemote ? 'remote site ' : 'local ') + 'username "' + username + '" has been successfully authenticated with token "' + token + '"');
     return true;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -945,7 +1008,7 @@ function getTokenExpirationTimeout() {
   try {
     return expires;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -962,13 +1025,14 @@ function on(type, cb) {
   try {
     return emitter.on(type, cb);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
 // public interface
 exports.on = on;
 exports.config = config;
+exports.reload = reload;
 exports.getNonce = getNonce;
 exports.setLogger = setLogger;
 exports.verifyToken = verifyToken;

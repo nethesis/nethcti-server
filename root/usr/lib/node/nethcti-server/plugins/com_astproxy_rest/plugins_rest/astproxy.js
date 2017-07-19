@@ -836,17 +836,17 @@ var compConfigManager;
           //   remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
           //   // get all operator groups enabled for remote site
           //   opGroups = compAuthorization.getAuthorizedRemoteOperatorGroups(remoteSiteName);
-          //   logger.info(IDLOG, 'op groups enabled for remote site "' + remoteSiteName + '" is "' + Object.keys(opGroups) + '"');
+          //   logger.log.info(IDLOG, 'op groups enabled for remote site "' + remoteSiteName + '" is "' + Object.keys(opGroups) + '"');
           // } else {
           //   // check if the user has the operator panel authorization
           //   if (compAuthorization.authorizeOperatorGroupsUser(username) !== true) {
-          //     logger.warn(IDLOG, 'requesting operator groups: authorization failed for user "' + username + '"');
+          //     logger.log.warn(IDLOG, 'requesting operator groups: authorization failed for user "' + username + '"');
           //     compUtil.net.sendHttp403(IDLOG, res);
           //     return;
           //   }
           //   // get all authorized operator groups of the user
           //   opGroups = compAuthorization.getAuthorizedOperatorGroups(username);
-          //   logger.info(IDLOG, 'op groups enabled for user "' + username + '" is "' + Object.keys(opGroups) + '"');
+          //   logger.log.info(IDLOG, 'op groups enabled for user "' + username + '" is "' + Object.keys(opGroups) + '"');
           // }
 
           // get all operator groups
@@ -860,13 +860,13 @@ var compConfigManager;
             list[group] = allOpGroups[group];
             // }
           }
-          logger.info(IDLOG, 'sent authorized operator groups "' + Object.keys(list) + '" to ' +
+          logger.log.info(IDLOG, 'sent authorized operator groups "' + Object.keys(list) + '" to ' +
             (isRemote ? ('remote site "' + remoteSiteName + '"') : '') + ' user "' +
             username + '" ' + res.connection.remoteAddress);
           res.send(200, list);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -891,7 +891,7 @@ var compConfigManager;
           if (compComNethctiRemotes.isClientRemote(username, token)) {
 
             var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
-            logger.warn(IDLOG, 'requesting all remote sites op groups by remote site "' + remoteSiteName + '": ' +
+            logger.log.warn(IDLOG, 'requesting all remote sites op groups by remote site "' + remoteSiteName + '": ' +
               'authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
@@ -899,19 +899,19 @@ var compConfigManager;
             // check if the user has the operator panel authorization
             if (compAuthorization.authorizeRemoteSiteUser(username) !== true) {
 
-              logger.warn(IDLOG, 'requesting all remote sites operator groups: authorization failed for user "' + username + '"');
+              logger.log.warn(IDLOG, 'requesting all remote sites operator groups: authorization failed for user "' + username + '"');
               compUtil.net.sendHttp403(IDLOG, res);
               return;
             }
 
             // get all operator panel groups of all remote sites
             var allRemoteOpGroups = compComNethctiRemotes.getAllRemoteSitesOperatorGroups();
-            logger.info(IDLOG, 'sent all remote sites operator groups "' + Object.keys(allRemoteOpGroups) + '" ' +
+            logger.log.info(IDLOG, 'sent all remote sites operator groups "' + Object.keys(allRemoteOpGroups) + '" ' +
               'to user "' + username + '" ' + res.connection.remoteAddress);
             res.send(200, allRemoteOpGroups);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -943,7 +943,7 @@ var compConfigManager;
           if (compComNethctiRemotes.isClientRemote(username, token)) {
 
             var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
-            logger.warn(IDLOG, 'requesting conference data by remote site "' + remoteSiteName + '": ' +
+            logger.log.warn(IDLOG, 'requesting conference data by remote site "' + remoteSiteName + '": ' +
               'authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
@@ -951,18 +951,18 @@ var compConfigManager;
           // check if the endpoint is owned by the user
           if (compAuthorization.verifyUserEndpointExten(username, extenId) === false) {
 
-            logger.warn(IDLOG, 'getting conference data of exten "' + extenId + '" failed: ' +
+            logger.log.warn(IDLOG, 'getting conference data of exten "' + extenId + '" failed: ' +
               '"' + extenId + '" is not owned by user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           } else {
             var conf = compAstProxy.getConference(extenId);
-            logger.info(IDLOG, 'sent conference data of exten "' + extenId + '" ' +
+            logger.log.info(IDLOG, 'sent conference data of exten "' + extenId + '" ' +
               'to user "' + username + '" ' + res.connection.remoteAddress);
             res.send(200, conf);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -984,7 +984,7 @@ var compConfigManager;
           // check if the user has the operator panel authorization
           if (compAuthorization.authorizeOpParkingsUser(username) !== true) {
 
-            logger.warn(IDLOG, 'requesting parkings: authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'requesting parkings: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
@@ -997,11 +997,11 @@ var compConfigManager;
             parkings = compAstProxy.getJSONParkings();
           }
 
-          logger.info(IDLOG, 'sent all parkings in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+          logger.log.info(IDLOG, 'sent all parkings in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, parkings);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1023,12 +1023,12 @@ var compConfigManager;
           // check if the user has the administration operator panel queues authorization
           if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
-            logger.info(IDLOG, 'requesting queues: user "' + username + '" has the "admin_queues" authorization');
+            logger.log.info(IDLOG, 'requesting queues: user "' + username + '" has the "admin_queues" authorization');
           }
           // otherwise check if the user has the operator panel queues authorization
           else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
-            logger.warn(IDLOG, 'requesting queues: authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'requesting queues: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
@@ -1044,11 +1044,11 @@ var compConfigManager;
             queues = compAstProxy.getJSONQueues();
           }
 
-          logger.info(IDLOG, 'sent all queues in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+          logger.log.info(IDLOG, 'sent all queues in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, queues);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1070,7 +1070,7 @@ var compConfigManager;
           // check if the user has the operator panel authorization
           if (compAuthorization.authorizeOpTrunksUser(username) !== true) {
 
-            logger.warn(IDLOG, 'requesting trunks: authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'requesting trunks: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
@@ -1084,11 +1084,11 @@ var compConfigManager;
             trunks = compAstProxy.getJSONTrunks();
           }
 
-          logger.info(IDLOG, 'sent all trunks in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+          logger.log.info(IDLOG, 'sent all trunks in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, trunks);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1111,7 +1111,7 @@ var compConfigManager;
           var extenAgent = compAstProxy.getExtensionAgent(req.params.endpoint);
           var isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
 
-          logger.info(IDLOG, 'send "' + isSupported + '" for extension phone (' + req.params.endpoint + ') agent (' + extenAgent + ') support auto click2call to user "' + username + '" ' + res.connection.remoteAddress);
+          logger.log.info(IDLOG, 'send "' + isSupported + '" for extension phone (' + req.params.endpoint + ') agent (' + extenAgent + ') support auto click2call to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, {
             exten: req.params.endpoint,
             agent: extenAgent,
@@ -1119,7 +1119,7 @@ var compConfigManager;
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1143,7 +1143,7 @@ var compConfigManager;
           if (compComNethctiRemotes.isClientRemote(username, token)) {
 
             var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
-            logger.warn(IDLOG, 'requesting all remote sites extensions by remote site "' + remoteSiteName + '": ' +
+            logger.log.warn(IDLOG, 'requesting all remote sites extensions by remote site "' + remoteSiteName + '": ' +
               'authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
@@ -1152,7 +1152,7 @@ var compConfigManager;
             if (compAuthorization.authorizeRemoteSiteUser(username) !== true ||
               compAuthorization.authorizePresencePanelUser(username) !== true) {
 
-              logger.warn(IDLOG, 'requesting all remote sites extensions: authorization failed for user "' + username + '"');
+              logger.log.warn(IDLOG, 'requesting all remote sites extensions: authorization failed for user "' + username + '"');
               compUtil.net.sendHttp403(IDLOG, res);
               return;
             }
@@ -1164,12 +1164,12 @@ var compConfigManager;
             } else {
               allRemoteOpExtensions = compComNethctiRemotes.getAllRemoteSitesOperatorExtensions();
             }
-            logger.info(IDLOG, 'sent all remote sites extensions "' + Object.keys(allRemoteOpExtensions) + '" ' +
+            logger.log.info(IDLOG, 'sent all remote sites extensions "' + Object.keys(allRemoteOpExtensions) + '" ' +
               'to user "' + username + '" ' + res.connection.remoteAddress);
             res.send(200, allRemoteOpExtensions);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1194,7 +1194,7 @@ var compConfigManager;
 
           //   var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
           //   var extensions = compAstProxy.getJSONExtensions();
-          //   logger.info(IDLOG, 'sent all extensions in JSON format to remote site "' + remoteSiteName +
+          //   logger.log.info(IDLOG, 'sent all extensions in JSON format to remote site "' + remoteSiteName +
           //     '" user "' + username + '" ' + res.connection.remoteAddress);
           //   res.send(200, extensions);
           // }
@@ -1238,11 +1238,11 @@ var compConfigManager;
             extensions[e].username = compUser.getUserUsingEndpointExtension(e);
           }
 
-          logger.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+          logger.log.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, extensions);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1289,11 +1289,11 @@ var compConfigManager;
             extension = compAstProxy.getJSONExtension(req.params.id, privacyStrReplace);
           }
 
-          logger.info(IDLOG, 'sent extension in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+          logger.log.info(IDLOG, 'sent extension in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, extension);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1313,11 +1313,11 @@ var compConfigManager;
           var username = req.headers.authorization_user;
           var sipWebrtc = compAstProxy.getSipWebrtcConf();
 
-          logger.info(IDLOG, 'sent sip webrtc configuration to user "' + username + '" ' + res.connection.remoteAddress);
+          logger.log.info(IDLOG, 'sent sip webrtc configuration to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, sipWebrtc);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1337,13 +1337,13 @@ var compConfigManager;
           var username = req.headers.authorization_user;
           var prefix = compAstProxy.getPrefix();
 
-          logger.info(IDLOG, 'sent the prefix number "' + prefix + '" to user "' + username + '" ' + res.connection.remoteAddress);
+          logger.log.info(IDLOG, 'sent the prefix number "' + prefix + '" to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, {
             prefix: prefix
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1363,17 +1363,17 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           if (compAuthorization.authorizeRemoteSiteUser(username) !== true) {
-            logger.warn(IDLOG, 'requesting prefixes of all remote sites: authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'requesting prefixes of all remote sites: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
           var prefixes = compComNethctiRemotes.getAllSitesPrefixCall();
 
-          logger.info(IDLOG, 'sent prefixes of all remote sites to user "' + username + '" ' + res.connection.remoteAddress);
+          logger.log.info(IDLOG, 'sent prefixes of all remote sites to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, prefixes);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1396,12 +1396,12 @@ var compConfigManager;
           // check if the user has the administration operator panel queues authorization
           if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
-            logger.info(IDLOG, 'requesting queues statistics: user "' + username + '" has the "admin_queues" authorization');
+            logger.log.info(IDLOG, 'requesting queues statistics: user "' + username + '" has the "admin_queues" authorization');
           }
           // otherwise check if the user has the operator panel queues authorization
           else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
-            logger.warn(IDLOG, 'requesting queues statistics: authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'requesting queues statistics: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
@@ -1414,17 +1414,17 @@ var compConfigManager;
                 throw err1;
               }
 
-              logger.info(IDLOG, 'sent all queues statistics of ' + day + ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+              logger.log.info(IDLOG, 'sent all queues statistics of ' + day + ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
               res.send(200, stats);
 
             } catch (err) {
-              logger.error(IDLOG, err.stack);
+              logger.log.error(IDLOG, err.stack);
               compUtil.net.sendHttp500(IDLOG, res, err.toString());
             }
           });
 
         } catch (error) {
-          logger.error(IDLOG, error.stack);
+          logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
         }
       },
@@ -1452,7 +1452,7 @@ var compConfigManager;
           }
 
           if (compAuthorization.authorizeLostQueueCallsUser(username) !== true) {
-            logger.warn(IDLOG, 'requesting last ' + req.params.val + ' ' + req.params.type + ' ' +
+            logger.log.warn(IDLOG, 'requesting last ' + req.params.val + ' ' + req.params.type + ' ' +
               'recalls info of queue "' + req.params.qid + '": authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
@@ -1464,18 +1464,18 @@ var compConfigManager;
                 throw err;
               }
 
-              logger.info(IDLOG, 'sent recall data about queue ' + req.params.qid +
+              logger.log.info(IDLOG, 'sent recall data about queue ' + req.params.qid +
                 ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
               res.send(200, results);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
 
         } catch (error) {
-          logger.error(IDLOG, error.stack);
+          logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
         }
       },
@@ -1500,7 +1500,7 @@ var compConfigManager;
           }
 
           if (compAuthorization.authorizeLostQueueCallsUser(username) !== true) {
-            logger.warn(IDLOG, 'requesting check for recall of num ' + req.params.num + ': ' +
+            logger.log.warn(IDLOG, 'requesting check for recall of num ' + req.params.num + ': ' +
               'authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
@@ -1512,19 +1512,19 @@ var compConfigManager;
                 throw err;
               }
 
-              logger.info(IDLOG, 'sent queue recalling status "' + result + '" of num "' + req.params.num + '"' +
+              logger.log.info(IDLOG, 'sent queue recalling status "' + result + '" of num "' + req.params.num + '"' +
                 ' to user "' + username + '" ' + res.connection.remoteAddress);
               res.send(200, {
                 inConversation: result
               });
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (error) {
-          logger.error(IDLOG, error.stack);
+          logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
         }
       },
@@ -1552,7 +1552,7 @@ var compConfigManager;
           }
 
           if (compAuthorization.authorizeLostQueueCallsUser(username) !== true) {
-            logger.warn(IDLOG, 'requesting detailed info of last ' + req.params.val + ' ' + req.params.type + ' ' +
+            logger.log.warn(IDLOG, 'requesting detailed info of last ' + req.params.val + ' ' + req.params.type + ' ' +
               'recall cid ' + req.params.cid + ' of queue: ' +
               'authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
@@ -1565,7 +1565,7 @@ var compConfigManager;
                 throw err;
               }
 
-              logger.info(IDLOG, 'sent details about queue recall of cid "' + req.params.cid + '" from ' +
+              logger.log.info(IDLOG, 'sent details about queue recall of cid "' + req.params.cid + '" from ' +
                 (req.params.type === 'hours' ?
                   'last ' + req.params.val + ' hours' :
                   'day ' + req.params.val
@@ -1574,12 +1574,12 @@ var compConfigManager;
               res.send(200, results);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (error) {
-          logger.error(IDLOG, error.stack);
+          logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
         }
       },
@@ -1602,12 +1602,12 @@ var compConfigManager;
           // check if the user has the administration operator panel queues authorization
           if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
-            logger.info(IDLOG, 'requesting queues QOS info: user "' + username + '" has the "admin_queues" authorization');
+            logger.log.info(IDLOG, 'requesting queues QOS info: user "' + username + '" has the "admin_queues" authorization');
           }
           // otherwise check if the user has the operator panel queues authorization
           else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
-            logger.warn(IDLOG, 'requesting queues QOS info: authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'requesting queues QOS info: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
@@ -1620,17 +1620,17 @@ var compConfigManager;
                 throw err1;
               }
 
-              logger.info(IDLOG, 'sent all queues QOS info of ' + day + ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+              logger.log.info(IDLOG, 'sent all queues QOS info of ' + day + ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
               res.send(200, qosinfo);
 
             } catch (err) {
-              logger.error(IDLOG, err.stack);
+              logger.log.error(IDLOG, err.stack);
               compUtil.net.sendHttp500(IDLOG, res, err.toString());
             }
           });
 
         } catch (error) {
-          logger.error(IDLOG, error.stack);
+          logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
         }
       },
@@ -1653,12 +1653,12 @@ var compConfigManager;
           // check if the user has the administration operator panel queues authorization
           if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
-            logger.info(IDLOG, 'requesting queues QOS info: user "' + username + '" has the "admin_queues" authorization');
+            logger.log.info(IDLOG, 'requesting queues QOS info: user "' + username + '" has the "admin_queues" authorization');
           }
           // otherwise check if the user has the operator panel queues authorization
           else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
-            logger.warn(IDLOG, 'requesting queues QOS info: authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'requesting queues QOS info: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
@@ -1671,17 +1671,17 @@ var compConfigManager;
                 throw err1;
               }
 
-              logger.info(IDLOG, 'sent all queues agent stats of ' + day + ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+              logger.log.info(IDLOG, 'sent all queues agent stats of ' + day + ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
               res.send(200, agstats);
 
             } catch (err) {
-              logger.error(IDLOG, err.stack);
+              logger.log.error(IDLOG, err.stack);
               compUtil.net.sendHttp500(IDLOG, res, err.toString());
             }
           });
 
         } catch (error) {
-          logger.error(IDLOG, error.stack);
+          logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
         }
       },
@@ -1705,11 +1705,11 @@ var compConfigManager;
           } else if (req.method.toLowerCase() === 'post') {
             cfvmSet(req, res, next);
           } else {
-            logger.warn(IDLOG, 'unknown requested method ' + req.method);
+            logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
           }
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1733,11 +1733,11 @@ var compConfigManager;
           } else if (req.method.toLowerCase() === 'post') {
             cfcallSet(req, res, next);
           } else {
-            logger.warn(IDLOG, 'unknown requested method ' + req.method);
+            logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
           }
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1767,7 +1767,7 @@ var compConfigManager;
           // can only toggle hold a conversation that belong to him
           if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-            logger.warn(IDLOG, 'toggle hold from user "' + username + '" has been failed: the extension "' +
+            logger.log.warn(IDLOG, 'toggle hold from user "' + username + '" has been failed: the extension "' +
               req.params.endpointId + '" is not owned by him');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
@@ -1778,13 +1778,13 @@ var compConfigManager;
 
           if (!isSupported) {
             var str = 'holding conversation with unsupported phone (exten: ' + req.params.endpointId + '/' + extenAgent + ')';
-            logger.warn(IDLOG, str);
+            logger.log.warn(IDLOG, str);
             compUtil.net.sendHttp500(IDLOG, res, str);
           } else {
             ajaxPhoneHoldUnhold(username, req, res);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1824,13 +1824,13 @@ var compConfigManager;
 
             if (compAuthorization.authorizeAdminPhoneUser(username) === true) {
 
-              logger.info(IDLOG, 'make new call to "' + req.params.number + '" from ' + req.params.endpointType +
+              logger.log.info(IDLOG, 'make new call to "' + req.params.number + '" from ' + req.params.endpointType +
                 ' "' + req.params.endpointId + '" by user "' + username + '": he has the "admin phone" permission');
             }
             // check if the endpoint is owned by the user
             else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-              logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
+              logger.log.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
                 ' "' + req.params.endpointId + '" is not owned by user "' + username + '"');
               compUtil.net.sendHttp403(IDLOG, res);
               return;
@@ -1841,13 +1841,13 @@ var compConfigManager;
 
             if (compAuthorization.authorizeAdminPhoneUser(username) === true) {
 
-              logger.info(IDLOG, 'make new call to "' + req.params.number + '" from ' + req.params.endpointType +
+              logger.log.info(IDLOG, 'make new call to "' + req.params.number + '" from ' + req.params.endpointType +
                 ' "' + req.params.endpointId + '" by user "' + username + '": he has the "admin phone" permission');
             }
             // check if the endpoint is owned by the user
             else if (compAuthorization.verifyUserEndpointCellphone(username, req.params.endpointId) === false) {
 
-              logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
+              logger.log.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
                 ' "' + req.params.endpointId + '" is not owned by user "' + username + '"');
               compUtil.net.sendHttp403(IDLOG, res);
               return;
@@ -1857,13 +1857,13 @@ var compConfigManager;
             asteriskCall(username, req, res);
 
           } else {
-            logger.warn(IDLOG, 'making new call from user "' + username + '" to ' + req.params.number +
+            logger.log.warn(IDLOG, 'making new call from user "' + username + '" to ' + req.params.number +
               ': unknown endpointType ' + req.params.endpointType);
             compUtil.net.sendHttp400(IDLOG, res);
           }
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1897,7 +1897,7 @@ var compConfigManager;
           if (compComNethctiRemotes.isClientRemote(username, token)) {
 
             var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
-            logger.warn(IDLOG, 'calling remote exten "' + req.params.remoteExtenId + '" from remote site ' +
+            logger.log.warn(IDLOG, 'calling remote exten "' + req.params.remoteExtenId + '" from remote site ' +
               '"' + remoteSiteName + '" user "' + username + '": not allowed from remote');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
@@ -1910,13 +1910,13 @@ var compConfigManager;
             if (compAuthorization.authorizeAdminPhoneUser(username) === true &&
               compAuthorization.authorizeRemoteSiteUser(username) === true) {
 
-              logger.info(IDLOG, 'make new call to remote exten "' + req.params.remoteExtenId + '" ' +
+              logger.log.info(IDLOG, 'make new call to remote exten "' + req.params.remoteExtenId + '" ' +
                 ' of remote site "' + req.params.site + '" from local exten "' + req.params.fromExtenId +
                 '" by user "' + username + '": he has the "admin_call" & "remote_site" permissions');
             } else if (compAuthorization.verifyUserEndpointExten(username, req.params.fromExtenId) === false ||
               compAuthorization.authorizeRemoteSiteUser(username) === false) {
 
-              logger.warn(IDLOG, 'calling remote exten "' + req.params.remoteExtenId + '" ' +
+              logger.log.warn(IDLOG, 'calling remote exten "' + req.params.remoteExtenId + '" ' +
                 'of remote site "' + req.params.site + '" from local exten "' + req.params.fromExtenId +
                 '" by user "' + username + '" failed: local exten "' + req.params.fromExtenId +
                 '" is not owned by user "' + username + '"');
@@ -1927,7 +1927,7 @@ var compConfigManager;
             // check the remote site existence
             if (!compComNethctiRemotes.remoteSiteExists(req.params.site)) {
 
-              logger.warn(IDLOG, 'calling remote exten "' + req.params.remoteExtenId + '" ' +
+              logger.log.warn(IDLOG, 'calling remote exten "' + req.params.remoteExtenId + '" ' +
                 'of remote site "' + req.params.site + '" from local exten "' + req.params.fromExtenId +
                 '" by user "' + username + '" failed: non existent remote site "' + req.params.site + '"');
               compUtil.net.sendHttp500(IDLOG, res, 'non existent remote site "' + req.params.site + '"');
@@ -1941,7 +1941,7 @@ var compConfigManager;
             call(username, req, res);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1971,7 +1971,7 @@ var compConfigManager;
           asteriskCall('unauthe_call rest api', req, res);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -1995,11 +1995,11 @@ var compConfigManager;
           } else if (req.method.toLowerCase() === 'post') {
             cwset(req, res, next);
           } else {
-            logger.warn(IDLOG, 'unknown requested method ' + req.method);
+            logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
           }
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2023,11 +2023,11 @@ var compConfigManager;
           } else if (req.method.toLowerCase() === 'post') {
             dndset(req, res, next);
           } else {
-            logger.warn(IDLOG, 'unknown requested method ' + req.method);
+            logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
           }
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2056,39 +2056,39 @@ var compConfigManager;
 
           if (compAuthorization.authorizeAdminParkingsUser(username) === true) {
 
-            logger.info(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username +
+            logger.log.info(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username +
               '": he has the admin parkings permission');
           }
           // check if the applicant of the request is owned by the user: the user can only park a conversation
           // that belong to him. The belonging is verfied later by the asterisk proxy component
           else if (compAuthorization.verifyUserEndpointExten(username, req.params.applicantId) === false) {
 
-            logger.warn(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username +
+            logger.log.warn(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username +
               '" has been failed: the applicant "' + req.params.applicantId + '" is not owned by him');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
-          logger.info(IDLOG, 'the applicant extension "' + req.params.applicantId + '"" is owned by "' + username + '"');
+          logger.log.info(IDLOG, 'the applicant extension "' + req.params.applicantId + '"" is owned by "' + username + '"');
 
           compAstProxy.parkConversation(req.params.endpointId, req.params.convid, req.params.applicantId, function(err, response) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'parking convid ' + req.params.convid + ' by user "' + username + '" with ' +
+                logger.log.warn(IDLOG, 'parking convid ' + req.params.convid + ' by user "' + username + '" with ' +
                   req.params.applicantId + ': failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'convid ' + req.params.convid + ' has been parked successfully by user "' + username + '" with ' +
+              logger.log.info(IDLOG, 'convid ' + req.params.convid + ' has been parked successfully by user "' + username + '" with ' +
                 req.params.applicantId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2116,37 +2116,37 @@ var compConfigManager;
           // check if the user has the authorization to hangup every calls
           if (compAuthorization.authorizeAdminHangupUser(username) === true) {
 
-            logger.info(IDLOG, 'hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
+            logger.log.info(IDLOG, 'hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
           }
           // check if the endpoint of the request is owned by the user
           else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
 
-            logger.warn(IDLOG, 'hangup convid "' + req.params.convid + '" by user "' + username +
+            logger.log.warn(IDLOG, 'hangup convid "' + req.params.convid + '" by user "' + username +
               '" has been failed: the ' + req.params.endpointId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
 
           } else {
-            logger.info(IDLOG, 'hangup convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+            logger.log.info(IDLOG, 'hangup convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
 
           compAstProxy.hangupConversation(req.params.endpointId, req.params.convid, function(err, response) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'hangup convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
+                logger.log.warn(IDLOG, 'hangup convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'convid ' + req.params.convid + ' has been hangup successfully by user "' + username + '" with ' + req.params.endpointId);
+              logger.log.info(IDLOG, 'convid ' + req.params.convid + ' has been hangup successfully by user "' + username + '" with ' + req.params.endpointId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2179,40 +2179,40 @@ var compConfigManager;
 
             // check if the user has the authorization to hangup every calls
             if (compAuthorization.authorizeAdminHangupUser(username) === true) {
-              logger.info(IDLOG, 'hangup asterisk channel "' + req.params.channel + '": authorization admin hangup successful for user "' + username + '"');
+              logger.log.info(IDLOG, 'hangup asterisk channel "' + req.params.channel + '": authorization admin hangup successful for user "' + username + '"');
             }
             // check if the endpoint of the request is owned by the user
             else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
-              logger.warn(IDLOG, 'hangup asterisk channel "' + req.params.channel + '" by user "' + username + '" has been failed: ' +
+              logger.log.warn(IDLOG, 'hangup asterisk channel "' + req.params.channel + '" by user "' + username + '" has been failed: ' +
                 ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' is not owned by the user');
               compUtil.net.sendHttp403(IDLOG, res);
               return;
 
             } else {
-              logger.info(IDLOG, 'hangup asterisk channel "' + req.params.channel + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+              logger.log.info(IDLOG, 'hangup asterisk channel "' + req.params.channel + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
             }
 
             compAstProxy.hangupChannel(req.params.endpointType, req.params.endpointId, req.params.channel, function(err, response) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'hangup asterisk channel ' + req.params.channel + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                  logger.log.warn(IDLOG, 'hangup asterisk channel ' + req.params.channel + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.info(IDLOG, 'asterisk channel ' + req.params.channel + ' has been hangup successfully by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                logger.log.info(IDLOG, 'asterisk channel ' + req.params.channel + ' has been hangup successfully by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
                 compUtil.net.sendHttp200(IDLOG, res);
               } catch (error) {
-                logger.error(IDLOG, error.stack);
+                logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             });
           } else {
-            logger.warn(IDLOG, 'hanging up the asterisk channel ' + req.params.channel + ': unknown endpointType ' + req.params.endpointType);
+            logger.log.warn(IDLOG, 'hanging up the asterisk channel ' + req.params.channel + ': unknown endpointType ' + req.params.endpointType);
             compUtil.net.sendHttp400(IDLOG, res);
           }
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2244,32 +2244,32 @@ var compConfigManager;
           // check if the endpoint of the request is owned by the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
 
-            logger.warn(IDLOG, 'mute convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+            logger.log.warn(IDLOG, 'mute convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
               ' the ' + req.params.endpointId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
 
           } else {
-            logger.info(IDLOG, 'mute convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+            logger.log.info(IDLOG, 'mute convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
 
           compAstProxy.muteConversation(req.params.endpointId, req.params.convid, function(err, response) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'mute convid ' + req.params.convid + ' by user "' + username + '" with exten ' + req.params.endpointId + ': failed');
+                logger.log.warn(IDLOG, 'mute convid ' + req.params.convid + ' by user "' + username + '" with exten ' + req.params.endpointId + ': failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'convid ' + req.params.convid + ' has been muted successfully by user "' + username + '" with exten ' + req.params.endpointId);
+              logger.log.info(IDLOG, 'convid ' + req.params.convid + ' has been muted successfully by user "' + username + '" with exten ' + req.params.endpointId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2300,32 +2300,32 @@ var compConfigManager;
           // check if the endpoint of the request is owned by the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
 
-            logger.warn(IDLOG, 'unmute convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+            logger.log.warn(IDLOG, 'unmute convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
               ' the ' + req.params.endpointId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
 
           } else {
-            logger.info(IDLOG, 'unmute convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+            logger.log.info(IDLOG, 'unmute convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
 
           compAstProxy.unmuteConversation(req.params.endpointId, req.params.convid, function(err, response) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'unmute convid ' + req.params.convid + ' by user "' + username + '" with exten ' + req.params.endpointId + ': failed');
+                logger.log.warn(IDLOG, 'unmute convid ' + req.params.convid + ' by user "' + username + '" with exten ' + req.params.endpointId + ': failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'convid ' + req.params.convid + ' has been unmuted successfully by user "' + username + '" with exten ' + req.params.endpointId);
+              logger.log.info(IDLOG, 'convid ' + req.params.convid + ' has been unmuted successfully by user "' + username + '" with exten ' + req.params.endpointId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2356,16 +2356,16 @@ var compConfigManager;
           // only his own conversations, otherwise he must have the transfer permission
           if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === true) {
 
-            logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" to "' + req.params.to + '": the endpoint ' +
+            logger.log.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" to "' + req.params.to + '": the endpoint ' +
               req.params.endpointId + ' is owned by "' + username + '"');
 
           } else if (compAuthorization.authorizeAdminTransferUser(username) === true) {
 
-            logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" to "' + req.params.to + '": user "' + username +
+            logger.log.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" to "' + req.params.to + '": user "' + username +
               '" has admin transfer permission');
 
           } else {
-            logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" of extension "' + req.params.endpointId + '" to "' +
+            logger.log.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" of extension "' + req.params.endpointId + '" to "' +
               req.params.to + '": authorization failed or convid not owned by the user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
@@ -2378,23 +2378,23 @@ var compConfigManager;
             function(err) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
+                  logger.log.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
                     '" with exten "' + req.params.endpointId + '" has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" has been attended transfered ' +
+                logger.log.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" has been attended transfered ' +
                   'successfully by user "' + username + '" with exten "' + req.params.endpointId + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
-                logger.error(IDLOG, error.stack);
+                logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             }
           );
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2422,18 +2422,18 @@ var compConfigManager;
           if (!req.params.endpointId) {
             req.params.endpointId = compConfigManager.getDefaultUserExtensionConf(username);
           } else if (compAuthorization.authorizeAdminPhoneUser(username) === true) {
-            logger.info(IDLOG, 'answer to call from ' + req.params.endpointId + '" by user "' + username + '": he has the admin phone permission');
+            logger.log.info(IDLOG, 'answer to call from ' + req.params.endpointId + '" by user "' + username + '": he has the admin phone permission');
           }
           // check if the endpoint is owned by the user
           else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
-            logger.warn(IDLOG, 'answer to call from ' + ' "' + req.params.endpointId + '" failed: extension is not owned by user "' + username + '"');
+            logger.log.warn(IDLOG, 'answer to call from ' + ' "' + req.params.endpointId + '" failed: extension is not owned by user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
           ajaxPhoneAnswer(username, req, res);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2460,11 +2460,11 @@ var compConfigManager;
           }
 
           if (compAuthorization.authorizeAdminPhoneUser(username) === true) {
-            logger.info(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" by user "' + username + '": he has the admin phone permission');
+            logger.log.info(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" by user "' + username + '": he has the admin phone permission');
           }
           // check if the endpoint is owned by the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
-            logger.warn(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" failed: extension is not owned by user "' + username + '"');
+            logger.log.warn(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" failed: extension is not owned by user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
@@ -2473,11 +2473,11 @@ var compConfigManager;
             compComNethctiWs.sendAnswerWebrtcToClient(username, req.params.endpointId);
             compUtil.net.sendHttp200(IDLOG, res);
           } else {
-            logger.warn(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" by user "' + username + '" failed: it is not webrtc');
+            logger.log.warn(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" by user "' + username + '" failed: it is not webrtc');
             compUtil.net.sendHttp500(IDLOG, res, req.params.endpointId + ' it is not webrtc');
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2505,21 +2505,21 @@ var compConfigManager;
 
           // check if the user has the authorization to blind transfer the call of all extensions
           if (compAuthorization.authorizeAdminTransferUser(username) === true) {
-            logger.info(IDLOG, 'blind transfer convid ' + req.params.convid + ': admin transfer authorization successful for user "' + username + '"');
+            logger.log.info(IDLOG, 'blind transfer convid ' + req.params.convid + ': admin transfer authorization successful for user "' + username + '"');
           }
           // check if the endpoint of the request is owned by the user
           else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-            logger.warn(IDLOG, 'blind transfer convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+            logger.log.warn(IDLOG, 'blind transfer convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
               ' the ' + req.params.endpointId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
 
           } else {
-            logger.info(IDLOG, 'blind transfer convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+            logger.log.info(IDLOG, 'blind transfer convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
 
-          logger.info(IDLOG, 'user "' + username + '" blind transfer convid "' + req.params.convid + '" of extension "' + req.params.endpointId + '"');
+          logger.log.info(IDLOG, 'user "' + username + '" blind transfer convid "' + req.params.convid + '" of extension "' + req.params.endpointId + '"');
 
           // var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
           var extForCtx = req.params.endpointId;
@@ -2532,23 +2532,23 @@ var compConfigManager;
             function(err) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'blind transfer convid "' + req.params.convid + '" by user "' + username + '" with ' +
+                  logger.log.warn(IDLOG, 'blind transfer convid "' + req.params.convid + '" by user "' + username + '" with ' +
                     req.params.endpointId + ' has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.info(IDLOG, 'convid ' + req.params.convid + ' has been blind transfered successfully by user "' +
+                logger.log.info(IDLOG, 'convid ' + req.params.convid + ' has been blind transfered successfully by user "' +
                   username + '" with ' + req.params.endpointId);
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
-                logger.error(IDLOG, error.stack);
+                logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             }
           );
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2577,9 +2577,9 @@ var compConfigManager;
 
           // check if the user has the authorization to blind transfer the waiting callers from all queues
           if (compAuthorization.authorizeAdminTransferUser(username) === true) {
-            logger.info(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue + ' to ' + req.params.to + ': "admin_transfer" authorization successful for user "' + username + '"');
+            logger.log.info(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue + ' to ' + req.params.to + ': "admin_transfer" authorization successful for user "' + username + '"');
           } else {
-            logger.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue + ' to ' + req.params.to + ': "admin_transfer" authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue + ' to ' + req.params.to + ': "admin_transfer" authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
@@ -2594,25 +2594,25 @@ var compConfigManager;
             function(err) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' +
+                  logger.log.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' +
                     req.params.queue + ' to ' + req.params.to + ' by user "' + username + '" has been failed');
 
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
 
-                logger.info(IDLOG, 'waiting caller ' + req.params.waitingCallerId + ' has been blind transfered successfully ' +
+                logger.log.info(IDLOG, 'waiting caller ' + req.params.waitingCallerId + ' has been blind transfered successfully ' +
                   'by user "' + username + '" ("' + defext + '") from queue ' + req.params.queue + ' to ' + req.params.to);
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
-                logger.error(IDLOG, error.stack);
+                logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             }
           );
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2643,9 +2643,9 @@ var compConfigManager;
           // check if the user has the authorization to blind transfer the parked calls
           if (compAuthorization.authorizeAdminTransferUser(username) === true) {
 
-            logger.info(IDLOG, 'blind transfer parking "' + req.params.parking + '" to ' + req.params.to + ': "admin_transfer" authorization successful for user "' + username + '"');
+            logger.log.info(IDLOG, 'blind transfer parking "' + req.params.parking + '" to ' + req.params.to + ': "admin_transfer" authorization successful for user "' + username + '"');
           } else {
-            logger.warn(IDLOG, 'blind transfer parking "' + req.params.parking + '" to ' + req.params.to + ': "admin_transfer" authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'blind transfer parking "' + req.params.parking + '" to ' + req.params.to + ': "admin_transfer" authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
@@ -2659,26 +2659,26 @@ var compConfigManager;
             function(err) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' +
+                  logger.log.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' +
                     req.params.queue + ' to ' + req.params.to + ' by user "' + username + '" has been failed');
 
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
 
-                logger.info(IDLOG, 'waiting caller ' + req.params.waitingCallerId + ' has been blind transfered successfully ' +
+                logger.log.info(IDLOG, 'waiting caller ' + req.params.waitingCallerId + ' has been blind transfered successfully ' +
                   'by user "' + username + '" from queue ' + req.params.queue + ' to ' + req.params.to);
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
-                logger.error(IDLOG, error.stack);
+                logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             }
           );
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2707,20 +2707,20 @@ var compConfigManager;
 
           // check if the user has the authorization to spy
           if (compAuthorization.authorizeSpyUser(username) !== true) {
-            logger.warn(IDLOG, 'spy convid ' + req.params.convid + ': authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'spy convid ' + req.params.convid + ': authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
 
           // check if the destination endpoint is owned by the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
-            logger.warn(IDLOG, 'spy listen convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+            logger.log.warn(IDLOG, 'spy listen convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
               ' the destination ' + req.params.destId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
 
           } else {
-            logger.info(IDLOG, 'spy listen: the destination endpoint ' + req.params.destId + ' is owned by "' + username + '"');
+            logger.log.info(IDLOG, 'spy listen: the destination endpoint ' + req.params.destId + ' is owned by "' + username + '"');
           }
 
           compAstProxy.startSpyListenConversation(req.params.endpointId,
@@ -2729,21 +2729,21 @@ var compConfigManager;
             function(err) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'spy listen convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destId + ' has been failed');
+                  logger.log.warn(IDLOG, 'spy listen convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destId + ' has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.info(IDLOG, 'spy listen convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.destId);
+                logger.log.info(IDLOG, 'spy listen convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.destId);
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
-                logger.error(IDLOG, error.stack);
+                logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             }
           );
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2779,26 +2779,26 @@ var compConfigManager;
             // check if the endpoint of the request is owned by the username that has the conversation to transfer
             if (compAuthorization.verifyUserEndpointExten(req.params.username, req.params.endpointId) === false) {
 
-              logger.warn(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
+              logger.log.warn(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
                 req.params.voicemailId + '" by user "' + username + '" has been failed: the ' + req.params.endpointId + ' isn\'t owned by user "' + req.params.username + '"');
               compUtil.net.sendHttp403(IDLOG, res);
               return;
 
             } else {
-              logger.info(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
+              logger.log.info(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
                 req.params.voicemailId + '" by user "' + username + '": the ' + req.params.endpointId + ' is owned by user "' + req.params.username + '"');
             }
 
             // check if the voicemail of the request is owned by the user
             if (compAuthorization.verifyUserEndpointVoicemail(req.params.username, req.params.voicemailId) === false) {
 
-              logger.warn(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
+              logger.log.warn(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
                 req.params.voicemailId + '" by user "' + username + '" has been failed: the voicemail ' + req.params.voicemailId + ' isn\'t owned by the user "' + req.params.username + '"');
               compUtil.net.sendHttp403(IDLOG, res);
               return;
 
             } else {
-              logger.info(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
+              logger.log.info(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
                 req.params.voicemailId + '": by user "' + username + '" the voicemail ' + req.params.voicemailId + ' is owned by user "' + req.params.username + '"');
             }
 
@@ -2813,29 +2813,29 @@ var compConfigManager;
               function(err) {
                 try {
                   if (err) {
-                    logger.warn(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '" by user "' + username +
+                    logger.log.warn(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '" by user "' + username +
                       '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                     return;
                   }
-                  logger.info(IDLOG, 'transfer convid ' + req.params.convid + ' to voicemail "' + req.params.voicemailId + '" has been attended transfered ' +
+                  logger.log.info(IDLOG, 'transfer convid ' + req.params.convid + ' to voicemail "' + req.params.voicemailId + '" has been attended transfered ' +
                     'successfully by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
                   compUtil.net.sendHttp200(IDLOG, res);
 
                 } catch (error) {
-                  logger.error(IDLOG, error.stack);
+                  logger.log.error(IDLOG, error.stack);
                   compUtil.net.sendHttp500(IDLOG, res, error.toString());
                 }
               }
             );
 
           } else {
-            logger.warn(IDLOG, 'transfering convid ' + req.params.convid + ' to voicemail ' + req.params.voicemailId + ': unknown endpointType ' + req.params.endpointType);
+            logger.log.warn(IDLOG, 'transfering convid ' + req.params.convid + ' to voicemail ' + req.params.voicemailId + ': unknown endpointType ' + req.params.endpointType);
             compUtil.net.sendHttp400(IDLOG, res);
           }
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -2871,19 +2871,19 @@ var compConfigManager;
 
           if (compAuthorization.verifyUserEndpointExten(username, req.params.ownerEndpointId) === false) {
 
-            logger.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+            logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
               'by user "' + username + '" has been failed: the "' + req.params.ownerEndpointId + '" is not owned by him');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           } else {
-            logger.info(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+            logger.log.info(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
               'by user "' + username + '": the ' + req.params.ownerEndpointId + ' is owned by him');
           }
 
           // check remote site permission
           if (req.params.site && compAuthorization.authorizeRemoteSiteUser(username) === false) {
 
-            logger.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+            logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
               'with remote endpoint "' + req.params.addEndpointId + '" of remote site "' + req.params.site + '" ' +
               'by user "' + username + '" has been failed: no remote site permission');
             compUtil.net.sendHttp403(IDLOG, res);
@@ -2893,7 +2893,7 @@ var compConfigManager;
           // check the remote site existence
           if (req.params.site && !compComNethctiRemotes.remoteSiteExists(req.params.site)) {
 
-            logger.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+            logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
               'with remote endpoint "' + req.params.addEndpointId + '" of remote site "' + req.params.site + '" ' +
               'by user "' + username + '" has been failed: remote site does not exist');
             compUtil.net.sendHttp500(IDLOG, res, 'non existent remote site "' + req.params.site + '"');
@@ -2908,7 +2908,7 @@ var compConfigManager;
             compAstProxy.hangupConversation('extension', req.params.ownerEndpointId, req.params.convid, function(err) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                  logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
                     'by user "' + username + '" has been failed: ' + err.toString());
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
@@ -2923,11 +2923,11 @@ var compConfigManager;
                 req.params.endpointType = 'extension';
                 call(username, req, res);
 
-                logger.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                logger.log.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
                   'by user "' + username + '" adding exten "' + req.params.addEndpointId + '" ' +
                   (req.params.site ? ('of remote site ' + req.params.site) : ''));
               } catch (error) {
-                logger.error(IDLOG, error.stack);
+                logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             });
@@ -2942,7 +2942,7 @@ var compConfigManager;
               function(err, newUser) {
                 try {
                   if (err) {
-                    logger.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                    logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
                       'by user "' + username + '" has been failed: ' + err.toString());
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                     return;
@@ -2967,18 +2967,18 @@ var compConfigManager;
                   req.params.endpointType = 'extension';
                   call(username, req, res);
 
-                  logger.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                  logger.log.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
                     'by user "' + username + '" adding exten "' + req.params.addEndpointId + '" ' +
                     (req.params.site ? ('of remote site ' + req.params.site) : ''));
                 } catch (error) {
-                  logger.error(IDLOG, error.stack);
+                  logger.log.error(IDLOG, error.stack);
                   compUtil.net.sendHttp500(IDLOG, res, error.toString());
                 }
               }
             );
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3008,22 +3008,22 @@ var compConfigManager;
 
           // check if the user has the authorization to pickup the specified conversation
           if (compAuthorization.authorizeAdminPickupUser(username) === true) {
-            logger.info(IDLOG, 'picking up convid "' + req.params.convid + '": admin pickup authorization successful for user "' + username + '"');
+            logger.log.info(IDLOG, 'picking up convid "' + req.params.convid + '": admin pickup authorization successful for user "' + username + '"');
           } else {
-            logger.warn(IDLOG, 'picking up convid ' + req.params.convid + ': admin pickup authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'picking up convid ' + req.params.convid + ': admin pickup authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
           // check if the destination endpoint is owned by the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
 
-            logger.warn(IDLOG, 'pickup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+            logger.log.warn(IDLOG, 'pickup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
               ' the destination extension "' + req.params.destId + '" is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
 
           } else {
-            logger.info(IDLOG, 'pickup convid "' + req.params.convid + ': the destination extension "' +
+            logger.log.info(IDLOG, 'pickup convid "' + req.params.convid + ': the destination extension "' +
               req.params.destId + '" is owned by "' + username + '"');
           }
 
@@ -3036,22 +3036,22 @@ var compConfigManager;
             function(err) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'pickup exten "' + req.params.endpointId + '" by user "' + username + '" with ' +
+                  logger.log.warn(IDLOG, 'pickup exten "' + req.params.endpointId + '" by user "' + username + '" with ' +
                     ' extension "' + req.params.destId + '" has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.info(IDLOG, 'pickup exten "' + req.params.endpointId + '" has been successful by user "' + username +
+                logger.log.info(IDLOG, 'pickup exten "' + req.params.endpointId + '" has been successful by user "' + username +
                   '" with extension "' + req.params.destId + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
-                logger.error(IDLOG, error.stack);
+                logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3082,45 +3082,45 @@ var compConfigManager;
           //// check if the user has the authorization to stop record all the conversations
           //if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
 
-          //  logger.info(IDLOG, 'stop recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+          //  logger.log.info(IDLOG, 'stop recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
           //}
           // check if the user has the authorization to stop record his own conversations
           //else if (compAuthorization.authorizeRecordingUser(username) !== true) {
 
-          //  logger.warn(IDLOG, 'stop recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+          //  logger.log.warn(IDLOG, 'stop recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
           //  compUtil.net.sendHttp403(IDLOG, res);
           //  return;
           //}
           // check if the destination endpoint is owned by the user
           //  if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-          //    logger.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
+          //    logger.log.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
           //      ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
           //    compUtil.net.sendHttp403(IDLOG, res);
           //    return;
 
           //  } else {
-          //    logger.info(IDLOG, 'stopping record convid ' + req.params.convid + ': the endpoint ' + endpointId + ' is owned by "' + username + '"');
+          //    logger.log.info(IDLOG, 'stopping record convid ' + req.params.convid + ': the endpoint ' + endpointId + ' is owned by "' + username + '"');
           //  }
 
           compAstProxy.stopRecordConversation(req.params.endpointId, req.params.convid, function(err) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
+                logger.log.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'stopped record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointId);
+              logger.log.info(IDLOG, 'stopped record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3150,45 +3150,45 @@ var compConfigManager;
           // check if the user has the authorization to record all the conversations
           if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
 
-            logger.info(IDLOG, 'start recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+            logger.log.info(IDLOG, 'start recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
           }
           // check if the user has the authorization to record his own conversations
           else if (compAuthorization.authorizeRecordingUser(username) !== true) {
 
-            logger.warn(IDLOG, 'start recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'start recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
           // check if the destination endpoint is owned by the user
           else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-            logger.warn(IDLOG, 'starting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
+            logger.log.warn(IDLOG, 'starting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
               ' the endpoint ' + req.params.endpointId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
 
           } else {
-            logger.info(IDLOG, 'starting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+            logger.log.info(IDLOG, 'starting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
 
           compAstProxy.startRecordConversation(req.params.endpointId, req.params.convid, function(err) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'starting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
+                logger.log.warn(IDLOG, 'starting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'started record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointId);
+              logger.log.info(IDLOG, 'started record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3220,17 +3220,17 @@ var compConfigManager;
             // check if the user has the authorization to hangup every calls
             // if (compAuthorization.authorizeAdminHangupUser(username) === true) {
             //
-            //   logger.info(IDLOG, 'force hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
+            //   logger.log.info(IDLOG, 'force hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
             // }
             // // check if the endpoint of the request is owned by the user
             // else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
             //
-            //   logger.warn(IDLOG, 'force hangup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+            //   logger.log.warn(IDLOG, 'force hangup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
             //     ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
             //   compUtil.net.sendHttp403(IDLOG, res);
             //   return;
             // } else {
-            //   logger.info(IDLOG, 'force hangup convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+            //   logger.log.info(IDLOG, 'force hangup convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
             // }
 
             var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
@@ -3243,29 +3243,29 @@ var compConfigManager;
               function(err) {
                 try {
                   if (err) {
-                    logger.warn(IDLOG, 'force hangup convid "' + req.params.convid + '" by user "' + username + '" with ' +
+                    logger.log.warn(IDLOG, 'force hangup convid "' + req.params.convid + '" by user "' + username + '" with ' +
                       req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                     return;
                   }
-                  logger.info(IDLOG, 'convid ' + req.params.convid + ' has been forced hangup successfully by user "' +
+                  logger.log.info(IDLOG, 'convid ' + req.params.convid + ' has been forced hangup successfully by user "' +
                     username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
                   compUtil.net.sendHttp200(IDLOG, res);
 
                 } catch (error) {
-                  logger.error(IDLOG, error.stack);
+                  logger.log.error(IDLOG, error.stack);
                   compUtil.net.sendHttp500(IDLOG, res, error.toString());
                 }
               }
             );
 
           } else {
-            logger.warn(IDLOG, 'forcing hangup of convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+            logger.log.warn(IDLOG, 'forcing hangup of convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
             compUtil.net.sendHttp400(IDLOG, res);
           }
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3296,12 +3296,12 @@ var compConfigManager;
           // check if the conference belongs to the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
 
-            logger.warn(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+            logger.log.warn(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
               'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           } else {
-            logger.info(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '": ' +
+            logger.log.info(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '": ' +
               req.params.confId + ' is owned by "' + username + '"');
           }
 
@@ -3311,23 +3311,23 @@ var compConfigManager;
             function(err) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                  logger.log.warn(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
                     ' has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.info(IDLOG, 'user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                logger.log.info(IDLOG, 'user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
                   'has been muted successfully by user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
-                logger.error(IDLOG, error.stack);
+                logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             }
           );
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3358,12 +3358,12 @@ var compConfigManager;
           // check if the conference belongs to the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
 
-            logger.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+            logger.log.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
               'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           } else {
-            logger.info(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '": ' +
+            logger.log.info(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '": ' +
               req.params.confId + ' is owned by "' + username + '"');
           }
 
@@ -3373,23 +3373,23 @@ var compConfigManager;
             function(err) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                  logger.log.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
                     'has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.info(IDLOG, 'user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                logger.log.info(IDLOG, 'user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
                   'has been unmuted successfully by user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
-                logger.error(IDLOG, error.stack);
+                logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             }
           );
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3419,12 +3419,12 @@ var compConfigManager;
           // check if the conference belongs to the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
 
-            logger.warn(IDLOG, 'ending meetme conf "' + req.params.confId + '" ' +
+            logger.log.warn(IDLOG, 'ending meetme conf "' + req.params.confId + '" ' +
               'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           } else {
-            logger.info(IDLOG, 'ending meetme conf "' + req.params.confId + '": ' +
+            logger.log.info(IDLOG, 'ending meetme conf "' + req.params.confId + '": ' +
               req.params.confId + ' is owned by "' + username + '"');
           }
 
@@ -3433,22 +3433,22 @@ var compConfigManager;
             function(err) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'ending meetme conf "' + req.params.confId + '" by user "' + username + '" has been failed');
+                  logger.log.warn(IDLOG, 'ending meetme conf "' + req.params.confId + '" by user "' + username + '" has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.info(IDLOG, 'meetme conf "' + req.params.confId + '" ' +
+                logger.log.info(IDLOG, 'meetme conf "' + req.params.confId + '" ' +
                   'has been ended successfully by user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
-                logger.error(IDLOG, error.stack);
+                logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             }
           );
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3478,23 +3478,23 @@ var compConfigManager;
           // check if the conference belongs to the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
 
-            logger.warn(IDLOG, 'joining meetme conf "' + req.params.endpointId + '" ' +
+            logger.log.warn(IDLOG, 'joining meetme conf "' + req.params.endpointId + '" ' +
               'by user "' + username + '" has been failed: ' + req.params.endpointId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           } else {
-            logger.info(IDLOG, 'joining meetme conf "' + req.params.endpointId + '": ' +
+            logger.log.info(IDLOG, 'joining meetme conf "' + req.params.endpointId + '": ' +
               req.params.endpointId + ' is owned by "' + username + '"');
           }
 
-          logger.warn(IDLOG, 'starting join exten "' + req.params.endpointId + '" to its meetme conf ' +
+          logger.log.warn(IDLOG, 'starting join exten "' + req.params.endpointId + '" to its meetme conf ' +
             'by user "' + username + '"');
           req.params.number = compAstProxy.getMeetmeConfCode() + req.params.endpointId;
           req.params.endpointType = 'extension';
           call(username, req, res);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3525,12 +3525,12 @@ var compConfigManager;
           // check if the conference belongs to the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
 
-            logger.warn(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
+            logger.log.warn(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
               'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           } else {
-            logger.info(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '": ' +
+            logger.log.info(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '": ' +
               req.params.confId + ' is owned by "' + username + '"');
           }
 
@@ -3540,23 +3540,23 @@ var compConfigManager;
             function(err) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
+                  logger.log.warn(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
                     'has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.info(IDLOG, 'user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
+                logger.log.info(IDLOG, 'user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
                   'has been hanged up successfully by user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
-                logger.error(IDLOG, error.stack);
+                logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             }
           );
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3587,45 +3587,45 @@ var compConfigManager;
           // check if the user has the authorization to mute all the conversations
           if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
 
-            logger.info(IDLOG, 'mute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+            logger.log.info(IDLOG, 'mute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
           }
           // check if the user has the authorization to mute his own conversations
           else if (compAuthorization.authorizeRecordingUser(username) !== true) {
 
-            logger.warn(IDLOG, 'mute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'mute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
           // check if the destination endpoint is owned by the user
           else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-            logger.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
+            logger.log.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
               ' the endpoint ' + req.params.endpointId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
 
           } else {
-            logger.info(IDLOG, 'muting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+            logger.log.info(IDLOG, 'muting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
 
           compAstProxy.muteRecordConversation(req.params.endpointId, req.params.convid, function(err) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" ' + req.params.endpointId + ' has been failed');
+                logger.log.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" ' + req.params.endpointId + ' has been failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'mute record convid ' + req.params.convid + ' has been successful by user "' + username + '" ' + req.params.endpointId);
+              logger.log.info(IDLOG, 'mute record convid ' + req.params.convid + ' has been successful by user "' + username + '" ' + req.params.endpointId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3656,44 +3656,44 @@ var compConfigManager;
           // check if the user has the authorization to unmute all the conversations
           if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
 
-            logger.info(IDLOG, 'unmute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+            logger.log.info(IDLOG, 'unmute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
           }
           // check if the user has the authorization to unmute his own conversations
           else if (compAuthorization.authorizeRecordingUser(username) !== true) {
 
-            logger.warn(IDLOG, 'unmute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'unmute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
           // check if the destination endpoint is owned by the user
           else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-            logger.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
+            logger.log.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
               ' the endpoint ' + req.params.endpointId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
 
           } else {
-            logger.info(IDLOG, 'unmuting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+            logger.log.info(IDLOG, 'unmuting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
 
           compAstProxy.unmuteRecordConversation(req.params.endpointId, req.params.convid, function(err) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
+                logger.log.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'unmuting record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointId);
+              logger.log.info(IDLOG, 'unmuting record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3725,24 +3725,24 @@ var compConfigManager;
           if (compAuthorization.authorizeOpParkingsUser(username) !== true &&
             compAuthorization.authorizeAdminParkingsUser(username) !== true) {
 
-            logger.warn(IDLOG, 'picking-up parking "' + req.params.parking + '": authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'picking-up parking "' + req.params.parking + '": authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
 
           if (compAuthorization.authorizeAdminParkingsUser(username) === true) {
-            logger.info(IDLOG, 'picking-up parking "' + req.params.parking + '" by user "' + username + '": he has the "admin parkings" permission');
+            logger.log.info(IDLOG, 'picking-up parking "' + req.params.parking + '" by user "' + username + '": he has the "admin parkings" permission');
           }
           // check if the destination endpoint is owned by the user
           else if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
 
-            logger.warn(IDLOG, 'picking-up parking "' + req.params.parking + '" by user "' + username + '" has been failed: ' +
+            logger.log.warn(IDLOG, 'picking-up parking "' + req.params.parking + '" by user "' + username + '" has been failed: ' +
               ' the destination ' + req.params.destId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
 
           } else {
-            logger.info(IDLOG, 'pickup parking "' + req.params.parking + '": the destination "' + req.params.destId + '" is owned by "' + username + '"');
+            logger.log.info(IDLOG, 'pickup parking "' + req.params.parking + '": the destination "' + req.params.destId + '" is owned by "' + username + '"');
           }
 
           var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
@@ -3750,21 +3750,21 @@ var compConfigManager;
           compAstProxy.pickupParking(req.params.parking, req.params.destId, extForCtx, function(err) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'picking-up parking ' + req.params.parking + ' by user "' + username + '" with ' + req.params.destId + ' has been failed');
+                logger.log.warn(IDLOG, 'picking-up parking ' + req.params.parking + ' by user "' + username + '" with ' + req.params.destId + ' has been failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'pickup parking ' + req.params.parking + ' has been successful by user "' + username + '" with ' + req.params.destId);
+              logger.log.info(IDLOG, 'pickup parking ' + req.params.parking + ' has been successful by user "' + username + '" with ' + req.params.destId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3796,13 +3796,13 @@ var compConfigManager;
           // check if the user has the administration operator panel queues authorization
           if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
-            logger.info(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
+            logger.log.info(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
               '": user "' + username + '" has the "admin queues" authorization');
           }
           // otherwise check if the user has the queues operator panel authorization
           else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
-            logger.warn(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
+            logger.log.warn(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
               '": authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
@@ -3810,18 +3810,18 @@ var compConfigManager;
           // the user has the "queues" authorization. So check if the endpoint is owned by the user
           else {
 
-            logger.info(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
+            logger.log.info(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
               '": user "' + username + '" has the "queues" authorization');
 
             if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-              logger.warn(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
+              logger.log.warn(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
                 '" by user "' + username + '" has been failed: "' + req.params.endpointId + '" is not owned by the user');
               compUtil.net.sendHttp403(IDLOG, res);
               return;
 
             } else {
-              logger.info(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
+              logger.log.info(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
                 '": "' + req.params.endpointId + '" is owned by user "' + username + '"');
             }
           }
@@ -3829,24 +3829,24 @@ var compConfigManager;
           compAstProxy.queueMemberAdd(req.params.endpointId, req.params.queueId, req.params.paused, req.params.penalty, function(err) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
+                logger.log.warn(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
                   '" by user "' + username + '" has been failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
 
-              logger.info(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
+              logger.log.info(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
                 '" by user "' + username + '" has been successf');
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3877,13 +3877,13 @@ var compConfigManager;
           // check if the user has the administration operator panel queues authorization
           if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
-            logger.info(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
+            logger.log.info(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
               '": user "' + username + '" has the "admin_queues" authorization');
           }
           // otherwise check if the user has the queues operator panel authorization
           else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
-            logger.warn(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
+            logger.log.warn(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
               '": authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
@@ -3891,18 +3891,18 @@ var compConfigManager;
           // the user has the "queues" authorization. So check if the endpoint is owned by the user
           else {
 
-            logger.info(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
+            logger.log.info(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
               '": user "' + username + '" has the "queues" authorization');
 
             if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-              logger.warn(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
+              logger.log.warn(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
                 '" by user "' + username + '" has been failed: ' + '"' + req.params.endpointId + '" is not owned by the user');
               compUtil.net.sendHttp403(IDLOG, res);
               return;
 
             } else {
-              logger.info(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
+              logger.log.info(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
                 '": "' + req.params.endpointId + '" is owned by user "' + username + '"');
             }
           }
@@ -3910,24 +3910,24 @@ var compConfigManager;
           compAstProxy.queueMemberRemove(req.params.endpointId, req.params.queueId, function(err) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
+                logger.log.warn(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
                   '" by user "' + username + '" has been failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
 
-              logger.info(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
+              logger.log.info(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
                 '" by user "' + username + '" has been successf');
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -3957,54 +3957,54 @@ var compConfigManager;
           // check if the user has the administration operator panel queues authorization
           if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
-            logger.info(IDLOG, 'inout dynamic all queues for "' + req.params.endpointId + '": user "' + username +
+            logger.log.info(IDLOG, 'inout dynamic all queues for "' + req.params.endpointId + '": user "' + username +
               '" has the "admin_queues" authorization');
           }
           // otherwise check if the user has the queues operator panel authorization
           else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
-            logger.warn(IDLOG, 'inout dynamic all queues for "' + req.params.endpointId + '": authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'inout dynamic all queues for "' + req.params.endpointId + '": authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
           // the user has the "queues" authorization. So check if the endpoint is owned by the user
           else {
 
-            logger.info(IDLOG, 'inout dynamic all queues for "' + req.params.endpointId + '": user "' + username +
+            logger.log.info(IDLOG, 'inout dynamic all queues for "' + req.params.endpointId + '": user "' + username +
               '" has the "queues" authorization');
 
             if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-              logger.warn(IDLOG, 'inout dynamic all queues by user "' + username + '" has been failed: ' +
+              logger.log.warn(IDLOG, 'inout dynamic all queues by user "' + username + '" has been failed: ' +
                 ' the endpoint ' + req.params.endpointId + ' is not owned by the user');
               compUtil.net.sendHttp403(IDLOG, res);
               return;
 
             } else {
-              logger.info(IDLOG, 'inout dynamic all queues: endpoint ' + req.params.endpointId + ' is owned by user "' + username + '"');
+              logger.log.info(IDLOG, 'inout dynamic all queues: endpoint ' + req.params.endpointId + ' is owned by user "' + username + '"');
             }
           }
 
           compAstProxy.inoutDynQueues(req.params.endpointId, function(err) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'inout dynamic all queues by user "' + username + '" with ' +
+                logger.log.warn(IDLOG, 'inout dynamic all queues by user "' + username + '" with ' +
                   req.params.endpointId + ' has been failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
 
-              logger.info(IDLOG, 'inout dynamic all queues has been successful by user "' + username + '" with ' + req.params.endpointId);
+              logger.log.info(IDLOG, 'inout dynamic all queues has been successful by user "' + username + '" with ' + req.params.endpointId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -4024,7 +4024,7 @@ var compConfigManager;
           queueMemberPauseUnpause(req, res, true);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -4044,7 +4044,7 @@ var compConfigManager;
           queueMemberPauseUnpause(req, res, false);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -4076,13 +4076,13 @@ var compConfigManager;
           // check if the endpoint of the request is owned by the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-            logger.warn(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
+            logger.log.warn(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
               '" by user "' + username + '" has been failed: ' + ' the ' + req.params.endpointId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
 
           } else {
-            logger.info(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
+            logger.log.info(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
               '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
 
@@ -4091,13 +4091,13 @@ var compConfigManager;
 
           if (!isSupported) {
             var str = 'sending dtmf with unsupported phone (exten: ' + req.params.endpointId + '/' + extenAgent + ')';
-            logger.warn(IDLOG, str);
+            logger.log.warn(IDLOG, str);
             compUtil.net.sendHttp500(IDLOG, res, str);
           } else {
             ajaxPhoneDtmf(username, req, res);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -4121,10 +4121,10 @@ var compConfigManager;
           } else if (req.method.toLowerCase() === 'delete') {
             wakeupDelete(req, res, next);
           } else {
-            logger.warn(IDLOG, 'unknown requested method ' + req.method);
+            logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -4155,14 +4155,14 @@ var compConfigManager;
           // check if the endpoint is owned by the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-            logger.warn(IDLOG, 'make new echo call failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"');
+            logger.log.warn(IDLOG, 'make new echo call failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
           call(username, req, res);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -4192,7 +4192,7 @@ var compConfigManager;
           // check if the user has the authorization to spy
           if (compAuthorization.authorizeIntrudeUser(username) !== true) {
 
-            logger.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ': authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ': authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
@@ -4200,34 +4200,34 @@ var compConfigManager;
           // check if the destination endpoint is owned by the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
 
-            logger.warn(IDLOG, 'start spy & speak convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+            logger.log.warn(IDLOG, 'start spy & speak convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
               ' the destination "' + req.params.destId + '" is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
 
           } else {
-            logger.info(IDLOG, 'start spy & speak the destination extension ' + req.params.destId + ' is owned by "' + username + '"');
+            logger.log.info(IDLOG, 'start spy & speak the destination extension ' + req.params.destId + ' is owned by "' + username + '"');
           }
 
           compAstProxy.startSpySpeakConversation(req.params.endpointId, req.params.convid, req.params.destId, function(err) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ' by user "' + username + '" with ' +
+                logger.log.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ' by user "' + username + '" with ' +
                   req.params.destId + ' has been failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'start spy & speak convid ' + req.params.convid + ' has been successful by user "' + username +
+              logger.log.info(IDLOG, 'start spy & speak convid ' + req.params.convid + ' has been successful by user "' + username +
                 '" with ' + req.params.destId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       }
@@ -4307,7 +4307,7 @@ var compConfigManager;
     exports.setCompComNethctiRemotes = setCompComNethctiRemotes;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 })();
 
@@ -4330,20 +4330,20 @@ function wakeupDelete(req, res, next) {
     compAstProxy.deleteAlarm(req.params.filename, function(err) {
       try {
         if (err) {
-          logger.warn(IDLOG, 'deleting alarm ' + req.params.filename + ' by user "' + username + '" has been failed: ' + err);
+          logger.log.warn(IDLOG, 'deleting alarm ' + req.params.filename + ' by user "' + username + '" has been failed: ' + err);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
           return;
         }
-        logger.info(IDLOG, 'deleted alarm ' + req.params.filename + ' by user "' + username + '"');
+        logger.log.info(IDLOG, 'deleted alarm ' + req.params.filename + ' by user "' + username + '"');
         compUtil.net.sendHttp200(IDLOG, res);
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         compUtil.net.sendHttp500(IDLOG, res, error.toString());
       }
     });
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -4362,20 +4362,20 @@ function wakeupGet(req, res, next) {
     compAstProxy.getAlarms(function(err, resp) {
       try {
         if (err) {
-          logger.warn(IDLOG, 'getting the list of all alarms by user "' + username + '" has been failed');
+          logger.log.warn(IDLOG, 'getting the list of all alarms by user "' + username + '" has been failed');
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
           return;
         }
-        logger.info(IDLOG, 'sent the list of all #' + resp.length + ' alarms by user "' + username + '"');
+        logger.log.info(IDLOG, 'sent the list of all #' + resp.length + ' alarms by user "' + username + '"');
         res.send(200, resp);
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         compUtil.net.sendHttp500(IDLOG, res, error.toString());
       }
     });
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -4403,22 +4403,22 @@ function wakeupPost(req, res, next) {
     compAstProxy.createAlarm(req.params.extension, req.params.time, req.params.date, function(err) {
       try {
         if (err) {
-          logger.warn(IDLOG, 'creating alarm in ' + req.params.date + ' - ' + req.params.time + ' for exten "' +
+          logger.log.warn(IDLOG, 'creating alarm in ' + req.params.date + ' - ' + req.params.time + ' for exten "' +
             req.params.extension + '" by user "' + username + '" has been failed: ' + err);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
           return;
         }
-        logger.info(IDLOG, 'created alarm in ' + req.params.date + ' - ' + req.params.time + ' for exten "' +
+        logger.log.info(IDLOG, 'created alarm in ' + req.params.date + ' - ' + req.params.time + ' for exten "' +
           req.params.extension + '" by user "' + username + '"');
         compUtil.net.sendHttp200(IDLOG, res);
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         compUtil.net.sendHttp500(IDLOG, res, error.toString());
       }
     });
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -4452,7 +4452,7 @@ function call(username, req, res) {
       asteriskCall(username, req, res);
     }
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -4507,39 +4507,39 @@ function ajaxPhoneDtmf(username, req, res) {
       httpReq.get(url, function(httpResp) {
         try {
           if (httpResp.statusCode === 200) {
-            logger.info(IDLOG, 'dtmf: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+            logger.log.info(IDLOG, 'dtmf: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
               ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-            logger.info(IDLOG, url);
+            logger.log.info(IDLOG, url);
             res.send(200, {
               phoneRespStatusCode: httpResp.statusCode
             });
 
           } else {
-            logger.warn(IDLOG, 'dtmf: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+            logger.log.warn(IDLOG, 'dtmf: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
               ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-            logger.warn(IDLOG, url);
+            logger.log.warn(IDLOG, url);
             res.send(httpResp.statusCode, {
               phoneRespStatusCode: httpResp.statusCode
             });
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
 
       }).on('error', function(err1) {
-        logger.error(IDLOG, err1.message);
+        logger.log.error(IDLOG, err1.message);
         compUtil.net.sendHttp500(IDLOG, res, err1.message);
       });
 
     } else {
-      logger.warn(IDLOG, 'failed send dtmf via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
+      logger.log.warn(IDLOG, 'failed send dtmf via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
         ' by the user "' + username + '": ' + extenAgent + ' is not supported');
       compUtil.net.sendHttp500(IDLOG, res, 'the phone "' + extenAgent + '" is not supported');
     }
 
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -4583,39 +4583,39 @@ function ajaxPhoneHoldUnhold(username, req, res) {
       httpReq.get(url, function(httpResp) {
         try {
           if (httpResp.statusCode === 200) {
-            logger.info(IDLOG, 'hold: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+            logger.log.info(IDLOG, 'hold: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
               ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-            logger.info(IDLOG, url);
+            logger.log.info(IDLOG, url);
             res.send(200, {
               phoneRespStatusCode: httpResp.statusCode
             });
 
           } else {
-            logger.warn(IDLOG, 'hold: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+            logger.log.warn(IDLOG, 'hold: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
               ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-            logger.warn(IDLOG, url);
+            logger.log.warn(IDLOG, url);
             res.send(httpResp.statusCode, {
               phoneRespStatusCode: httpResp.statusCode
             });
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
 
       }).on('error', function(err1) {
-        logger.error(IDLOG, err1.message);
+        logger.log.error(IDLOG, err1.message);
         compUtil.net.sendHttp500(IDLOG, res, err1.message);
       });
 
     } else {
-      logger.warn(IDLOG, 'failed hold via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
+      logger.log.warn(IDLOG, 'failed hold via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
         ' by the user "' + username + '": ' + extenAgent + ' is not supported');
       compUtil.net.sendHttp500(IDLOG, res, 'the phone "' + extenAgent + '" is not supported');
     }
 
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -4635,11 +4635,11 @@ function fallbackAjaxPhoneCall(username, req, res) {
     if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.info(IDLOG, 'fallback ajax phone call: doing asterisk call');
+    logger.log.info(IDLOG, 'fallback ajax phone call: doing asterisk call');
     asteriskCall(username, req, res);
 
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -4693,9 +4693,9 @@ function ajaxPhoneCall(username, req, res) {
           try {
             if (httpResp.statusCode === 200 || httpResp.statusCode === 204) {
 
-              logger.info(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+              logger.log.info(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                 ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-              logger.info(IDLOG, url);
+              logger.log.info(IDLOG, url);
               res.send(httpResp.statusCode, {
                 phoneRespStatusCode: httpResp.statusCode
               });
@@ -4706,42 +4706,42 @@ function ajaxPhoneCall(username, req, res) {
                 try {
                   if (httpResp.statusCode === 200 || httpResp.statusCode === 204) {
 
-                    logger.info(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+                    logger.log.info(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                       ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-                    logger.info(IDLOG, url);
+                    logger.log.info(IDLOG, url);
                     res.send(httpResp.statusCode, {
                       phoneRespStatusCode: httpResp.statusCode
                     });
 
                   } else {
-                    logger.warn(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+                    logger.log.warn(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                       ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-                    logger.warn(IDLOG, url);
+                    logger.log.warn(IDLOG, url);
                     fallbackAjaxPhoneCall(username, req, res);
                   }
                 } catch (err) {
-                  logger.error(IDLOG, err.stack);
+                  logger.log.error(IDLOG, err.stack);
                   fallbackAjaxPhoneCall(username, req, res);
                 }
 
               }).on('error', function(err1) {
-                logger.error(IDLOG, err1.message);
+                logger.log.error(IDLOG, err1.message);
                 fallbackAjaxPhoneCall(username, req, res);
               });
 
             } else {
-              logger.info(IDLOG, 'failed new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+              logger.log.info(IDLOG, 'failed new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                 ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-              logger.info(IDLOG, 'failed url: ' + url);
+              logger.log.info(IDLOG, 'failed url: ' + url);
               fallbackAjaxPhoneCall(username, req, res);
             }
           } catch (err) {
-            logger.error(IDLOG, err.stack);
+            logger.log.error(IDLOG, err.stack);
             fallbackAjaxPhoneCall(username, req, res);
           }
 
         }).on('error', function(err1) {
-          logger.error(IDLOG, err1.message);
+          logger.log.error(IDLOG, err1.message);
           fallbackAjaxPhoneCall(username, req, res);
         });
 
@@ -4751,38 +4751,38 @@ function ajaxPhoneCall(username, req, res) {
           try {
             if (httpResp.statusCode === 200 || httpResp.statusCode === 204) {
 
-              logger.info(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+              logger.log.info(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                 ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-              logger.info(IDLOG, url);
+              logger.log.info(IDLOG, url);
               res.send(httpResp.statusCode, {
                 phoneRespStatusCode: httpResp.statusCode
               });
 
             } else {
-              logger.info(IDLOG, 'failed call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+              logger.log.info(IDLOG, 'failed call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                 ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-              logger.info(IDLOG, 'failed url: ' + url);
+              logger.log.info(IDLOG, 'failed url: ' + url);
               fallbackAjaxPhoneCall(username, req, res);
             }
           } catch (err) {
-            logger.error(IDLOG, err.stack);
+            logger.log.error(IDLOG, err.stack);
             fallbackAjaxPhoneCall(username, req, res);
           }
 
         }).on('error', function(err1) {
-          logger.error(IDLOG, err1.message);
+          logger.log.error(IDLOG, err1.message);
           fallbackAjaxPhoneCall(username, req, res);
         });
       }
 
     } else {
-      logger.warn(IDLOG, 'failed call to ' + to + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
+      logger.log.warn(IDLOG, 'failed call to ' + to + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
         ' by the user "' + username + '": ' + extenAgent + ' is not supported');
       fallbackAjaxPhoneCall(username, req, res);
     }
 
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     fallbackAjaxPhoneCall(username, req, res);
   }
 }
@@ -4831,9 +4831,9 @@ function ajaxPhoneAnswer(username, req, res) {
           try {
             if (httpResp.statusCode === 200 || httpResp.statusCode === 204) {
 
-              logger.info(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+              logger.log.info(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                 ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-              logger.info(IDLOG, url);
+              logger.log.info(IDLOG, url);
               res.send(httpResp.statusCode, {
                 phoneRespStatusCode: httpResp.statusCode
               });
@@ -4844,46 +4844,46 @@ function ajaxPhoneAnswer(username, req, res) {
                 try {
                   if (httpResp.statusCode === 200 || httpResp.statusCode === 204) {
 
-                    logger.info(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+                    logger.log.info(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                       ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-                    logger.info(IDLOG, url);
+                    logger.log.info(IDLOG, url);
                     res.send(httpResp.statusCode, {
                       phoneRespStatusCode: httpResp.statusCode
                     });
 
                   } else {
-                    logger.warn(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+                    logger.log.warn(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                       ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-                    logger.warn(IDLOG, url);
+                    logger.log.warn(IDLOG, url);
                     res.send(httpResp.statusCode, {
                       phoneRespStatusCode: httpResp.statusCode
                     });
                   }
                 } catch (err) {
-                  logger.error(IDLOG, err.stack);
+                  logger.log.error(IDLOG, err.stack);
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
 
               }).on('error', function(err1) {
-                logger.error(IDLOG, err1.message);
+                logger.log.error(IDLOG, err1.message);
                 compUtil.net.sendHttp500(IDLOG, res, err1.message);
               });
 
             } else {
-              logger.warn(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+              logger.log.warn(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                 ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-              logger.warn(IDLOG, url);
+              logger.log.warn(IDLOG, url);
               res.send(httpResp.statusCode, {
                 phoneRespStatusCode: httpResp.statusCode
               });
             }
           } catch (err) {
-            logger.error(IDLOG, err.stack);
+            logger.log.error(IDLOG, err.stack);
             compUtil.net.sendHttp500(IDLOG, res, err.toString());
           }
 
         }).on('error', function(err1) {
-          logger.error(IDLOG, err1.message);
+          logger.log.error(IDLOG, err1.message);
           compUtil.net.sendHttp500(IDLOG, res, err1.message);
         });
 
@@ -4894,40 +4894,40 @@ function ajaxPhoneAnswer(username, req, res) {
           try {
             if (httpResp.statusCode === 200 || httpResp.statusCode === 204) {
 
-              logger.info(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+              logger.log.info(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                 ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-              logger.info(IDLOG, url);
+              logger.log.info(IDLOG, url);
               res.send(httpResp.statusCode, {
                 phoneRespStatusCode: httpResp.statusCode
               });
 
             } else {
-              logger.warn(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+              logger.log.warn(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                 ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-              logger.warn(IDLOG, url);
+              logger.log.warn(IDLOG, url);
               res.send(httpResp.statusCode, {
                 phoneRespStatusCode: httpResp.statusCode
               });
             }
           } catch (err) {
-            logger.error(IDLOG, err.stack);
+            logger.log.error(IDLOG, err.stack);
             compUtil.net.sendHttp500(IDLOG, res, err.toString());
           }
 
         }).on('error', function(err1) {
-          logger.error(IDLOG, err1.message);
+          logger.log.error(IDLOG, err1.message);
           compUtil.net.sendHttp500(IDLOG, res, err1.message);
         });
       }
 
     } else {
-      logger.warn(IDLOG, 'failed answer to ' + exten + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
+      logger.log.warn(IDLOG, 'failed answer to ' + exten + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
         ' by the user "' + username + '": ' + extenAgent + ' is not supported');
       compUtil.net.sendHttp500(IDLOG, res, 'the phone "' + extenAgent + '" is not supported');
     }
 
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -4958,24 +4958,24 @@ function asteriskCall(username, req, res) {
     compAstProxy.call(req.params.endpointType, req.params.endpointId, req.params.number, extenForContext, function(err) {
       try {
         if (err) {
-          logger.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' ' +
+          logger.log.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' ' +
             'using ' + req.params.endpointType + ' ' + req.params.endpointId + ' ' +
             'with exten for context ' + extenForContext);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
           return;
         }
-        logger.info(IDLOG, 'new call from user "' + username + '" to ' + req.params.number + ' with ' +
+        logger.log.info(IDLOG, 'new call from user "' + username + '" to ' + req.params.number + ' with ' +
           req.params.endpointType + ' ' + req.params.endpointId + ' and exten for ' +
           'context "' + extenForContext + '" has been successful');
         compUtil.net.sendHttp200(IDLOG, res);
 
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
         compUtil.net.sendHttp500(IDLOG, res, err1.toString());
       }
     });
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -4989,9 +4989,9 @@ function asteriskCall(username, req, res) {
 function setPrivacy(str) {
   try {
     privacyStrReplace = str;
-    logger.info(IDLOG, 'use privacy string "' + privacyStrReplace + '"');
+    logger.log.info(IDLOG, 'use privacy string "' + privacyStrReplace + '"');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -5004,9 +5004,9 @@ function setPrivacy(str) {
 function setCompComNethctiRemotes(comp) {
   try {
     compComNethctiRemotes = comp;
-    logger.info(IDLOG, 'set remote sites communication architect component');
+    logger.log.info(IDLOG, 'set remote sites communication architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -5019,9 +5019,9 @@ function setCompComNethctiRemotes(comp) {
 function setCompConfigManager(cm) {
   try {
     compConfigManager = cm;
-    logger.info(IDLOG, 'set configuration manager architect component');
+    logger.log.info(IDLOG, 'set configuration manager architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -5034,9 +5034,9 @@ function setCompConfigManager(cm) {
 function setCompOperator(comp) {
   try {
     compOperator = comp;
-    logger.info(IDLOG, 'set operator architect component');
+    logger.log.info(IDLOG, 'set operator architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -5050,16 +5050,16 @@ function setCompOperator(comp) {
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -5078,10 +5078,10 @@ function setCompAuthorization(comp) {
     }
 
     compAuthorization = comp;
-    logger.info(IDLOG, 'authorization component has been set');
+    logger.log.info(IDLOG, 'authorization component has been set');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -5100,10 +5100,10 @@ function setCompComNethctiWs(comp) {
     }
 
     compComNethctiWs = comp;
-    logger.info(IDLOG, 'websocket communication component has been set');
+    logger.log.info(IDLOG, 'websocket communication component has been set');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -5122,10 +5122,10 @@ function setCompUser(comp) {
     }
 
     compUser = comp;
-    logger.info(IDLOG, 'user component has been set');
+    logger.log.info(IDLOG, 'user component has been set');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -5138,9 +5138,9 @@ function setCompUser(comp) {
 function setCompAstProxy(ap) {
   try {
     compAstProxy = ap;
-    logger.info(IDLOG, 'set asterisk proxy architect component');
+    logger.log.info(IDLOG, 'set asterisk proxy architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -5153,9 +5153,9 @@ function setCompAstProxy(ap) {
 function setCompUtil(comp) {
   try {
     compUtil = comp;
-    logger.info(IDLOG, 'set util architect component');
+    logger.log.info(IDLOG, 'set util architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -5184,7 +5184,7 @@ function dndset(req, res, next) {
     // check if the user has the dnd authorization
     if (compAuthorization.authorizeDndUser(username) !== true) {
 
-      logger.warn(IDLOG, 'setting dnd: authorization failed for user "' + username + '"');
+      logger.log.warn(IDLOG, 'setting dnd: authorization failed for user "' + username + '"');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
     }
@@ -5193,7 +5193,7 @@ function dndset(req, res, next) {
     // can only set the don't disturb status of his endpoints
     if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
 
-      logger.warn(IDLOG, 'authorization dnd set failed for user "' + username + '": extension ' +
+      logger.log.warn(IDLOG, 'authorization dnd set failed for user "' + username + '": extension ' +
         endpoint + ' not owned by him');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
@@ -5204,22 +5204,22 @@ function dndset(req, res, next) {
     compAstProxy.setDnd(endpoint, activate, function(err) {
       try {
         if (err) {
-          logger.error(IDLOG, 'setting dnd for extension ' + endpoint + ' of user "' + username + '"');
+          logger.log.error(IDLOG, 'setting dnd for extension ' + endpoint + ' of user "' + username + '"');
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
           return;
         }
 
-        logger.info(IDLOG, 'dnd ' + status + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+        logger.log.info(IDLOG, 'dnd ' + status + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
         compUtil.net.sendHttp200(IDLOG, res);
 
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
         compUtil.net.sendHttp500(IDLOG, res, err1.toString());
       }
     });
 
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -5250,7 +5250,7 @@ function cwset(req, res, next) {
     // can only set the call waiting status of his endpoints
     if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
 
-      logger.warn(IDLOG, 'authorization cw set failed for user "' + username + '": extension ' +
+      logger.log.warn(IDLOG, 'authorization cw set failed for user "' + username + '": extension ' +
         endpoint + ' not owned by him');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
@@ -5265,16 +5265,16 @@ function cwset(req, res, next) {
     }, function(err, resp) {
 
       if (err) {
-        logger.error(IDLOG, 'setting cw "' + status + '" for extension ' + endpoint + ' of user "' + username + '"');
+        logger.log.error(IDLOG, 'setting cw "' + status + '" for extension ' + endpoint + ' of user "' + username + '"');
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
         return;
       }
 
-      logger.info(IDLOG, 'cw "' + status + '" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+      logger.log.info(IDLOG, 'cw "' + status + '" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
       compUtil.net.sendHttp200(IDLOG, res);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5302,7 +5302,7 @@ function dndget(req, res, next) {
     // check if the user has the dnd authorization
     if (compAuthorization.authorizeDndUser(username) !== true) {
 
-      logger.warn(IDLOG, 'requesting dnd: authorization failed for user "' + username + '"');
+      logger.log.warn(IDLOG, 'requesting dnd: authorization failed for user "' + username + '"');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
     }
@@ -5311,7 +5311,7 @@ function dndget(req, res, next) {
     // can only get the don't disturb status of his endpoints
     if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
 
-      logger.warn(IDLOG, 'authorization dnd get failed for user "' + username + '": extension ' +
+      logger.log.warn(IDLOG, 'authorization dnd get failed for user "' + username + '": extension ' +
         endpoint + ' not owned by him');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
@@ -5323,16 +5323,16 @@ function dndget(req, res, next) {
     }, function(err, resp) {
 
       if (err) {
-        logger.error(IDLOG, 'getting dnd for extension ' + endpoint + ' of user "' + username + '"');
+        logger.log.error(IDLOG, 'getting dnd for extension ' + endpoint + ' of user "' + username + '"');
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
         return;
       }
 
-      logger.info(IDLOG, 'dnd for extension endpoint ' + endpoint + ' of user "' + username + '" has been get successfully: the status is ' + resp.dnd);
+      logger.log.info(IDLOG, 'dnd for extension endpoint ' + endpoint + ' of user "' + username + '" has been get successfully: the status is ' + resp.dnd);
       res.send(200, resp);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5361,7 +5361,7 @@ function cwget(req, res, next) {
     // can only get the call waiting status of his endpoints
     if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
 
-      logger.warn(IDLOG, 'authorization cw get failed for user "' + username + '": extension ' +
+      logger.log.warn(IDLOG, 'authorization cw get failed for user "' + username + '": extension ' +
         endpoint + ' not owned by him');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
@@ -5373,16 +5373,16 @@ function cwget(req, res, next) {
     }, function(err, resp) {
 
       if (err) {
-        logger.error(IDLOG, 'getting cw for extension ' + endpoint + ' of user "' + username + '"');
+        logger.log.error(IDLOG, 'getting cw for extension ' + endpoint + ' of user "' + username + '"');
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
         return;
       }
 
-      logger.info(IDLOG, 'cw for extension endpoint ' + endpoint + ' of user "' + username + '" has been get successfully: the status is ' + resp.cw);
+      logger.log.info(IDLOG, 'cw for extension endpoint ' + endpoint + ' of user "' + username + '" has been get successfully: the status is ' + resp.cw);
       res.send(200, resp);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5411,7 +5411,7 @@ function cfvmGet(req, res, next) {
     // check if the user has the operator panel authorization
     if (compAuthorization.authorizePhoneRedirectUser(username) !== true) {
 
-      logger.warn(IDLOG, 'getting cfvm status of type ' + type + ' for extension ' + endpoint + ': authorization failed for user "' + username + '"');
+      logger.log.warn(IDLOG, 'getting cfvm status of type ' + type + ' for extension ' + endpoint + ': authorization failed for user "' + username + '"');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
     }
@@ -5420,7 +5420,7 @@ function cfvmGet(req, res, next) {
     // can only get the call forward status of his endpoints
     if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
 
-      logger.warn(IDLOG, 'authorization to get "cfvm ' + type + '" failed for user "' + username + '": extension ' +
+      logger.log.warn(IDLOG, 'authorization to get "cfvm ' + type + '" failed for user "' + username + '": extension ' +
         endpoint + ' not owned by him');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
@@ -5436,12 +5436,12 @@ function cfvmGet(req, res, next) {
       cfvmGetUnavailable(endpoint, username, res);
 
     } else {
-      logger.warn(IDLOG, 'getting cfvm status of type ' + type + ' for extension ' + endpoint + ': unknown call forward type to get: ' + type);
+      logger.log.warn(IDLOG, 'getting cfvm status of type ' + type + ' for extension ' + endpoint + ': unknown call forward type to get: ' + type);
       compUtil.net.sendHttp400(IDLOG, res);
     }
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5468,17 +5468,17 @@ function cfvmGetUnconditional(endpoint, username, res) {
     }, function(err, resp) {
 
       if (err) {
-        logger.error(IDLOG, 'getting unconditional cfvm for extension ' + endpoint + ' of user "' + username + '"');
+        logger.log.error(IDLOG, 'getting unconditional cfvm for extension ' + endpoint + ' of user "' + username + '"');
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
         return;
       }
 
-      logger.info(IDLOG, 'unconditional cfvm for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
+      logger.log.info(IDLOG, 'unconditional cfvm for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
         'status "' + resp.status + '"' + (IDLOG, resp.to ? ' to ' + resp.to : ''));
       res.send(200, resp);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5505,17 +5505,17 @@ function cfvmGetBusy(endpoint, username, res) {
     }, function(err, resp) {
 
       if (err) {
-        logger.error(IDLOG, 'getting cfvm busy for extension ' + endpoint + ' of user "' + username + '"');
+        logger.log.error(IDLOG, 'getting cfvm busy for extension ' + endpoint + ' of user "' + username + '"');
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
         return;
       }
 
-      logger.info(IDLOG, 'cfvm busy for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
+      logger.log.info(IDLOG, 'cfvm busy for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
         'status "' + resp.status + '"' + (IDLOG, resp.to ? ' to ' + resp.to : ''));
       res.send(200, resp);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5542,17 +5542,17 @@ function cfvmGetUnavailable(endpoint, username, res) {
     }, function(err, resp) {
 
       if (err) {
-        logger.error(IDLOG, 'getting cfvm unavailable for extension ' + endpoint + ' of user "' + username + '"');
+        logger.log.error(IDLOG, 'getting cfvm unavailable for extension ' + endpoint + ' of user "' + username + '"');
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
         return;
       }
 
-      logger.info(IDLOG, 'cfvm unavailable for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
+      logger.log.info(IDLOG, 'cfvm unavailable for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
         'status "' + resp.status + '"' + (IDLOG, resp.to ? ' to ' + resp.to : ''));
       res.send(200, resp);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5581,7 +5581,7 @@ function cfcallGet(req, res, next) {
     // check if the user has the operator panel authorization
     if (compAuthorization.authorizePhoneRedirectUser(username) !== true) {
 
-      logger.warn(IDLOG, 'getting cfcall status of type ' + type + ' for extension ' + endpoint + ': authorization failed for user "' + username + '"');
+      logger.log.warn(IDLOG, 'getting cfcall status of type ' + type + ' for extension ' + endpoint + ': authorization failed for user "' + username + '"');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
     }
@@ -5590,7 +5590,7 @@ function cfcallGet(req, res, next) {
     // can only get the call forward status of his endpoints
     if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
 
-      logger.warn(IDLOG, 'authorization to get "cfcall ' + type + '" failed for user "' + username + '": extension ' +
+      logger.log.warn(IDLOG, 'authorization to get "cfcall ' + type + '" failed for user "' + username + '": extension ' +
         endpoint + ' not owned by him');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
@@ -5606,12 +5606,12 @@ function cfcallGet(req, res, next) {
       cfcallGetUnavailable(endpoint, username, res);
 
     } else {
-      logger.warn(IDLOG, 'getting cfcall status of type ' + type + ' for extension ' + endpoint + ': unknown call forward type to get: ' + type);
+      logger.log.warn(IDLOG, 'getting cfcall status of type ' + type + ' for extension ' + endpoint + ': unknown call forward type to get: ' + type);
       compUtil.net.sendHttp400(IDLOG, res);
     }
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5638,17 +5638,17 @@ function cfcallGetUnconditional(endpoint, username, res) {
     }, function(err, resp) {
 
       if (err) {
-        logger.error(IDLOG, 'getting unconditional cfcall for extension ' + endpoint + ' of user "' + username + '"');
+        logger.log.error(IDLOG, 'getting unconditional cfcall for extension ' + endpoint + ' of user "' + username + '"');
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
         return;
       }
 
-      logger.info(IDLOG, 'unconditional cfcall for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
+      logger.log.info(IDLOG, 'unconditional cfcall for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
         'status "' + resp.status + '"' + (IDLOG, resp.to ? ' to ' + resp.to : ''));
       res.send(200, resp);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5675,17 +5675,17 @@ function cfcallGetBusy(endpoint, username, res) {
     }, function(err, resp) {
 
       if (err) {
-        logger.error(IDLOG, 'getting cfcall busy for extension ' + endpoint + ' of user "' + username + '"');
+        logger.log.error(IDLOG, 'getting cfcall busy for extension ' + endpoint + ' of user "' + username + '"');
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
         return;
       }
 
-      logger.info(IDLOG, 'cfcall busy for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
+      logger.log.info(IDLOG, 'cfcall busy for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
         'status "' + resp.status + '"' + (IDLOG, resp.to ? ' to ' + resp.to : ''));
       res.send(200, resp);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5712,17 +5712,17 @@ function cfcallGetUnavailable(endpoint, username, res) {
     }, function(err, resp) {
 
       if (err) {
-        logger.error(IDLOG, 'getting cfcall unavailable for extension ' + endpoint + ' of user "' + username + '"');
+        logger.log.error(IDLOG, 'getting cfcall unavailable for extension ' + endpoint + ' of user "' + username + '"');
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
         return;
       }
 
-      logger.info(IDLOG, 'cfcall unavailable for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
+      logger.log.info(IDLOG, 'cfcall unavailable for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
         'status "' + resp.status + '"' + (IDLOG, resp.to ? ' to ' + resp.to : ''));
       res.send(200, resp);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5754,7 +5754,7 @@ function cfvmSet(req, res, next) {
     // check if the user has the operator panel authorization
     if (compAuthorization.authorizePhoneRedirectUser(username) !== true) {
 
-      logger.warn(IDLOG, 'setting phone cfvm of extension ' + endpoint + ': authorization failed for user "' + username + '"');
+      logger.log.warn(IDLOG, 'setting phone cfvm of extension ' + endpoint + ': authorization failed for user "' + username + '"');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
     }
@@ -5763,7 +5763,7 @@ function cfvmSet(req, res, next) {
     // can only set the call forward status of his endpoints
     if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
 
-      logger.warn(IDLOG, 'authorization cfvm set of type ' + type + ' failed for user "' + username + '": extension ' +
+      logger.log.warn(IDLOG, 'authorization cfvm set of type ' + type + ' failed for user "' + username + '": extension ' +
         endpoint + ' not owned by him');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
@@ -5781,11 +5781,11 @@ function cfvmSet(req, res, next) {
       cfvmSetUnavailable(endpoint, username, activate, to, res);
 
     } else {
-      logger.warn(IDLOG, 'setting phone cfvm of extension ' + endpoint + ': unknown call forward type to set: ' + type);
+      logger.log.warn(IDLOG, 'setting phone cfvm of extension ' + endpoint + ': unknown call forward type to set: ' + type);
       compUtil.net.sendHttp400(IDLOG, res);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5813,20 +5813,20 @@ function cfvmSetUnconditional(endpoint, username, activate, to, res) {
     compAstProxy.setUnconditionalCfVm(endpoint, activate, to, function(err1, resp) {
 
       if (err1) {
-        logger.error(IDLOG, 'setting unconditional cfvm for extension ' + endpoint + ' of user "' + username + '"');
+        logger.log.error(IDLOG, 'setting unconditional cfvm for extension ' + endpoint + ' of user "' + username + '"');
         compUtil.net.sendHttp500(IDLOG, res, err1.toString());
         return;
       }
 
       if (activate) {
-        logger.info(IDLOG, 'unconditional cfvm "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+        logger.log.info(IDLOG, 'unconditional cfvm "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
       } else {
-        logger.info(IDLOG, 'unconditional cfvm "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+        logger.log.info(IDLOG, 'unconditional cfvm "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
       }
       compUtil.net.sendHttp200(IDLOG, res);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5859,20 +5859,20 @@ function cfvmSetBusy(endpoint, username, activate, to, res) {
     }, function(err, resp) {
 
       if (err) {
-        logger.error(IDLOG, 'setting cfvm busy for extension ' + endpoint + ' of user "' + username + '"');
+        logger.log.error(IDLOG, 'setting cfvm busy for extension ' + endpoint + ' of user "' + username + '"');
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
         return;
       }
 
       if (activate) {
-        logger.info(IDLOG, 'cfvm busy "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+        logger.log.info(IDLOG, 'cfvm busy "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
       } else {
-        logger.info(IDLOG, 'cfvm busy "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+        logger.log.info(IDLOG, 'cfvm busy "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
       }
       compUtil.net.sendHttp200(IDLOG, res);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5905,20 +5905,20 @@ function cfvmSetUnavailable(endpoint, username, activate, to, res) {
     }, function(err, resp) {
 
       if (err) {
-        logger.error(IDLOG, 'setting cfvm unavailable for extension ' + endpoint + ' of user "' + username + '"');
+        logger.log.error(IDLOG, 'setting cfvm unavailable for extension ' + endpoint + ' of user "' + username + '"');
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
         return;
       }
 
       if (activate) {
-        logger.info(IDLOG, 'cfvm unavailable "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+        logger.log.info(IDLOG, 'cfvm unavailable "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
       } else {
-        logger.info(IDLOG, 'cfvm unavailable "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+        logger.log.info(IDLOG, 'cfvm unavailable "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
       }
       compUtil.net.sendHttp200(IDLOG, res);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -5950,7 +5950,7 @@ function cfcallSet(req, res, next) {
     // check if the user has the operator panel authorization
     if (compAuthorization.authorizePhoneRedirectUser(username) !== true) {
 
-      logger.warn(IDLOG, 'setting phone cfcall of extension ' + endpoint + ': authorization failed for user "' + username + '"');
+      logger.log.warn(IDLOG, 'setting phone cfcall of extension ' + endpoint + ': authorization failed for user "' + username + '"');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
     }
@@ -5959,7 +5959,7 @@ function cfcallSet(req, res, next) {
     // can only set the call forward status of his endpoints
     if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
 
-      logger.warn(IDLOG, 'authorization cfcall set of type ' + type + ' failed for user "' + username + '": extension ' +
+      logger.log.warn(IDLOG, 'authorization cfcall set of type ' + type + ' failed for user "' + username + '": extension ' +
         endpoint + ' not owned by him');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
@@ -5977,11 +5977,11 @@ function cfcallSet(req, res, next) {
       cfcallSetUnavailable(endpoint, username, activate, to, res);
 
     } else {
-      logger.warn(IDLOG, 'setting phone cfcall of extension ' + endpoint + ': unknown call forward type to set: ' + type);
+      logger.log.warn(IDLOG, 'setting phone cfcall of extension ' + endpoint + ': unknown call forward type to set: ' + type);
       compUtil.net.sendHttp400(IDLOG, res);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -6009,26 +6009,26 @@ function cfcallSetUnconditional(endpoint, username, activate, to, res) {
     compAstProxy.setUnconditionalCf(endpoint, activate, to, function(err1, resp) {
       try {
         if (err1) {
-          logger.error(IDLOG, 'setting unconditional cfcall for extension ' + endpoint + ' of user "' + username + '"');
+          logger.log.error(IDLOG, 'setting unconditional cfcall for extension ' + endpoint + ' of user "' + username + '"');
           compUtil.net.sendHttp500(IDLOG, res, err1.toString());
           return;
         }
 
         if (activate) {
-          logger.info(IDLOG, 'unconditional cfcall "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+          logger.log.info(IDLOG, 'unconditional cfcall "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
         } else {
-          logger.info(IDLOG, 'unconditional cfcall "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+          logger.log.info(IDLOG, 'unconditional cfcall "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
         }
         compUtil.net.sendHttp200(IDLOG, res);
 
       } catch (err2) {
-        logger.error(IDLOG, err2.stack);
+        logger.log.error(IDLOG, err2.stack);
         compUtil.net.sendHttp500(IDLOG, res, err2.toString());
       }
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -6061,20 +6061,20 @@ function cfcallSetBusy(endpoint, username, activate, to, res) {
     }, function(err, resp) {
 
       if (err) {
-        logger.error(IDLOG, 'setting cfcall busy for extension ' + endpoint + ' of user "' + username + '"');
+        logger.log.error(IDLOG, 'setting cfcall busy for extension ' + endpoint + ' of user "' + username + '"');
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
         return;
       }
 
       if (activate) {
-        logger.info(IDLOG, 'cfcall busy "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+        logger.log.info(IDLOG, 'cfcall busy "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
       } else {
-        logger.info(IDLOG, 'cfcall busy "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+        logger.log.info(IDLOG, 'cfcall busy "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
       }
       compUtil.net.sendHttp200(IDLOG, res);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -6107,20 +6107,20 @@ function cfcallSetUnavailable(endpoint, username, activate, to, res) {
     }, function(err, resp) {
 
       if (err) {
-        logger.error(IDLOG, 'setting cfcall unavailable for extension ' + endpoint + ' of user "' + username + '"');
+        logger.log.error(IDLOG, 'setting cfcall unavailable for extension ' + endpoint + ' of user "' + username + '"');
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
         return;
       }
 
       if (activate) {
-        logger.info(IDLOG, 'cfcall unavailable "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+        logger.log.info(IDLOG, 'cfcall unavailable "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
       } else {
-        logger.info(IDLOG, 'cfcall unavailable "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+        logger.log.info(IDLOG, 'cfcall unavailable "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
       }
       compUtil.net.sendHttp200(IDLOG, res);
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -6164,30 +6164,30 @@ function queueMemberPauseUnpause(req, res, paused) {
     // check if the user has the administration queues operator panel authorization
     if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
-      logger.info(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ': user "' +
+      logger.log.info(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ': user "' +
         username + '" has "admin_queues" authorization');
     }
     // otherwise check if the user has the queues operator panel authorization
     else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
-      logger.warn(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ': authorization failed for user "' + username + '"');
+      logger.log.warn(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ': authorization failed for user "' + username + '"');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
     }
     // the user has the "queues" authorization. So check if the endpoint is owned by the user
     else {
 
-      logger.info(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ': user "' + username + '" has "queues" authorization');
+      logger.log.info(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ': user "' + username + '" has "queues" authorization');
 
       if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-        logger.warn(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ' by user "' + username +
+        logger.log.warn(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ' by user "' + username +
           '" has been failed: the endpoint is not owned by the user');
         compUtil.net.sendHttp403(IDLOG, res);
         return;
 
       } else {
-        logger.info(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ': the endpoint is owned by user "' + username + '"');
+        logger.log.info(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ': the endpoint is owned by user "' + username + '"');
       }
     }
 
@@ -6199,23 +6199,23 @@ function queueMemberPauseUnpause(req, res, paused) {
       function(err) {
         try {
           if (err) {
-            logger.warn(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ' by user "' + username + '": has been failed');
+            logger.log.warn(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ' by user "' + username + '": has been failed');
             compUtil.net.sendHttp500(IDLOG, res, err.toString());
             return;
           }
 
-          logger.info(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ' has been successful by user "' + username + '"');
+          logger.log.info(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ' has been successful by user "' + username + '"');
           compUtil.net.sendHttp200(IDLOG, res);
 
         } catch (error) {
-          logger.error(IDLOG, error.stack);
+          logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
         }
       }
     );
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }

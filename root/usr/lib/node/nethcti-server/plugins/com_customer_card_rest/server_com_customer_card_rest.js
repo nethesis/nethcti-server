@@ -84,10 +84,10 @@ var compUtil;
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
       // set the logger for all REST plugins
       setAllRestPluginsLogger(log);
@@ -96,7 +96,7 @@ function setLogger(log) {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -115,11 +115,11 @@ function setAllRestPluginsLogger(log) {
 
       if (typeof plugins[key].setLogger === 'function') {
         plugins[key].setLogger(log);
-        logger.info(IDLOG, 'new logger has been set for rest plugin ' + key);
+        logger.log.info(IDLOG, 'new logger has been set for rest plugin ' + key);
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -147,7 +147,7 @@ function setCompUtil(comp) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -168,18 +168,18 @@ function execute(req, res, next) {
     if (username === 'admin' ||
       compAuthorization.authorizeCustomerCardUser(username) === true) {
 
-      logger.info(IDLOG, 'customer card authorization successfully for user "' + username + '"');
-      logger.info(IDLOG, 'execute: ' + p + '.' + name);
+      logger.log.info(IDLOG, 'customer card authorization successfully for user "' + username + '"');
+      logger.log.info(IDLOG, 'execute: ' + p + '.' + name);
       plugins[p][name].apply(plugins[p], [req, res, next]);
 
     } else { // authorization failed
-      logger.warn(IDLOG, 'customer card authorization failed for user "' + username + '"!');
+      logger.log.warn(IDLOG, 'customer card authorization failed for user "' + username + '"!');
       compUtil.net.sendHttp403(IDLOG, res);
     }
     return next();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -204,7 +204,7 @@ function setCompCustomerCard(compCustomerCard) {
     }
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -223,10 +223,10 @@ function setCompAuthorization(ca) {
     }
 
     compAuthorization = ca;
-    logger.info(IDLOG, 'authorization component has been set');
+    logger.log.info(IDLOG, 'authorization component has been set');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -251,14 +251,14 @@ function config(path) {
   }
 
   // read configuration file
-  var json = require(path).rest;
+  var json = (JSON.parse(fs.readFileSync(path, 'utf8'))).rest;
 
   // initialize the port of the REST server
   if (json.customer_card && json.customer_card.port) {
     port = json.customer_card.port;
 
   } else {
-    logger.warn(IDLOG, path + ': no "port" has been specified');
+    logger.log.warn(IDLOG, path + ': no "port" has been specified');
   }
 
   // initialize the address of the REST server
@@ -266,9 +266,9 @@ function config(path) {
     address = json.customer_card.address;
 
   } else {
-    logger.warn(IDLOG, path + ': no "address" has been specified');
+    logger.log.warn(IDLOG, path + ': no "address" has been specified');
   }
-  logger.info(IDLOG, 'configuration done by ' + path);
+  logger.log.info(IDLOG, 'configuration done by ' + path);
 }
 
 /**
@@ -308,22 +308,22 @@ function start() {
 
       // add routing functions
       for (k in get) {
-        logger.info(IDLOG, 'Binding GET: /' + root + '/' + get[k]);
+        logger.log.info(IDLOG, 'Binding GET: /' + root + '/' + get[k]);
         server.get('/' + root + '/' + get[k], execute);
       }
       for (k in post) {
-        logger.info(IDLOG, 'Binding POST: /' + root + '/' + post[k]);
+        logger.log.info(IDLOG, 'Binding POST: /' + root + '/' + post[k]);
         server.post('/' + root + '/' + post[k], execute);
       }
     }
 
     // start the REST server
     server.listen(port, address, function() {
-      logger.info(IDLOG, server.name + ' listening at ' + server.url);
+      logger.log.info(IDLOG, server.name + ' listening at ' + server.url);
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 

@@ -33,6 +33,17 @@ var EventEmitter = require('events').EventEmitter;
 var IDLOG = '[dbconn]';
 
 /**
+ * True if the component has been started. Used to emit EVT_RELOADED
+ * instead of EVT_READY
+ *
+ * @property ready
+ * @type boolean
+ * @private
+ * @default false
+ */
+var ready = false;
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -60,7 +71,20 @@ var numExecQueries = 0;
  * @private
  */
 var emitter = new EventEmitter();
-emitter.setMaxListeners(20);
+
+/**
+ * Fired when the component has been reloaded.
+ *
+ * @event reloaded
+ */
+/**
+ * The name of the reloaded event.
+ *
+ * @property EVT_RELOADED
+ * @type string
+ * @default "reloaded"
+ */
+var EVT_RELOADED = 'reloaded';
 
 /**
  * Fired when the component is ready.
@@ -196,16 +220,16 @@ var models = {};
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -227,18 +251,18 @@ function config(path) {
       throw new Error(path + ' does not exist');
     }
 
-    var json = require(path); // read the file
-    logger.info(IDLOG, 'file ' + path + ' has been read');
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
+    logger.log.info(IDLOG, 'file ' + path + ' has been read');
 
     if ((typeof json === 'object' && json.loglevel.toLowerCase() === 'info') ||
       process.env.NODE_ENV === 'development') {
 
       logSequelize = true;
     }
-    logger.info(IDLOG, 'configuration done by ' + path);
+    logger.log.info(IDLOG, 'configuration done by ' + path);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -264,18 +288,18 @@ function configDbStatic(dirPath) {
     var i, k, json;
     for (i = 0; i < files.length; i++) {
 
-      json = require(path.join(dirPath, files[i]));
-      logger.info(IDLOG, 'file ' + files[i] + ' has been read');
+      json = JSON.parse(fs.readFileSync(path.join(dirPath, files[i]), 'utf8'));
+      logger.log.info(IDLOG, 'file ' + files[i] + ' has been read');
 
       // transfer the file content into the memory
       for (k in json) {
         dbConfig[k] = json[k];
       }
     }
-    logger.info(IDLOG, 'configuration done by ' + dirPath);
+    logger.log.info(IDLOG, 'configuration done by ' + dirPath);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -287,24 +311,23 @@ function configDbStatic(dirPath) {
 function start() {
   try {
     initConnections();
-    logger.info(IDLOG, 'database connections initialized');
+    logger.log.info(IDLOG, 'database connections initialized');
 
     importModels();
-    logger.info(IDLOG, 'sequelize models imported');
+    logger.log.info(IDLOG, 'sequelize models imported');
 
     initCustCardData(function(err) {
       if (err) {
-        logger.error(IDLOG, 'initializing customer card configurations: ' + err);
+        logger.log.error(IDLOG, 'initializing customer card configurations: ' + err);
       } else {
-        logger.info(IDLOG, 'initialized database configuration for customer cards');
+        logger.log.info(IDLOG, 'initialized database configuration for customer cards');
 
         initCustCardConnections();
-        logger.info(IDLOG, 'initialized database connections for customer card');
+        logger.log.info(IDLOG, 'initialized database connections for customer card');
       }
     });
-
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -377,7 +400,7 @@ function testConnection(host, port, type, user, pass, name, cb) {
       cb('dbms not supported');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -396,12 +419,12 @@ function importModels() {
       path = __dirname + '/sequelize_models/' + k;
       if (fs.existsSync(path + '.js') === true) {
         models[k] = dbConn[k].import(path);
-        logger.info(IDLOG, 'loaded sequelize model ' + path);
+        logger.log.info(IDLOG, 'loaded sequelize model ' + path);
       }
     }
-    logger.info(IDLOG, 'all sequelize models have been imported');
+    logger.log.info(IDLOG, 'all sequelize models have been imported');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -413,7 +436,7 @@ function importModels() {
  */
 function initCustCardConnections() {
   try {
-    logger.info(IDLOG, 'initializing db connections for customer cards');
+    logger.log.info(IDLOG, 'initializing db connections for customer cards');
 
     var ccName;
     for (ccName in dbConfigCustCardData) {
@@ -437,9 +460,9 @@ function initCustCardConnections() {
         }
 
         sequelize = new Sequelize(dbConfigCustCardData[ccName].name, dbConfigCustCardData[ccName].user, dbConfigCustCardData[ccName].pass, config);
-
+        sequelize.db_type = 'mysql';
         dbConnCustCard[dbConfigCustCardData[ccName].id] = sequelize;
-        logger.info(IDLOG, 'initialized db connection for customer card (id: ' + dbConfigCustCardData[ccName].id + ', ' +
+        logger.log.info(IDLOG, 'initialized db connection for customer card (id: ' + dbConfigCustCardData[ccName].id + ', ' +
           dbConfigCustCardData[ccName].type + ', ' + dbConfigCustCardData[ccName].name + ', ' + dbConfigCustCardData[ccName].host + ':' + dbConfigCustCardData[ccName].port + ')');
 
       } else if (dbConfigCustCardData[ccName].type === 'postgres') {
@@ -450,7 +473,7 @@ function initCustCardConnections() {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -482,16 +505,16 @@ function initCustCardData(cb) {
             for (i = 0; i < results.length; i++) {
               results[i] = results[i].dataValues;
             }
-            logger.info(IDLOG, '#' + results.length + ' db connections for customer cards have been found');
+            logger.log.info(IDLOG, '#' + results.length + ' db connections for customer cards have been found');
             callback(null, results);
 
           } catch (error) {
-            logger.error(IDLOG, error.stack);
+            logger.log.error(IDLOG, error.stack);
             callback(error, {});
           }
 
         }, function(err) { // manage the error
-          logger.error(IDLOG, 'searching db connections for customer cards: ' + err.toString());
+          logger.log.error(IDLOG, 'searching db connections for customer cards: ' + err.toString());
           callback(err, {});
         });
       },
@@ -503,7 +526,7 @@ function initCustCardData(cb) {
     }, function(err, results) {
 
       if (err) {
-        logger.warn(IDLOG, 'initializing db configuration for customer cards: ' + err);
+        logger.log.warn(IDLOG, 'initializing db configuration for customer cards: ' + err);
         cb(err);
         return;
       }
@@ -524,7 +547,7 @@ function initCustCardData(cb) {
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -552,21 +575,21 @@ function readCustomerCard(cb) {
         for (i = 0; i < results.length; i++) {
           results[i] = results[i].dataValues;
         }
-        logger.info(IDLOG, '#' + results.length + ' db customer card templates have been found');
+        logger.log.info(IDLOG, '#' + results.length + ' db customer card templates have been found');
         cb(null, results);
 
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         cb(error, {});
       }
 
     }, function(err) { // manage the error
-      logger.error(IDLOG, 'searching db customer card templates: ' + err.toString());
+      logger.log.error(IDLOG, 'searching db customer card templates: ' + err.toString());
       cb(err, {});
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -598,11 +621,10 @@ function initConnections() {
         if (!logSequelize) {
           config.logging = false;
         }
-
         sequelize = new Sequelize(dbConfig[k].dbname, dbConfig[k].dbuser, dbConfig[k].dbpassword, config);
-
+        sequelize.db_type = 'mysql';
         dbConn[k] = sequelize;
-        logger.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
+        logger.log.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
 
       } else if (dbConfig[k].dbtype === 'postgres') {
         initPostgresConn(k);
@@ -611,9 +633,22 @@ function initConnections() {
         initMssqlConn(k, getMssqlTdsVersion(dbConfig[k].dbtype));
       }
     }
+    if (ready) {
+      emit(EVT_RELOADED);
+    }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
+}
+
+/**
+ * set the component as ready.
+ *
+ * @method setReady
+ * @private
+ */
+function setReady(value) {
+  ready = value;
 }
 
 /**
@@ -642,14 +677,24 @@ function initPostgresConnCustCard(data) {
     var client = new pg.Client(config);
     client.connect(function(err) {
       if (err) {
-        logger.error(IDLOG, 'initializing ' + data.type + ' db connection ' + data.name + ' ' + data.host + ':' + data.port + ' - ' + err.stacname);
+        logger.log.error(IDLOG, 'initializing ' + data.type + ' db connection ' + data.name + ' ' + data.host + ':' + data.port + ' - ' + err.stacname);
       } else {
+        client.db_type = 'postgres'; // used for disconnection
         dbConnCustCard[data.id] = client;
-        logger.info(IDLOG, 'initialized db connection with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port + ' (id: ' + data.id + ')');
+        logger.log.info(IDLOG, 'initialized db connection with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port + ' (id: ' + data.id + ')');
       }
     });
+
+    client.on('end', function() {
+      logger.log.warn(IDLOG, 'db disconnection with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port + ' (id: ' + data.id + ')');
+    });
+    client.on('error', function(err) {
+      logger.log.error(IDLOG, 'db error with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port +
+        ' (id: ' + data.id + '): ' + err.stack);
+    });
+
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -672,14 +717,24 @@ function initPostgresConn(name) {
     var client = new pg.Client(config);
     client.connect(function(err) {
       if (err) {
-        logger.error(IDLOG, 'initializing ' + dbConfig[name].dbtype + ' db connection ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport + ' - ' + err.stacname);
+        logger.log.error(IDLOG, 'initializing ' + dbConfig[name].dbtype + ' db connection ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport + ' - ' + err.stacname);
       } else {
+        client.db_type = 'postgres'; // used for disconnection
         dbConn[name] = client;
-        logger.info(IDLOG, 'initialized db connection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport);
+        logger.log.info(IDLOG, 'initialized db connection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport);
       }
     });
+
+    client.on('end', function() {
+      logger.log.warn(IDLOG, 'db disconnection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport);
+    });
+    client.on('error', function(err) {
+      logger.log.error(IDLOG, 'db disconnection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' +
+        dbConfig[name].dbhost + ':' + dbConfig[name].dbport + ': ' + err.stack);
+    });
+
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -697,7 +752,7 @@ function getMssqlTdsVersion(type) {
     return type.split(':')[1];
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return '';
   }
 }
@@ -719,7 +774,7 @@ function isMssqlType(type) {
     return false;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return false;
   }
 }
@@ -747,27 +802,30 @@ function initMssqlConnCustCard(data, tdsVersion) {
       user: data.user,
       password: data.pass,
       database: data.name,
+      pool: {
+        idleTimeoutMillis: 300000,
+        max: 10
+      },
       options: {
         encrypt: false,
         tdsVersion: tdsVersion
       }
     };
-
     var connection = new mssql.Connection(config, function(err1) {
       try {
         if (err1) {
-          logger.error(IDLOG, 'initializing db connection with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port + ' - ' + err1.stack);
-
+          logger.log.error(IDLOG, 'initializing db connection with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port + ' - ' + err1.stack);
         } else {
+          connection.db_type = 'mssql';
           dbConnCustCard[data.id] = connection;
-          logger.info(IDLOG, 'initialized db connection with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port + ' (id: ' + data.id + ')');
+          logger.log.info(IDLOG, 'initialized db connection with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port + ' (id: ' + data.id + ')');
         }
       } catch (err2) {
-        logger.error(IDLOG, err2.stack);
+        logger.log.error(IDLOG, err2.stack);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -787,6 +845,10 @@ function initMssqlConn(name, tdsVersion) {
       user: dbConfig[name].dbuser,
       password: dbConfig[name].dbpassword,
       database: dbConfig[name].dbname,
+      pool: {
+        idleTimeoutMillis: 300000,
+        max: 10
+      },
       options: {
         encrypt: false,
         tdsVersion: tdsVersion
@@ -796,18 +858,19 @@ function initMssqlConn(name, tdsVersion) {
     var connection = new mssql.Connection(config, function(err1) {
       try {
         if (err1) {
-          logger.error(IDLOG, 'initializing db connection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport + ' - ' + err1.stack);
+          logger.log.error(IDLOG, 'initializing db connection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport + ' - ' + err1.stack);
 
         } else {
+          connection.db_type = 'mssql';
           dbConn[name] = connection;
-          logger.info(IDLOG, 'initialized db connection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport);
+          logger.log.info(IDLOG, 'initialized db connection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport);
         }
       } catch (err2) {
-        logger.error(IDLOG, err2.stack);
+        logger.log.error(IDLOG, err2.stack);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -824,7 +887,7 @@ function on(type, cb) {
   try {
     return emitter.on(type, cb);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -839,7 +902,7 @@ function emit(ev, data) {
   try {
     emitter.emit(ev, data);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -855,7 +918,7 @@ function getStats() {
       numExecQueries: numExecQueries
     };
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return {};
   }
 }
@@ -869,13 +932,89 @@ function incNumExecQueries() {
   try {
     numExecQueries += 1;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reset the component.
+ *
+ * @method reset
+ */
+function reset() {
+  try {
+    var k;
+    // mysql connections are not closed, beacuse it uses a pool
+    for (k in dbConn) {
+      if (dbConn[k].db_type === 'mysql') {
+        delete dbConn[k];
+      }
+    }
+    for (k in dbConnCustCard) {
+      if (dbConnCustCard[k].db_type === 'mysql') {
+        delete dbConnCustCard[k];
+      }
+    }
+    // close postgres connections
+    for (k in dbConn) {
+      if (dbConn[k].db_type === 'postgres') {
+        dbConn[k].end(function(err) {
+          logger.log.info(IDLOG, dbConn[k].db_type + ' connection "' + k + '" closed during reset');
+          if (err) {
+            logger.log.error(IDLOG, 'closing ' + dbConn[k].db_type + ' connection "' + k + '": ' + err.stack);
+          }
+          delete dbConn[k];
+        });
+      }
+    }
+    for (k in dbConnCustCard) {
+      if (dbConnCustCard[k].db_type === 'postgres') {
+        dbConnCustCard[k].end(function(err) {
+          logger.log.info(IDLOG, dbConnCustCard[k].db_type + ' connection "' + k + '" closed during reset');
+          if (err) {
+            logger.log.error(IDLOG, 'closing ' + dbConnCustCard[k].db_type + ' connection "' + k + '": ' + err.stack);
+          }
+          delete dbConnCustCard[k];
+        });
+      }
+    }
+    // close mssql connections
+    for (k in dbConn) {
+      if (dbConn[k].db_type === 'mssql') {
+        dbConn[k].close(function(err) {
+          logger.log.info(IDLOG, dbConn[k].db_type + ' connection "' + k + '" closed during reset');
+          if (err) {
+            logger.log.error(IDLOG, 'closing ' + dbConn[k].db_type + ' connection "' + k + '": ' + err.stack);
+          }
+          delete dbConn[k];
+        });
+      }
+    }
+    for (k in dbConnCustCard) {
+      if (dbConnCustCard[k].db_type === 'mssql') {
+        dbConnCustCard[k].close(function(err) {
+          logger.log.info(IDLOG, dbConnCustCard[k].db_type + ' connection "' + k + '" closed during reset');
+          if (err) {
+            logger.log.error(IDLOG, 'closing ' + dbConnCustCard[k].db_type + ' connection "' + k + '": ' + err.stack);
+          }
+          delete dbConnCustCard[k];
+        });
+      }
+    }
+    dbConfig = {};
+    models = {};
+    dbConfigCustCardData = {};
+    custCardTemplatesData = {};
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
 // public interface
 exports.on = on;
 exports.emit = emit;
+exports.reset = reset;
 exports.start = start;
 exports.models = models;
 exports.config = config;
@@ -883,6 +1022,7 @@ exports.dbConn = dbConn;
 exports.dbConfig = dbConfig;
 exports.getStats = getStats;
 exports.EVT_READY = EVT_READY;
+exports.EVT_RELOADED = EVT_RELOADED;
 exports.Sequelize = Sequelize;
 exports.JSON_KEYS = JSON_KEYS;
 exports.setLogger = setLogger;
@@ -894,3 +1034,4 @@ exports.readCustomerCard = readCustomerCard;
 exports.incNumExecQueries = incNumExecQueries;
 exports.dbConfigCustCardData = dbConfigCustCardData
 exports.custCardTemplatesData = custCardTemplatesData;
+exports.setReady = setReady

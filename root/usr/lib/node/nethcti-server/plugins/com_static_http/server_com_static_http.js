@@ -115,18 +115,18 @@ var compUtil;
 function setLogger(log) {
   try {
     if (typeof log === 'object' &&
-      typeof log.info === 'function' &&
-      typeof log.warn === 'function' &&
-      typeof log.error === 'function') {
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -139,9 +139,9 @@ function setLogger(log) {
 function setCompUtil(comp) {
   try {
     compUtil = comp;
-    logger.info(IDLOG, 'set util architect component');
+    logger.log.info(IDLOG, 'set util architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -166,14 +166,14 @@ function config(path) {
   }
 
   // read configuration file
-  var json = require(path).rest;
+  var json = (JSON.parse(fs.readFileSync(path, 'utf8'))).rest;
 
   // initialize the port of the REST server
   if (json.static && json.static.port) {
     port = json.static.port;
 
   } else {
-    logger.warn(IDLOG, 'wrong ' + path + ': no "port" key in rest static');
+    logger.log.warn(IDLOG, 'wrong ' + path + ': no "port" key in rest static');
   }
 
   // initialize the address of the REST server
@@ -181,7 +181,7 @@ function config(path) {
     address = json.static.address;
 
   } else {
-    logger.warn(IDLOG, 'wrong ' + path + ': no "address" key in rest static');
+    logger.log.warn(IDLOG, 'wrong ' + path + ': no "address" key in rest static');
   }
 
   // initialize webroot
@@ -189,16 +189,16 @@ function config(path) {
     webroot = json.static.webroot;
   } else {
     webroot = path.join(__dirname, webroot);
-    logger.warn(IDLOG, 'wrong ' + path + ': no "webroot" key in rest static');
+    logger.log.warn(IDLOG, 'wrong ' + path + ': no "webroot" key in rest static');
   }
 
   // initialize webroot for custom files created by the user
   if (json.static.customWebroot) {
     customWebroot = json.static.customWebroot;
   } else {
-    logger.warn(IDLOG, 'wrong ' + path + ': no "customWebroot" key in rest static');
+    logger.log.warn(IDLOG, 'wrong ' + path + ': no "customWebroot" key in rest static');
   }
-  logger.info(IDLOG, 'configuration done by ' + path);
+  logger.log.info(IDLOG, 'configuration done by ' + path);
 }
 
 /**
@@ -229,10 +229,10 @@ function start() {
 
     // create http server
     var server = http.createServer(httpServerCb).listen(port, address);
-    logger.info(IDLOG, 'listening at ' + address + ':' + port);
+    logger.log.info(IDLOG, 'listening at ' + address + ':' + port);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -258,9 +258,9 @@ function httpServerCb(req, res) {
           if (err1) {
             customFileStaticRoot.serve(req, res, function(err3, result3) {
               if (err3 && err3.status && err3.message) {
-                logger.error(IDLOG, 'serving "' + req.url + '": code ' + err3.status + ' "' + err3.message + '"');
+                logger.log.error(IDLOG, 'serving "' + req.url + '": code ' + err3.status + ' "' + err3.message + '"');
               } else if (err3) {
-                logger.error(IDLOG, 'serving "' + req.url + '": ' + err3);
+                logger.log.error(IDLOG, 'serving "' + req.url + '": ' + err3);
               }
               if (err3) {
                 res.writeHead(err3.status);
@@ -275,21 +275,21 @@ function httpServerCb(req, res) {
 
             fs.unlink(path.join(webroot, req.url), function(err2) {
               if (err2) {
-                logger.error(IDLOG, 'deleting temp file ' + path.join(webroot, req.url) + ': ' + err2);
+                logger.log.error(IDLOG, 'deleting temp file ' + path.join(webroot, req.url) + ': ' + err2);
               } else {
-                logger.info(IDLOG, 'temp file ' + path.join(webroot, req.url) + ' has been deleted');
+                logger.log.info(IDLOG, 'temp file ' + path.join(webroot, req.url) + ' has been deleted');
               }
             });
           }
         });
       } catch (err1) {
-        logger.error(IDLOG, 'serving static file ' + req.url + ': ' + err1.stack);
+        logger.log.error(IDLOG, 'serving static file ' + req.url + ': ' + err1.stack);
         compUtil.net.sendHttp500(IDLOG, res, err1.toString());
       }
     }).resume();
 
   } catch (err) {
-    logger.error(IDLOG, 'serving static file ' + req.url + ': ' + err.stack);
+    logger.log.error(IDLOG, 'serving static file ' + req.url + ': ' + err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());
   }
 }
@@ -305,14 +305,14 @@ function httpServerCb(req, res) {
 function saveFile(dstpath, data) {
   try {
     var destPath = path.join(webroot, dstpath);
-    logger.info(IDLOG, 'saving file ' + destPath);
+    logger.log.info(IDLOG, 'saving file ' + destPath);
     fs.writeFile(destPath, data, function(err) {
       if (err) {
         throw err;
       }
     });
   } catch (err) {
-    logger.error(IDLOG, 'saving static file ' + req.url + ': ' + err.stack);
+    logger.log.error(IDLOG, 'saving static file ' + req.url + ': ' + err.stack);
   }
 }
 
@@ -340,19 +340,19 @@ function copyFile(srcpath, dstpath, cb) {
     var src = fs.createReadStream(srcpath);
     src.on('error', function(err1) {
       var str = 'creating readable stream from "' + srcpath + '": ' + err1.toString();
-      logger.error(IDLOG, str);
+      logger.log.error(IDLOG, str);
       cb(str);
     });
 
     // create destination stream
     var dest = fs.createWriteStream(destPath);
     dest.on('close', function() {
-      logger.info(IDLOG, '"' + srcpath + '" has been copied into "' + destPath + '"');
+      logger.log.info(IDLOG, '"' + srcpath + '" has been copied into "' + destPath + '"');
       cb();
     });
     dest.on('error', function(err2) {
       var str = 'copying "' + srcpath + '" into "' + destPath + '": ' + err2.toString();
-      logger.error(IDLOG, str);
+      logger.log.error(IDLOG, str);
       cb(str);
     });
 
@@ -360,7 +360,7 @@ function copyFile(srcpath, dstpath, cb) {
     src.pipe(dest);
 
   } catch (err) {
-    logger.error(IDLOG, 'copying static file ' + srcpath + ' -> ' + destPath + ': ' + err.stack);
+    logger.log.error(IDLOG, 'copying static file ' + srcpath + ' -> ' + destPath + ': ' + err.stack);
   }
 }
 

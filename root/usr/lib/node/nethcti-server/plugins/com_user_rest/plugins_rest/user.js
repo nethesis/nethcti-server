@@ -73,16 +73,16 @@ var compUtil;
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -100,9 +100,9 @@ function setCompUser(comp) {
     }
 
     compUser = comp;
-    logger.info(IDLOG, 'set user architect component');
+    logger.log.info(IDLOG, 'set user architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -115,9 +115,9 @@ function setCompUser(comp) {
 function setCompAuthorization(ca) {
   try {
     compAuthorization = ca;
-    logger.info(IDLOG, 'set authorization architect component');
+    logger.log.info(IDLOG, 'set authorization architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -130,9 +130,9 @@ function setCompAuthorization(ca) {
 function setCompUtil(comp) {
   try {
     compUtil = comp;
-    logger.info(IDLOG, 'set util architect component');
+    logger.log.info(IDLOG, 'set util architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -586,20 +586,20 @@ function setCompUtil(comp) {
             // get user settings
             compUser.getUserSettings(username, function(err, settings) {
               if (err) {
-                logger.error(IDLOG, 'getting user settings for user "' + username + '"');
+                logger.log.error(IDLOG, 'getting user settings for user "' + username + '"');
               } else {
                 result.settings = settings;
               }
-              logger.info(IDLOG, 'send user info to user "' + username + '"');
+              logger.log.info(IDLOG, 'send user info to user "' + username + '"');
               res.send(200, result);
             });
           } else {
             var strerr = 'sending user info to user "' + username + '": wrong format';
-            logger.error(IDLOG, strerr);
+            logger.log.error(IDLOG, strerr);
             compUtil.net.sendHttp500(IDLOG, res, strerr);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -624,11 +624,11 @@ function setCompUtil(comp) {
           for (i in endpoints) {
             results[i] = compUser.getUserInfoJSON(i);
           }
-          logger.info(IDLOG, 'send endpoints to user "' + username + '"');
+          logger.log.info(IDLOG, 'send endpoints to user "' + username + '"');
           res.send(200, results);
 
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -648,15 +648,15 @@ function setCompUtil(comp) {
           var username = req.headers.authorization_user;
           var results = compUser.getPresenceListOnBusy(username);
           if (results instanceof Array) {
-            logger.info(IDLOG, 'send conditional user presence on busy list to user "' + username + '"');
+            logger.log.info(IDLOG, 'send conditional user presence on busy list to user "' + username + '"');
             res.send(200, results);
           } else {
             var strerr = 'sending conditional user presence on busy list to user "' + username + '": wrong format';
-            logger.error(IDLOG, strerr);
+            logger.log.error(IDLOG, strerr);
             compUtil.net.sendHttp500(IDLOG, res, strerr);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -676,15 +676,15 @@ function setCompUtil(comp) {
           var username = req.headers.authorization_user;
           var results = compUser.getPresenceListOnUnavailable(username);
           if (results instanceof Array) {
-            logger.info(IDLOG, 'send conditional user presence on unavailable list to user "' + username + '"');
+            logger.log.info(IDLOG, 'send conditional user presence on unavailable list to user "' + username + '"');
             res.send(200, results);
           } else {
             var strerr = 'sending conditional user presence on unavailable list to user "' + username + '": wrong format';
-            logger.error(IDLOG, strerr);
+            logger.log.error(IDLOG, strerr);
             compUtil.net.sendHttp500(IDLOG, res, strerr);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -704,15 +704,15 @@ function setCompUtil(comp) {
           var username = req.headers.authorization_user;
           var results = compUser.getPresenceList(username);
           if (results instanceof Array) {
-            logger.info(IDLOG, 'send user presence list to user "' + username + '"');
+            logger.log.info(IDLOG, 'send user presence list to user "' + username + '"');
             res.send(200, results);
           } else {
             var strerr = 'sending user presence list to user "' + username + '": wrong format';
-            logger.error(IDLOG, strerr);
+            logger.log.error(IDLOG, strerr);
             compUtil.net.sendHttp500(IDLOG, res, strerr);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -736,10 +736,10 @@ function setCompUtil(comp) {
           } else if (req.method.toLowerCase() === 'post') {
             presenceSet(req, res, next);
           } else {
-            logger.warn(IDLOG, 'unknown requested method ' + req.method);
+            logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -763,10 +763,10 @@ function setCompUtil(comp) {
           } else if (req.method.toLowerCase() === 'post') {
             presenceOnBusySet(req, res, next);
           } else {
-            logger.warn(IDLOG, 'unknown requested method ' + req.method);
+            logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -790,10 +790,10 @@ function setCompUtil(comp) {
           } else if (req.method.toLowerCase() === 'post') {
             presenceOnUnavailableSet(req, res, next);
           } else {
-            logger.warn(IDLOG, 'unknown requested method ' + req.method);
+            logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -815,10 +815,10 @@ function setCompUtil(comp) {
           } else if (req.method.toLowerCase() === 'delete') {
             settingsDelete(req, res, next);
           } else {
-            logger.warn(IDLOG, 'unknown requested method ' + req.method);
+            logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -845,19 +845,19 @@ function setCompUtil(comp) {
           compConfigManager.setDefaultUserExtensionConf(username, req.params.id, function(err) {
             try {
               if (err) {
-                logger.error(IDLOG, 'setting default extension "' + req.params.id + '" to user "' + username + '"');
+                logger.log.error(IDLOG, 'setting default extension "' + req.params.id + '" to user "' + username + '"');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
               } else {
-                logger.info(IDLOG, 'set default extension "' + req.params.id + '" to user "' + username + '"');
+                logger.log.info(IDLOG, 'set default extension "' + req.params.id + '" to user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
               }
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
@@ -877,7 +877,7 @@ function setCompUtil(comp) {
           var username = req.headers.authorization_user;
 
           compConfigManager.retrieveUsersSettings(function(results) {
-            logger.info(IDLOG, 'send all settings to user "' + username + '"');
+            logger.log.info(IDLOG, 'send all settings to user "' + username + '"');
             var obj = {};
             for (var i in results) {
               obj[i] = results[i].avatar;
@@ -886,7 +886,7 @@ function setCompUtil(comp) {
             res.send(200, obj);
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       }
@@ -910,7 +910,7 @@ function setCompUtil(comp) {
     exports.presence_onunavailable = user.presence_onunavailable;
     exports.presencelist_onunavailable = user.presencelist_onunavailable;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 })();
 
@@ -929,19 +929,19 @@ function settingsDelete(req, res, next) {
     compUser.deleteSettings(username, function(err) {
       try {
         if (err) {
-          logger.error(IDLOG, 'deleting settings for user "' + username + '"');
+          logger.log.error(IDLOG, 'deleting settings for user "' + username + '"');
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         } else {
-          logger.info(IDLOG, 'deleted settings for user "' + username + '"');
+          logger.log.info(IDLOG, 'deleted settings for user "' + username + '"');
           compUtil.net.sendHttp200(IDLOG, res);
         }
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         compUtil.net.sendHttp500(IDLOG, res, error.toString());
       }
     });
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -965,19 +965,19 @@ function settingsPost(req, res, next) {
     compUser.saveSettings(username, req.params, function(err) {
       try {
         if (err) {
-          logger.error(IDLOG, 'saving settings for user "' + username + '"');
+          logger.log.error(IDLOG, 'saving settings for user "' + username + '"');
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         } else {
-          logger.info(IDLOG, 'saved settings for user "' + username + '"');
+          logger.log.info(IDLOG, 'saved settings for user "' + username + '"');
           compUtil.net.sendHttp200(IDLOG, res);
         }
       } catch (error) {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
         compUtil.net.sendHttp500(IDLOG, res, error.toString());
       }
     });
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -991,9 +991,9 @@ function settingsPost(req, res, next) {
 function setCompConfigManager(comp) {
   try {
     compConfigManager = comp;
-    logger.info(IDLOG, 'set configuration manager architect component');
+    logger.log.info(IDLOG, 'set configuration manager architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1009,13 +1009,13 @@ function presenceOnBusyGet(req, res, next) {
   try {
     var username = req.headers.authorization_user;
     var status = compUser.getPresenceOnBusy(username);
-    logger.info(IDLOG, 'send conditional presence status on busy "' + status + '" to user "' + username + '"');
+    logger.log.info(IDLOG, 'send conditional presence status on busy "' + status + '" to user "' + username + '"');
     res.send(200, {
       status: status,
       to: status === compUser.USER_PRESENCE_ONBUSY_STATUS.callforward ? compUser.getPresenceOnBusyCallforwardTo(username) : undefined
     });
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -1032,13 +1032,13 @@ function presenceOnUnavailableGet(req, res, next) {
   try {
     var username = req.headers.authorization_user;
     var status = compUser.getPresenceOnUnavailable(username);
-    logger.info(IDLOG, 'send conditional presence status on unavailable "' + status + '" to user "' + username + '"');
+    logger.log.info(IDLOG, 'send conditional presence status on unavailable "' + status + '" to user "' + username + '"');
     res.send(200, {
       status: status,
       to: status === compUser.USER_PRESENCE_ONUNAVAILABLE_STATUS.callforward ? compUser.getPresenceOnUnavailableCallforwardTo(username) : undefined
     });
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -1064,6 +1064,18 @@ function presenceOnBusySet(req, res, next) {
       return;
     }
 
+    if (!compAuthorization.authorizeCfUser(username) &&
+      (
+        status === compUser.USER_PRESENCE_ONBUSY_STATUS.call_forward ||
+        status === compUser.USER_PRESENCE_ONBUSY_STATUS.voicemail ||
+        status === compUser.USER_PRESENCE_ONBUSY_STATUS.cellphone
+      )) {
+
+      logger.log.warn(IDLOG, 'setting presence on busy cf to user "' + username + '": permission denied');
+      compUtil.net.sendHttp403(IDLOG, res);
+      return;
+    }
+
     compUser.setPresenceOnBusy({
         username: username,
         status: status,
@@ -1072,21 +1084,21 @@ function presenceOnBusySet(req, res, next) {
       function(err) {
         try {
           if (err) {
-            logger.error(IDLOG, 'setting conditional presence on busy "' + status + '" to "' + destination + '" to user "' + username + '"');
+            logger.log.error(IDLOG, 'setting conditional presence on busy "' + status + '" to "' + destination + '" to user "' + username + '"');
             compUtil.net.sendHttp500(IDLOG, res, err.toString());
             return;
           }
-          logger.info(IDLOG, 'presence conditional on busy "' + status + '" to "' + destination + '" has been set successfully to user "' + username + '" ');
+          logger.log.info(IDLOG, 'presence conditional on busy "' + status + '" to "' + destination + '" has been set successfully to user "' + username + '" ');
           compUtil.net.sendHttp200(IDLOG, res);
 
         } catch (err1) {
-          logger.error(IDLOG, err1.stack);
+          logger.log.error(IDLOG, err1.stack);
           compUtil.net.sendHttp500(IDLOG, res, err1.toString());
         }
       }
     );
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -1112,6 +1124,18 @@ function presenceOnUnavailableSet(req, res, next) {
       return;
     }
 
+    if (!compAuthorization.authorizeCfUser(username) &&
+      (
+        status === compUser.USER_PRESENCE_ONUNAVAILABLE_STATUS.call_forward ||
+        status === compUser.USER_PRESENCE_ONUNAVAILABLE_STATUS.voicemail ||
+        status === compUser.USER_PRESENCE_ONUNAVAILABLE_STATUS.cellphone
+      )) {
+
+      logger.log.warn(IDLOG, 'setting presence on unavailable cf to user "' + username + '": permission denied');
+      compUtil.net.sendHttp403(IDLOG, res);
+      return;
+    }
+
     compUser.setPresenceOnUnavailable({
         username: username,
         status: status,
@@ -1120,21 +1144,21 @@ function presenceOnUnavailableSet(req, res, next) {
       function(err) {
         try {
           if (err) {
-            logger.error(IDLOG, 'setting conditional presence on unavailable "' + status + '" to "' + destination + '" to user "' + username + '"');
+            logger.log.error(IDLOG, 'setting conditional presence on unavailable "' + status + '" to "' + destination + '" to user "' + username + '"');
             compUtil.net.sendHttp500(IDLOG, res, err.toString());
             return;
           }
-          logger.info(IDLOG, 'presence conditional on unavailable "' + status + '" to "' + destination + '" has been set successfully to user "' + username + '" ');
+          logger.log.info(IDLOG, 'presence conditional on unavailable "' + status + '" to "' + destination + '" has been set successfully to user "' + username + '" ');
           compUtil.net.sendHttp200(IDLOG, res);
 
         } catch (err1) {
-          logger.error(IDLOG, err1.stack);
+          logger.log.error(IDLOG, err1.stack);
           compUtil.net.sendHttp500(IDLOG, res, err1.toString());
         }
       }
     );
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -1152,13 +1176,13 @@ function presenceGet(req, res, next) {
     var username = req.headers.authorization_user;
     var status = compUser.getPresence(username);
 
-    logger.info(IDLOG, 'send presence status "' + status + '" to user "' + username + '"');
+    logger.log.info(IDLOG, 'send presence status "' + status + '" to user "' + username + '"');
     res.send(200, {
       status: status,
       to: status === compUser.USER_PRESENCE_STATUS.callforward ? compUser.getPresenceCallforwardTo(username) : undefined
     });
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
@@ -1183,6 +1207,25 @@ function presenceSet(req, res, next) {
       return;
     }
 
+    if (status === compUser.USER_PRESENCE_STATUS.dnd &&
+      !compAuthorization.authorizeDndUser(username)) {
+
+      logger.log.warn(IDLOG, 'setting presence dnd to user "' + username + '": permission denied');
+      compUtil.net.sendHttp403(IDLOG, res);
+      return;
+
+    } else if (!compAuthorization.authorizeCfUser(username) &&
+      (
+        status === compUser.USER_PRESENCE_STATUS.call_forward ||
+        status === compUser.USER_PRESENCE_STATUS.voicemail ||
+        status === compUser.USER_PRESENCE_STATUS.cellphone
+      )) {
+
+      logger.log.warn(IDLOG, 'setting presence cf to user "' + username + '": permission denied');
+      compUtil.net.sendHttp403(IDLOG, res);
+      return;
+    }
+
     compUser.setPresence({
         username: username,
         status: status,
@@ -1191,21 +1234,21 @@ function presenceSet(req, res, next) {
       function(err) {
         try {
           if (err) {
-            logger.error(IDLOG, 'setting presence "' + status + '" to user "' + username + '"');
+            logger.log.error(IDLOG, 'setting presence "' + status + '" to user "' + username + '"');
             compUtil.net.sendHttp500(IDLOG, res, err.toString());
             return;
           }
-          logger.info(IDLOG, 'presence "' + status + '" has been set successfully to user "' + username + '" ');
+          logger.log.info(IDLOG, 'presence "' + status + '" has been set successfully to user "' + username + '" ');
           compUtil.net.sendHttp200(IDLOG, res);
 
         } catch (err1) {
-          logger.error(IDLOG, err1.stack);
+          logger.log.error(IDLOG, err1.stack);
           compUtil.net.sendHttp500(IDLOG, res, err1.toString());
         }
       }
     );
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }

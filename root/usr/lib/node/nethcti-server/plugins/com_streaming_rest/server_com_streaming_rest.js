@@ -87,12 +87,12 @@ var compUtil;
 function setLogger(log) {
   try {
     if (typeof log === 'object' &&
-      typeof log.info === 'function' &&
-      typeof log.warn === 'function' &&
-      typeof log.error === 'function') {
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
       // set the logger for all REST plugins
       setAllRestPluginsLogger(log);
@@ -101,7 +101,7 @@ function setLogger(log) {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -120,11 +120,11 @@ function setAllRestPluginsLogger(log) {
 
       if (typeof plugins[key].setLogger === 'function') {
         plugins[key].setLogger(log);
-        logger.info(IDLOG, 'new logger has been set for rest plugin ' + key);
+        logger.log.info(IDLOG, 'new logger has been set for rest plugin ' + key);
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -152,7 +152,7 @@ function setCompUtil(comp) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -178,7 +178,7 @@ function setCompConfigManager(comp) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -199,18 +199,18 @@ function execute(req, res, next) {
     if (username === 'admin' ||
       compAuthorization.authorizeStreamingUser(username) === true) {
 
-      logger.info(IDLOG, 'streaming authorization successfully for user "' + username + '"');
-      logger.info(IDLOG, 'execute: ' + p + '.' + name);
+      logger.log.info(IDLOG, 'streaming authorization successfully for user "' + username + '"');
+      logger.log.info(IDLOG, 'execute: ' + p + '.' + name);
       plugins[p][name].apply(plugins[p], [req, res, next]);
 
     } else { // authorization failed
-      logger.warn(IDLOG, 'streaming authorization failed for user "' + username + '"!');
+      logger.log.warn(IDLOG, 'streaming authorization failed for user "' + username + '"!');
       compUtil.net.sendHttp403(IDLOG, res);
     }
     return next();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -235,7 +235,7 @@ function setCompStreaming(compStreaming) {
     }
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -254,13 +254,13 @@ function setCompAuthorization(ca) {
     }
 
     compAuthorization = ca;
-    logger.info(IDLOG, 'authorization component has been set');
+    logger.log.info(IDLOG, 'authorization component has been set');
 
     // set the authorization for all REST plugins
     setAllRestPluginsAuthorization(ca);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -279,11 +279,11 @@ function setAllRestPluginsAuthorization(ca) {
 
       if (typeof plugins[key].setCompAuthorization === 'function') {
         plugins[key].setCompAuthorization(ca);
-        logger.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
+        logger.log.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -308,14 +308,14 @@ function config(path) {
   }
 
   // read configuration file
-  var json = require(path).rest;
+  var json = (JSON.parse(fs.readFileSync(path, 'utf8'))).rest;
 
   // initialize the port of the REST server
   if (json.streaming && json.streaming.port) {
     port = json.streaming.port;
 
   } else {
-    logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
+    logger.log.warn(IDLOG, 'no port has been specified in JSON file ' + path);
   }
 
   // initialize the address of the REST server
@@ -323,9 +323,9 @@ function config(path) {
     address = json.streaming.address;
 
   } else {
-    logger.warn(IDLOG, 'no address has been specified in JSON file ' + path);
+    logger.log.warn(IDLOG, 'no address has been specified in JSON file ' + path);
   }
-  logger.info(IDLOG, 'configuration by file ' + path + ' ended');
+  logger.log.info(IDLOG, 'configuration by file ' + path + ' ended');
 }
 
 /**
@@ -365,22 +365,22 @@ function start() {
 
       // add routing functions
       for (k in get) {
-        logger.info(IDLOG, 'Binding GET: /' + root + '/' + get[k]);
+        logger.log.info(IDLOG, 'Binding GET: /' + root + '/' + get[k]);
         server.get('/' + root + '/' + get[k], execute);
       }
       for (k in post) {
-        logger.info(IDLOG, 'Binding POST: /' + root + '/' + post[k]);
+        logger.log.info(IDLOG, 'Binding POST: /' + root + '/' + post[k]);
         server.post('/' + root + '/' + post[k], execute);
       }
     }
 
     // start the REST server
     server.listen(port, address, function() {
-      logger.info(IDLOG, server.name + ' listening at ' + server.url);
+      logger.log.info(IDLOG, server.name + ' listening at ' + server.url);
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 

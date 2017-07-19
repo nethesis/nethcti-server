@@ -28,7 +28,7 @@ module.exports = function(options, imports, register) {
   }
 
   try {
-    serverRest.setLogger(logger);
+    serverRest.setLogger(logger.ctilog);
     serverRest.config('/etc/nethcti/services.json');
     serverRest.configPrivacy('/etc/nethcti/nethcti.json');
     serverRest.setCompUtil(imports.util);
@@ -41,6 +41,6 @@ module.exports = function(options, imports, register) {
     serverRest.setCompComNethctiWs(imports.com_nethcti_ws);
     serverRest.start();
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }

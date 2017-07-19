@@ -73,16 +73,16 @@ var compAstProxy;
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -95,9 +95,9 @@ function setLogger(log) {
 function setCompAuthentication(ca) {
   try {
     compAuthe = ca;
-    logger.info(IDLOG, 'set authentication architect component');
+    logger.log.info(IDLOG, 'set authentication architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -110,9 +110,9 @@ function setCompAuthentication(ca) {
 function setCompAstProxy(comp) {
   try {
     compAstProxy = comp;
-    logger.info(IDLOG, 'set asterisk proxy architect component');
+    logger.log.info(IDLOG, 'set asterisk proxy architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -125,9 +125,9 @@ function setCompAstProxy(comp) {
 function setCompUtil(comp) {
   try {
     compUtil = comp;
-    logger.info(IDLOG, 'set util architect component');
+    logger.log.info(IDLOG, 'set util architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -140,9 +140,9 @@ function setCompUtil(comp) {
 function setCompUser(comp) {
   try {
     compUser = comp;
-    logger.info(IDLOG, 'set user architect component');
+    logger.log.info(IDLOG, 'set user architect component');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -243,7 +243,7 @@ function setCompUser(comp) {
           var password = req.params.password;
 
           if (!username || !password) {
-            logger.warn('username or password has not been specified');
+            logger.log.warn('username or password has not been specified');
             compUtil.net.sendHttp401(IDLOG, res);
             return;
           }
@@ -254,7 +254,7 @@ function setCompUser(comp) {
 
             extension = username;
             username = compUser.getUserUsingEndpointExtension(username);
-            logger.info(IDLOG, 'user supplied an extension number to login: "' + extension + '". Corresponding username is "' + username + '"');
+            logger.log.info(IDLOG, 'user supplied an extension number to login: "' + extension + '". Corresponding username is "' + username + '"');
           }
 
           if (!compUser.isUserPresent(username)) {
@@ -266,22 +266,22 @@ function setCompUser(comp) {
           compAuthe.authenticate(username, password, function(err) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'authentication failed for user "' + username + '"');
+                logger.log.warn(IDLOG, 'authentication failed for user "' + username + '"');
                 compUtil.net.sendHttp401(IDLOG, res);
                 return;
 
               } else {
-                logger.info(IDLOG, 'user "' + username + '" successfully authenticated');
+                logger.log.info(IDLOG, 'user "' + username + '" successfully authenticated');
                 var nonce = compAuthe.getNonce(username, password, false, extension);
                 compUtil.net.sendHttp401Nonce(IDLOG, res, nonce);
               }
             } catch (error) {
-              logger.error(IDLOG, error.stack);
+              logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp401(IDLOG, res);
             }
           });
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp401(IDLOG, res);
         }
       },
@@ -302,15 +302,15 @@ function setCompUser(comp) {
           var username = req.headers.authorization_user;
 
           if (compAuthe.removeToken(username, token) === true) {
-            logger.info(IDLOG, 'user "' + username + '" successfully logged out');
+            logger.log.info(IDLOG, 'user "' + username + '" successfully logged out');
             compUtil.net.sendHttp200(IDLOG, res);
           } else {
             var str = 'during logout user "' + username + '": removing grant';
-            logger.warn(IDLOG, str);
+            logger.log.warn(IDLOG, str);
             compUtil.net.sendHttp500(IDLOG, res, str);
           }
         } catch (err) {
-          logger.error(IDLOG, err.stack);
+          logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       }
@@ -326,6 +326,6 @@ function setCompUser(comp) {
     exports.setCompAuthentication = setCompAuthentication;
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 })();

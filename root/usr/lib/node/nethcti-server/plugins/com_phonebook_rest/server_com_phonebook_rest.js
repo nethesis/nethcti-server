@@ -85,10 +85,10 @@ var compUtil;
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
       // set the logger for all REST plugins
       setAllRestPluginsLogger(log);
@@ -97,7 +97,7 @@ function setLogger(log) {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -116,11 +116,11 @@ function setAllRestPluginsLogger(log) {
 
       if (typeof plugins[key].setLogger === 'function') {
         plugins[key].setLogger(log);
-        logger.info(IDLOG, 'new logger has been set for rest plugin ' + key);
+        logger.log.info(IDLOG, 'new logger has been set for rest plugin ' + key);
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -139,7 +139,7 @@ function setCompUtil(comp) {
     }
 
     compUtil = comp;
-    logger.info(IDLOG, 'util component has been set');
+    logger.log.info(IDLOG, 'util component has been set');
 
     var p;
     // set utility architect component to all REST plugins
@@ -149,7 +149,7 @@ function setCompUtil(comp) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -169,18 +169,18 @@ function execute(req, res, next) {
     var username = req.headers.authorization_user;
     if (compAuthorization.authorizePhonebookUser(username) === true) {
 
-      logger.info(IDLOG, 'phonebook authorization successfully for user "' + username + '"');
-      logger.info(IDLOG, 'execute: ' + p + '.' + name);
+      logger.log.info(IDLOG, 'phonebook authorization successfully for user "' + username + '"');
+      logger.log.info(IDLOG, 'execute: ' + p + '.' + name);
       plugins[p][name].apply(plugins[p], [req, res, next]);
 
     } else { // authorization failed
-      logger.warn(IDLOG, 'phonebook authorization failed for user "' + username + '"!');
+      logger.log.warn(IDLOG, 'phonebook authorization failed for user "' + username + '"!');
       compUtil.net.sendHttp403(IDLOG, res);
     }
     return next();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -205,7 +205,7 @@ function setCompPhonebook(compPhonebook) {
     }
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -224,13 +224,13 @@ function setCompAuthorization(comp) {
     }
 
     compAuthorization = comp;
-    logger.info(IDLOG, 'authorization component has been set');
+    logger.log.info(IDLOG, 'authorization component has been set');
 
     // set the authorization for all REST plugins
     setAllRestPluginsAuthorization(comp);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -249,11 +249,11 @@ function setAllRestPluginsAuthorization(comp) {
 
       if (typeof plugins[key].setCompAuthorization === 'function') {
         plugins[key].setCompAuthorization(comp);
-        logger.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
+        logger.log.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -278,22 +278,22 @@ function config(path) {
   }
 
   // read configuration file
-  var json = require(path).rest;
+  var json = (JSON.parse(fs.readFileSync(path, 'utf8'))).rest;
 
   // initialize the port of the REST server
   if (json.phonebook && json.phonebook.port) {
     port = json.phonebook.port;
   } else {
-    logger.warn(IDLOG, 'wrong ' + path + ': no "port" key in rest user');
+    logger.log.warn(IDLOG, 'wrong ' + path + ': no "port" key in rest user');
   }
 
   // initialize the address of the REST server
   if (json.phonebook && json.phonebook.address) {
     address = json.phonebook.address;
   } else {
-    logger.warn(IDLOG, 'wrong ' + path + ': no "address" key in rest user');
+    logger.log.warn(IDLOG, 'wrong ' + path + ': no "address" key in rest user');
   }
-  logger.info(IDLOG, 'configuration done by ' + path);
+  logger.log.info(IDLOG, 'configuration done by ' + path);
 }
 
 /**
@@ -333,22 +333,22 @@ function start() {
 
       // add routing functions
       for (k in get) {
-        logger.info(IDLOG, 'Binding GET: /' + root + '/' + get[k]);
+        logger.log.info(IDLOG, 'Binding GET: /' + root + '/' + get[k]);
         server.get('/' + root + '/' + get[k], execute);
       }
       for (k in post) {
-        logger.info(IDLOG, 'Binding POST: /' + root + '/' + post[k]);
+        logger.log.info(IDLOG, 'Binding POST: /' + root + '/' + post[k]);
         server.post('/' + root + '/' + post[k], execute);
       }
     }
 
     // start the REST server
     server.listen(port, address, function() {
-      logger.info(IDLOG, server.name + ' listening at ' + server.url);
+      logger.log.info(IDLOG, server.name + ' listening at ' + server.url);
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 

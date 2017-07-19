@@ -27,18 +27,42 @@ module.exports = function(options, imports, register) {
 
   // public interface for other architect components
   register(null, {
-    authentication: authentication
+    authentication: {
+      on: authentication.on,
+      config: authentication.config,
+      getNonce: authentication.getNonce,
+      setLogger: authentication.setLogger,
+      verifyToken: authentication.verifyToken,
+      removeToken: authentication.removeToken,
+      authenticate: authentication.authenticate,
+      setCompDbconn: authentication.setCompDbconn,
+      EVT_COMP_READY: authentication.EVT_COMP_READY,
+      calculateToken: authentication.calculateToken,
+      getRemoteSiteName: authentication.getRemoteSiteName,
+      updateTokenExpires: authentication.updateTokenExpires,
+      isUnautheCallEnabled: authentication.isUnautheCallEnabled,
+      authenticateRemoteSite: authentication.authenticateRemoteSite,
+      isAutoUpdateTokenExpires: authentication.isAutoUpdateTokenExpires,
+      authenticateFreepbxAdmin: authentication.authenticateFreepbxAdmin,
+      getTokenExpirationTimeout: authentication.getTokenExpirationTimeout,
+      configRemoteAuthentications: authentication.configRemoteAuthentications,
+      isRemoteSiteAlreadyLoggedIn: authentication.isRemoteSiteAlreadyLoggedIn,
+      initFreepbxAdminAuthentication: authentication.initFreepbxAdminAuthentication
+    }
   });
 
   try {
     imports.dbconn.on(imports.dbconn.EVT_READY, function() {
-      authentication.setLogger(logger);
+      authentication.setLogger(logger.ctilog);
       authentication.setCompDbconn(imports.dbconn);
       // authentication.configRemoteAuthentications('/etc/nethcti/remote_authentications.json');
       authentication.config('/etc/nethcti/authentication.json');
       authentication.initFreepbxAdminAuthentication();
     });
+    imports.dbconn.on(imports.dbconn.EVT_RELOADED, function() {
+      authentication.reload();
+    });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 };

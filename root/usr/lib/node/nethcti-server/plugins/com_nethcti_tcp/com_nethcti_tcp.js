@@ -159,6 +159,15 @@ var IDLOG = '[com_nethcti_tcp]';
 var ENCODING = 'utf8';
 
 /**
+ * The configuration file path of the windows popup.
+ *
+ * @property CONFIG_WINPOPUP_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_WINPOPUP_FILEPATH;
+
+/**
  * The name of the template file for a call notification popup.
  *
  * @property CALL_NOTIF_TEMPLATE_NAME
@@ -383,9 +392,9 @@ var updateTokenExpirationInterval;
 function setLogger(log) {
   try {
     if (typeof log === 'object' &&
-      typeof log.info === 'function' &&
-      typeof log.warn === 'function' &&
-      typeof log.error === 'function') {
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
 
       logger = log;
 
@@ -393,7 +402,7 @@ function setLogger(log) {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -410,7 +419,7 @@ function setCompAuthe(autheMod) {
     }
     compAuthe = autheMod;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -428,7 +437,7 @@ function setCompConfigManager(comp) {
     }
     compConfigManager = comp;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -445,7 +454,7 @@ function setCompStreaming(comp) {
     }
     compStreaming = comp;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -462,7 +471,7 @@ function setCompUser(comp) {
     }
     compUser = comp;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -479,7 +488,7 @@ function setCompAuthorization(comp) {
     }
     compAuthorization = comp;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -497,7 +506,7 @@ function setAstProxy(ap) {
     }
     compAstProxy = ap;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -516,7 +525,7 @@ function setAstProxyListeners() {
     compAstProxy.on(compAstProxy.EVT_EXTEN_DIALING, extenDialing);
     compAstProxy.on(compAstProxy.EVT_EXTEN_CONNECTED, extenConnected);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -555,7 +564,7 @@ function getFilteredStreamData(username, callerNum) {
     return {};
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return {};
   }
 }
@@ -581,7 +590,7 @@ function extenDialing(data) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.info(IDLOG, 'received event extenDialing for extension ' + data.dialingExten + ' with caller identity');
+    logger.log.info(IDLOG, 'received event extenDialing for extension ' + data.dialingExten + ' with caller identity');
     var user = compUser.getUserUsingEndpointExtension(data.dialingExten);
     // emit the notification event for each logged in user associated
     // with the ringing extension to open a desktop notification popup
@@ -606,7 +615,7 @@ function extenDialing(data) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -632,7 +641,7 @@ function extenHangup(data) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.info(IDLOG, 'received event "' + compAstProxy.EVT_EXTEN_HANGUP + '" for extension ' + data.channelExten + ' with caller identity');
+    logger.log.info(IDLOG, 'received event "' + compAstProxy.EVT_EXTEN_HANGUP + '" for extension ' + data.channelExten + ' with caller identity');
     var user = compUser.getUserUsingEndpointExtension(data.channelExten);
     // emit the notification event for each logged in user associated
     // with the ringing extension to open a desktop notification popup
@@ -647,7 +656,7 @@ function extenHangup(data) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -668,7 +677,7 @@ function extenConnected(data) {
     if (typeof data !== 'object' || typeof data.num1 !== 'string' || typeof data.num2 !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.info(IDLOG, 'received event extenConnected between num1=' + data.num1 + ' and num2=' + data.num2);
+    logger.log.info(IDLOG, 'received event extenConnected between num1=' + data.num1 + ' and num2=' + data.num2);
     var user = compUser.getUserUsingEndpointExtension(data.num1);
     // emit the notification event for each logged in user associated
     // with the connected extension data.num1 to close a desktop notification popup
@@ -683,7 +692,7 @@ function extenConnected(data) {
       }
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -737,15 +746,15 @@ function sendStreamingNotificationEvent(username, data, socket) {
 
     socket.write(JSON.stringify(notif), ENCODING, function() {
       try {
-        logger.info(IDLOG, 'sent "open streaming notification" to ' + socket.username + ' with socket.id ' + socket.id);
+        logger.log.info(IDLOG, 'sent "open streaming notification" to ' + socket.username + ' with socket.id ' + socket.id);
 
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
       }
     });
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -790,13 +799,13 @@ function sendCallNotificationEvent(username, data, socket) {
     };
     socket.write(JSON.stringify(notif), ENCODING, function() {
       try {
-        logger.info(IDLOG, 'sent "' + EVT_NOTIFICATION + '" evt to open call notification to ' + socket.username + ' with socket.id ' + socket.id);
+        logger.log.info(IDLOG, 'sent "' + EVT_NOTIFICATION + '" evt to open call notification to ' + socket.username + ' with socket.id ' + socket.id);
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -815,14 +824,14 @@ function sendCallConnectedNotificationEvent(username, data, socket) {
     evt[EVT_EXTEN_CONNECTED] = data.num1;
     socket.write(JSON.stringify(evt), ENCODING, function() {
       try {
-        logger.info(IDLOG, 'sent "' + EVT_EXTEN_CONNECTED + '" evt between "' + data.num1 + '" and "' + data.num2 +
+        logger.log.info(IDLOG, 'sent "' + EVT_EXTEN_CONNECTED + '" evt between "' + data.num1 + '" and "' + data.num2 +
           '" to close call notification to ' + socket.username + ' with socket.id ' + socket.id);
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -841,14 +850,14 @@ function sendHangupNotificationEvent(username, data, socket) {
     evt[EVT_EXTEN_HANGUP] = data.channelExten;
     socket.write(JSON.stringify(evt), ENCODING, function() {
       try {
-        logger.info(IDLOG, 'sent "' + EVT_EXTEN_HANGUP + '" evt for exten "' + data.channelExten +
+        logger.log.info(IDLOG, 'sent "' + EVT_EXTEN_HANGUP + '" evt for exten "' + data.channelExten +
           '" to close call notification to ' + socket.username + ' with socket.id ' + socket.id);
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -872,13 +881,13 @@ function config(path) {
     }
 
     // read configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     // initialize the port of the tcp server
     if (json && json.tcp && json.tcp.port) {
       port = json.tcp.port;
     } else {
-      logger.warn(IDLOG, path + ': no tcp "port" has been specified');
+      logger.log.warn(IDLOG, path + ': no tcp "port" has been specified');
     }
 
     // initialize the paths of the notification templates
@@ -886,17 +895,17 @@ function config(path) {
       callNotifTemplatePath = json.tcp.base_templates + pathReq.sep + CALL_NOTIF_TEMPLATE_NAME;
       streamingNotifTemplatePath = json.tcp.base_templates + pathReq.sep + STREAMING_NOTIF_TEMPLATE_NAME;
     } else {
-      logger.warn(IDLOG, path + ': no "base_templates" has been specified');
+      logger.log.warn(IDLOG, path + ': no "base_templates" has been specified');
     }
 
     // initialize the interval at which update the token expiration of all users
     // that are connected by tcp
     var expires = compAuthe.getTokenExpirationTimeout();
     updateTokenExpirationInterval = expires / 2;
-    logger.info(IDLOG, 'configuration done by ' + path);
+    logger.log.info(IDLOG, 'configuration done by ' + path);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -916,59 +925,60 @@ function configWinPopup(path) {
 
     // check file presence
     if (!fs.existsSync(path)) {
-      logger.warn(IDLOG, 'win popup configuration file ' + path + ' does not exist: use default values');
+      logger.log.warn(IDLOG, 'win popup configuration file ' + path + ' does not exist: use default values');
       return;
     }
+    CONFIG_WINPOPUP_FILEPATH = path;
 
     // read configuration file
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(CONFIG_WINPOPUP_FILEPATH, 'utf8'));
 
     if (json && json.stream && json.stream.width) {
       streamNotifSize.width = json.stream.width;
     } else {
-      logger.warn(IDLOG, 'no win stream popup width has been specified in ' + path + ': use default ' + streamNotifSize.width);
+      logger.log.warn(IDLOG, 'no win stream popup width has been specified in ' + CONFIG_WINPOPUP_FILEPATH + ': use default ' + streamNotifSize.width);
     }
 
     if (json && json.stream && json.stream.height) {
       streamNotifSize.height = json.stream.height;
     } else {
-      logger.warn(IDLOG, 'no win stream popup height has been specified in ' + path + ': use default ' + streamNotifSize.height);
+      logger.log.warn(IDLOG, 'no win stream popup height has been specified in ' + CONFIG_WINPOPUP_FILEPATH + ': use default ' + streamNotifSize.height);
     }
 
     if (json && json.call && json.call.width) {
       callNotifSize.width = json.call.width;
     } else {
-      logger.warn(IDLOG, 'no win call popup width has been specified in ' + path + ': use default ' + callNotifSize.width);
+      logger.log.warn(IDLOG, 'no win call popup width has been specified in ' + CONFIG_WINPOPUP_FILEPATH + ': use default ' + callNotifSize.width);
     }
 
     if (json && json.call && json.call.height) {
       callNotifSize.height = json.call.height;
     } else {
-      logger.warn(IDLOG, 'no win call popup height has been specified in ' + path + ': use default ' + callNotifSize.height);
+      logger.log.warn(IDLOG, 'no win call popup height has been specified in ' + CONFIG_WINPOPUP_FILEPATH + ': use default ' + callNotifSize.height);
     }
 
     if (json && json.close_timeout) {
       notifCloseTimeout = json.close_timeout;
     } else {
-      logger.warn(IDLOG, 'no win close popup timeout has been specified in ' + path + ': use default ' + notifCloseTimeout);
+      logger.log.warn(IDLOG, 'no win close popup timeout has been specified in ' + CONFIG_WINPOPUP_FILEPATH + ': use default ' + notifCloseTimeout);
     }
 
     if (json && json.commands && typeof json.commands === 'object') {
       notifSupportedCommands = json.commands;
     } else {
-      logger.warn(IDLOG, 'wrong win popup commands in ' + path);
+      logger.log.warn(IDLOG, 'wrong win popup commands in ' + CONFIG_WINPOPUP_FILEPATH);
     }
 
     // initialize the protocol used by windows notification popup to open the cti app
     if (json && json.cti_proto && (json.cti_proto === 'https' || json.cti_proto === 'http')) {
       ctiProto = json.cti_proto;
     } else {
-      logger.warn(IDLOG, 'bad "cti_proto" for win popup in ' + path + ': use default ' + ctiProto);
+      logger.log.warn(IDLOG, 'bad "cti_proto" for win popup in ' + CONFIG_WINPOPUP_FILEPATH + ': use default ' + ctiProto);
     }
-    logger.info(IDLOG, 'configuration of notification popup done by ' + path);
+    logger.log.info(IDLOG, 'configuration of notification popup done by ' + CONFIG_WINPOPUP_FILEPATH);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -983,12 +993,12 @@ function start() {
     // correctly, that is if the /etc/nethcti/services.json file exists and contains
     // the tcp json object
     if (port === undefined) {
-      logger.warn(IDLOG, 'tcp server does not start, because the configuration is not present');
+      logger.log.warn(IDLOG, 'tcp server does not start, because the configuration is not present');
       return;
     }
     // also check if the notification template file path exist
     if (!callNotifTemplatePath || !streamingNotifTemplatePath) {
-      logger.warn(IDLOG, 'tcp server does not start: templates file path are undefined');
+      logger.log.warn(IDLOG, 'tcp server does not start: templates file path are undefined');
       return;
     }
 
@@ -1001,7 +1011,7 @@ function start() {
     // add listeners
     server.on('connection', connHdlr);
     server.listen(port, function() {
-      logger.warn(IDLOG, 'tcp server listening on ' + server.address().address + ':' + server.address().port);
+      logger.log.warn(IDLOG, 'tcp server listening on ' + server.address().address + ':' + server.address().port);
     });
 
     // start the automatic update of token expiration of all the users that are connected by tcp.
@@ -1011,7 +1021,7 @@ function start() {
     }, updateTokenExpirationInterval);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1023,13 +1033,13 @@ function start() {
  */
 function updateTokenExpirationOfAllTcpUsers() {
   try {
-    logger.info(IDLOG, 'update token expiration of all TCP users');
+    logger.log.info(IDLOG, 'update token expiration of all TCP users');
     var id;
     for (id in sockets) {
       compAuthe.updateTokenExpires(sockets[id].username, sockets[id].token);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1042,7 +1052,7 @@ function updateTokenExpirationOfAllTcpUsers() {
  */
 function connHdlr(socket) {
   try {
-    logger.info(IDLOG, 'new connection from ' + getClientSocketEndpoint(socket));
+    logger.log.info(IDLOG, 'new connection from ' + getClientSocketEndpoint(socket));
 
     // set the socket identifier
     socket.id = getClientSocketEndpoint(socket);
@@ -1066,7 +1076,7 @@ function connHdlr(socket) {
         }
 
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
       }
     });
 
@@ -1076,7 +1086,7 @@ function connHdlr(socket) {
         disconnHdlr(socket);
 
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
       }
     });
 
@@ -1087,27 +1097,27 @@ function connHdlr(socket) {
         disconnHdlr(socket);
 
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
       }
     });
 
     // Emitted when an error occurs. The 'close' event will be called directly following this event.
     socket.on('error', function(error) {
       try {
-        logger.error(IDLOG, error.stack);
+        logger.log.error(IDLOG, error.stack);
 
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
       }
     });
 
     // Emitted when the write buffer becomes empty. Can be used to throttle uploads.
     socket.on('drain', function() {});
 
-    logger.info(IDLOG, 'listeners for the new socket connection have been set');
+    logger.log.info(IDLOG, 'listeners for the new socket connection have been set');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1123,7 +1133,7 @@ function getClientSocketEndpoint(socket) {
   try {
     return socket.remoteAddress + ':' + socket.remotePort;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1140,7 +1150,7 @@ function unauthorized(socket) {
     send401(socket); // send 401 unauthorized response to the client
     socket.destroy();
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1162,14 +1172,14 @@ function loginHdlr(socket, obj) {
       typeof obj.token !== 'string' ||
       typeof obj.username !== 'string') {
 
-      logger.warn(IDLOG, 'bad authentication login request from ' + getClientSocketEndpoint(socket));
+      logger.log.warn(IDLOG, 'bad authentication login request from ' + getClientSocketEndpoint(socket));
       unauthorized(socket);
       return;
     }
 
     if (compAuthe.verifyToken(obj.username, obj.token, false) === true) { // user successfully authenticated
 
-      logger.info(IDLOG, 'user "' + obj.username + '" successfully authenticated from ' + getClientSocketEndpoint(socket));
+      logger.log.info(IDLOG, 'user "' + obj.username + '" successfully authenticated from ' + getClientSocketEndpoint(socket));
 
       // sets the username and the token property to the client socket
       socket.token = obj.token;
@@ -1185,12 +1195,12 @@ function loginHdlr(socket, obj) {
       sendNotificationSupportedCommands(socket);
 
     } else { // authentication failed
-      logger.warn(IDLOG, 'authentication failed for user "' + obj.username + '" from ' + getClientSocketEndpoint(socket));
+      logger.log.warn(IDLOG, 'authentication failed for user "' + obj.username + '" from ' + getClientSocketEndpoint(socket));
       unauthorized(socket);
     }
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     unauthorized(socket);
   }
 }
@@ -1213,7 +1223,7 @@ function resetCommandsHdlr(socket, obj) {
       typeof obj.token !== 'string' ||
       typeof obj.username !== 'string') {
 
-      logger.warn(IDLOG, 'bad reset commands request from from ' + getClientSocketEndpoint(socket));
+      logger.log.warn(IDLOG, 'bad reset commands request from from ' + getClientSocketEndpoint(socket));
       unauthorized(socket);
       return;
     }
@@ -1224,12 +1234,12 @@ function resetCommandsHdlr(socket, obj) {
       sendResetNotificationSupportedCommands(socket);
 
     } else { // authentication failed
-      logger.warn(IDLOG, 'unauthorized reset commands request by user "' + obj.username + '" from ' + getClientSocketEndpoint(socket));
+      logger.log.warn(IDLOG, 'unauthorized reset commands request by user "' + obj.username + '" from ' + getClientSocketEndpoint(socket));
       unauthorized(socket);
     }
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1250,13 +1260,13 @@ function pingHdlr(socket) {
     data[EVT_PING] = 'active';
     socket.write(JSON.stringify(data), ENCODING, function() {
       try {
-        logger.info(IDLOG, 'sent "' + EVT_PING + '" evt response "active" to ping request to ' + socket.username + ' with socket.id ' + socket.id);
+        logger.log.info(IDLOG, 'sent "' + EVT_PING + '" evt response "active" to ping request to ' + socket.username + ' with socket.id ' + socket.id);
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1276,13 +1286,13 @@ function sendNotificationSupportedCommands(socket) {
     cmds[EVT_COMMANDS] = notifSupportedCommands;
     socket.write(JSON.stringify(cmds), ENCODING, function() {
       try {
-        logger.info(IDLOG, 'sent "' + EVT_COMMANDS + '" evt notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
+        logger.log.info(IDLOG, 'sent "' + EVT_COMMANDS + '" evt notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1306,14 +1316,14 @@ function sendResetNotificationSupportedCommands(socket) {
     };
     socket.write(JSON.stringify(obj), ENCODING, function() {
       try {
-        logger.info(IDLOG, 'sent reset notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
+        logger.log.info(IDLOG, 'sent reset notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
 
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1326,13 +1336,13 @@ function sendResetNotificationSupportedCommands(socket) {
  */
 function disconnHdlr(socket) {
   try {
-    logger.info(IDLOG, 'client socket disconnected ' + getClientSocketEndpoint(socket));
+    logger.log.info(IDLOG, 'client socket disconnected ' + getClientSocketEndpoint(socket));
 
     // remove trusted identifier of the socket
     removeClientSocket(socket.id);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1349,10 +1359,10 @@ function removeClientSocket(socketId) {
       var tokenTemp = sockets[socketId].token;
       var usernameTemp = sockets[socketId].username;
       delete sockets[socketId];
-      logger.info(IDLOG, 'removed client socket ' + socketId + ' of the user ' + usernameTemp + ' with token ' + tokenTemp);
+      logger.log.info(IDLOG, 'removed client socket ' + socketId + ' of the user ' + usernameTemp + ' with token ' + tokenTemp);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1367,10 +1377,10 @@ function removeClientSocket(socketId) {
 function addSocket(socket) {
   try {
     sockets[socket.id] = socket;
-    logger.info(IDLOG, 'added client socket ' + socket.id + ' for user ' + socket.username + ' with token ' + socket.token);
+    logger.log.info(IDLOG, 'added client socket ' + socket.id + ' for user ' + socket.username + ' with token ' + socket.token);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1385,14 +1395,14 @@ function send401(socket) {
   try {
     socket.write('401', ENCODING, function() {
       try {
-        logger.info(IDLOG, 'sent 401 unauthorized to ' + getClientSocketEndpoint(socket));
+        logger.log.info(IDLOG, 'sent 401 unauthorized to ' + getClientSocketEndpoint(socket));
 
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1411,14 +1421,14 @@ function sendAutheSuccess(socket) {
 
     socket.write(JSON.stringify(data), ENCODING, function() {
       try {
-        logger.info(IDLOG, 'sent authorized successfully to ' + socket.username + ' with socket.id ' + socket.id);
+        logger.log.info(IDLOG, 'sent authorized successfully to ' + socket.username + ' with socket.id ' + socket.id);
 
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
       }
     });
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -1433,14 +1443,55 @@ function getNumConnectedClients() {
   try {
     return Object.keys(sockets).length;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     return -1;
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reset
+ * @private
+ */
+function reset() {
+  try {
+    streamNotifSize = {
+      width: 400,
+      height: 400
+    };
+    callNotifSize = {
+      width: 400,
+      height: 96
+    };
+    notifSupportedCommands = {};
+    notifCloseTimeout = 10;
+    ctiProto = 'https';
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reload the component.
+ *
+ * @method reload
+ * @private
+ */
+function reload() {
+  try {
+    reset();
+    configWinPopup(CONFIG_WINPOPUP_FILEPATH);
+    logger.log.warn(IDLOG, 'reloaded');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
 // public interface
 exports.start = start;
 exports.config = config;
+exports.reload = reload;
 exports.setLogger = setLogger;
 exports.setAstProxy = setAstProxy;
 exports.setCompUser = setCompUser;

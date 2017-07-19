@@ -113,16 +113,16 @@ var compUser;
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.info === 'function' && typeof log.warn === 'function' && typeof log.error === 'function') {
+    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
 
       logger = log;
-      logger.info(IDLOG, 'new logger has been set');
+      logger.log.info(IDLOG, 'new logger has been set');
 
     } else {
       throw new Error('wrong logger object');
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -140,9 +140,9 @@ function setCompUser(cu) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     compUser = cu;
-    logger.info(IDLOG, 'user component has been set');
+    logger.log.info(IDLOG, 'user component has been set');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -160,7 +160,7 @@ function setAstProxy(ap) {
     }
     astProxy = ap;
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -186,10 +186,10 @@ function getVoiceMessagesByUser(username, type, offset, limit, cb) {
     var vm = compUser.getVoicemailList(username);
     if (vm.length == 1) {
       var voicemail = vm[0];
-      logger.info(IDLOG, 'get all voice messages of user "' + username + '" by means dbconn module');
+      logger.log.info(IDLOG, 'get all voice messages of user "' + username + '" by means dbconn module');
       dbconn.getVoicemailMsg(voicemail, type, offset, limit, function(err, results) {
         if (err) {
-          logger.error(IDLOG, err);
+          logger.log.error(IDLOG, err);
         } else {
           cb(null, results);
         }
@@ -198,7 +198,7 @@ function getVoiceMessagesByUser(username, type, offset, limit, cb) {
       cb(null, []);
     }
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err.toString());
   }
 }
@@ -218,7 +218,7 @@ function getAllNewVoiceMessageCount(cb) {
 
     // get the number of new voice messages of all voicemails using the listVoicemail plugin
     // command of the asterisk proxy component. Then clean the results to return only the necessary information
-    logger.info(IDLOG, 'get the number of new voice messages of all voicemails using astProxy module');
+    logger.log.info(IDLOG, 'get the number of new voice messages of all voicemails using astProxy module');
     astProxy.doCmd({
       command: 'listVoicemail'
     }, function(err, res) {
@@ -237,12 +237,12 @@ function getAllNewVoiceMessageCount(cb) {
         cb(null, obj);
 
       } catch (err1) {
-        logger.error(IDLOG, err1.stack);
+        logger.log.error(IDLOG, err1.stack);
         cb(err1);
       }
     });
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
     cb(error.toString());
   }
 }
@@ -260,9 +260,9 @@ function setDbconn(dbconnMod) {
       throw new Error('wrong dbconn object');
     }
     dbconn = dbconnMod;
-    logger.info(IDLOG, 'set dbconn module');
+    logger.log.info(IDLOG, 'set dbconn module');
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -280,7 +280,7 @@ function start() {
     setDbconnListeners();
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -299,14 +299,14 @@ function setAstProxyListeners() {
 
     // new voice message has been left in a voicemail
     astProxy.on(astProxy.EVT_NEW_VOICE_MESSAGE, newVoiceMessage);
-    logger.info(IDLOG, 'new listener has been set for "' + astProxy.EVT_NEW_VOICE_MESSAGE + '" event from the asterisk proxy component');
+    logger.log.info(IDLOG, 'new listener has been set for "' + astProxy.EVT_NEW_VOICE_MESSAGE + '" event from the asterisk proxy component');
 
     // something changed in voice messages of a voicemail
     astProxy.on(astProxy.EVT_UPDATE_VOICE_MESSAGES, updateVoiceMessages);
-    logger.info(IDLOG, 'new listener has been set for "' + astProxy.EVT_UPDATE_VOICE_MESSAGES + '" event from the asterisk proxy component');
+    logger.log.info(IDLOG, 'new listener has been set for "' + astProxy.EVT_UPDATE_VOICE_MESSAGES + '" event from the asterisk proxy component');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -325,14 +325,14 @@ function setDbconnListeners() {
 
     // a voicemail message has been listened
     dbconn.on(dbconn.EVT_LISTENED_VOICE_MESSAGE, listenedVoiceMessage);
-    logger.info(IDLOG, 'new listener has been set for "' + dbconn.EVT_LISTENED_VOICE_MESSAGE + '" event from the dbconn component');
+    logger.log.info(IDLOG, 'new listener has been set for "' + dbconn.EVT_LISTENED_VOICE_MESSAGE + '" event from the dbconn component');
 
     // a voicemail message has been deleted
     dbconn.on(dbconn.EVT_DELETED_VOICE_MESSAGE, deletedVoiceMessage);
-    logger.info(IDLOG, 'new listener has been set for "' + dbconn.EVT_DELETED_VOICE_MESSAGE + '" event from the dbconn component');
+    logger.log.info(IDLOG, 'new listener has been set for "' + dbconn.EVT_DELETED_VOICE_MESSAGE + '" event from the dbconn component');
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -355,15 +355,15 @@ function newVoiceMessage(ev) {
     // get all the new voice messages of the voicemail to send the events through the callback
     // emits the event for a new voice message with all the new messages of the voicemail. This event
     // is emitted only when a new voice message has been left in a voicemail
-    logger.info(IDLOG, 'emit event "' + EVT_NEW_VOICE_MESSAGE + '" for voicemail ' + ev.voicemail);
+    logger.log.info(IDLOG, 'emit event "' + EVT_NEW_VOICE_MESSAGE + '" for voicemail ' + ev.voicemail);
     emitter.emit(EVT_NEW_VOICE_MESSAGE, ev);
 
     // emits the event with the update list of new voice messages of a voicemail. This event is emitted
     // each time a new voice message has been left, when the user listen a message or delete it
-    logger.info(IDLOG, 'emit event "' + EVT_UPDATE_NEW_VOICE_MESSAGES + '" for voicemail ' + ev.voicemail);
+    logger.log.info(IDLOG, 'emit event "' + EVT_UPDATE_NEW_VOICE_MESSAGES + '" for voicemail ' + ev.voicemail);
     emitter.emit(EVT_UPDATE_NEW_VOICE_MESSAGES, ev);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -387,7 +387,7 @@ function updateVoiceMessages(ev) {
     dbconn.getVoicemailNewMsg(ev.voicemail, updateVoiceMessagesCb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -407,7 +407,7 @@ function deleteCustomMessage(vm, type, cb) {
     }
     dbconn.deleteCustomMessage(vm, type, cb);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -428,7 +428,7 @@ function deleteVoiceMessage(id, cb) {
     dbconn.deleteVoiceMessage(id, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -450,7 +450,7 @@ function listenVoiceMessage(id, cb) {
     dbconn.listenVoiceMessage(id, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -474,7 +474,7 @@ function listenCustomMessage(vm, type, cb) {
     dbconn.listenCustomMessage(vm, type, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -498,7 +498,7 @@ function getVmIdFromDbId(dbid, cb) {
     dbconn.getVmMailboxFromDbId(dbid, cb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
@@ -518,7 +518,7 @@ function listenedVoiceMessageCb(err, voicemail, results) {
     updateVoiceMessagesCb(err, voicemail, results);
 
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
   }
 }
 
@@ -542,7 +542,7 @@ function updateVoiceMessagesCb(err, voicemail, results) {
         str += err.stack;
       }
 
-      logger.error(IDLOG, str);
+      logger.log.error(IDLOG, str);
       return;
     }
 
@@ -553,11 +553,11 @@ function updateVoiceMessagesCb(err, voicemail, results) {
 
     // emits the event with the update list of new voice messages of a voicemail. This event is emitted
     // each time a new voice message has been left, when the user listen a message or delete it
-    logger.info(IDLOG, 'emit event "' + EVT_UPDATE_NEW_VOICE_MESSAGES + '" for voicemail ' + voicemail);
+    logger.log.info(IDLOG, 'emit event "' + EVT_UPDATE_NEW_VOICE_MESSAGES + '" for voicemail ' + voicemail);
     emitter.emit(EVT_UPDATE_NEW_VOICE_MESSAGES, voicemail, results);
 
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
   }
 }
 
@@ -579,7 +579,7 @@ function listenedVoiceMessage(voicemail) {
     dbconn.getVoicemailNewMsg(voicemail, listenedVoiceMessageCb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -598,7 +598,7 @@ function deletedVoiceMessageCb(err, voicemail, results) {
     updateVoiceMessagesCb(err, voicemail, results);
 
   } catch (error) {
-    logger.error(IDLOG, error.stack);
+    logger.log.error(IDLOG, error.stack);
   }
 }
 
@@ -620,7 +620,7 @@ function deletedVoiceMessage(voicemail) {
     dbconn.getVoicemailNewMsg(voicemail, deletedVoiceMessageCb);
 
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -637,7 +637,7 @@ function on(type, cb) {
   try {
     return emitter.on(type, cb);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
   }
 }
 
@@ -663,7 +663,7 @@ function setCustomVmAudioMsg(vm, type, audio, cb) {
     }
     dbconn.setCustomVmAudioMsg(vm, type, Buffer.from(audio, 'base64'), cb);
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
