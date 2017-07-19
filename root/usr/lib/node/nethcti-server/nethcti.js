@@ -81,20 +81,19 @@ try {
       });
 
       process.on('uncaughtException', function(err) {
-        app.destroy();
         logger.error(IDLOG, 'UncaughtException !!!');
         logger.error(IDLOG, err.stack);
       });
 
       process.on('SIGTERM', function() {
-        app.destroy();
         logger.warn(IDLOG, 'process halted by SIGTERM');
+        app.destroy();
         process.exit(2);
       });
 
       process.on('SIGINT', function() {
-        app.destroy();
         logger.warn(IDLOG, 'process halted by SIGINT (Ctrl+C)');
+        app.destroy();
         process.exit(2);
       });
 
