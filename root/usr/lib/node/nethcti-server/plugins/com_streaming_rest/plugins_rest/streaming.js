@@ -316,8 +316,8 @@ function setCompConfigManager(comp) {
 
           // check if the user is authorized to use the streaming source
           if (compAuthorization.authorizeStreamingSourceUser(username).filter(function(e) {
-            return e.permissionId === stream;
-          }).length > 0) {
+              return e.permissionId === stream;
+            }).length > 0) {
             logger.info(IDLOG, 'authorization for user "' + username + '" to open streaming source "' + stream + '" has been successful');
 
             // create the caller identifier
@@ -335,7 +335,7 @@ function setCompConfigManager(comp) {
                 compUtil.net.sendHttp500(IDLOG, res, str);
 
               } else {
-                logger.info(IDLOG, 'opened streaming source "' + stream + '" successful');
+                logger.warn(IDLOG, 'streaming source "' + stream + '" opened successfully by user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
               }
             });
@@ -370,8 +370,8 @@ function setCompConfigManager(comp) {
 
           // check if the user is authorized to use the streaming source
           if (compAuthorization.authorizeStreamingSourceUser(username).filter(function(e) {
-            return e.permissionId === stream;
-          }).length > 0) {
+              return e.permissionId === stream;
+            }).length > 0) {
             logger.info(IDLOG, 'authorization for user "' + username + '" to subscribe to the streaming source "' + stream + '" has been successful');
 
             compStreaming.subscribeSource(username, stream, function(err) {
@@ -416,8 +416,8 @@ function setCompConfigManager(comp) {
 
           // check if the user is authorized to use the streaming source
           if (compAuthorization.authorizeStreamingSourceUser(username).filter(function(e) {
-            return e.permissionId === stream;
-          }).length > 0) {
+              return e.permissionId === stream;
+            }).length > 0) {
             logger.info(IDLOG, 'authorization for user "' + username + '" to subscribe to the streaming source "' + stream + '" has been successful');
 
             compStreaming.unsubscribeSource(username, stream, function(err) {
@@ -440,7 +440,7 @@ function setCompConfigManager(comp) {
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       }
-    }
+    };
 
     exports.api = streaming.api;
     exports.open = streaming.open;
