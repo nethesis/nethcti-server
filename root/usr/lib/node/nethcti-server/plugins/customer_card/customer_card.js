@@ -8,6 +8,30 @@ var fs = require('fs');
 var ejs = require('ejs');
 var path = require('path');
 var async = require('async');
+var EventEmitter = require('events').EventEmitter;
+
+/**
+ * Fired when the componente has been reloaded.
+ *
+ * @event reloaded
+ */
+/**
+ * The name of the reloaded event.
+ *
+ * @property EVT_RELOADED
+ * @type string
+ * @default "reloaded"
+ */
+var EVT_RELOADED = 'reloaded';
+
+/**
+ * The event emitter.
+ *
+ * @property emitter
+ * @type object
+ * @private
+ */
+var emitter = new EventEmitter();
 
 /**
  * Provides the customer card functionalities.
@@ -501,7 +525,6 @@ function filterPrivacyCcCalls(username, num, calls) {
 function start() {
   try {
     initEjsTemplates();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -661,19 +684,39 @@ function reload() {
     config(CONFIG_FILEPATH);
     configPrivacy(CONFIG_PRIVACY_FILEPATH);
     start();
+    logger.log.info(IDLOG, 'emit event "' + EVT_RELOADED + '"');
+    emitter.emit(EVT_RELOADED);
     logger.log.warn(IDLOG, 'reloaded');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
 }
 
-// public interface
+/**
+ * Subscribe a callback function to a custom event fired by this object.
+ * It's the same of nodejs _events.EventEmitter.on_ method.
+ *
+ * @method on
+ * @param {string} type The name of the event
+ * @param {function} cb The callback to execute in response to the event
+ * @return {object} A subscription handle capable of detaching that subscription.
+ */
+function on(type, cb) {
+  try {
+    return emitter.on(type, cb);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+exports.on = on;
 exports.start = start;
 exports.reload = reload;
 exports.config = config;
 exports.setLogger = setLogger;
 exports.setDbconn = setDbconn;
 exports.setCompUser = setCompUser;
+exports.EVT_RELOADED = EVT_RELOADED;
 exports.configPrivacy = configPrivacy;
 exports.getAllCustomerCards = getAllCustomerCards;
 exports.getCustomerCardByNum = getCustomerCardByNum;

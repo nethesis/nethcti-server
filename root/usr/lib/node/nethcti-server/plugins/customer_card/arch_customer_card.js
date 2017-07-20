@@ -28,11 +28,13 @@ module.exports = function(options, imports, register) {
   // public interface for other architect components
   register(null, {
     customerCard: {
+      on: customerCard.on,
       start: customerCard.start,
       config: customerCard.config,
       setLogger: customerCard.setLogger,
       setDbconn: customerCard.setDbconn,
       setCompUser: customerCard.setCompUser,
+      EVT_RELOADED: customerCard.EVT_RELOADED,
       configPrivacy: customerCard.configPrivacy,
       getAllCustomerCards: customerCard.getAllCustomerCards,
       getCustomerCardByNum: customerCard.getCustomerCardByNum,

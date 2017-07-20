@@ -52,6 +52,20 @@ var intervalRemoveExpiredTokens;
 var EVT_COMP_READY = 'ready';
 
 /**
+ * Fired when the componente has been reloaded.
+ *
+ * @event reloaded
+ */
+/**
+ * The name of the reloaded event.
+ *
+ * @property EVT_RELOADED
+ * @type string
+ * @default "reloaded"
+ */
+var EVT_RELOADED = 'reloaded';
+
+/**
  * The module identifier used by the logger.
  *
  * @property IDLOG
@@ -340,6 +354,9 @@ function config(path) {
     logger.log.info(IDLOG, 'emit "' + EVT_COMP_READY + '" event');
     emitter.emit(EVT_COMP_READY);
     ready = true;
+  } else {
+    logger.log.info(IDLOG, 'emit event "' + EVT_RELOADED + '"');
+    emitter.emit(EVT_RELOADED);
   }
   logger.log.info(IDLOG, 'configuration done by ' + CONFIG_FILEPATH);
 }
@@ -1038,6 +1055,7 @@ exports.setLogger = setLogger;
 exports.verifyToken = verifyToken;
 exports.removeToken = removeToken;
 exports.authenticate = authenticate;
+exports.EVT_RELOADED = EVT_RELOADED;
 exports.setCompDbconn = setCompDbconn;
 exports.EVT_COMP_READY = EVT_COMP_READY;
 exports.calculateToken = calculateToken;

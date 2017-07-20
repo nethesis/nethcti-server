@@ -50,6 +50,20 @@ var EventEmitter = require('events').EventEmitter;
 var EVT_EXTEN_UPDATE = 'extenUpdate';
 
 /**
+ * Fired when the componente has been reloaded.
+ *
+ * @event reloaded
+ */
+/**
+ * The name of the reloaded event.
+ *
+ * @property EVT_RELOADED
+ * @type string
+ * @default "reloaded"
+ */
+var EVT_RELOADED = 'reloaded';
+
+/**
  * Emitted to a websocket client connection on queue update.
  *
  * Example:
@@ -79,6 +93,21 @@ var EVT_EXTEN_UPDATE = 'extenUpdate';
  * @default "queueUpdate"
  */
 var EVT_QUEUE_UPDATE = 'queueUpdate';
+
+/**
+ * Emitted to a websocket client connection on all components reloaded.
+ *
+ * @event serverReloaded
+ */
+/**
+ * The name of the all component reloaded
+ *
+ * @property EVT_SERVER_RELOADED
+ * @type string
+ * @default "serverReloaded"
+ */
+var EVT_SERVER_RELOADED = 'serverReloaded';
+
 
 /**
  * Emitted to a websocket client connection on queue member update.
@@ -153,23 +182,23 @@ var EVT_PARKING_UPDATE = 'parkingUpdate';
 //   */
 var EVT_ANSWER_WEBRTC = 'answerWebrtc';
 
- /**
-  * Emitted to a websocket client connection to call a number using webrtc extension.
-  *
-  * Example:
-  *
-      "0721405516"
-  *
-  * @event callWebrtc
-  * @param {string} to The destination number to be called using WebRTC extension
-  *
-  */
- /**
-  * The name of the event to call number using WebRTC extension
-  *
-  * @property EVT_CALL_WEBRTC
-  * @type string
-  */
+/**
+ * Emitted to a websocket client connection to call a number using webrtc extension.
+ *
+ * Example:
+ *
+     "0721405516"
+ *
+ * @event callWebrtc
+ * @param {string} to The destination number to be called using WebRTC extension
+ *
+ */
+/**
+ * The name of the event to call number using WebRTC extension
+ *
+ * @property EVT_CALL_WEBRTC
+ * @type string
+ */
 var EVT_CALL_WEBRTC = 'callWebrtc';
 
 //  /**
@@ -886,12 +915,12 @@ function updateNewPostitListener(recipient, list) {
 function evtUserPresenceChanged(evt) {
   try {
     if (typeof evt !== 'object' ||
-        (
-          typeof evt.presence !== 'object' &&
-          typeof evt.presence_onbusy !== 'object' &&
-          typeof evt.presence_onunavailable !== 'object'
-        )
-      ) {
+      (
+        typeof evt.presence !== 'object' &&
+        typeof evt.presence_onbusy !== 'object' &&
+        typeof evt.presence_onunavailable !== 'object'
+      )
+    ) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
@@ -1421,6 +1450,25 @@ function sendCallWebrtcToClient(username, to) {
         if (wsServer.sockets.sockets[socketId]) {
           wsServer.sockets.sockets[socketId].emit(EVT_CALL_WEBRTC, to);
         }
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Send an event to all the clients to inform them about all components reloaded.
+ *
+ * @method sendAllCompReloaded
+ */
+function sendAllCompReloaded() {
+  try {
+    var socketId;
+    logger.log.info(IDLOG, 'emit event "' + EVT_SERVER_RELOADED + '" to all clients');
+    for (socketId in wsid) {
+      if (wsServer.sockets.sockets[socketId]) {
+        wsServer.sockets.sockets[socketId].emit(EVT_SERVER_RELOADED);
       }
     }
   } catch (err) {
@@ -2088,6 +2136,8 @@ function reload() {
   try {
     reset();
     configPrivacy(CONFIG_PRIVACY_FILEPATH);
+    logger.log.info(IDLOG, 'emit event "' + EVT_RELOADED + '"');
+    emitter.emit(EVT_RELOADED);
     logger.log.warn(IDLOG, 'reloaded');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -2103,12 +2153,14 @@ exports.config = config;
 exports.setAuthe = setAuthe;
 exports.setLogger = setLogger;
 exports.setAstProxy = setAstProxy;
+exports.EVT_RELOADED = EVT_RELOADED;
 exports.setCompUser = setCompUser;
 exports.configPrivacy = configPrivacy;
 exports.setCompPostit = setCompPostit;
 exports.setCompVoicemail = setCompVoicemail;
 exports.setCompAuthorization = setCompAuthorization;
 exports.setCompStreaming = setCompStreaming;
+exports.sendAllCompReloaded = sendAllCompReloaded;
 exports.sendEventToAllClients = sendEventToAllClients;
 exports.sendCallWebrtcToClient = sendCallWebrtcToClient;
 exports.getNumConnectedClients = getNumConnectedClients;

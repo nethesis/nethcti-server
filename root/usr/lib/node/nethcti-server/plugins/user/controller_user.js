@@ -244,10 +244,10 @@ function config(path) {
     initializeEndpointsUsersByJSON(json);
     // set user presence
     initializeUsersPresence();
-    // initialize asterisk proxy listeners
-    initializeAstProxyListeners();
 
     if (!ready) {
+      // initialize asterisk proxy listeners
+      initializeAstProxyListeners();
       // emit the event for tell to other modules that the user objects are ready
       logger.log.info(IDLOG, 'emit event "' + EVT_USERS_READY + '"');
       emitter.emit(EVT_USERS_READY);
@@ -290,8 +290,8 @@ function reset() {
 function reload() {
   try {
     reset();
-    config(USERS_CONF_FILEPATH);
     logger.log.warn(IDLOG, 'reloaded');
+    config(USERS_CONF_FILEPATH);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }

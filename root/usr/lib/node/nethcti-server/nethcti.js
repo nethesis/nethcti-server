@@ -39,6 +39,16 @@ var logger = {
 };
 
 /**
+ * Maintains the reload status of all components
+ *
+ * @property allCompReloadStatus
+ * @type object
+ * @private
+ * @default {}
+ */
+var allCompReloadStatus = {};
+
+/**
  * The application.
  *
  * @property app
@@ -82,7 +92,21 @@ try {
           });
 
           app.on('ready', function(uno, due) {
-            logger.ctilog.log.warn(IDLOG, 'STARTED ' + process.argv[1]);
+            try {
+              logger.ctilog.log.warn(IDLOG, 'STARTED ' + process.argv[1]);
+              var sub = Object.keys(app.services).filter(function(k) {
+                return (typeof app.services[k].on === 'function' && app.services[k].EVT_RELOADED);
+              });
+              // add reload listeners to synchronize on reload of all components
+              sub.forEach(function(c) {
+                app.services[c].on(app.services[c].EVT_RELOADED, function() {
+                  compReloaded(c);
+                });
+                allCompReloadStatus[c] = false;
+              });
+            } catch (err1) {
+              logger.ctilog.log.error(IDLOG, err1.stack);
+            }
           });
         } catch (err) {
           logger.ctilog.log.error(IDLOG, err.stack);
@@ -96,11 +120,17 @@ try {
 
       process.on('SIGUSR1', function() {
         logger.ctilog.log.warn(IDLOG, 'received signal SIGUSR1: RELOAD all components');
-        for (var comp in app.services) {
-          if (typeof app.services[comp].reload === 'function') {
-            app.services[comp].reload();
+
+        // reset reload staus of all components
+        Object.keys(allCompReloadStatus).forEach(function(k) {
+          allCompReloadStatus[k] = false;
+        });
+        // call reload on all components exposing the function
+        Object.keys(app.services).forEach(function(k) {
+          if (typeof app.services[k].reload === 'function') {
+            app.services[k].reload();
           }
-        }
+        });
       });
 
       process.on('SIGTERM', function() {
@@ -125,4 +155,25 @@ try {
   });
 } catch (err) {
   logger.ctilog.log.error(IDLOG, err.stack);
+}
+
+/**
+ * Emits event to all client websocket connections only when
+ * all components has been reloaded.
+ *
+ * @method compReloaded
+ */
+function compReloaded(comp) {
+  try {
+    allCompReloadStatus[comp] = true;
+    var k;
+    for (k in allCompReloadStatus) {
+      if (!allCompReloadStatus[k]) {
+        return;
+      }
+    }
+    app.services.com_nethcti_ws.sendAllCompReloaded();
+  } catch (err) {
+    logger.ctilog.log.error(IDLOG, err.stack);
+  }
 }

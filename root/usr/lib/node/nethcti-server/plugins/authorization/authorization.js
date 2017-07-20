@@ -12,6 +12,30 @@
  * @static
  */
 var fs = require('fs');
+var EventEmitter = require('events').EventEmitter;
+
+/**
+ * Fired when the componente has been reloaded.
+ *
+ * @event reloaded
+ */
+/**
+ * The name of the reloaded event.
+ *
+ * @property EVT_RELOADED
+ * @type string
+ * @default "reloaded"
+ */
+var EVT_RELOADED = 'reloaded';
+
+/**
+ * The event emitter.
+ *
+ * @property emitter
+ * @type object
+ * @private
+ */
+var emitter = new EventEmitter();
 
 /**
  * The module identifier used by the logger.
@@ -1734,17 +1758,37 @@ function reload() {
       users: USERS_CONF_FILEPATH,
       profiles: PROFILES_CONF_FILEPATH
     });
+    logger.log.info(IDLOG, 'emit event "' + EVT_RELOADED + '"');
+    emitter.emit(EVT_RELOADED);
     logger.log.warn(IDLOG, 'reloaded');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
 }
 
-// public interface
+/**
+ * Subscribe a callback function to a custom event fired by this object.
+ * It's the same of nodejs _events.EventEmitter.on_ method.
+ *
+ * @method on
+ * @param {string} type The name of the event
+ * @param {function} cb The callback to execute in response to the event
+ * @return {object} A subscription handle capable of detaching that subscription.
+ */
+function on(type, cb) {
+  try {
+    return emitter.on(type, cb);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+exports.on = on;
 exports.config = config;
 exports.reload = reload;
 exports.setLogger = setLogger;
 exports.setCompUser = setCompUser;
+exports.EVT_RELOADED = EVT_RELOADED;
 exports.setCompDbconn = setCompDbconn;
 exports.authorizeCfUser = authorizeCfUser;
 exports.authorizeSpyUser = authorizeSpyUser;

@@ -35,6 +35,7 @@ module.exports = function(options, imports, register) {
       verifyToken: authentication.verifyToken,
       removeToken: authentication.removeToken,
       authenticate: authentication.authenticate,
+      EVT_RELOADED: authentication.EVT_RELOADED,
       setCompDbconn: authentication.setCompDbconn,
       EVT_COMP_READY: authentication.EVT_COMP_READY,
       calculateToken: authentication.calculateToken,

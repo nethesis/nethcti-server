@@ -4,15 +4,16 @@
  * @module streaming
  * @main arch_streaming
  */
-var fs = require('fs');
-var Streaming = require('./streaming_class').Streaming;
-var EventEmitter = require('events').EventEmitter;
+
 /**
  * Provides the streaming functionalities.
  *
  * @class streaming
  * @static
  */
+var fs = require('fs');
+var Streaming = require('./streaming_class').Streaming;
+var EventEmitter = require('events').EventEmitter;
 
 /**
  * The module identifier used by the logger.
@@ -34,6 +35,20 @@ var IDLOG = '[streaming]';
  * @private
  */
 var CONFIG_FILEPATH;
+
+/**
+ * Fired when the componente has been reloaded.
+ *
+ * @event reloaded
+ */
+/**
+ * The name of the reloaded event.
+ *
+ * @property EVT_RELOADED
+ * @type string
+ * @default "reloaded"
+ */
+var EVT_RELOADED = 'reloaded';
 
 /**
  * Fired when the streaming source has been sampled.
@@ -479,6 +494,8 @@ function reload() {
     reset();
     config(CONFIG_FILEPATH);
     start();
+    logger.log.info(IDLOG, 'emit event "' + EVT_RELOADED + '"');
+    emitter.emit(EVT_RELOADED);
     logger.log.warn(IDLOG, 'reloaded');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -486,6 +503,7 @@ function reload() {
 }
 
 // public interface
+exports.EVT_RELOADED = EVT_RELOADED;
 exports.on = on;
 exports.reload = reload;
 exports.emit = emit;

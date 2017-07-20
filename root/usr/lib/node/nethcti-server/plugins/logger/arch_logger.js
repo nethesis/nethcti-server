@@ -23,8 +23,10 @@ module.exports = function(options, imports, register) {
   // public interface for other architect components
   register(null, {
     logger: {
+      on: controllerLogger.on,
       ctilog: controllerLogger.ctilog,
-      reload: controllerLogger.reload
+      reload: controllerLogger.reload,
+      EVT_RELOADED: controllerLogger.EVT_RELOADED
     }
   });
 };
