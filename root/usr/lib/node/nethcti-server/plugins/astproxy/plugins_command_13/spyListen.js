@@ -77,7 +77,7 @@ var IDLOG = '[spyListen]';
         try {
           // action for asterisk
           var act = {
-            Data: args.chToSpy,
+            Data: args.chToSpy + ',qS',
             Action: 'Originate',
             Channel: args.spierId,
             Callerid: PREFIX + args.spiedId,
