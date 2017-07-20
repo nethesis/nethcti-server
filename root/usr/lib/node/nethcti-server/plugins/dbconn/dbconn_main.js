@@ -949,64 +949,58 @@ function incNumExecQueries() {
  */
 function reset() {
   try {
-    var k;
-    // mysql connections are not closed, beacuse it uses a pool
-    for (k in dbConn) {
+    // close db connection
+    Object.keys(dbConn).forEach(function(k) {
       if (dbConn[k].db_type === 'mysql') {
         delete dbConn[k];
+      } else if (dbConn[k].db_type === 'postgres') {
+        (function(id) {
+          dbConn[id].end(function(err) {
+            logger.log.info(IDLOG, dbConn[id].db_type + ' connection "' + id + '" closed during reset');
+            if (err) {
+              logger.log.error(IDLOG, 'closing ' + dbConn[id].db_type + ' connection "' + id + '": ' + err.stack);
+            }
+            delete dbConn[id];
+          });
+        })(k);
+      } else if (dbConn[k].db_type === 'mssql') {
+        (function(id) {
+          dbConn[id].close(function(err) {
+            logger.log.info(IDLOG, dbConn[id].db_type + ' connection "' + id + '" closed during reset');
+            if (err) {
+              logger.log.error(IDLOG, 'closing ' + dbConn[id].db_type + ' connection "' + id + '": ' + err.stack);
+            }
+            delete dbConn[id];
+          });
+        })(k);
       }
-    }
-    for (k in dbConnCustCard) {
+    });
+    // close db connection customer card
+    Object.keys(dbConnCustCard).forEach(function(k) {
       if (dbConnCustCard[k].db_type === 'mysql') {
         delete dbConnCustCard[k];
+      } else if (dbConnCustCard[k].db_type === 'postgres') {
+        (function(id) {
+          dbConnCustCard[id].end(function(err) {
+            logger.log.info(IDLOG, dbConnCustCard[id].db_type + ' connection "' + id + '" closed during reset');
+            if (err) {
+              logger.log.error(IDLOG, 'closing ' + dbConnCustCard[id].db_type + ' connection "' + id + '": ' + err.stack);
+            }
+            delete dbConnCustCard[id];
+          });
+        })(k);
+      } else if (dbConnCustCard[k].db_type === 'mssql') {
+        (function(id) {
+          dbConnCustCard[id].close(function(err) {
+            logger.log.info(IDLOG, dbConnCustCard[id].db_type + ' connection "' + id + '" closed during reset');
+            if (err) {
+              logger.log.error(IDLOG, 'closing ' + dbConnCustCard[id].db_type + ' connection "' + id + '": ' + err.stack);
+            }
+            delete dbConnCustCard[id];
+          });
+        })(k);
       }
-    }
-    // close postgres connections
-    for (k in dbConn) {
-      if (dbConn[k].db_type === 'postgres') {
-        dbConn[k].end(function(err) {
-          logger.log.info(IDLOG, dbConn[k].db_type + ' connection "' + k + '" closed during reset');
-          if (err) {
-            logger.log.error(IDLOG, 'closing ' + dbConn[k].db_type + ' connection "' + k + '": ' + err.stack);
-          }
-          delete dbConn[k];
-        });
-      }
-    }
-    for (k in dbConnCustCard) {
-      if (dbConnCustCard[k].db_type === 'postgres') {
-        dbConnCustCard[k].end(function(err) {
-          logger.log.info(IDLOG, dbConnCustCard[k].db_type + ' connection "' + k + '" closed during reset');
-          if (err) {
-            logger.log.error(IDLOG, 'closing ' + dbConnCustCard[k].db_type + ' connection "' + k + '": ' + err.stack);
-          }
-          delete dbConnCustCard[k];
-        });
-      }
-    }
-    // close mssql connections
-    for (k in dbConn) {
-      if (dbConn[k].db_type === 'mssql') {
-        dbConn[k].close(function(err) {
-          logger.log.info(IDLOG, dbConn[k].db_type + ' connection "' + k + '" closed during reset');
-          if (err) {
-            logger.log.error(IDLOG, 'closing ' + dbConn[k].db_type + ' connection "' + k + '": ' + err.stack);
-          }
-          delete dbConn[k];
-        });
-      }
-    }
-    for (k in dbConnCustCard) {
-      if (dbConnCustCard[k].db_type === 'mssql') {
-        dbConnCustCard[k].close(function(err) {
-          logger.log.info(IDLOG, dbConnCustCard[k].db_type + ' connection "' + k + '" closed during reset');
-          if (err) {
-            logger.log.error(IDLOG, 'closing ' + dbConnCustCard[k].db_type + ' connection "' + k + '": ' + err.stack);
-          }
-          delete dbConnCustCard[k];
-        });
-      }
-    }
+    });
     dbConfig = {};
     models = {};
     dbConfigCustCardData = {};
