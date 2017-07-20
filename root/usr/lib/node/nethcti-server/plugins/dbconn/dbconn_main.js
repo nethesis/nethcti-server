@@ -366,6 +366,8 @@ function testConnection(host, port, type, user, pass, name, cb) {
         server: host,
         port: port,
         database: name,
+        connectionTimeout: 2000,
+        requestTimeout: 3000,
         options: {
           encrypt: false,
           tdsVersion: getMssqlTdsVersion(type)
@@ -802,6 +804,8 @@ function initMssqlConnCustCard(data, tdsVersion) {
       user: data.user,
       password: data.pass,
       database: data.name,
+      connectionTimeout: 2000,
+      requestTimeout: 3000,
       pool: {
         idleTimeoutMillis: 300000,
         max: 10
@@ -845,6 +849,8 @@ function initMssqlConn(name, tdsVersion) {
       user: dbConfig[name].dbuser,
       password: dbConfig[name].dbpassword,
       database: dbConfig[name].dbname,
+      connectionTimeout: 2000,
+      requestTimeout: 3000,
       pool: {
         idleTimeoutMillis: 300000,
         max: 10

@@ -419,11 +419,11 @@ function getAllCustomerCards(username, num, format, cb) {
 
       if (!dbconn.checkDbconnCustCard(cc.permissionId)) {
         logger.log.warn(IDLOG, 'no db connection for customer card "' + cc.name + '"');
-        callback('no db connection for customer card "' + cc.name + '"');
+        callback();
 
       } else if (!ejsTemplates[templateName]) {
         logger.log.warn(IDLOG, 'no template ejs for customer card "' + cc.name + '"');
-        callback('no template ejs for customer card "' + cc.name + '"');
+        callback();
 
       } else {
 
@@ -458,21 +458,8 @@ function getAllCustomerCards(username, num, format, cb) {
       }
 
     }, function(err) {
-      if (err) {
-        logger.log.error(IDLOG, err);
-        cb(err);
-        return;
-      }
 
-      var objKeys = Object.keys(obj);
-      var str = '';
-      var k;
-      for (k in obj) {
-        str += k + ',';
-      }
-      str = str.substring(0, str.length - 1);
-      logger.log.info(IDLOG, objKeys.length + ' customer cards "' + str + '" obtained for user "' + username + '" searching num ' + num);
-
+      logger.log.info(IDLOG, Object.keys(obj).length + ' customer cards "' + Object.keys(obj).join(',') + '" obtained for user "' + username + '" searching num ' + num);
       cb(null, obj);
     });
   } catch (err) {
