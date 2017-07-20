@@ -120,11 +120,7 @@ try {
 
       process.on('SIGUSR1', function() {
         logger.ctilog.log.warn(IDLOG, 'received signal SIGUSR1: RELOAD all components');
-
-        // reset reload staus of all components
-        Object.keys(allCompReloadStatus).forEach(function(k) {
-          allCompReloadStatus[k] = false;
-        });
+        resetAllCompReloadStatus();
         // call reload on all components exposing the function
         Object.keys(app.services).forEach(function(k) {
           if (typeof app.services[k].reload === 'function') {
@@ -173,6 +169,23 @@ function compReloaded(comp) {
       }
     }
     app.services.com_nethcti_ws.sendAllCompReloaded();
+    resetAllCompReloadStatus();
+  } catch (err) {
+    logger.ctilog.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reset reload status of all components.
+ *
+ * @method resetAllCompReloadStatus
+ * @private
+ */
+function resetAllCompReloadStatus() {
+  try {
+    Object.keys(allCompReloadStatus).forEach(function(c) {
+      allCompReloadStatus[c] = false;
+    });
   } catch (err) {
     logger.ctilog.log.error(IDLOG, err.stack);
   }

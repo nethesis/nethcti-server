@@ -1380,7 +1380,6 @@ function listParkedCalls(err, resp) {
 
     // store parked channels in global variable "parkedChannels"
     parkedChannels = resp;
-
     // request all channels to get the caller number information for each parked channel
     astProxy.doCmd({
       command: 'listChannels'
@@ -1514,7 +1513,6 @@ function updateParkedCallerForAllParkings(err, resp) {
       logger.log.error(IDLOG, 'updating parked caller for all parkings: ' + err.toString());
       return;
     }
-
     // cycle in all channels received from "listChannel" command plugin.
     // If a channel is present in "parkedChannels", then it is a parked
     // channel and so add it to relative parking
@@ -1537,6 +1535,10 @@ function updateParkedCallerForAllParkings(err, resp) {
         logger.log.info(IDLOG, 'added parked call ' + pCall.getNumber() + ' to parking ' + p);
       }
     }
+    Object.keys(parkings).forEach(function(p) {
+      logger.log.info(IDLOG, 'emit event ' + EVT_PARKING_CHANGED + ' for parking ' + p);
+      astProxy.emit(EVT_PARKING_CHANGED, parkings[p]);
+    });
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
   }
@@ -1576,11 +1578,9 @@ function initializeQueues(err, results) {
       logger.log.error(IDLOG, err);
       return;
     }
-
     var arr = [];
     var k, q;
     for (k in results) {
-
       q = new Queue(results[k].queue);
       q.setName(staticDataQueues[results[k].queue].name);
       // store the new queue object
@@ -1592,9 +1592,12 @@ function initializeQueues(err, results) {
         if (err) {
           logger.log.error(IDLOG, err);
         }
+        results.forEach(function(o) {
+          logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + o.queue);
+          astProxy.emit(EVT_QUEUE_CHANGED, queues[o.queue]);
+        });
       }
     );
-
     logger.log.info(IDLOG, 'start the interval period to update the details of all the queues each ' + INTERVAL_UPDATE_QUEUE_DETAILS + ' msec');
     startIntervalUpdateQueuesDetails(INTERVAL_UPDATE_QUEUE_DETAILS);
 
@@ -1823,7 +1826,6 @@ function queueDetails(err, resp) {
         addQueueMemberLoggedOut(staticDataQueues[q].dynmembers[i], q);
       }
     }
-
     // set all waiting callers
     var ch, wCaller;
     for (ch in resp.waitingCallers) {
@@ -1831,7 +1833,6 @@ function queueDetails(err, resp) {
       queues[q].addWaitingCaller(wCaller);
       logger.log.info(IDLOG, 'added waiting caller ' + wCaller.getName() + ' to queue ' + wCaller.getQueue());
     }
-
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
   }
@@ -2569,6 +2570,10 @@ function initializePjsipExten(err, results) {
           logger.log.info(IDLOG, 'emit "' + EVT_RELOADED + '" event');
           astProxy.emit(EVT_RELOADED);
         }
+        results.forEach(function(obj) {
+          logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for pjsip extension ' + obj.ext);
+          astProxy.emit(EVT_EXTEN_CHANGED, extensions[obj.ext]);
+        });
       }
     );
   } catch (error) {
