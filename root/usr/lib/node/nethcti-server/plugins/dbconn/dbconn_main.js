@@ -381,10 +381,13 @@ function testConnection(host, port, type, user, pass, name, cb) {
       });
 
     } else if (type === 'postgres') {
-      var client = new pg.Client({
+      var client = new pg.Pool({
         user: user,
         password: pass,
         database: name,
+        max: 20,
+        idleTimeoutMillis: 3000,
+        connectionTimeoutMillis: 2000,
         host: host,
         port: port
       });
@@ -673,10 +676,13 @@ function initPostgresConnCustCard(data) {
       user: data.user,
       password: data.pass,
       database: data.name,
+      max: 20,
+      idleTimeoutMillis: 3000,
+      connectionTimeoutMillis: 2000,
       host: data.host,
       port: data.port
     };
-    var client = new pg.Client(config);
+    var client = new pg.Pool(config);
     client.connect(function(err) {
       if (err) {
         logger.log.error(IDLOG, 'initializing ' + data.type + ' db connection ' + data.name + ' ' + data.host + ':' + data.port + ' - ' + err.stacname);
@@ -713,10 +719,13 @@ function initPostgresConn(name) {
       user: dbConfig[name].dbuser,
       password: dbConfig[name].dbpassword,
       database: dbConfig[name].dbname,
+      max: 20,
+      idleTimeoutMillis: 3000,
+      connectionTimeoutMillis: 2000,
       host: dbConfig[name].dbhost,
       port: dbConfig[name].dbport
     };
-    var client = new pg.Client(config);
+    var client = new pg.Pool(config);
     client.connect(function(err) {
       if (err) {
         logger.log.error(IDLOG, 'initializing ' + dbConfig[name].dbtype + ' db connection ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport + ' - ' + err.stacname);
