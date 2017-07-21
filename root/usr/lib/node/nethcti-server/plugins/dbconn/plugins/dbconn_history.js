@@ -157,7 +157,7 @@ function getHistoryCallInterval(data, cb) {
     // is returned only if the "data.recording" argument is true
     var attributes = [
       ['UNIX_TIMESTAMP(calldate)', 'time'],
-      'channel', 'dstchannel', 'uniqueid', 'userfield',
+      'channel', 'dstchannel', 'uniqueid', 'linkedid', 'userfield',
       'duration', 'billsec', 'disposition', 'dcontext'
     ];
     if (data.recording === true) {
@@ -313,7 +313,7 @@ function getHistorySwitchCallInterval(data, cb) {
     // is returned only if the "data.recording" argument is true
     var attributes = [
       ['UNIX_TIMESTAMP(calldate)', 'time'],
-      'channel', 'dstchannel', 'uniqueid', 'userfield',
+      'channel', 'dstchannel', 'uniqueid', 'linkedid', 'userfield',
       'duration', 'billsec', 'disposition', 'dcontext'
     ];
     if (data.recording === true) {
