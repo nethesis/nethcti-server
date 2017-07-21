@@ -35,6 +35,7 @@ var astProxy;
  * @private
  */
 var CAUSE = {
+  0: 'not_defined',
   1: 'unallocated',
   2: 'no_route_transit_net',
   3: 'no_route_destination',
