@@ -216,7 +216,7 @@ function config(path) {
   try {
     // check parameter
     if (typeof path !== 'string') {
-      throw new TypeError('wrong parameter');
+      throw new TypeError('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check file presence
@@ -292,8 +292,7 @@ function start() {
 }
 
 /**
- * Returns all streaming sources for the user
- * object in error case.
+ * Returns all streaming sources for the user of empty object in error case.
  *
  * @method getAllStreamingSources
  * @param {string} extenId The extension endpoint identifier
@@ -303,19 +302,17 @@ function start() {
 function getAllStreamingSources(username, cb) {
   try {
     var i;
-    var allowedStreamingSources = compAuthorization.authorizeStreamingSourceUser(username);
+    var allowedStreamingSources = compAuthorization.getAllowedStreamingSources(username);
     var permissions = [];
     for (i in allowedStreamingSources) {
       permissions.push(allowedStreamingSources[i].name);
     }
-
     var results = {};
     for (i in streamings) {
       if (permissions.indexOf(i) >= 0) {
         results[i] = streamings[i];
       }
     }
-
     cb(null, results);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -337,7 +334,7 @@ function open(streamId, callerid, fromExten, cb) {
     // check parameters
     if (typeof streamId !== 'string' || typeof callerid !== 'string' || typeof cb !== 'function') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check if the streaming source exists

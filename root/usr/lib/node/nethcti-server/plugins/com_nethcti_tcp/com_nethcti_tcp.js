@@ -574,7 +574,7 @@ function getFilteredStreamData(username, callerNum) {
     var streamJSON = compStreaming.getSourceJSONByExten(callerNum);
 
     // check if the user has the streaming permission, otherwise return an empty object
-    if (compAuthorization.authorizeStreamingSourceUser(username, streamJSON.id) === true) {
+    if (compAuthorization.getAllowedStreamingSources(username, streamJSON.id) === true) {
 
       return {
         id: streamJSON.id,
