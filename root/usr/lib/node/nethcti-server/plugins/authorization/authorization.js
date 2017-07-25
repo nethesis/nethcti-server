@@ -1330,14 +1330,13 @@ function authorizeStreamingUser(username) {
 }
 
 /**
- * Return true if the specified user has the authorization for the
- * specified streaming source.
+ * Return the list of allowed streaming sources.
  *
- * @method authorizeStreamingSourceUser
- * @param  {string} username    The username
- * @return {boolean} True if the user has the authorization for the specified streaming source.
+ * @method getAllowedStreamingSources
+ * @param {string} username The username
+ * @return {array} The list of allowed streaming sources.
  */
-function authorizeStreamingSourceUser(username) {
+function getAllowedStreamingSources(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
@@ -1350,7 +1349,6 @@ function authorizeStreamingSourceUser(username) {
     if (profiles[profid].macro_permissions.streaming.value === true) {
       for (permissionId in profiles[profid].macro_permissions.streaming.permissions) {
         if (profiles[profid].macro_permissions.streaming.permissions[permissionId].value === true) {
-
           arr.push({
             permissionId: permissionId,
             name: profiles[profid].macro_permissions.streaming.permissions[permissionId].name
@@ -1360,21 +1358,40 @@ function authorizeStreamingSourceUser(username) {
     }
     return arr;
 
-    // get streaming authorization from the user
-    // var autho = compUser.getAuthorization(username, authorizationTypes.TYPES.streaming);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return [];
+  }
+}
 
-    // analize the result
-    // var objResult = autho[authorizationTypes.TYPES.streaming];
-    // var stream;
-    // for (stream in objResult) {
+/**
+ * Return true if the specified user has the authorization for the specified
+ * streaming source.
+ *
+ * @method authorizeStreamingSourceUser
+ * @param {string} username The username
+ * @param {string} streamingId The streaming source identifier
+ * @return {boolean} True if the user has the authorization for the specified
+ *                   streaming source.
+ */
+function authorizeStreamingSourceUser(username, streamingId) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var sid;
+    var profid = getUserProfileId(username);
 
-    //   // check the type of the authorization. It must be a boolean value
-    //   if (stream === streamingId && objResult[stream] === true) {
-    //     return true;
-    //   }
-    // }
-    // return false;
+    if (profiles[profid].macro_permissions.streaming.value === true) {
+      for (sid in profiles[profid].macro_permissions.streaming.permissions) {
+        if (sid === streamingId &&
+          profiles[profid].macro_permissions.streaming.permissions[sid].value === true) {
 
+          return true;
+        }
+      }
+    }
+    return false;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
@@ -1824,6 +1841,7 @@ exports.getAllUsersAuthorizations = getAllUsersAuthorizations;
 exports.authorizeCustomerCardUser = authorizeCustomerCardUser;
 exports.authorizePresencePanelUser = authorizePresencePanelUser;
 exports.authorizeAdminOffhourUser = authorizeAdminOffhourUser;
+exports.authorizeStreamingSourceUser = authorizeStreamingSourceUser;
 exports.authorizeAdminParkingsUser = authorizeAdminParkingsUser;
 exports.authorizeAdminTransferUser = authorizeAdminTransferUser;
 exports.authorizeAdminQueuesUser = authorizeAdminQueuesUser;
@@ -1836,7 +1854,7 @@ exports.getAuthorizedOperatorGroups = getAuthorizedOperatorGroups;
 exports.authorizeOperatorGroupsUser = authorizeOperatorGroupsUser;
 exports.verifyUserEndpointCellphone = verifyUserEndpointCellphone;
 exports.authorizeAdminCallerNoteUser = authorizeAdminCallerNoteUser;
-exports.authorizeStreamingSourceUser = authorizeStreamingSourceUser;
+exports.getAllowedStreamingSources = getAllowedStreamingSources;
 exports.verifyOffhourUserAnnouncement = verifyOffhourUserAnnouncement;
 exports.verifyOffhourListenAnnouncement = verifyOffhourListenAnnouncement;
 exports.getAuthorizedRemoteOperatorGroups = getAuthorizedRemoteOperatorGroups;

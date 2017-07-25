@@ -315,7 +315,7 @@ function setCompConfigManager(comp) {
           var stream = req.params.id;
 
           // check if the user is authorized to use the streaming source
-          if (compAuthorization.authorizeStreamingSourceUser(username).filter(function(e) {
+          if (compAuthorization.getAllowedStreamingSources(username).filter(function(e) {
             return e.permissionId === stream;
           }).length > 0) {
 
@@ -370,7 +370,7 @@ function setCompConfigManager(comp) {
           var stream = req.params.id;
 
           // check if the user is authorized to use the streaming source
-          if (compAuthorization.authorizeStreamingSourceUser(username).filter(function(e) {
+          if (compAuthorization.getAllowedStreamingSources(username).filter(function(e) {
             return e.permissionId === stream;
           }).length > 0) {
 
@@ -417,7 +417,7 @@ function setCompConfigManager(comp) {
           var stream = req.params.id;
 
           // check if the user is authorized to use the streaming source
-          if (compAuthorization.authorizeStreamingSourceUser(username).filter(function(e) {
+          if (compAuthorization.getAllowedStreamingSources(username).filter(function(e) {
             return e.permissionId === stream;
           }).length > 0) {
 
