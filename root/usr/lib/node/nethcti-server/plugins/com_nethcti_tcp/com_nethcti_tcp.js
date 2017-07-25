@@ -558,8 +558,8 @@ function setAstProxyListeners() {
  * doesn't have the authorization, an empty object is returned.
  *
  * @method getFilteredStreamData
- * @param  {string} username   The username
- * @param  {string} callerNum  The number of the caller
+ * @param {string} username The username
+ * @param {string} callerNum The number of the caller
  * @return {object} The filtered streaming data
  * @private
  */
@@ -572,10 +572,8 @@ function getFilteredStreamData(username, callerNum) {
 
     // get the streaming data
     var streamJSON = compStreaming.getSourceJSONByExten(callerNum);
-
     // check if the user has the streaming permission, otherwise return an empty object
-    if (compAuthorization.getAllowedStreamingSources(username, streamJSON.id) === true) {
-
+    if (compAuthorization.authorizeStreamingSourceUser(username, streamJSON.id) === true) {
       return {
         id: streamJSON.id,
         url: streamJSON.url,
@@ -583,7 +581,6 @@ function getFilteredStreamData(username, callerNum) {
         description: streamJSON.description
       };
     }
-
     // the user has not the streaming permission, so return an empty object
     return {};
 
@@ -629,13 +626,13 @@ function extenDialing(data) {
       if (user === username) {
 
         // check if the caller is a streaming source
-        // var isStreaming = compStreaming.isExtenStreamingSource(data.callerIdentity.callerNum);
+        var isStreaming = compStreaming.isExtenStreamingSource(data.callerIdentity.callerNum);
 
-        // if (isStreaming) {
-        //   sendStreamingNotificationEvent(username, data, sockets[sockId]);
-        // } else {
-        sendCallNotificationEvent(username, data, sockets[sockId]);
-        // }
+        if (isStreaming) {
+          sendStreamingNotificationEvent(username, data, sockets[sockId]);
+        } else {
+          sendCallNotificationEvent(username, data, sockets[sockId]);
+        }
       }
     }
   } catch (err) {
@@ -733,50 +730,60 @@ function sendStreamingNotificationEvent(username, data, socket) {
   try {
     // gets the data about the streaming source based on the user authorizations
     var streamingData = getFilteredStreamData(username, data.callerIdentity.callerNum);
-
-    // check if the user has the relative streaming authorization. If he hasn't the authorization,
-    // the "streamingData" is an empty object. So sends the default notification for a generic call
+    // check if the user has the relative streaming authorization. If he does
+    // not have the authorization, the "streamingData" is an empty object. So
+    // it sends the default notification for a generic call
     if (Object.keys(streamingData).length === 0) {
       sendCallNotificationEvent(username, data, socket);
       return;
     }
 
-    // always add this informations without filter them
-    var params = [
-      'description=', escape(streamingData.description),
-      '&ctiProto=', ctiProto,
-      '&open=', streamingData.open,
-      '&url=', escape(streamingData.url),
-      '&webrtc=', compAstProxy.isExtenWebrtc(data.dialingExten),
-      '&id=', streamingData.id
-    ].join('');
-
-    // add parameters to the HTTP GET url
-    var url = streamingNotifTemplatePath + '?' + params;
-
-    // create the id to identify the notification popup
-    var notifid = data.callerIdentity.numCalled + '<-' + data.callerIdentity.callerNum;
-
-    var notif = {
-      notification: {
-        id: notifid,
-        url: url,
-        width: streamNotifSize.width,
-        height: streamNotifSize.height,
-        action: 'open',
-        closetimeout: notifCloseTimeout
-      }
-    };
-
-    socket.write(JSON.stringify(notif), ENCODING, function() {
+    compStreaming.getVideoSample(streamingData.id, function(err, videoSample) {
       try {
-        logger.log.info(IDLOG, 'sent "open streaming notification" to ' + socket.username + ' with socket.id ' + socket.id);
+        if (err) {
+          logger.log.error(IDLOG, 'getting video sample of "' + streamingData.id + '": ' + err);
+          return;
+        }
+        // always add this informations without filter them
+        var params = [
+          'description=', escape(streamingData.description),
+          '&videoSample=', videoSample,
+          '&ctiProto=', ctiProto,
+          '&open=', streamingData.open,
+          '&url=', escape(streamingData.url),
+          '&webrtc=', compUser.isExtenWebrtc(data.dialingExten),
+          '&id=', streamingData.id
+        ].join('');
+
+        // add parameters to the HTTP GET url
+        var url = streamingNotifTemplatePath + '?' + params;
+
+        // create the id to identify the notification popup
+        var notifid = data.callerIdentity.numCalled + '<-' + data.callerIdentity.callerNum;
+
+        var notif = {
+          notification: {
+            id: notifid,
+            url: url,
+            width: streamNotifSize.width,
+            height: streamNotifSize.height,
+            action: 'open',
+            closetimeout: notifCloseTimeout
+          }
+        };
+
+        socket.write(JSON.stringify(notif), ENCODING, function() {
+          try {
+            logger.log.info(IDLOG, 'sent "open streaming notification" to ' + socket.username + ' with socket.id ' + socket.id);
+          } catch (err1) {
+            logger.log.error(IDLOG, err1.stack);
+          }
+        });
 
       } catch (err1) {
         logger.log.error(IDLOG, err1.stack);
       }
     });
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }

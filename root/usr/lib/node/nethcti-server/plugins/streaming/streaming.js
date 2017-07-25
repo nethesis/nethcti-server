@@ -499,6 +499,91 @@ function reload() {
   }
 }
 
+/**
+ * Check if the endpoint extension is a streaming source.
+ *
+ * @method isExtenStreamingSource
+ * @param {string} extenId The extension endpoint identifier
+ * @return {boolean} True if the extension endpoint is a steraming source.
+ */
+function isExtenStreamingSource(extenId) {
+  try {
+    if (typeof extenId !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var stream;
+    for (stream in streamings) {
+      if (streamings[stream].getExtension() === extenId) {
+        return true;
+      }
+    }
+    return false;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
+ * Returns the streaming source in JSON format or an empty object on error.
+ *
+ * @method getSourceJSONByExten
+ * @param {string} extenId The extension endpoint identifier
+ * @return {object} The streaming source in JSON format.
+ */
+function getSourceJSONByExten(extenId) {
+  try {
+    if (typeof extenId !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var stream;
+    for (stream in streamings) {
+      if (streamings[stream].getExtension() === extenId) {
+        return streamings[stream].toJSON();
+      }
+    }
+    return {};
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return {};
+  }
+}
+
+/**
+ * Return the streaming image.
+ *
+ * @method getVideoSample
+ * @param {string} id The streaming source identifier
+ * @param {function} cb The callback function
+ */
+function getVideoSample(id, cb) {
+  try {
+    if (typeof id !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (streamings[id]) {
+      streamings[id].getSample(function(err, id, img) {
+        try {
+          if (err) {
+            logger.log.error(IDLOG, 'getting video sample for source "' + id + '": ' + err)
+          }
+          cb(err, img);
+        } catch (err1) {
+          logger.log.error(IDLOG, err1.stack);
+          cb(err1);
+        }
+      });
+    } else {
+      var str = 'getting source video sample: stream "' + id + '" not found';
+      logger.log.warn(IDLOG, str);
+      cb(str);
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
 // public interface
 exports.EVT_RELOADED = EVT_RELOADED;
 exports.on = on;
@@ -508,11 +593,14 @@ exports.start = start;
 exports.open = open;
 exports.config = config;
 exports.setLogger = setLogger;
+exports.getVideoSample = getVideoSample;
 exports.setCompAstProxy = setCompAstProxy;
 exports.setCompAuthorization = setCompAuthorization;
 exports.getAllStreamingSources = getAllStreamingSources;
 exports.subscribeSource = subscribeSource;
 exports.unsubscribeSource = unsubscribeSource;
+exports.getSourceJSONByExten = getSourceJSONByExten;
+exports.isExtenStreamingSource = isExtenStreamingSource;
 exports.EVT_STREAMING_SOURCE_CHANGED = EVT_STREAMING_SOURCE_CHANGED;
 exports.EVT_STREAMING_SOURCE_SUBSCRIBED = EVT_STREAMING_SOURCE_SUBSCRIBED;
 exports.EVT_STREAMING_SOURCE_UNSUBSCRIBED = EVT_STREAMING_SOURCE_UNSUBSCRIBED;

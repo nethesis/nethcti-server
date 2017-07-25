@@ -41,7 +41,7 @@ module.exports = function(options, imports, register) {
       comNethctiTcp.setAstProxy(imports.astProxy);
       comNethctiTcp.setCompAuthorization(imports.authorization);
       comNethctiTcp.setCompConfigManager(imports.configManager);
-      // comNethctiTcp.setCompStreaming(imports.streaming);
+      comNethctiTcp.setCompStreaming(imports.streaming);
       comNethctiTcp.start();
     });
   } catch (err) {

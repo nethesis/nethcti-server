@@ -1365,6 +1365,41 @@ function getAllowedStreamingSources(username) {
 }
 
 /**
+ * Return true if the specified user has the authorization for the specified
+ * streaming source.
+ *
+ * @method authorizeStreamingSourceUser
+ * @param {string} username The username
+ * @param {string} streamingId The streaming source identifier
+ * @return {boolean} True if the user has the authorization for the specified
+ *                   streaming source.
+ */
+function authorizeStreamingSourceUser(username, streamingId) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var sid;
+    var profid = getUserProfileId(username);
+
+    if (profiles[profid].macro_permissions.streaming.value === true) {
+      for (sid in profiles[profid].macro_permissions.streaming.permissions) {
+        if (sid === streamingId &&
+          profiles[profid].macro_permissions.streaming.permissions[sid].value === true) {
+
+          return true;
+        }
+      }
+    }
+    return false;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    // in the case of exception it returns false for security reasons
+    return false;
+  }
+}
+
+/**
  * Returns all the authorized groups of the operator panel for the specified remote site.
  *
  * @method getAuthorizedRemoteOperatorGroups
@@ -1806,6 +1841,7 @@ exports.getAllUsersAuthorizations = getAllUsersAuthorizations;
 exports.authorizeCustomerCardUser = authorizeCustomerCardUser;
 exports.authorizePresencePanelUser = authorizePresencePanelUser;
 exports.authorizeAdminOffhourUser = authorizeAdminOffhourUser;
+exports.authorizeStreamingSourceUser = authorizeStreamingSourceUser;
 exports.authorizeAdminParkingsUser = authorizeAdminParkingsUser;
 exports.authorizeAdminTransferUser = authorizeAdminTransferUser;
 exports.authorizeAdminQueuesUser = authorizeAdminQueuesUser;

@@ -182,11 +182,11 @@ exports.Streaming = function(data) {
   }
 
   /**
-   * Get the sample.
+   * Return the video sample in base64 format.
    *
    * @method getSample
    * @param {function} cb The callback function
-   * @return {object} The sample from video source.
+   * @return {object} The sample from video source in base64 format.
    */
   function getSample(cb) {
     if (url) {
@@ -195,11 +195,15 @@ exports.Streaming = function(data) {
         encoding: null,
         timeout: 2000
       }, function(err, res, body) {
-        if (!err && res.statusCode == 200) {
+        if (!err && res.statusCode === 200) {
           var data = "data:" + res.headers["content-type"] + ";base64," + new Buffer(body).toString('base64');
           cb(err, id, data);
+        } else {
+          cb(err);
         }
       });
+    } else {
+      cb('url not found');
     }
   }
 
