@@ -287,6 +287,7 @@ var compConfigManager;
         * 1. [`astproxy/unmute_record`](#unmute_recordpost)
         * 1. [`astproxy/start_spy`](#start_spypost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
+        * 1. [`astproxy/pickup_qwaitcaller`](#pickup_qwaitcallerpost)
         * 1. [`astproxy/queuemember_add`](#queuemember_addpost)
         * 1. [`astproxy/inout_dyn_queues`](#inout_dyn_queuespost)
         * 1. [`astproxy/queuemember_pause`](#queuemember_pausepost)
@@ -523,6 +524,20 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="pickup_qwaitcallerpost">**`astproxy/pickup_qwaitcaller`**</a>
+        *
+        * Pickup a waiting caller from a queue. The request must contains the following parameters:
+        *
+        * * `queue: the queue identifier`
+        * * `waitCallerId: the parking identifier`
+        * * `destId: the extension identifier that pickup the waiting caller`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "queue": "401", "waitCallerId": "IAX2/214-2273", "destId": "200" }
+        *
+        * ---
+        *
         * ### <a id="pickup_parkingpost">**`astproxy/pickup_parking`**</a>
         *
         * Pickup the specified parking. The request must contains the following parameters:
@@ -752,6 +767,7 @@ var compConfigManager;
          *   @param {string} queuemember_add       Adds the specified extension to the queue
          *   @param {string} inout_dyn_queues      Alternates the logon and logout of the extension in all the queues for which it's a dynamic member
          *   @param {string} queuemember_pause     Pause the specified extension from receive calls from the queue
+         *   @param {string} pickup_qwaitcaller    Pickup a waiting caller from a queue
          *   @param {string} queuemember_remove    Removes the specified extension from the queue
          *   @param {string} queuemember_unpause   Unpause the specified extension to receive calls from the queue
          *   @param {string} blindtransfer_queue   Transfer a waiting caller from a queue to the destination with blind type
@@ -796,6 +812,7 @@ var compConfigManager;
           'queuemember_add',
           'inout_dyn_queues',
           'queuemember_pause',
+          'pickup_qwaitcaller',
           'queuemember_remove',
           'queuemember_unpause',
           'blindtransfer_queue',
@@ -3049,7 +3066,8 @@ var compConfigManager;
                 logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
-            });
+            }
+          );
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -3770,6 +3788,77 @@ var compConfigManager;
       },
 
       /**
+       * Pickup a waiting caller from a queue with the following REST API:
+       *
+       *     POST pickup_qwaitcaller
+       *
+       * @method pickup_qwaitcaller
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      pickup_qwaitcaller: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+
+          // check parameters
+          if (typeof req.params !== 'object' ||
+            typeof req.params.queue !== 'string' ||
+            typeof req.params.waitCallerId !== 'string' ||
+            typeof req.params.destId !== 'string') {
+
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+
+          // check if the user has the authorization to pickup the specified queue waiting caller
+          if (compAuthorization.authorizeAdminPickupUser(username) === true) {
+            logger.log.info(IDLOG, 'picking up qWaitCaller "' + req.params.waitCallerId + '" from queue "' + req.params.queue + '": admin pickup authorization successful for user "' + username + '"');
+          } else {
+            logger.log.warn(IDLOG, 'picking up qWaitCaller "' + req.params.waitCallerId + '" from queue "' + req.params.queue + '": admin pickup authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          // check if the destination endpoint is owned by the user
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
+            logger.log.warn(IDLOG, 'pickup qWaitCaller "' + req.params.waitCallerId + '" from queue "' + req.params.queue + '" by user "' + username + '" has been failed: ' +
+              ' the destination extension "' + req.params.destId + '" is not owned by the user');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          } else {
+            logger.log.info(IDLOG, 'pickup qWaitCaller "' + req.params.waitCallerId + '" from queue "' + req.params.queue + '": the destination extension "' +
+              req.params.destId + '" is owned by "' + username + '"');
+          }
+          var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
+          compAstProxy.pickupQueueWaitingCaller(
+            req.params.queue,
+            req.params.waitCallerId,
+            req.params.destId,
+            extForCtx,
+            function(err) {
+              try {
+                if (err) {
+                  logger.log.warn(IDLOG, 'pickup qWaitCaller "' + req.params.waitCallerId + '" from queue "' + req.params.queue + '" by user "' + username + '" with ' +
+                    ' extension "' + req.params.destId + '" has been failed');
+                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                  return;
+                }
+                logger.log.info(IDLOG, 'pickup qWaitCaller "' + req.params.waitCallerId + '" from queue "' + req.params.queue + '" has been successful by user "' + username +
+                  '" with extension "' + req.params.destId + '"');
+                compUtil.net.sendHttp200(IDLOG, res);
+              } catch (error) {
+                logger.log.error(IDLOG, error.stack);
+                compUtil.net.sendHttp500(IDLOG, res, error.toString());
+              }
+            }
+          );
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
        * Logon the extension in the queue in which is dynamic member with the following REST API:
        *
        *     POST queuemember_add
@@ -4296,6 +4385,7 @@ var compConfigManager;
     exports.inout_dyn_queues = astproxy.inout_dyn_queues;
     exports.remote_extensions = astproxy.remote_extensions;
     exports.queuemember_pause = astproxy.queuemember_pause;
+    exports.pickup_qwaitcaller = astproxy.pickup_qwaitcaller;
     exports.queuemember_remove = astproxy.queuemember_remove;
     exports.queuemember_unpause = astproxy.queuemember_unpause;
     exports.blindtransfer_queue = astproxy.blindtransfer_queue;

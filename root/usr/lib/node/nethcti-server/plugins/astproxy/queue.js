@@ -139,6 +139,28 @@ exports.Queue = function(queueNum) {
   }
 
   /**
+   * Return a waiting caller.
+   *
+   * @method getWaitingCaller
+   * @param {string} id The waiting caller identifier
+   * @return {object} A waiting caller or undefined.
+   */
+  function getWaitingCaller(id) {
+    return waitingCallers[id];
+  }
+
+  /**
+   * Returns true if the waiting caller exists.
+   *
+   * @method waitingCallerExists
+   * @param {string} id The waiting caller identifier
+   * @return {boolean} True if the waiting caller exists.
+   */
+  function waitingCallerExists(id) {
+    return waitingCallers[id] ? true : false;
+  }
+
+  /**
    * Adds the queue member to the private _members_ object property.
    * If the queue member already exists, it will be overwritten.
    *
@@ -435,7 +457,9 @@ exports.Queue = function(queueNum) {
     getAvgTalkTime: getAvgTalkTime,
     setAvgTalkTime: setAvgTalkTime,
     addWaitingCaller: addWaitingCaller,
+    getWaitingCaller: getWaitingCaller,
     removeWaitingCaller: removeWaitingCaller,
+    waitingCallerExists: waitingCallerExists,
     getAllWaitingCallers: getAllWaitingCallers,
     getCompletedCallsCount: getCompletedCallsCount,
     setCompletedCallsCount: setCompletedCallsCount,
