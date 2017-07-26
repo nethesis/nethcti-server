@@ -37,6 +37,7 @@ module.exports = function(options, imports, register) {
       createAlarm: astProxy.proxyLogic.createAlarm,
       deleteAlarm: astProxy.proxyLogic.deleteAlarm,
       getConference: astProxy.proxyLogic.getConference,
+      pickupQueueWaitingCaller: astProxy.proxyLogic.pickupQueueWaitingCaller,
       getEchoCallDestination: astProxy.proxyLogic.getEchoCallDestination,
       getMeetmeConfCode: astProxy.proxyLogic.getMeetmeConfCode,
       unmuteUserMeetmeConf: astProxy.proxyLogic.unmuteUserMeetmeConf,

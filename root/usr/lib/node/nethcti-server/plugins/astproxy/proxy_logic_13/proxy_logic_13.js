@@ -6016,6 +6016,77 @@ function pickupParking(parking, destId, extForCtx, cb) {
 /**
  * Pickup a conversation.
  *
+ * @method pickupQueueWaitingCaller
+ * @param {string} queue The queue identifier
+ * @param {string} waitCallerId The queue waiting caller identifier
+ * @param {string} destId The endpoint identifier that pickup the conversation
+ * @param {string} extForCtx The extension identifier used to get the context
+ * @param {function} cb The callback function
+ */
+function pickupQueueWaitingCaller(queue, waitCallerId, destId, extForCtx, cb) {
+  try {
+    // check parameters
+    if (typeof cb !== 'function' ||
+      typeof queue !== 'string' ||
+      typeof destId !== 'string' ||
+      typeof extForCtx !== 'string' ||
+      typeof waitCallerId !== 'string') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var str;
+    if (!queues[queue]) {
+      str = 'picking up qWaitCaller: queue "' + queue + '" does not exist';
+      logger.log.warn(IDLOG, str);
+      cb(str);
+      return;
+    }
+    if (!queues[queue].waitingCallerExists(waitCallerId)) {
+      str = 'picking up qWaitCaller: waitingCaller "' + waitCallerId + '" does not exist';
+      logger.log.warn(IDLOG, str);
+      cb(str);
+      return;
+    }
+    if (!extensions[destId]) {
+      str = 'picking up qWaitCaller: destId "' + destId + '" does not exist';
+      logger.log.warn(IDLOG, str);
+      cb(str);
+      return;
+    }
+    if (!extensions[extForCtx]) {
+      str = 'no extension to get context for pickup qWaitCaller (extForCtx="' + extForCtx + '")';
+      logger.log.warn(IDLOG, str);
+      cb(str);
+      return;
+    }
+    var ch = (queues[queue].getWaitingCaller(waitCallerId)).getChannel();
+    if (!ch) {
+      str = 'picking up qWaitCaller: no channel to pickup (ch: ' + ch + ')';
+      logger.log.warn(IDLOG, str);
+      cb(str);
+      return;
+    }
+    var ctx = extensions[extForCtx].getContext();
+    logger.log.info(IDLOG, 'pickup waiting caller "' + waitCallerId + '" (ch: ' + ch + ') of queue "' + queue + '" from exten "' +
+      destId + '" with context ' + ctx);
+    astProxy.doCmd({
+      command: 'redirectChannel',
+      context: ctx,
+      chToRedirect: ch,
+      to: destId
+    }, function(err) {
+      cb(err);
+      pickupQueueWaitingCallerCb(err);
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Pickup a conversation.
+ *
  * @method pickupConversation
  * @param {string} endpointId The endpoint identifier (e.g. the extension number)
  * @param {string} destId The endpoint identifier that pickup the conversation
@@ -6357,6 +6428,25 @@ function hangupChannel(endpointType, endpointId, ch, cb) {
 }
 
 /**
+ * This is the callback of the pickup queue waiting caller operation.
+ *
+ * @method pickupQueueWaitingCallerCb
+ * @param {object} err The error object of the operation
+ * @private
+ */
+function pickupQueueWaitingCallerCb(err) {
+  try {
+    if (err) {
+      logger.log.error(IDLOG, 'pickup queue waiting caller failed: ' + err.toString());
+    } else {
+      logger.log.info(IDLOG, 'pickup queue waiting caller successfully');
+    }
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
+
+/**
  * This is the callback of the pickup operation.
  *
  * @method pickupConvCb
@@ -6368,7 +6458,7 @@ function pickupConvCb(err) {
     if (err) {
       logger.log.error(IDLOG, 'pickup call failed: ' + err.toString());
     } else {
-      logger.log.info(IDLOG, 'pickup call succesfully');
+      logger.log.info(IDLOG, 'pickup call successfully');
     }
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
@@ -8905,6 +8995,7 @@ exports.getBaseCallRecAudioPath = getBaseCallRecAudioPath;
 exports.queueMemberPauseUnpause = queueMemberPauseUnpause;
 exports.EVT_MEETME_CONF_CHANGED = EVT_MEETME_CONF_CHANGED;
 exports.EVT_QUEUE_MEMBER_CHANGED = EVT_QUEUE_MEMBER_CHANGED;
+exports.pickupQueueWaitingCaller = pickupQueueWaitingCaller;
 exports.evtNewQueueWaitingCaller = evtNewQueueWaitingCaller;
 exports.evtConversationConnected = evtConversationConnected;
 exports.unmuteRecordConversation = unmuteRecordConversation;

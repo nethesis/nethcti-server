@@ -22,8 +22,18 @@ exports.QueueWaitingCaller = function(data) {
     typeof data.callerNum !== 'string' ||
     typeof data.callerName !== 'string') {
 
-    throw new Error('wrong parameter');
+    throw new Error('wrong parameters: ' + JSON.stringify(arguments));
   }
+
+  /**
+   * The identifier.
+   *
+   * @property id
+   * @type {string}
+   * @required
+   * @private
+   */
+  var id = data.channel;
 
   /**
    * The caller number.
@@ -179,6 +189,7 @@ exports.QueueWaitingCaller = function(data) {
    * Returns the JSON representation of the object.
    *
    *     {
+   *         id:          "IAX2/214-2273",
    *         num:         "214",
    *         name:        "Alessandro",
    *         queue:       "401",
@@ -197,6 +208,7 @@ exports.QueueWaitingCaller = function(data) {
     updateWaiting();
 
     return {
+      id: id,
       num: privacyStr ? (num.slice(0, -privacyStr.length) + privacyStr) : num,
       name: privacyStr ? privacyStr : name,
       queue: queue,
