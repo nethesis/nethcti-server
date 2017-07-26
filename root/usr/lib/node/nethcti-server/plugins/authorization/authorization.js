@@ -314,8 +314,11 @@ function authorizePhonebookUser(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    return profiles[getUserProfileId(username)].macro_permissions.phonebook.value === true;
+    var profid = getUserProfileId(username);
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.phonebook.value === true
+    );
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -341,6 +344,7 @@ function authorizeAdminPhonebookUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.phonebook.value === true &&
       profiles[profid].macro_permissions.phonebook.permissions.ad_phonebook.value === true
     );
@@ -369,6 +373,7 @@ function authorizeRecordingUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.settings.value === true &&
       profiles[profid].macro_permissions.settings.permissions.recording.value === true
     );
@@ -420,6 +425,7 @@ function authorizeAdminRecordingUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.presence_panel.value === true &&
       profiles[profid].macro_permissions.presence_panel.permissions.ad_recording.value === true
     );
@@ -494,6 +500,7 @@ function authorizeAdminQueuesUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.queue_agent.value === true &&
       profiles[profid].macro_permissions.queue_agent.permissions.ad_queue_agent.value === true
     );
@@ -567,6 +574,7 @@ function authorizeAdminHangupUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.presence_panel.value === true &&
       profiles[profid].macro_permissions.presence_panel.permissions.hangup.value === true
     );
@@ -595,6 +603,7 @@ function authorizeAdminPickupUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.presence_panel.value === true &&
       profiles[profid].macro_permissions.presence_panel.permissions.pickup.value === true
     );
@@ -622,7 +631,10 @@ function authorizeCdrUser(username) {
     }
 
     var profid = getUserProfileId(username);
-    return profiles[profid].macro_permissions.cdr.value === true;
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.cdr.value === true
+    );
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -668,7 +680,7 @@ function getUserProfileId(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameter: ' + username);
     }
-    return mapUserProfile[username].profile_id;
+    return (mapUserProfile[username] && mapUserProfile[username].profile_id) ? mapUserProfile[username].profile_id : undefined;
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -691,6 +703,7 @@ function isPrivacyEnabled(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.settings.value === true &&
       profiles[profid].macro_permissions.settings.permissions.privacy.value === true
     );
@@ -741,6 +754,7 @@ function authorizeSpyUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.presence_panel.value === true &&
       profiles[profid].macro_permissions.presence_panel.permissions.spy.value === true
     );
@@ -770,6 +784,7 @@ function authorizeIntrudeUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.presence_panel.value === true &&
       profiles[profid].macro_permissions.presence_panel.permissions.intrude.value === true
     );
@@ -799,6 +814,7 @@ function authorizeCfUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.settings.value === true &&
       profiles[profid].macro_permissions.settings.permissions.call_forward.value === true
     );
@@ -828,6 +844,7 @@ function authorizeDndUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.settings.value === true &&
       profiles[profid].macro_permissions.settings.permissions.dnd.value === true
     );
@@ -853,8 +870,11 @@ function authorizePresencePanelUser(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameter: ' + username);
     }
-    return profiles[getUserProfileId(username)].macro_permissions.presence_panel.value === true;
-
+    var profid = getUserProfileId(username);
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.presence_panel.value === true
+    );
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
@@ -902,6 +922,7 @@ function authorizeAdminTransferUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.presence_panel.value === true &&
       profiles[profid].macro_permissions.presence_panel.permissions.transfer.value === true
     );
@@ -931,6 +952,7 @@ function authorizeOpParkingsUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.settings.value === true &&
       profiles[profid].macro_permissions.settings.permissions.parkings.value === true
     );
@@ -1004,8 +1026,11 @@ function authorizeQueuesUser(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    return profiles[getUserProfileId(username)].macro_permissions.queue_agent.value === true;
-
+    var profid = getUserProfileId(username);
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.queue_agent.value === true
+    );
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
@@ -1067,6 +1092,7 @@ function authorizeAdminCdrUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.cdr.value === true &&
       profiles[profid].macro_permissions.cdr.permissions.ad_cdr.value === true
     );
@@ -1096,6 +1122,7 @@ function authorizeAdminParkingsUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.presence_panel.value === true &&
       profiles[profid].macro_permissions.presence_panel.permissions.ad_parking.value === true
     );
@@ -1125,6 +1152,7 @@ function authorizeAdminPhoneUser(username) {
     var profid = getUserProfileId(username);
 
     return (
+      profiles[profid] !== undefined &&
       profiles[profid].macro_permissions.presence_panel.value === true &&
       profiles[profid].macro_permissions.presence_panel.permissions.ad_phone.value === true
     );
@@ -1261,8 +1289,11 @@ function authorizeCustomerCardUser(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    return profiles[getUserProfileId(username)].macro_permissions.customer_card.value === true;
-
+    var profid = getUserProfileId(username);
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.customer_card.value === true
+    );
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
@@ -1320,8 +1351,11 @@ function authorizeStreamingUser(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    return profiles[getUserProfileId(username)].macro_permissions.streaming.value === true;
-
+    var profid = getUserProfileId(username);
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.streaming.value === true
+    );
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
@@ -1346,7 +1380,9 @@ function getAllowedStreamingSources(username) {
     var arr = [];
     var profid = getUserProfileId(username);
 
-    if (profiles[profid].macro_permissions.streaming.value === true) {
+    if (profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.streaming.value === true) {
+
       for (permissionId in profiles[profid].macro_permissions.streaming.permissions) {
         if (profiles[profid].macro_permissions.streaming.permissions[permissionId].value === true) {
           arr.push({
@@ -1382,7 +1418,9 @@ function authorizeStreamingSourceUser(username, streamingId) {
     var sid;
     var profid = getUserProfileId(username);
 
-    if (profiles[profid].macro_permissions.streaming.value === true) {
+    if (profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.streaming.value === true) {
+
       for (sid in profiles[profid].macro_permissions.streaming.permissions) {
         if (sid === streamingId &&
           profiles[profid].macro_permissions.streaming.permissions[sid].value === true) {
@@ -1483,7 +1521,9 @@ function authorizedCustomerCards(username) {
     var arr = [];
     var profid = getUserProfileId(username);
 
-    if (profiles[profid].macro_permissions.customer_card.value === true) {
+    if (profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.customer_card.value === true) {
+
       for (permissionId in profiles[profid].macro_permissions.customer_card.permissions) {
         if (profiles[profid].macro_permissions.customer_card.permissions[permissionId].value === true) {
 
