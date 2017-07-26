@@ -3,6 +3,9 @@
 include_once('/etc/freepbx.conf');
 global $amp_conf;
 $asteriskcdrdb = array();
+if (empty($amp_conf['CDRDBNAME'])) {
+    $amp_conf['CDRDBNAME'] = 'asteriskcdrdb';
+}
 foreach (array('history_call','cel','voicemail','queue_log') as $dbobj) {
     $asteriskcdrdb[$dbobj] = array();
     $asteriskcdrdb[$dbobj]['dbhost'] = 'localhost';
