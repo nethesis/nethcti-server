@@ -536,6 +536,8 @@ var compConfigManager;
         *
         *     { "queue": "401", "waitCallerId": "IAX2/214-2273", "destId": "200" }
         *
+        * <b style="color: red"><i>NOTE: this method is discouraged because it can cause wrong data in queue statistics!</i></b>
+        *
         * ---
         *
         * ### <a id="pickup_parkingpost">**`astproxy/pickup_parking`**</a>
