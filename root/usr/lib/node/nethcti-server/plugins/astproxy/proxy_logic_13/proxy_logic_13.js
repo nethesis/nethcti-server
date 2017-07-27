@@ -3084,14 +3084,15 @@ function extPjsipDetails(err, resp) {
       throw new Error('wrong parameter: ' + JSON.stringify(arguments));
     }
     // set the extension information
-    extensions[resp.exten].setIp(resp.ip);
-    extensions[resp.exten].setPort(resp.port);
-    extensions[resp.exten].setName(staticDataExtens.names[resp.exten]);
-    extensions[resp.exten].setContext(resp.context);
-    extensions[resp.exten].setSipUserAgent(resp.sipuseragent);
-    extensions[resp.exten].setStatus(resp.status);
-    logger.log.info(IDLOG, 'set pjsip details for ext "' + resp.exten + '"');
-
+    if (extensions[resp.exten]) {
+      extensions[resp.exten].setIp(resp.ip);
+      extensions[resp.exten].setPort(resp.port);
+      extensions[resp.exten].setName(staticDataExtens.names[resp.exten]);
+      extensions[resp.exten].setContext(resp.context);
+      extensions[resp.exten].setSipUserAgent(resp.sipuseragent);
+      extensions[resp.exten].setStatus(resp.status);
+      logger.log.info(IDLOG, 'set pjsip details for ext "' + resp.exten + '"');
+    }
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
   }
