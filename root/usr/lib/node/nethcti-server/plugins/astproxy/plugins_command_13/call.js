@@ -21,9 +21,9 @@ var IDLOG = '[call]';
  * @property CALL_TIMEOUT
  * @type {number}
  * @private
- * @default 30000
+ * @default 15000
  */
-var CALL_TIMEOUT = 30000;
+var CALL_TIMEOUT = 15000;
 
 /**
  * Call failure reasons.
@@ -97,7 +97,7 @@ var FAIL_REASON = {
      *
      * Use it with _astproxy_ module as follow:
      *
-     *     ast_proxy.doCmd({ command: 'call', context: 'from-internal', from: '214', to: '12345' }, function (res) {
+     *     ast_proxy.doCmd({ command: 'call', chanType: 'pjsip', context: 'from-internal', from: '214', to: '12345' }, function (res) {
      *         // some code
      *     });
      *
@@ -121,7 +121,7 @@ var FAIL_REASON = {
           // action for asterisk
           var act = {
             Action: 'Originate',
-            Channel: 'Local/' + args.from + '@' + args.context, // the caller
+            Channel: args.chanType + '/' + args.from, // the caller
             Context: args.context,
             Priority: 1,
             CallerID: args.from,

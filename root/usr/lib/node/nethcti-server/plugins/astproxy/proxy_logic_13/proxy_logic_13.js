@@ -5689,6 +5689,7 @@ function call(endpointType, endpointId, to, extenForContext, cb) {
       command: 'call',
       context: extensions[extenForContext].getContext(),
       from: endpointId,
+      chanType: extensions[endpointId].getChanType(),
       to: to
     }, function(error) {
       cb(error);
@@ -6116,6 +6117,7 @@ function pickupConversation(endpointId, destId, extForCtx, cb) {
       astProxy.doCmd({
         command: 'call',
         context: ctx,
+        chanType: extensions[endpointId].getChanType(),
         from: destId,
         to: getPickupCode() + endpointId
       }, function(err) {
