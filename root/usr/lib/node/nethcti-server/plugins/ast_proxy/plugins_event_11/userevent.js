@@ -64,6 +64,14 @@ var astProxy;
                         astProxy.proxyLogic.evtExtenDndChanged(data.agent, enabled);
 
                     }
+                    if (data.agent &&
+                        data.userevent === 'UpdateDB' &&
+                        data.key   === 'DNDTOGGLE' &&
+                        data.event === 'UserEvent') {
+
+                        logger.info(IDLOG, 'received event ' + data.event + ' with ' + data.key + ' for exten ' + data.agent);
+                        astProxy.proxyLogic.evtExtenDndToggle(data.agent);
+                    }
                     // it is the call forward event
                     else if (data.agent &&
                              data.userevent === 'UpdateDB' && data.key   === 'CF' &&
