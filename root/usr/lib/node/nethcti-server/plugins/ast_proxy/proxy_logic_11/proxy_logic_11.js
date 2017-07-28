@@ -3182,6 +3182,34 @@ function evtNewExternalCall(number) {
 /**
 * Updates the extension dnd status.
 *
+* @method evtExtenDndToggle
+* @param {string} exten The extension number
+* @private
+*/
+function evtExtenDndToggle(exten) {
+    try {
+        // check parameters
+        if (typeof exten !== 'string') {
+            throw new Error('wrong parameters');
+        }
+        if (extensions[exten]) { // the exten is an extension
+            var value = !(extensions[exten].getDnd());
+            extensions[exten].setDnd(value);
+            logger.info(IDLOG, 'set dnd status to ' + value + ' for extension ' + exten);
+            // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+            astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+        } else {
+            logger.warn(IDLOG, 'try to set dnd status of non existent extension ' + exten);
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Updates the extension dnd status.
+*
 * @method evtExtenDndChanged
 * @param {string}  exten   The extension number
 * @param {boolean} enabled True if the dnd is enabled
@@ -7026,6 +7054,7 @@ exports.hangupConversation              = hangupConversation;
 exports.evtNewExternalCall              = evtNewExternalCall;
 exports.pickupConversation              = pickupConversation;
 exports.evtExtenDndChanged              = evtExtenDndChanged;
+exports.evtExtenDndToggle               = evtExtenDndToggle;
 exports.muteUserMeetmeConf              = muteUserMeetmeConf;
 exports.isExtenInMeetmeConf             = isExtenInMeetmeConf;
 exports.evtRemoveMeetmeConf             = evtRemoveMeetmeConf;
