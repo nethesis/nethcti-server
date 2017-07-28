@@ -394,7 +394,7 @@ function getQueueRecallQueryTable(type, val) {
 
         var query = [
          '(',
-               'SELECT TIMESTAMP(time) AS time,',
+               'SELECT DISTINCT(TIMESTAMP(time)) AS time,',
                      ' queuename,',
                      ' "IN" AS direction,',
                      ' "TIMEOUT" AS action,',
@@ -413,7 +413,7 @@ function getQueueRecallQueryTable(type, val) {
 
          ' UNION ALL ',
 
-               'SELECT TIMESTAMP(time) AS time,',
+               'SELECT DISTINCT(TIMESTAMP(time)) AS time,',
                      ' queuename,',
                      ' "IN" AS direction,',
                      ' "DONE" AS action,',
@@ -433,7 +433,7 @@ function getQueueRecallQueryTable(type, val) {
 
          ' UNION ALL ',
 
-               'SELECT TIMESTAMP(calldate) AS time,',
+               'SELECT DISTINCT(TIMESTAMP(calldate)) AS time,',
                      ' l.queuename as queuename,',
                      ' "OUT" AS direction,',
                      ' IF (disposition="ANSWERED", "DONE", disposition) AS action,',
