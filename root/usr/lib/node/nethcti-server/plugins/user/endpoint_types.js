@@ -14,7 +14,8 @@
  * @type {object}
  * @readOnly
  * @default {
-    email:     "email",
+    email: "email",
+    jabber: "jabber",
     extension: "extension",
     cellphone: "cellphone",
     voicemail: "voicemail",
@@ -23,7 +24,7 @@
  */
 var TYPES = {
   email: 'email',
-  // jabber: 'jabber',
+  jabber: 'jabber',
   // calendar: 'calendar',
   extension: 'extension',
   cellphone: 'cellphone',

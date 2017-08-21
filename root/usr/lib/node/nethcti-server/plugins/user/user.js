@@ -24,7 +24,7 @@ var EndpointMainExtension = require('./endpointMainExtension').EndpointMainExten
  * @return {object}       The user object.
  * @constructor
  */
-exports.User = function(uname, na) {
+exports.User = function (uname, na) {
   if (typeof uname !== 'string' || typeof na !== 'string') {
     throw new Error('wrong parameter');
   }
@@ -327,8 +327,8 @@ exports.User = function(uname, na) {
     var newEndpoint;
     if (type === endpointTypes.TYPES.email) {
       newEndpoint = new EndpointEmail(id);
-      // } else if (type === endpointTypes.TYPES.jabber) {
-      //   newEndpoint = new EndpointJabber(id);
+    } else if (type === endpointTypes.TYPES.jabber) {
+      newEndpoint = new EndpointJabber(id);
       // } else if (type === endpointTypes.TYPES.calendar) {
       //   newEndpoint = new EndpointCalendar(id);
     } else if (type === endpointTypes.TYPES.extension) {
