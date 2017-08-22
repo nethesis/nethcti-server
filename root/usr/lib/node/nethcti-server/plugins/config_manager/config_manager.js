@@ -456,7 +456,7 @@ function configChat(path) {
   try {
     // check parameter
     if (typeof path !== 'string') {
-      throw new TypeError('wrong parameter');
+      throw new TypeError('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check file presence
@@ -496,7 +496,7 @@ function config(path) {
   try {
     // check parameter
     if (typeof path !== 'string') {
-      throw new TypeError('wrong parameter');
+      throw new TypeError('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check file presence
@@ -782,7 +782,7 @@ function configPhoneUrls(path) {
   try {
     // check parameter
     if (typeof path !== 'string') {
-      throw new TypeError('wrong parameter');
+      throw new TypeError('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check file presence
@@ -825,7 +825,7 @@ function getCallUrlFromAgent(agent) {
   try {
     // check parameter
     if (typeof agent !== 'string') {
-      throw new TypeError('wrong parameter');
+      throw new TypeError('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var re;
@@ -920,13 +920,44 @@ function phoneSupportDtmfHttpApi(agent) {
   try {
     // check parameter
     if (typeof agent !== 'string') {
-      throw new TypeError('wrong parameter');
+      throw new TypeError('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var re;
     for (re in phoneUrls) {
       // case insensitive 'i'
       if (agent.search(new RegExp(re, 'i')) >= 0 && phoneUrls[re].urls.dtmf) {
+        return true;
+      }
+    }
+    return false;
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
+ * Returns true if the specified phone supports hold by HTTP api.
+ * It sequentially test a match of specified agent with the keys of _phoneUrls_
+ * object. If the match exists than returns a true value, false otherwise.
+ *
+ * @method phoneSupportHoldHttpApi
+ * @param  {string}  agent The phone user agent
+ * @return {boolean} True is the phone supports HTTP api.
+ */
+function phoneSupportHoldHttpApi(agent) {
+  try {
+    // check parameter
+    if (typeof agent !== 'string') {
+      throw new TypeError('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    var re;
+    for (re in phoneUrls) {
+      // case insensitive 'i'
+      if (agent.search(new RegExp(re, 'i')) >= 0 && phoneUrls[re].urls.hold_unhold) {
         return true;
       }
     }
@@ -951,7 +982,7 @@ function phoneSupportHttpApi(agent) {
   try {
     // check parameter
     if (typeof agent !== 'string') {
-      throw new TypeError('wrong parameter');
+      throw new TypeError('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var re;
@@ -983,7 +1014,7 @@ function getAnswerUrlFromAgent(agent) {
   try {
     // check parameter
     if (typeof agent !== 'string') {
-      throw new TypeError('wrong parameter');
+      throw new TypeError('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var re;
@@ -1031,7 +1062,7 @@ function setUserNotifySetting(data, cb) {
     // check parameter
     if (typeof data !== 'object' || typeof data.type !== 'string' || typeof data.when !== 'string' || typeof data.method !== 'string' || typeof data.username !== 'string' || typeof cb !== 'function') {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // save the setting into the database
@@ -1068,7 +1099,7 @@ function getUserSettings(user) {
   try {
     // check parameter
     if (typeof user !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return userSettings[user] || {};
@@ -1090,7 +1121,7 @@ function getUserEndpointsJSON(userid) {
   try {
     // check parameter
     if (typeof userid !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return compUser.getEndpointsJSON(userid);
@@ -1184,7 +1215,7 @@ function getDefaultUserExtensionConf(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     return userSettings[username][USER_CONFIG_KEYS.default_extension] ?
       userSettings[username][USER_CONFIG_KEYS.default_extension] :
@@ -1330,7 +1361,7 @@ function getQueueAutoLogoutConf(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return userSettings[username][USER_CONFIG_KEYS.queue_auto_logout];
@@ -1352,7 +1383,7 @@ function getAutoDndOnLogoutConf(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return userSettings[username][USER_CONFIG_KEYS.auto_dndon_logout];
@@ -1375,7 +1406,7 @@ function getAutoDndOffLoginConf(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return userSettings[username][USER_CONFIG_KEYS.auto_dndoff_login];
@@ -1438,7 +1469,7 @@ function getQueueAutoLoginConf(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return userSettings[username][USER_CONFIG_KEYS.queue_auto_login];
@@ -1556,7 +1587,7 @@ function verifySendVoicemailNotificationByEmail(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return verifySendVoicemailNotification(username, 'email');
@@ -1579,7 +1610,7 @@ function verifySendPostitNotificationByEmail(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return verifySendPostitNotification(username, 'email');
@@ -1602,7 +1633,7 @@ function verifySendVoicemailNotificationBySms(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return verifySendVoicemailNotification(username, 'sms');
@@ -1625,7 +1656,7 @@ function verifySendPostitNotificationBySms(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return verifySendPostitNotification(username, 'sms');
@@ -1647,7 +1678,7 @@ function getVoicemailNotificationEmailTo(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the configurations of the user
@@ -1675,7 +1706,7 @@ function getPostitNotificationEmailTo(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the configurations of the user
@@ -1703,7 +1734,7 @@ function getVoicemailNotificationSmsTo(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the configurations of the user
@@ -1731,7 +1762,7 @@ function getPostitNotificationSmsTo(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the configurations of the user
@@ -1846,6 +1877,7 @@ exports.setQueueAutoLogoutConf = setQueueAutoLogoutConf;
 exports.getAutoDndOffLoginConf = getAutoDndOffLoginConf;
 exports.getAutoDndOnLogoutConf = getAutoDndOnLogoutConf;
 exports.phoneSupportDtmfHttpApi = phoneSupportDtmfHttpApi;
+exports.phoneSupportHoldHttpApi = phoneSupportHoldHttpApi;
 exports.getAllUserEndpointsJSON = getAllUserEndpointsJSON;
 exports.getHoldUnholdUrlFromAgent = getHoldUnholdUrlFromAgent;
 exports.getPostitNotificationSmsTo = getPostitNotificationSmsTo;

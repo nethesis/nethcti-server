@@ -117,7 +117,7 @@ function setCompUtil(comp) {
   try {
     // check parameter
     if (typeof comp !== 'object') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var p;
@@ -143,7 +143,7 @@ function setCompAuthorization(comp) {
   try {
     // check parameter
     if (typeof comp !== 'object') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // set the authorization for all REST plugins
@@ -210,7 +210,7 @@ function setCompUser(cu) {
   try {
     // check parameter
     if (typeof cu !== 'object') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var p;
@@ -237,7 +237,7 @@ function setCompUser(cu) {
  */
 function config(path) {
   if (typeof path !== 'string') {
-    throw new TypeError('wrong parameter');
+    throw new TypeError('wrong parameters: ' + JSON.stringify(arguments));
   }
   if (!fs.existsSync(path)) {
     throw new Error(path + ' does not exist');
@@ -332,15 +332,41 @@ function setCompConfigManager(comp) {
   try {
     // check parameter
     if (typeof comp !== 'object') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var p;
-    // set configuratino manager architect component to all REST plugins
+    // set configuration manager architect component to all REST plugins
     for (p in plugins) {
 
       if (typeof plugins[p].setCompConfigManager === 'function') {
         plugins[p].setCompConfigManager(comp);
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the asterisk proxy architect component to be used by REST plugins.
+ *
+ * @method setCompAstProxy
+ * @param {object} comp The architect asterisk proxy component
+ * @static
+ */
+function setCompAstProxy(comp) {
+  try {
+    // check parameter
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    var p;
+    // set configuration manager architect component to all REST plugins
+    for (p in plugins) {
+      if (typeof plugins[p].setCompConfigManager === 'function') {
+        plugins[p].setCompAstProxy(comp);
       }
     }
   } catch (err) {
@@ -354,5 +380,6 @@ exports.config = config;
 exports.setLogger = setLogger;
 exports.setCompUtil = setCompUtil;
 exports.setCompUser = setCompUser;
+exports.setCompAstProxy = setCompAstProxy;
 exports.setCompConfigManager = setCompConfigManager;
 exports.setCompAuthorization = setCompAuthorization;

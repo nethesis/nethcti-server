@@ -33,6 +33,7 @@ module.exports = function(options, imports, register) {
     serverRest.setCompUtil(imports.util);
     serverRest.setCompAuthorization(imports.authorization);
     serverRest.setCompConfigManager(imports.configManager);
+    serverRest.setCompAstProxy(imports.astProxy);
     serverRest.setCompUser(imports.user);
     serverRest.start();
   } catch (err) {

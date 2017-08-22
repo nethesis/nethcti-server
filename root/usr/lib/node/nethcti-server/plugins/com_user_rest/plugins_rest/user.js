@@ -46,6 +46,15 @@ var compAuthorization;
 var compConfigManager;
 
 /**
+ * The asterisk proxy architect component.
+ *
+ * @property compAstProxy
+ * @type object
+ * @private
+ */
+var compAstProxy;
+
+/**
  * The architect component to be used for user functions.
  *
  * @property compUser
@@ -570,6 +579,20 @@ function setCompUtil(comp) {
 
             // create default_device key to return with result
             for (i = 0; i < result.endpoints[compUser.ENDPOINT_TYPES.extension].length; i++) {
+
+              var extenAgent = compAstProxy.getExtensionAgent(result.endpoints[compUser.ENDPOINT_TYPES.extension][i].id);
+              var actions = {};
+              if (result.endpoints[compUser.ENDPOINT_TYPES.extension][i].type === 'webrtc') {
+                actions.answer = true;
+                actions.dtmf = true;
+                actions.hold = true;
+              } else {
+                actions.answer = compConfigManager.phoneSupportHttpApi(extenAgent);
+                actions.dtmf = compConfigManager.phoneSupportDtmfHttpApi(extenAgent);
+                actions.hold = compConfigManager.phoneSupportHoldHttpApi(extenAgent);
+              }
+              result.endpoints[compUser.ENDPOINT_TYPES.extension][i].actions = actions;
+
               if (result.endpoints[compUser.ENDPOINT_TYPES.extension][i].id === defExt) {
                 defextObj = result.endpoints[compUser.ENDPOINT_TYPES.extension][i];
                 break;
@@ -915,6 +938,7 @@ function setCompUtil(comp) {
     exports.presencelist_onbusy = user.presencelist_onbusy;
     exports.setCompAuthorization = setCompAuthorization;
     exports.setCompConfigManager = setCompConfigManager;
+    exports.setCompAstProxy = setCompAstProxy;
     exports.presence_onunavailable = user.presence_onunavailable;
     exports.presencelist_onunavailable = user.presencelist_onunavailable;
   } catch (err) {
@@ -1000,6 +1024,21 @@ function setCompConfigManager(comp) {
   try {
     compConfigManager = comp;
     logger.log.info(IDLOG, 'set configuration manager architect component');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set asterisk proxy architect component.
+ *
+ * @method setCompAstProxy
+ * @param {object} comp The asterisk proxy architect component.
+ */
+function setCompAstProxy(comp) {
+  try {
+    compAstProxy = comp;
+    logger.log.info(IDLOG, 'set asterisk proxy architect component');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
