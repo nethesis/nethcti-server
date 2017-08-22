@@ -696,7 +696,6 @@ var compConfigManager;
          *   @param {string} cfvm/:type/:endpoint           Gets the call forward status to voicemail of the endpoint of the user
          *   @param {string} cfcall/:type/:endpoint         Gets the call forward status to a destination number of the endpoint of the user
          *   @param {string} unauthe_call/:endpoint/:number Calls the number from the specified endpoint without authentication
-         *   @param {string} is_autoc2c_supported/:endpoint Returns true if the endpoint is supported by the automatic click2call
          */
         'get': [
           'queues',
@@ -722,8 +721,7 @@ var compConfigManager;
           'dnd/:endpoint',
           'cfvm/:type/:endpoint',
           'cfcall/:type/:endpoint',
-          'unauthe_call/:endpoint/:number',
-          'is_autoc2c_supported/:endpoint'
+          'unauthe_call/:endpoint/:number'
         ],
 
         /**
@@ -1105,37 +1103,6 @@ var compConfigManager;
 
           logger.log.info(IDLOG, 'sent all trunks in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, trunks);
-
-        } catch (err) {
-          logger.log.error(IDLOG, err.stack);
-          compUtil.net.sendHttp500(IDLOG, res, err.toString());
-        }
-      },
-
-      /**
-       * Returns true if the endpoint is supported by the automatic click2call with the following REST API:
-       *
-       *     is_autoc2c_supported/:endpoint
-       *
-       * @method is_autoc2c_supported
-       * @param {object}   req  The client request
-       * @param {object}   res  The client response
-       * @param {function} next Function to run the next handler in the chain
-       */
-      is_autoc2c_supported: function(req, res, next) {
-        try {
-          var username = req.headers.authorization_user;
-
-          // gets the user agent of the phone
-          var extenAgent = compAstProxy.getExtensionAgent(req.params.endpoint);
-          var isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
-
-          logger.log.info(IDLOG, 'send "' + isSupported + '" for extension phone (' + req.params.endpoint + ') agent (' + extenAgent + ') support auto click2call to user "' + username + '" ' + res.connection.remoteAddress);
-          res.send(200, {
-            exten: req.params.endpoint,
-            agent: extenAgent,
-            supported: isSupported
-          });
 
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
@@ -4392,7 +4359,6 @@ var compConfigManager;
     exports.queuemember_unpause = astproxy.queuemember_unpause;
     exports.blindtransfer_queue = astproxy.blindtransfer_queue;
     exports.setCompComNethctiWs = setCompComNethctiWs;
-    exports.is_autoc2c_supported = astproxy.is_autoc2c_supported;
     exports.setCompAuthorization = setCompAuthorization;
     exports.setCompConfigManager = setCompConfigManager;
     exports.blindtransfer_parking = astproxy.blindtransfer_parking;
