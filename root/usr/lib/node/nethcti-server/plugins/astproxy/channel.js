@@ -128,10 +128,6 @@ exports.Channel = function(obj) {
    * @required
    * @private
    */
-  // the channel type is calculated using the channel number. The minor
-  // number means that the channel is previously created. The channel
-  // number is the last part of the channel identifier, e.g. the number
-  // of the channel "PJSIP/211-00000486" is "00000486"
   var type;
   if (channelStatus === STATUS_ENUM.RING) {
     type = TYPE.SOURCE;
@@ -140,16 +136,9 @@ exports.Channel = function(obj) {
     type = TYPE.DEST;
 
   } else {
-
-    var numChannel = parseInt(channel.split('-').pop(), 16);
-    var numBridgedChannel = parseInt(bridgedChannel.split('-').pop(), 16);
-
-    // numBridgedChannel is NaN when the call is directed to a meetme conference
-    if (numChannel < numBridgedChannel || isNaN(numBridgedChannel)) {
-      type = TYPE.SOURCE;
-    } else {
-      type = TYPE.DEST;
-    }
+    var numUniqueid = obj.uniqueid.split('.').pop();
+    var numUniqueidLinked = obj.uniqueid_linked.split('.').pop();
+    type = (numUniqueid < numUniqueidLinked) ? TYPE.SOURCE : TYPE.DEST;
   }
 
   /**

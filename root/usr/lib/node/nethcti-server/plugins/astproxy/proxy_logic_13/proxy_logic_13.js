@@ -3477,6 +3477,8 @@ function addConversationToExten(exten, resp, chid) {
 
           resp[ch].bridgedChannel = resp[ch2].channel;
           resp[ch2].bridgedChannel = resp[ch].channel;
+          resp[ch].uniqueid_linked = resp[ch2].uniqueid;
+          resp[ch2].uniqueid_linked = resp[ch].uniqueid;
         }
       }
     }
