@@ -247,25 +247,46 @@ function setCompUtil(comp) {
               "id": "user@nethesis.it"
             }
           ],
+          "jabber": [
+            {
+              "id": "user@nethesis.it",
+              "server": "https://my.server.it/http-bind"
+            }
+          ],
           "extension": [
             {
               "id": "91301",
               "description": "Yealink SIP-T22P 7.73.0.50",
               "type": "physical",
               "web_user": "admin",
-              "web_password": "admin"
+              "web_password": "admin",
+              "actions": {
+                "answer": true,
+                "dtmf": true,
+                "hold": true
+              }
             },
             {
               "id": "92301",
               "description": "janus",
               "type": "webrtc",
-              "secret": "password"
+              "secret": "password",
+              "actions": {
+                "answer": true,
+                "dtmf": true,
+                "hold": true
+              }
             },
             {
               "id": "92304",
               "description": "janus",
               "type": "webrtc_mobile",
-              "secret": "password"
+              "secret": "password",
+              "actions": {
+                "answer": true,
+                "dtmf": true,
+                "hold": true
+              }
             }
           ],
           "cellphone": [
