@@ -461,7 +461,7 @@ function configChat(path) {
 
     // check file presence
     if (!fs.existsSync(path)) {
-      logger.log.warn(IDLOG, path + ' doesn\'t exist');
+      logger.log.warn(IDLOG, path + ' does not exist');
       return;
     }
 
@@ -472,7 +472,6 @@ function configChat(path) {
 
     // check JSON file
     if (typeof json !== 'object' || typeof json.url !== 'string' || typeof json.domain !== 'string') {
-
       logger.log.warn(IDLOG, 'wrong JSON file ' + path);
       return;
     }

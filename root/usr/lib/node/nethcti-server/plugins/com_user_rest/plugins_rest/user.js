@@ -606,6 +606,12 @@ function setCompUtil(comp) {
             }
             result.default_device = defextObj;
 
+            // add server url for jabber endpoints
+            var serverUrl = (compConfigManager.getChatConf()).url || '';
+            for (i = 0; i < result.endpoints[compUser.ENDPOINT_TYPES.jabber].length; i++) {
+              result.endpoints[compUser.ENDPOINT_TYPES.jabber][i].server = serverUrl;
+            }
+
             // get user settings
             compUser.getUserSettings(username, function(err, settings) {
               if (err) {

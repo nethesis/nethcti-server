@@ -13,13 +13,15 @@ event_templates('nethcti-server3-update', qw(
                 /etc/nethcti/services.json
                 /etc/nethcti/win_popup.json
                 /etc/nethcti/nethcti.json
+                /etc/nethcti/chat.json
                 /etc/nethcti/phone_urls.json
                 /etc/httpd/conf.d/nethcti-server.conf
 ));
 
 event_actions('nethcti-server3-update', qw(
 	            nethcti-server-conf 00
-		    nethcti-server-astdbconfig 10
+                initialize-default-databases 02
+		        nethcti-server-astdbconfig 10
 ));
 
 event_services('nethcti-server3-update', qw(
@@ -32,6 +34,7 @@ event_services('nethcti-server3-update', qw(
 #
 event_templates('hostname-modify', qw(
                 /etc/nethcti/nethcti.json
+                /etc/nethcti/chat.json
                 /etc/nethcti/services.json
 ));
 

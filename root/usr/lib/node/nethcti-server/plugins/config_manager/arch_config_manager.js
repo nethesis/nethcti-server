@@ -38,7 +38,7 @@ module.exports = function(options, imports, register) {
       configManager.setCompComNethctiWs(imports.com_nethcti_ws);
       configManager.config('/etc/nethcti/nethcti.json');
       configManager.configUser();
-      // configManager.configChat('/etc/nethcti/chat.json');
+      configManager.configChat('/etc/nethcti/chat.json');
       configManager.configPhoneUrls('/etc/nethcti/phone_urls.json');
     });
 
