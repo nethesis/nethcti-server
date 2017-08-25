@@ -64,6 +64,15 @@ var IDLOG = '[config_manager]';
 var CONFIG_FILEPATH;
 
 /**
+ * The chat configuration file path.
+ *
+ * @property CONFIG_CHAT_FILEPATH
+ * @type string
+ * @private
+ */
+var CONFIG_CHAT_FILEPATH;
+
+/**
  * The configuration file path of the phone urls.
  *
  * @property PHONE_URLS_FILEPATH
@@ -464,21 +473,22 @@ function configChat(path) {
       logger.log.warn(IDLOG, path + ' does not exist');
       return;
     }
+    CONFIG_CHAT_FILEPATH = path;
 
-    logger.log.info(IDLOG, 'configure server chat with ' + path);
+    logger.log.info(IDLOG, 'configure server chat with ' + CONFIG_CHAT_FILEPATH);
 
     // read configuration file
-    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
+    var json = JSON.parse(fs.readFileSync(CONFIG_CHAT_FILEPATH, 'utf8'));
 
     // check JSON file
     if (typeof json !== 'object' || typeof json.url !== 'string' || typeof json.domain !== 'string') {
-      logger.log.warn(IDLOG, 'wrong JSON file ' + path);
+      logger.log.warn(IDLOG, 'wrong JSON file ' + CONFIG_CHAT_FILEPATH);
       return;
     }
 
     chatServer.url = json.url;
     chatServer.domain = json.domain;
-    logger.log.info(IDLOG, 'server chat configuration by file ' + path + ' ended');
+    logger.log.info(IDLOG, 'server chat configuration by file ' + CONFIG_CHAT_FILEPATH + ' ended');
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1817,6 +1827,7 @@ function reload() {
   try {
     reset();
     config(CONFIG_FILEPATH);
+    configChat(CONFIG_CHAT_FILEPATH);
     configUser();
     configPhoneUrls(PHONE_URLS_FILEPATH);
     logger.log.info(IDLOG, 'emit event "' + EVT_RELOADED + '"');
