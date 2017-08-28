@@ -5,6 +5,6 @@
    weekly
    create 0644 asterisk asterisk
    postrotate
-       /sbin/restart nethcti-server &> /dev/null
+       /usr/bin/systemctl reload nethcti-server &> /dev/null
    endscript
 }
