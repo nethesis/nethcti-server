@@ -24,7 +24,7 @@ exports.ParkedCaller = function(data) {
     typeof data.callerNum !== 'string' ||
     typeof data.callerName !== 'string') {
 
-    throw new Error('wrong parameter');
+    throw new Error('wrong parameters: ' + JSON.stringify(arguments));
   }
 
   /**

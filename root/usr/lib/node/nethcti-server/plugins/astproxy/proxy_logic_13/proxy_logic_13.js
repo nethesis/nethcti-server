@@ -1358,6 +1358,27 @@ function initializeParkings(err, resp) {
 }
 
 /**
+ * Add the name of the parked to the response received from "listParkedCalls"
+ * command plugin.
+ *
+ * @method addParkeeNames
+ * @param {object} resp The reponse object received from the "listParkedCalls" command plugin
+ * @private
+ */
+function addParkeeNames(resp) {
+  try {
+    var p;
+    for (p in resp) {
+      resp[p].parkeeName = extensions[resp[p].parkeeNum] ? extensions[resp[p].parkeeNum].getName() : '';
+    }
+    return resp;
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+    return resp;
+  }
+}
+
+/**
  * Store parked channels in memory and launch "listChannel" command plugin
  * to get the number and the name of each parked channels.
  *
@@ -1372,6 +1393,7 @@ function listParkedCalls(err, resp) {
       logger.log.error(IDLOG, 'listing parked calls: ' + err.toString());
       return;
     }
+    resp = addParkeeNames(resp);
 
     // check the parameter
     if (typeof resp !== 'object') {
@@ -1410,6 +1432,7 @@ function updateParkedChannelOfOneParking(err, resp, parking) {
     if (typeof resp !== 'object' || typeof parking !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+    resp = addParkeeNames(resp);
 
     // check if the response contains a parked channel for the specified parking
     // If it is not present, the parking is free
@@ -1527,8 +1550,6 @@ function updateParkedCallerForAllParkings(err, resp) {
         parkedChannels[p].callerNum = resp[ch].callerNum;
         // add the caller name information for the same reason
         parkedChannels[p].callerName = resp[ch].callerName;
-        parkedChannels[p].parkeeNum = resp[ch].parkeeNum;
-        parkedChannels[p].parkeeName = resp[ch].parkeeName;
         // create and store a new parked call object
         pCall = new ParkedCaller(parkedChannels[p]);
         parkings[p].addParkedCaller(pCall);
