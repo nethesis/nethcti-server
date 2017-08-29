@@ -295,7 +295,7 @@ function start() {
           if (compAuthentication.verifyToken(arr[0], arr[1]) === true) {
 
             // add header used by the authorization module
-            if (compAstProxy.isExten(arr[0])) {
+            if (compAstProxy.isExten(arr[0]) && req.url !== '/authentication/logout') {
               // this is to support login with extension number
               req.headers.authorization_user = compUser.getUserUsingEndpointExtension(arr[0]);
             } else {

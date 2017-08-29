@@ -1843,11 +1843,6 @@ function loginHdlr(socket, obj) {
 
     if (compAuthe.verifyToken(obj.accessKeyId, obj.token, false) === true) { // user successfully authenticated
 
-      // this is to support login with extension number
-      if (astProxy.isExten(obj.accessKeyId)) {
-        obj.accessKeyId = compUser.getUserUsingEndpointExtension(obj.accessKeyId);
-      }
-
       logger.log.info(IDLOG, 'user "' + obj.accessKeyId + '" successfully authenticated from ' + getWebsocketEndpoint(socket) +
         ' with socket id ' + socket.id);
 
