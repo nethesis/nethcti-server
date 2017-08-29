@@ -896,7 +896,7 @@ function removeToken(username, token) {
       logger.log.info(IDLOG, 'removed token "' + token + '" for username ' + username);
     }
 
-    if (grants[username][token] === undefined) {
+    if (grants[username] === undefined || grants[username][token] === undefined) {
       return true;
     }
     return false;
