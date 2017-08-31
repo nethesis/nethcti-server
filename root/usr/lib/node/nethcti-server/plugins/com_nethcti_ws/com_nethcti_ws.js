@@ -1871,11 +1871,13 @@ function loginHdlr(socket, obj) {
       // send authenticated successfully response
       sendAutheSuccess(socket);
 
+      var username = astProxy.isExten(obj.accessKeyId) ? compUser.getUserUsingEndpointExtension(obj.accessKeyId) : obj.accessKeyId;
+
       // if the user has the "presence panel" permission, than he will receive
       // the asterisk events that involve the extensions
-      if (compAuthorization.authorizePresencePanelUser(obj.accessKeyId) === true) {
+      if (compAuthorization.authorizePresencePanelUser(username) === true) {
 
-        if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
+        if (compAuthorization.isPrivacyEnabled(username) === true) {
           // join the user to the websocket room to receive the asterisk events that
           // involve the extensions, using hide numbers
           socket.join(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY);
@@ -1888,9 +1890,9 @@ function loginHdlr(socket, obj) {
       }
 
       // if the user has the queues permission, than he will receive the asterisk events that affect the queues
-      if (compAuthorization.authorizeQueuesUser(obj.accessKeyId) === true || compAuthorization.authorizeAdminQueuesUser(obj.accessKeyId) === true) {
+      if (compAuthorization.authorizeQueuesUser(username) === true || compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
-        if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true && compAuthorization.authorizeAdminQueuesUser(obj.accessKeyId) === false) {
+        if (compAuthorization.isPrivacyEnabled(username) === true && compAuthorization.authorizeAdminQueuesUser(username) === false) {
           // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
           socket.join(WS_ROOM.QUEUES_AST_EVT_PRIVACY);
 
@@ -1901,9 +1903,9 @@ function loginHdlr(socket, obj) {
       }
 
       // // if the user has the trunks permission, than he will receive the asterisk events that affects the trunks
-      // if (compAuthorization.authorizeOpTrunksUser(obj.accessKeyId) === true) {
+      // if (compAuthorization.authorizeOpTrunksUser(username) === true) {
 
-      //   if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
+      //   if (compAuthorization.isPrivacyEnabled(username) === true) {
       //     // join the user to the websocket room to receive the asterisk events that affects the trunks, using hide numbers
       //     socket.join(WS_ROOM.TRUNKS_AST_EVT_PRIVACY);
 
@@ -1914,9 +1916,9 @@ function loginHdlr(socket, obj) {
       // }
 
       // if the user has the parkings permission, than he will receive the asterisk events that affects the parkings
-      if (compAuthorization.authorizeOpParkingsUser(obj.accessKeyId) === true) {
+      if (compAuthorization.authorizeOpParkingsUser(username) === true) {
 
-        if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
+        if (compAuthorization.isPrivacyEnabled(username) === true) {
           // join the user to the websocket room to receive the asterisk events that affects the parkings, using hide numbers
           socket.join(WS_ROOM.PARKINGS_AST_EVT_PRIVACY);
 
