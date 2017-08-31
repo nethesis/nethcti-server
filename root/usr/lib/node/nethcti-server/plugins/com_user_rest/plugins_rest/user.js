@@ -618,7 +618,6 @@ function setCompUtil(comp) {
 
               if (result.endpoints[compUser.ENDPOINT_TYPES.extension][i].id === defExt) {
                 defextObj = result.endpoints[compUser.ENDPOINT_TYPES.extension][i];
-                break;
               }
             }
             for (i = 0; i < result.endpoints[compUser.ENDPOINT_TYPES.mainextension].length; i++) {
