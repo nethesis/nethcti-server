@@ -554,7 +554,7 @@ function isAtLeastExtenInCall(uniqueid, extensions, cb) {
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].find({
       where: [
         'uniqueid=? AND ' +
-        '(src IN (?) OR dst IN (?))',
+        '(cnum IN (?) OR dst IN (?))',
         uniqueid, extensions, extensions
       ],
       attributes: [
