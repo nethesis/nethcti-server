@@ -603,7 +603,9 @@ function setCompUtil(comp) {
 
               var extenAgent = compAstProxy.getExtensionAgent(result.endpoints[compUser.ENDPOINT_TYPES.extension][i].id);
               var actions = {};
-              if (result.endpoints[compUser.ENDPOINT_TYPES.extension][i].type === 'webrtc') {
+              if (result.endpoints[compUser.ENDPOINT_TYPES.extension][i].type === 'webrtc' ||
+                result.endpoints[compUser.ENDPOINT_TYPES.extension][i].type === 'webrtc_mobile') {
+
                 actions.answer = true;
                 actions.dtmf = true;
                 actions.hold = true;
