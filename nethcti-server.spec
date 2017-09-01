@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.0
+Version: 3.0.1
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -82,6 +82,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Sep 01 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.1-1
+- Release 3.0.1
+
 * Thu Aug 31 2017 Edoardo Spadoni <edoardo.spadoni@nethesis.it> - 3.0.0-1
 Release 3.0.0
 
