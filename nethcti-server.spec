@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.7.10
+Version: 2.7.11
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -57,6 +57,11 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Tue Sep 05 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.11-1
+- fix query of queue lost calls
+- add support for dnd toggle (*76 using phone)
+- Add migration fragment for TCPPorts between NS 6 and 7
+
 * Thu Jun 22 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.10-1
 - fix sendsms.php to resolve the sending of error email notifications on empty config. Nethesis/dev#5160
 
