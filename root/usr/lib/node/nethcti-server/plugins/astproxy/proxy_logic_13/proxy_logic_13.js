@@ -26,8 +26,8 @@ var EventEmitter = require('events').EventEmitter;
 var ParkedCaller = require('../parkedCaller').ParkedCaller;
 var Conversation = require('../conversation').Conversation;
 var utilChannel13 = require('./util_channel_13');
-// var MeetmeConfUser = require('../meetmeConfUser').MeetmeConfUser;
-// var MeetmeConference = require('../meetmeConference').MeetmeConference;
+var MeetmeConfUser = require('../meetmeConfUser').MeetmeConfUser;
+var MeetmeConference = require('../meetmeConference').MeetmeConference;
 var RECORDING_STATUS = require('../conversation').RECORDING_STATUS;
 // var TrunkConversation = require('../trunkConversation').TrunkConversation;
 var QueueWaitingCaller = require('../queueWaitingCaller').QueueWaitingCaller;
@@ -513,16 +513,6 @@ var autoC2CEnabled = true;
 var remoteSitesPrefixes;
 
 /**
- * The asterisk codes.
- *
- * @property astCodes
- * @type object
- * @private
- * @default {}
- */
-var astCodes = {};
-
-/**
  * Contains the information about the caller. The key is the caller
  * number and the value is the information object. The data are about
  * the created caller notes and the phonebook contacts from the centralized
@@ -763,29 +753,6 @@ function isAutoC2CEnabled() {
 }
 
 /**
- * Sets the code numbers to be used.
- *
- * @method setAstCodes
- * @param {object} codes The asterisk codes.
- * @static
- */
-function setAstCodes(codes) {
-  try {
-    // check parameter
-    if (typeof codes !== 'object') {
-      throw new Error('wrong asterisk codes');
-    }
-
-    astCodes = codes;
-
-    logger.log.info(IDLOG, 'asterisk codes has been set');
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-  }
-}
-
-/**
  * Sets the remote sites phone prefixes used to filter the meetme conference members.
  *
  * @method setRemoteSitesPrefixes
@@ -816,7 +783,7 @@ function setRemoteSitesPrefixes(obj) {
  */
 function getMeetmeConfCode() {
   try {
-    return astCodes.meetme_conf;
+    return featureCodes.meetme_conf;
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1166,8 +1133,6 @@ function reset() {
       delete parkedChannels[k];
     }
     parkedChannels = {};
-
-    astCodes = {};
     staticDataExtens = {};
     staticDataTrunks = {};
     staticDataQueues = {};
@@ -1199,6 +1164,9 @@ function start() {
     astProxy.doCmd({
       command: 'listParkings'
     }, initializeParkings);
+
+    // initializes meetme conferences
+    initMeetmeConf();
 
     // logger.log.info(IDLOG, 'start asterisk structure ini file validation');
     // // validates all sip extensions
@@ -6257,8 +6225,7 @@ function startMeetmeConference(convid, ownerExtenId, addExtenId, cb) {
 
     // redirect the channel of the counterpart to the conference number of the owner extension
     var confnum = getMeetmeConfCode() + ownerExtenId;
-
-    redirectConversation('extension', ownerExtenId, convid, confnum, ownerExtenId, function(err) {
+    redirectConversation(ownerExtenId, convid, confnum, ownerExtenId, function(err) {
       // newUser is true if the conversation "convid"
       // involves both "ownerExtenId" and "addExtenId"
       var newUser = conv.getCounterpartNum() === addExtenId;
@@ -6365,9 +6332,9 @@ function isExtenInMeetmeConf(ownerExtenId) {
  * Hangup the conversation of the endpoint.
  *
  * @method hangupConversation
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
- * @param {string}   convid       The conversation identifier
- * @param {function} cb           The callback function
+ * @param {string} endpointId The endpoint identifier (e.g. the extension number)
+ * @param {string} convid The conversation identifier
+ * @param {function} cb The callback function
  */
 function hangupConversation(endpointId, convid, cb) {
   try {
@@ -8923,7 +8890,6 @@ exports.isExtenCfb = isExtenCfb;
 exports.isExtenCfu = isExtenCfu;
 exports.isExtenDnd = isExtenDnd;
 exports.isExtenCfVm = isExtenCfVm;
-exports.setAstCodes = setAstCodes;
 exports.EVT_NEW_CDR = EVT_NEW_CDR;
 exports.createAlarm = createAlarm;
 exports.deleteAlarm = deleteAlarm;

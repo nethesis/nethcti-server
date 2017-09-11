@@ -144,7 +144,6 @@ module.exports = function(options, imports, register) {
     astProxy.config('/etc/nethcti/asterisk.json');
     astProxy.configAstObjects('/etc/nethcti/ast_objects.json');
     astProxy.configExtenNames('/etc/nethcti/users.json');
-    // astProxy.configAstCodes('/etc/nethcti/asterisk_codes.json');
     // astProxy.configRemoteSitesPrefixes('/etc/nethcti/remote_sites.json');
     // astProxy.configSipWebrtc('/etc/nethcti/sip_webrtc.json');
     astProxy.proxyLogic.setCompDbconn(imports.dbconn);

@@ -121,7 +121,7 @@ var compComNethctiRemotes;
  */
 var compConfigManager;
 
-(function() {
+(function () {
   try {
     /**
         * REST plugin that provides asterisk functions through the following REST API:
@@ -134,6 +134,7 @@ var compConfigManager;
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
         * 1. [`astproxy/extension/:id`](#extensionget)
+        * 1. [`astproxy/conference/:endpoint`](#conferenceget)
         *
         * ---
         *
@@ -265,6 +266,27 @@ var compConfigManager;
           }
      }
         *
+        * ---
+        *
+        * ### <a id="conferenceget">**`astproxy/conference/:endpoint`**</a>
+        *
+        * Gets the data about the extension meetme conference.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "id": "202",
+         "users": {
+             "1": {
+                 "id": "1",
+                 "name": "202",
+                 "owner": true,
+                 "muted": false,
+                 "extenId": "202"
+             }
+         }
+     }
+        *
         *
         * <br>
         *
@@ -294,6 +316,12 @@ var compConfigManager;
         * 1. [`astproxy/queuemember_remove`](#queuemember_removepost)
         * 1. [`astproxy/queuemember_unpause`](#queuemember_unpausepost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
+        * 1. [`astproxy/end_conf`](#end_confpost)
+        * 1. [`astproxy/start_conf`](#start_confpost)
+        * 1. [`astproxy/join_myconf`](#join_myconfpost)
+        * 1. [`astproxy/mute_userconf`](#mute_userconfpost)
+        * 1. [`astproxy/hangup_userconf`](#hangup_userconfpost)
+        * 1. [`astproxy/unmute_userconf`](#unmute_userconfpost)
         *
         * ---
         *
@@ -634,6 +662,83 @@ var compConfigManager;
         *
         *     { "endpointId": "221", "destId": "220"}
         *
+        * ---
+        *
+        * ### <a id="end_confpost">**`astproxy/end_conf`**</a>
+        *
+        * Ends the entire meetme conference. The request must contains the following parameters:
+        *
+        * * `confId: the conference identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "confId": "202" }
+        *
+        * ---
+        *
+        * ### <a id="start_confpost">**`astproxy/start_conf`**</a>
+        *
+        * Starts a meetme conference. The request must contains the following parameters:
+        *
+        * * `convid: the conversation identifier of the owner to be added to the conference`
+        * * `addEndpointId: the identifier of the extension to be added to the conference`
+        * * `ownerEndpointId: the extension identifier who wants to start the meetme conference`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "ownerEndpointId": "202", "addEndpointId": "201" }
+        *
+        * ---
+        *
+        * ### <a id="join_myconfpost">**`astproxy/join_myconf`**</a>
+        *
+        * Joins the extension owner to his meetme conference. The request must contains the following parameters:
+        *
+        * * `endpointId: the endpoint identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointId": "202" }
+        *
+        * ---
+        *
+        * ### <a id="mute_userconfpost">**`astproxy/mute_userconf`**</a>
+        *
+        * Mute a user of a meetme conference. The request must contains the following parameters:
+        *
+        * * `confId: the conference identifier`
+        * * `userId: the user identifier to be muted`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "confId": "202", "userId": "2" }
+        *
+        * ---
+        *
+        * ### <a id="unmute_userconfpost">**`astproxy/unmute_userconf`**</a>
+        *
+        * Unmute a user of a meetme conference. The request must contains the following parameters:
+        *
+        * * `confId: the conference identifier`
+        * * `userId: the user identifier to be muted`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "confId": "202", "userId": "2" }
+        *
+        * ---
+        *
+        * ### <a id="hangup_userconfpost">**`astproxy/hangup_userconf`**</a>
+        *
+        * Hangup a user of a meetme conference. The request must contains the following parameters:
+        *
+        * * `confId: the conference identifier`
+        * * `extenId: the extension identifier to be hanged up`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "confId": "202", "extenId": "201" }
+        *
         *
         * <br>
         *
@@ -841,7 +946,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      opgroups: function(req, res, next) {
+      opgroups: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
           var token = req.headers.authorization_token;
@@ -899,7 +1004,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      remote_opgroups: function(req, res, next) {
+      remote_opgroups: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
           var token = req.headers.authorization_token;
@@ -944,7 +1049,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      conference: function(req, res, next) {
+      conference: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
           var token = req.headers.authorization_token;
@@ -957,14 +1062,14 @@ var compConfigManager;
           }
 
           // check if the request coming from a remote site
-          if (compComNethctiRemotes.isClientRemote(username, token)) {
+          // if (compComNethctiRemotes.isClientRemote(username, token)) {
 
-            var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
-            logger.log.warn(IDLOG, 'requesting conference data by remote site "' + remoteSiteName + '": ' +
-              'authorization failed for user "' + username + '"');
-            compUtil.net.sendHttp403(IDLOG, res);
-            return;
-          }
+          //   var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+          //   logger.log.warn(IDLOG, 'requesting conference data by remote site "' + remoteSiteName + '": ' +
+          //     'authorization failed for user "' + username + '"');
+          //   compUtil.net.sendHttp403(IDLOG, res);
+          //   return;
+          // }
           // check if the endpoint is owned by the user
           if (compAuthorization.verifyUserEndpointExten(username, extenId) === false) {
 
@@ -972,6 +1077,7 @@ var compConfigManager;
               '"' + extenId + '" is not owned by user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
+
           } else {
             var conf = compAstProxy.getConference(extenId);
             logger.log.info(IDLOG, 'sent conference data of exten "' + extenId + '" ' +
@@ -994,7 +1100,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      parkings: function(req, res, next) {
+      parkings: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -1033,7 +1139,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      queues: function(req, res, next) {
+      queues: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -1080,7 +1186,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      trunks: function(req, res, next) {
+      trunks: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -1120,7 +1226,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      remote_extensions: function(req, res, next) {
+      remote_extensions: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
           var token = req.headers.authorization_token;
@@ -1170,7 +1276,7 @@ var compConfigManager;
        * @param {object} res The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      extensions: function(req, res, next) {
+      extensions: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
           // var token = req.headers.authorization_token;
@@ -1243,7 +1349,7 @@ var compConfigManager;
        * @param {object} res The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      extension: function(req, res, next) {
+      extension: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
           if (typeof req.params.id !== 'string') {
@@ -1294,7 +1400,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      sip_webrtc: function(req, res, next) {
+      sip_webrtc: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
           var sipWebrtc = compAstProxy.getSipWebrtcConf();
@@ -1318,7 +1424,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      prefix: function(req, res, next) {
+      prefix: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
           var prefix = compAstProxy.getPrefix();
@@ -1344,7 +1450,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      remote_prefixes: function(req, res, next) {
+      remote_prefixes: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -1374,7 +1480,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      queues_stats: function(req, res, next) {
+      queues_stats: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
           var day = req.params.day;
@@ -1394,7 +1500,7 @@ var compConfigManager;
 
           // check if the user has the privacy enabled
 
-          compAstProxy.getJSONQueuesStats(day, function(err1, stats) {
+          compAstProxy.getJSONQueuesStats(day, function (err1, stats) {
             try {
               if (err1) {
                 throw err1;
@@ -1425,7 +1531,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      queue_recall: function(req, res, next) {
+      queue_recall: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -1444,7 +1550,7 @@ var compConfigManager;
             return;
           }
 
-          compAstProxy.getQueueRecallData(req.params.type, req.params.val, req.params.qid, function(err, results) {
+          compAstProxy.getQueueRecallData(req.params.type, req.params.val, req.params.qid, function (err, results) {
             try {
               if (err) {
                 throw err;
@@ -1476,7 +1582,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      qrecall_check: function(req, res, next) {
+      qrecall_check: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -1492,7 +1598,7 @@ var compConfigManager;
             return;
           }
 
-          compAstProxy.checkQueueRecallingStatus(req.params.num, function(err, result) {
+          compAstProxy.checkQueueRecallingStatus(req.params.num, function (err, result) {
             try {
               if (err) {
                 throw err;
@@ -1525,7 +1631,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      qrecall_info: function(req, res, next) {
+      qrecall_info: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -1545,7 +1651,7 @@ var compConfigManager;
             return;
           }
 
-          compAstProxy.getQueueRecallInfo(req.params.type, req.params.val, req.params.cid, function(err, results) {
+          compAstProxy.getQueueRecallInfo(req.params.type, req.params.val, req.params.cid, function (err, results) {
             try {
               if (err) {
                 throw err;
@@ -1580,7 +1686,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      queues_qos: function(req, res, next) {
+      queues_qos: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
           var day = req.params.day;
@@ -1600,7 +1706,7 @@ var compConfigManager;
 
           // check if the user has the privacy enabled
 
-          compAstProxy.getJSONQueuesQOS(day, function(err1, qosinfo) {
+          compAstProxy.getJSONQueuesQOS(day, function (err1, qosinfo) {
             try {
               if (err1) {
                 throw err1;
@@ -1631,7 +1737,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      agents_qos: function(req, res, next) {
+      agents_qos: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
           var day = req.params.day;
@@ -1651,7 +1757,7 @@ var compConfigManager;
 
           // check if the user has the privacy enabled
 
-          compAstProxy.getJSONAgentsStats(day, function(err1, agstats) {
+          compAstProxy.getJSONAgentsStats(day, function (err1, agstats) {
             try {
               if (err1) {
                 throw err1;
@@ -1684,7 +1790,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      cfvm: function(req, res, next) {
+      cfvm: function (req, res, next) {
         try {
           if (req.method.toLowerCase() === 'get') {
             cfvmGet(req, res, next);
@@ -1712,7 +1818,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      cfcall: function(req, res, next) {
+      cfcall: function (req, res, next) {
         try {
           if (req.method.toLowerCase() === 'get') {
             cfcallGet(req, res, next);
@@ -1739,7 +1845,7 @@ var compConfigManager;
        * @param {object} res The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      toggle_hold: function(req, res, next) {
+      toggle_hold: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -1785,7 +1891,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      call: function(req, res, next) {
+      call: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -1864,7 +1970,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      remote_call: function(req, res, next) {
+      remote_call: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
           var token = req.headers.authorization_token;
@@ -1942,7 +2048,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      unauthe_call: function(req, res, next) {
+      unauthe_call: function (req, res, next) {
         try {
           // check parameters
           if (typeof req.params !== 'object' || typeof req.params.number !== 'string' || typeof req.params.endpoint !== 'string') {
@@ -1974,7 +2080,7 @@ var compConfigManager;
        * @param {object} res The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      cw: function(req, res, next) {
+      cw: function (req, res, next) {
         try {
           if (req.method.toLowerCase() === 'get') {
             cwget(req, res, next);
@@ -2002,7 +2108,7 @@ var compConfigManager;
        * @param {object} res The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      dnd: function(req, res, next) {
+      dnd: function (req, res, next) {
         try {
           if (req.method.toLowerCase() === 'get') {
             dndget(req, res, next);
@@ -2028,7 +2134,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      park: function(req, res, next) {
+      park: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -2056,7 +2162,7 @@ var compConfigManager;
           }
           logger.log.info(IDLOG, 'the applicant extension "' + req.params.applicantId + '"" is owned by "' + username + '"');
 
-          compAstProxy.parkConversation(req.params.endpointId, req.params.convid, req.params.applicantId, function(err, response) {
+          compAstProxy.parkConversation(req.params.endpointId, req.params.convid, req.params.applicantId, function (err, response) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'parking convid ' + req.params.convid + ' by user "' + username + '" with ' +
@@ -2089,7 +2195,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      hangup: function(req, res, next) {
+      hangup: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -2116,7 +2222,7 @@ var compConfigManager;
             logger.log.info(IDLOG, 'hangup convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
 
-          compAstProxy.hangupConversation(req.params.endpointId, req.params.convid, function(err, response) {
+          compAstProxy.hangupConversation(req.params.endpointId, req.params.convid, function (err, response) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'hangup convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
@@ -2147,7 +2253,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain.
        */
-      hangup_channel: function(req, res, next) {
+      hangup_channel: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -2178,7 +2284,7 @@ var compConfigManager;
               logger.log.info(IDLOG, 'hangup asterisk channel "' + req.params.channel + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
             }
 
-            compAstProxy.hangupChannel(req.params.endpointType, req.params.endpointId, req.params.channel, function(err, response) {
+            compAstProxy.hangupChannel(req.params.endpointType, req.params.endpointId, req.params.channel, function (err, response) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, 'hangup asterisk channel ' + req.params.channel + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
@@ -2214,7 +2320,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      mute: function(req, res, next) {
+      mute: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -2239,7 +2345,7 @@ var compConfigManager;
             logger.log.info(IDLOG, 'mute convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
 
-          compAstProxy.muteConversation(req.params.endpointId, req.params.convid, function(err, response) {
+          compAstProxy.muteConversation(req.params.endpointId, req.params.convid, function (err, response) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'mute convid ' + req.params.convid + ' by user "' + username + '" with exten ' + req.params.endpointId + ': failed');
@@ -2270,7 +2376,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      unmute: function(req, res, next) {
+      unmute: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -2295,7 +2401,7 @@ var compConfigManager;
             logger.log.info(IDLOG, 'unmute convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
 
-          compAstProxy.unmuteConversation(req.params.endpointId, req.params.convid, function(err, response) {
+          compAstProxy.unmuteConversation(req.params.endpointId, req.params.convid, function (err, response) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'unmute convid ' + req.params.convid + ' by user "' + username + '" with exten ' + req.params.endpointId + ': failed');
@@ -2326,7 +2432,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      atxfer: function(req, res, next) {
+      atxfer: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -2361,7 +2467,7 @@ var compConfigManager;
             req.params.endpointId,
             req.params.convid,
             req.params.to,
-            function(err) {
+            function (err) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
@@ -2395,7 +2501,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      answer: function(req, res, next) {
+      answer: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -2435,7 +2541,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      answer_webrtc: function(req, res, next) {
+      answer_webrtc: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -2478,7 +2584,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      blindtransfer: function(req, res, next) {
+      blindtransfer: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -2515,7 +2621,7 @@ var compConfigManager;
             req.params.convid,
             req.params.to,
             extForCtx,
-            function(err) {
+            function (err) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, 'blind transfer convid "' + req.params.convid + '" by user "' + username + '" with ' +
@@ -2549,7 +2655,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      blindtransfer_queue: function(req, res, next) {
+      blindtransfer_queue: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -2577,7 +2683,7 @@ var compConfigManager;
             req.params.queue,
             req.params.to,
             extForCtx,
-            function(err) {
+            function (err) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' +
@@ -2613,7 +2719,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      blindtransfer_parking: function(req, res, next) {
+      blindtransfer_parking: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -2642,7 +2748,7 @@ var compConfigManager;
             req.params.parking,
             req.params.to,
             extForCtx,
-            function(err) {
+            function (err) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' +
@@ -2679,7 +2785,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      start_spy: function(req, res, next) {
+      start_spy: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -2712,7 +2818,7 @@ var compConfigManager;
           compAstProxy.startSpyListenConversation(req.params.endpointId,
             req.params.convid,
             req.params.destId,
-            function(err) {
+            function (err) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, 'spy listen convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destId + ' has been failed');
@@ -2744,7 +2850,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      txfer_tovm: function(req, res, next) {
+      txfer_tovm: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -2796,7 +2902,7 @@ var compConfigManager;
               req.params.convid,
               req.params.voicemailId,
               extForCtx,
-              function(err) {
+              function (err) {
                 try {
                   if (err) {
                     logger.log.warn(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '" by user "' + username +
@@ -2836,7 +2942,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      start_conf: function(req, res, next) {
+      start_conf: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -2861,37 +2967,38 @@ var compConfigManager;
               'by user "' + username + '" has been failed: the "' + req.params.ownerEndpointId + '" is not owned by him');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
+
           } else {
             logger.log.info(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
               'by user "' + username + '": the ' + req.params.ownerEndpointId + ' is owned by him');
           }
 
           // check remote site permission
-          if (req.params.site && compAuthorization.authorizeRemoteSiteUser(username) === false) {
+          // if (req.params.site && compAuthorization.authorizeRemoteSiteUser(username) === false) {
 
-            logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
-              'with remote endpoint "' + req.params.addEndpointId + '" of remote site "' + req.params.site + '" ' +
-              'by user "' + username + '" has been failed: no remote site permission');
-            compUtil.net.sendHttp403(IDLOG, res);
-            return;
-          }
+          //   logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+          //     'with remote endpoint "' + req.params.addEndpointId + '" of remote site "' + req.params.site + '" ' +
+          //     'by user "' + username + '" has been failed: no remote site permission');
+          //   compUtil.net.sendHttp403(IDLOG, res);
+          //   return;
+          // }
 
           // check the remote site existence
-          if (req.params.site && !compComNethctiRemotes.remoteSiteExists(req.params.site)) {
+          // if (req.params.site && !compComNethctiRemotes.remoteSiteExists(req.params.site)) {
 
-            logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
-              'with remote endpoint "' + req.params.addEndpointId + '" of remote site "' + req.params.site + '" ' +
-              'by user "' + username + '" has been failed: remote site does not exist');
-            compUtil.net.sendHttp500(IDLOG, res, 'non existent remote site "' + req.params.site + '"');
-            return;
-          }
+          //   logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+          //     'with remote endpoint "' + req.params.addEndpointId + '" of remote site "' + req.params.site + '" ' +
+          //     'by user "' + username + '" has been failed: remote site does not exist');
+          //   compUtil.net.sendHttp500(IDLOG, res, 'non existent remote site "' + req.params.site + '"');
+          //   return;
+          // }
 
           // case 1
           // the owner of the conference is already into its conference. So hangup
           // its conversation and call the extension to be added
           if (compAstProxy.isExtenInMeetmeConf(req.params.ownerEndpointId)) {
 
-            compAstProxy.hangupConversation('extension', req.params.ownerEndpointId, req.params.convid, function(err) {
+            compAstProxy.hangupConversation(req.params.ownerEndpointId, req.params.convid, function (err) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
@@ -2902,9 +3009,9 @@ var compConfigManager;
 
                 req.params.number = req.params.addEndpointId;
                 // add remote site prefix if it has been requested
-                if (req.params.site) {
-                  req.params.number = compComNethctiRemotes.getSitePrefixCall(req.params.site) + req.params.number;
-                }
+                // if (req.params.site) {
+                //   req.params.number = compComNethctiRemotes.getSitePrefixCall(req.params.site) + req.params.number;
+                // }
                 req.params.endpointId = req.params.ownerEndpointId;
                 req.params.endpointType = 'extension';
                 call(username, req, res);
@@ -2925,7 +3032,7 @@ var compConfigManager;
               req.params.convid,
               req.params.ownerEndpointId,
               req.params.addEndpointId,
-              function(err, newUser) {
+              function (err, newUser) {
                 try {
                   if (err) {
                     logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
@@ -2944,9 +3051,9 @@ var compConfigManager;
                   else {
                     req.params.number = req.params.addEndpointId;
                     // add remote site prefix if it has been requested
-                    if (req.params.site) {
-                      req.params.number = compComNethctiRemotes.getSitePrefixCall(req.params.site) + req.params.number;
-                    }
+                    // if (req.params.site) {
+                    //   req.params.number = compComNethctiRemotes.getSitePrefixCall(req.params.site) + req.params.number;
+                    // }
                   }
 
                   req.params.endpointId = req.params.ownerEndpointId;
@@ -2956,6 +3063,7 @@ var compConfigManager;
                   logger.log.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
                     'by user "' + username + '" adding exten "' + req.params.addEndpointId + '" ' +
                     (req.params.site ? ('of remote site ' + req.params.site) : ''));
+
                 } catch (error) {
                   logger.log.error(IDLOG, error.stack);
                   compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -2979,7 +3087,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      pickup_conv: function(req, res, next) {
+      pickup_conv: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -3019,7 +3127,7 @@ var compConfigManager;
             req.params.endpointId,
             req.params.destId,
             extForCtx,
-            function(err) {
+            function (err) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, 'pickup exten "' + req.params.endpointId + '" by user "' + username + '" with ' +
@@ -3053,7 +3161,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      stop_record: function(req, res, next) {
+      stop_record: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -3090,7 +3198,7 @@ var compConfigManager;
           //    logger.log.info(IDLOG, 'stopping record convid ' + req.params.convid + ': the endpoint ' + endpointId + ' is owned by "' + username + '"');
           //  }
 
-          compAstProxy.stopRecordConversation(req.params.endpointId, req.params.convid, function(err) {
+          compAstProxy.stopRecordConversation(req.params.endpointId, req.params.convid, function (err) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
@@ -3122,7 +3230,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      start_record: function(req, res, next) {
+      start_record: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -3158,7 +3266,7 @@ var compConfigManager;
             logger.log.info(IDLOG, 'starting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
 
-          compAstProxy.startRecordConversation(req.params.endpointId, req.params.convid, function(err) {
+          compAstProxy.startRecordConversation(req.params.endpointId, req.params.convid, function (err) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'starting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
@@ -3190,7 +3298,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      force_hangup: function(req, res, next) {
+      force_hangup: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -3227,7 +3335,7 @@ var compConfigManager;
               req.params.endpointId,
               req.params.convid,
               extForCtx,
-              function(err) {
+              function (err) {
                 try {
                   if (err) {
                     logger.log.warn(IDLOG, 'force hangup convid "' + req.params.convid + '" by user "' + username + '" with ' +
@@ -3267,7 +3375,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      mute_userconf: function(req, res, next) {
+      mute_userconf: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -3295,7 +3403,7 @@ var compConfigManager;
           compAstProxy.muteUserMeetmeConf(
             req.params.confId,
             req.params.userId,
-            function(err) {
+            function (err) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
@@ -3329,7 +3437,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      unmute_userconf: function(req, res, next) {
+      unmute_userconf: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -3357,7 +3465,7 @@ var compConfigManager;
           compAstProxy.unmuteUserMeetmeConf(
             req.params.confId,
             req.params.userId,
-            function(err) {
+            function (err) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
@@ -3391,7 +3499,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      end_conf: function(req, res, next) {
+      end_conf: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -3417,7 +3525,7 @@ var compConfigManager;
 
           compAstProxy.endMeetmeConf(
             req.params.confId,
-            function(err) {
+            function (err) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, 'ending meetme conf "' + req.params.confId + '" by user "' + username + '" has been failed');
@@ -3446,18 +3554,16 @@ var compConfigManager;
        *     POST join_myconf
        *
        * @method join_myconf
-       * @param {object}   req  The client request
-       * @param {object}   res  The client response
+       * @param {object} req The client request
+       * @param {object} res The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      join_myconf: function(req, res, next) {
+      join_myconf: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' ||
-            typeof req.params.endpointId !== 'string') {
-
+          if (typeof req.params !== 'object' || typeof req.params.endpointId !== 'string') {
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
@@ -3496,7 +3602,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      hangup_userconf: function(req, res, next) {
+      hangup_userconf: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -3524,7 +3630,7 @@ var compConfigManager;
           compAstProxy.hangupUserMeetmeConf(
             req.params.confId,
             req.params.extenId,
-            function(err) {
+            function (err) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
@@ -3558,7 +3664,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      mute_record: function(req, res, next) {
+      mute_record: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -3595,7 +3701,7 @@ var compConfigManager;
             logger.log.info(IDLOG, 'muting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
 
-          compAstProxy.muteRecordConversation(req.params.endpointId, req.params.convid, function(err) {
+          compAstProxy.muteRecordConversation(req.params.endpointId, req.params.convid, function (err) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" ' + req.params.endpointId + ' has been failed');
@@ -3627,7 +3733,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      unmute_record: function(req, res, next) {
+      unmute_record: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -3664,7 +3770,7 @@ var compConfigManager;
             logger.log.info(IDLOG, 'unmuting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
 
-          compAstProxy.unmuteRecordConversation(req.params.endpointId, req.params.convid, function(err) {
+          compAstProxy.unmuteRecordConversation(req.params.endpointId, req.params.convid, function (err) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
@@ -3695,7 +3801,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      pickup_parking: function(req, res, next) {
+      pickup_parking: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -3734,7 +3840,7 @@ var compConfigManager;
 
           var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
 
-          compAstProxy.pickupParking(req.params.parking, req.params.destId, extForCtx, function(err) {
+          compAstProxy.pickupParking(req.params.parking, req.params.destId, extForCtx, function (err) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'picking-up parking ' + req.params.parking + ' by user "' + username + '" with ' + req.params.destId + ' has been failed');
@@ -3766,7 +3872,7 @@ var compConfigManager;
        * @param {object} res The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      pickup_qwaitcaller: function(req, res, next) {
+      pickup_qwaitcaller: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -3804,7 +3910,7 @@ var compConfigManager;
             req.params.waitCallerId,
             req.params.destId,
             extForCtx,
-            function(err) {
+            function (err) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, 'pickup qWaitCaller "' + req.params.waitCallerId + '" from queue "' + req.params.queue + '" by user "' + username + '" with ' +
@@ -3837,7 +3943,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      queuemember_add: function(req, res, next) {
+      queuemember_add: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -3884,7 +3990,7 @@ var compConfigManager;
             }
           }
 
-          compAstProxy.queueMemberAdd(req.params.endpointId, req.params.queueId, req.params.paused, req.params.penalty, function(err) {
+          compAstProxy.queueMemberAdd(req.params.endpointId, req.params.queueId, req.params.paused, req.params.penalty, function (err) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
@@ -3919,7 +4025,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      queuemember_remove: function(req, res, next) {
+      queuemember_remove: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -3965,7 +4071,7 @@ var compConfigManager;
             }
           }
 
-          compAstProxy.queueMemberRemove(req.params.endpointId, req.params.queueId, function(err) {
+          compAstProxy.queueMemberRemove(req.params.endpointId, req.params.queueId, function (err) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
@@ -4000,7 +4106,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      inout_dyn_queues: function(req, res, next) {
+      inout_dyn_queues: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -4043,7 +4149,7 @@ var compConfigManager;
             }
           }
 
-          compAstProxy.inoutDynQueues(req.params.endpointId, function(err) {
+          compAstProxy.inoutDynQueues(req.params.endpointId, function (err) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'inout dynamic all queues by user "' + username + '" with ' +
@@ -4077,7 +4183,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      queuemember_pause: function(req, res, next) {
+      queuemember_pause: function (req, res, next) {
         try {
           queueMemberPauseUnpause(req, res, true);
 
@@ -4097,7 +4203,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      queuemember_unpause: function(req, res, next) {
+      queuemember_unpause: function (req, res, next) {
         try {
           queueMemberPauseUnpause(req, res, false);
 
@@ -4117,7 +4223,7 @@ var compConfigManager;
        * @param {object} res The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      dtmf: function(req, res, next) {
+      dtmf: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -4170,7 +4276,7 @@ var compConfigManager;
        * @param {object} res The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      wakeup: function(req, res, next) {
+      wakeup: function (req, res, next) {
         try {
           if (req.method.toLowerCase() === 'get') {
             wakeupGet(req, res, next);
@@ -4197,7 +4303,7 @@ var compConfigManager;
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      call_echo: function(req, res, next) {
+      call_echo: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -4235,7 +4341,7 @@ var compConfigManager;
        * @param {object}   res  The client response.
        * @param {function} next Function to run the next handler in the chain.
        */
-      intrude: function(req, res, next) {
+      intrude: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -4267,7 +4373,7 @@ var compConfigManager;
             logger.log.info(IDLOG, 'start spy & speak the destination extension ' + req.params.destId + ' is owned by "' + username + '"');
           }
 
-          compAstProxy.startSpySpeakConversation(req.params.endpointId, req.params.convid, req.params.destId, function(err) {
+          compAstProxy.startSpySpeakConversation(req.params.endpointId, req.params.convid, req.params.destId, function (err) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ' by user "' + username + '" with ' +
@@ -4385,7 +4491,7 @@ function wakeupDelete(req, res, next) {
       compUtil.net.sendHttp400(IDLOG, res);
       return;
     }
-    compAstProxy.deleteAlarm(req.params.filename, function(err) {
+    compAstProxy.deleteAlarm(req.params.filename, function (err) {
       try {
         if (err) {
           logger.log.warn(IDLOG, 'deleting alarm ' + req.params.filename + ' by user "' + username + '" has been failed: ' + err);
@@ -4417,7 +4523,7 @@ function wakeupDelete(req, res, next) {
 function wakeupGet(req, res, next) {
   try {
     var username = req.headers.authorization_user;
-    compAstProxy.getAlarms(function(err, resp) {
+    compAstProxy.getAlarms(function (err, resp) {
       try {
         if (err) {
           logger.log.warn(IDLOG, 'getting the list of all alarms by user "' + username + '" has been failed');
@@ -4458,7 +4564,7 @@ function wakeupPost(req, res, next) {
       compUtil.net.sendHttp400(IDLOG, res);
       return;
     }
-    compAstProxy.createAlarm(req.params.extension, req.params.time, req.params.date, function(err) {
+    compAstProxy.createAlarm(req.params.extension, req.params.time, req.params.date, function (err) {
       try {
         if (err) {
           logger.log.warn(IDLOG, 'creating alarm in ' + req.params.date + ' - ' + req.params.time + ' for exten "' +
@@ -4562,7 +4668,7 @@ function ajaxPhoneDtmf(username, req, res) {
       url = url.replace(/\$PHONE_PASS/g, phonePass);
       url = url.replace(/\$TONE/g, tone);
 
-      httpReq.get(url, function(httpResp) {
+      httpReq.get(url, function (httpResp) {
         try {
           if (httpResp.statusCode === 200) {
             logger.log.info(IDLOG, 'dtmf: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
@@ -4585,7 +4691,7 @@ function ajaxPhoneDtmf(username, req, res) {
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
 
-      }).on('error', function(err1) {
+      }).on('error', function (err1) {
         logger.log.error(IDLOG, err1.message);
         compUtil.net.sendHttp500(IDLOG, res, err1.message);
       });
@@ -4638,7 +4744,7 @@ function ajaxPhoneHoldUnhold(username, req, res) {
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
 
-      httpReq.get(url, function(httpResp) {
+      httpReq.get(url, function (httpResp) {
         try {
           if (httpResp.statusCode === 200) {
             logger.log.info(IDLOG, 'hold: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
@@ -4661,7 +4767,7 @@ function ajaxPhoneHoldUnhold(username, req, res) {
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
 
-      }).on('error', function(err1) {
+      }).on('error', function (err1) {
         logger.log.error(IDLOG, err1.message);
         compUtil.net.sendHttp500(IDLOG, res, err1.message);
       });
@@ -4747,7 +4853,7 @@ function ajaxPhoneCall(username, req, res) {
       // more details here: Nethesis/dev#5115
       if (extenAgent.toLowerCase().indexOf('alcatel') !== -1) {
 
-        httpReq.get(url, function(httpResp) {
+        httpReq.get(url, function (httpResp) {
           try {
             if (httpResp.statusCode === 200 || httpResp.statusCode === 204) {
 
@@ -4760,7 +4866,7 @@ function ajaxPhoneCall(username, req, res) {
 
             } else if (httpResp.statusCode === 401) {
 
-              httpReq.get(url, function(httpResp) {
+              httpReq.get(url, function (httpResp) {
                 try {
                   if (httpResp.statusCode === 200 || httpResp.statusCode === 204) {
 
@@ -4782,7 +4888,7 @@ function ajaxPhoneCall(username, req, res) {
                   fallbackAjaxPhoneCall(username, req, res);
                 }
 
-              }).on('error', function(err1) {
+              }).on('error', function (err1) {
                 logger.log.error(IDLOG, err1.message);
                 fallbackAjaxPhoneCall(username, req, res);
               });
@@ -4798,14 +4904,14 @@ function ajaxPhoneCall(username, req, res) {
             fallbackAjaxPhoneCall(username, req, res);
           }
 
-        }).on('error', function(err1) {
+        }).on('error', function (err1) {
           logger.log.error(IDLOG, err1.message);
           fallbackAjaxPhoneCall(username, req, res);
         });
 
       } else {
         // other phones
-        httpReq.get(url, function(httpResp) {
+        httpReq.get(url, function (httpResp) {
           try {
             if (httpResp.statusCode === 200 || httpResp.statusCode === 204) {
 
@@ -4827,7 +4933,7 @@ function ajaxPhoneCall(username, req, res) {
             fallbackAjaxPhoneCall(username, req, res);
           }
 
-        }).on('error', function(err1) {
+        }).on('error', function (err1) {
           logger.log.error(IDLOG, err1.message);
           fallbackAjaxPhoneCall(username, req, res);
         });
@@ -4885,7 +4991,7 @@ function ajaxPhoneAnswer(username, req, res) {
       // more details here: Nethesis/dev#5115
       if (extenAgent.toLowerCase().indexOf('alcatel') !== -1) {
 
-        httpReq.get(url, function(httpResp) {
+        httpReq.get(url, function (httpResp) {
           try {
             if (httpResp.statusCode === 200 || httpResp.statusCode === 204) {
 
@@ -4898,7 +5004,7 @@ function ajaxPhoneAnswer(username, req, res) {
 
             } else if (httpResp.statusCode === 401) {
 
-              httpReq.get(url, function(httpResp) {
+              httpReq.get(url, function (httpResp) {
                 try {
                   if (httpResp.statusCode === 200 || httpResp.statusCode === 204) {
 
@@ -4922,7 +5028,7 @@ function ajaxPhoneAnswer(username, req, res) {
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
 
-              }).on('error', function(err1) {
+              }).on('error', function (err1) {
                 logger.log.error(IDLOG, err1.message);
                 compUtil.net.sendHttp500(IDLOG, res, err1.message);
               });
@@ -4940,7 +5046,7 @@ function ajaxPhoneAnswer(username, req, res) {
             compUtil.net.sendHttp500(IDLOG, res, err.toString());
           }
 
-        }).on('error', function(err1) {
+        }).on('error', function (err1) {
           logger.log.error(IDLOG, err1.message);
           compUtil.net.sendHttp500(IDLOG, res, err1.message);
         });
@@ -4948,7 +5054,7 @@ function ajaxPhoneAnswer(username, req, res) {
         // other phones
       } else {
 
-        httpReq.get(url, function(httpResp) {
+        httpReq.get(url, function (httpResp) {
           try {
             if (httpResp.statusCode === 200 || httpResp.statusCode === 204) {
 
@@ -4972,7 +5078,7 @@ function ajaxPhoneAnswer(username, req, res) {
             compUtil.net.sendHttp500(IDLOG, res, err.toString());
           }
 
-        }).on('error', function(err1) {
+        }).on('error', function (err1) {
           logger.log.error(IDLOG, err1.message);
           compUtil.net.sendHttp500(IDLOG, res, err1.message);
         });
@@ -5013,7 +5119,7 @@ function asteriskCall(username, req, res) {
       extenForContext = compConfigManager.getDefaultUserExtensionConf(username);
     }
 
-    compAstProxy.call(req.params.endpointType, req.params.endpointId, req.params.number, extenForContext, function(err) {
+    compAstProxy.call(req.params.endpointType, req.params.endpointId, req.params.number, extenForContext, function (err) {
       try {
         if (err) {
           logger.log.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' ' +
@@ -5259,7 +5365,7 @@ function dndset(req, res, next) {
 
     var activate = (status === 'on') ? true : false;
 
-    compAstProxy.setDnd(endpoint, activate, function(err) {
+    compAstProxy.setDnd(endpoint, activate, function (err) {
       try {
         if (err) {
           logger.log.error(IDLOG, 'setting dnd for extension ' + endpoint + ' of user "' + username + '"');
@@ -5320,7 +5426,7 @@ function cwset(req, res, next) {
       command: 'cwSet',
       exten: endpoint,
       activate: activate
-    }, function(err, resp) {
+    }, function (err, resp) {
 
       if (err) {
         logger.log.error(IDLOG, 'setting cw "' + status + '" for extension ' + endpoint + ' of user "' + username + '"');
@@ -5378,7 +5484,7 @@ function dndget(req, res, next) {
     compAstProxy.doCmd({
       command: 'dndGet',
       exten: endpoint
-    }, function(err, resp) {
+    }, function (err, resp) {
 
       if (err) {
         logger.log.error(IDLOG, 'getting dnd for extension ' + endpoint + ' of user "' + username + '"');
@@ -5428,7 +5534,7 @@ function cwget(req, res, next) {
     compAstProxy.doCmd({
       command: 'cwGet',
       exten: endpoint
-    }, function(err, resp) {
+    }, function (err, resp) {
 
       if (err) {
         logger.log.error(IDLOG, 'getting cw for extension ' + endpoint + ' of user "' + username + '"');
@@ -5523,7 +5629,7 @@ function cfvmGetUnconditional(endpoint, username, res) {
     compAstProxy.doCmd({
       command: 'cfVmGet',
       exten: endpoint
-    }, function(err, resp) {
+    }, function (err, resp) {
 
       if (err) {
         logger.log.error(IDLOG, 'getting unconditional cfvm for extension ' + endpoint + ' of user "' + username + '"');
@@ -5560,7 +5666,7 @@ function cfvmGetBusy(endpoint, username, res) {
     compAstProxy.doCmd({
       command: 'cfbVmGet',
       exten: endpoint
-    }, function(err, resp) {
+    }, function (err, resp) {
 
       if (err) {
         logger.log.error(IDLOG, 'getting cfvm busy for extension ' + endpoint + ' of user "' + username + '"');
@@ -5597,7 +5703,7 @@ function cfvmGetUnavailable(endpoint, username, res) {
     compAstProxy.doCmd({
       command: 'cfuVmGet',
       exten: endpoint
-    }, function(err, resp) {
+    }, function (err, resp) {
 
       if (err) {
         logger.log.error(IDLOG, 'getting cfvm unavailable for extension ' + endpoint + ' of user "' + username + '"');
@@ -5693,7 +5799,7 @@ function cfcallGetUnconditional(endpoint, username, res) {
     compAstProxy.doCmd({
       command: 'cfGet',
       exten: endpoint
-    }, function(err, resp) {
+    }, function (err, resp) {
 
       if (err) {
         logger.log.error(IDLOG, 'getting unconditional cfcall for extension ' + endpoint + ' of user "' + username + '"');
@@ -5730,7 +5836,7 @@ function cfcallGetBusy(endpoint, username, res) {
     compAstProxy.doCmd({
       command: 'cfbGet',
       exten: endpoint
-    }, function(err, resp) {
+    }, function (err, resp) {
 
       if (err) {
         logger.log.error(IDLOG, 'getting cfcall busy for extension ' + endpoint + ' of user "' + username + '"');
@@ -5767,7 +5873,7 @@ function cfcallGetUnavailable(endpoint, username, res) {
     compAstProxy.doCmd({
       command: 'cfuGet',
       exten: endpoint
-    }, function(err, resp) {
+    }, function (err, resp) {
 
       if (err) {
         logger.log.error(IDLOG, 'getting cfcall unavailable for extension ' + endpoint + ' of user "' + username + '"');
@@ -5868,7 +5974,7 @@ function cfvmSetUnconditional(endpoint, username, activate, to, res) {
 
     // when "activate" is false, "to" can be undefined if the client hasn't specified it.
     // This is not important because in this case, the asterisk command plugin doesn't use "val" value
-    compAstProxy.setUnconditionalCfVm(endpoint, activate, to, function(err1, resp) {
+    compAstProxy.setUnconditionalCfVm(endpoint, activate, to, function (err1, resp) {
 
       if (err1) {
         logger.log.error(IDLOG, 'setting unconditional cfvm for extension ' + endpoint + ' of user "' + username + '"');
@@ -5914,7 +6020,7 @@ function cfvmSetBusy(endpoint, username, activate, to, res) {
       exten: endpoint,
       activate: activate,
       val: to
-    }, function(err, resp) {
+    }, function (err, resp) {
 
       if (err) {
         logger.log.error(IDLOG, 'setting cfvm busy for extension ' + endpoint + ' of user "' + username + '"');
@@ -5960,7 +6066,7 @@ function cfvmSetUnavailable(endpoint, username, activate, to, res) {
       exten: endpoint,
       activate: activate,
       val: to
-    }, function(err, resp) {
+    }, function (err, resp) {
 
       if (err) {
         logger.log.error(IDLOG, 'setting cfvm unavailable for extension ' + endpoint + ' of user "' + username + '"');
@@ -6064,7 +6170,7 @@ function cfcallSetUnconditional(endpoint, username, activate, to, res) {
 
     // when "activate" is false, "to" can be undefined if the client hasn't specified it.
     // This is not important because in this case, the asterisk command plugin doesn't use "val" value
-    compAstProxy.setUnconditionalCf(endpoint, activate, to, function(err1, resp) {
+    compAstProxy.setUnconditionalCf(endpoint, activate, to, function (err1, resp) {
       try {
         if (err1) {
           logger.log.error(IDLOG, 'setting unconditional cfcall for extension ' + endpoint + ' of user "' + username + '"');
@@ -6116,7 +6222,7 @@ function cfcallSetBusy(endpoint, username, activate, to, res) {
       exten: endpoint,
       activate: activate,
       val: to
-    }, function(err, resp) {
+    }, function (err, resp) {
 
       if (err) {
         logger.log.error(IDLOG, 'setting cfcall busy for extension ' + endpoint + ' of user "' + username + '"');
@@ -6162,7 +6268,7 @@ function cfcallSetUnavailable(endpoint, username, activate, to, res) {
       exten: endpoint,
       activate: activate,
       val: to
-    }, function(err, resp) {
+    }, function (err, resp) {
 
       if (err) {
         logger.log.error(IDLOG, 'setting cfcall unavailable for extension ' + endpoint + ' of user "' + username + '"');
@@ -6254,7 +6360,7 @@ function queueMemberPauseUnpause(req, res, paused) {
       req.params.queueId,
       req.params.reason,
       paused,
-      function(err) {
+      function (err) {
         try {
           if (err) {
             logger.log.warn(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ' by user "' + username + '": has been failed');

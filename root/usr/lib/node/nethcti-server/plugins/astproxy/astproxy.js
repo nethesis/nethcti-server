@@ -268,39 +268,6 @@ function configAstObjects(path) {
 }
 
 /**
- * Sets the asterisk codes to be used for some functions.
- *
- * @method configAstCodes
- * @param {string} path The file path of the JSON configuration file that contains the asterisk codes
- */
-function configAstCodes(path) {
-  try {
-    if (typeof path !== 'string') {
-      throw new TypeError('wrong parameter');
-    }
-
-    // check the file presence
-    if (!fs.existsSync(path)) {
-      throw new Error(path + ' does not exist');
-    }
-
-    // read the configuration file
-    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
-
-    // check the configuration file content
-    if (typeof json !== 'object') {
-      throw new Error('wrong configuration file ' + path);
-    }
-
-    proxyLogic.setAstCodes(json);
-    logger.log.info(IDLOG, 'asterisk codes successfully configured');
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-  }
-}
-
-/**
  * Sets the remote sites to have remote sites prefixes.
  *
  * @method configRemoteSitePrefixes
@@ -773,7 +740,6 @@ exports.reload = reload;
 exports.config = config;
 exports.setLogger = setLogger;
 exports.proxyLogic = proxyLogic;
-exports.configAstCodes = configAstCodes;
 exports.configSipWebrtc = configSipWebrtc;
 exports.getSipWebrtcConf = getSipWebrtcConf;
 exports.configAstObjects = configAstObjects;
