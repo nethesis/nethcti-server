@@ -2624,7 +2624,7 @@ function updateMeetmeConf(err, data) {
       var newConf = new MeetmeConference(data.confId);
       for (i = 0; i < data.users.length; i++) {
         var newUserConf = new MeetmeConfUser(data.users[i].id, data.users[i].extenId, data.users[i].isOwner, data.users[i].channel);
-        newUserConf.setName(data.users[i].name);
+        newUserConf.setName(extensions[data.users[i].extenId] ? extensions[data.users[i].extenId].getName() : '');
         newUserConf.setMuted(data.users[i].muted);
         newUserConf.setRemoteSitePrefix(data.users[i].prefix);
         newUserConf.setRemoteSiteName(data.users[i].site);
