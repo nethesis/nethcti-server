@@ -201,7 +201,7 @@ function start() {
     });
     var proxy = httpProxy.createProxy();
 
-    httpServer = http.createServer(function(req, res) {
+    httpServer = http.createServer(function (req, res) {
       try {
         logger.log.info(IDLOG, getProxyLog(req));
 
@@ -280,7 +280,7 @@ function start() {
         }
 
         if ((req.headers.authorization !== undefined && typeof req.headers.authorization !== 'string') ||
-            (req.headers.authorization !== undefined && (req.headers.authorization.split(':')).length !== 2)) {
+          (req.headers.authorization !== undefined && (req.headers.authorization.split(':')).length !== 2)) {
 
           compUtil.net.sendHttp401(IDLOG, res);
           return;
@@ -298,7 +298,11 @@ function start() {
             if (compAstProxy.isExten(arr[0]) && req.url !== '/authentication/logout') {
               // this is to support login with extension number
               req.headers.authorization_user = compUser.getUserUsingEndpointExtension(arr[0]);
+            } else if (req.url !== '/authentication/logout') {
+              // remove "@domain" from username if it is present
+              req.headers.authorization_user = arr[0].indexOf('@') !== -1 ? arr[0].substring(0, arr[0].lastIndexOf('@')) : arr[0];
             } else {
+              // because login and logout are done with user or user@domain as passed by the client
               req.headers.authorization_user = arr[0];
             }
             req.headers.authorization_token = arr[1];
@@ -322,13 +326,13 @@ function start() {
       }
     }).listen(port, address);
 
-    httpServer.on('listening', function() {
+    httpServer.on('listening', function () {
       logger.log.warn(IDLOG, 'listening on ' + httpServer.address().address + ':' + httpServer.address().port);
     });
-    httpServer.on('error', function(e) {
+    httpServer.on('error', function (e) {
       logger.log.error(IDLOG, e.stack);
     });
-    httpServer.on('close', function() {
+    httpServer.on('close', function () {
       logger.log.warn(IDLOG, 'stop listening');
     });
   } catch (err) {

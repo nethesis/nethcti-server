@@ -251,13 +251,15 @@ function setCompUser(comp) {
           // check if user tryed to login using main extension instead of username
           var extension;
           if (!compUser.isUserPresent(username) && compAstProxy.isExten(username)) {
-
             extension = username;
             username = compUser.getUserUsingEndpointExtension(username);
             logger.log.info(IDLOG, 'user supplied an extension number to login: "' + extension + '". Corresponding username is "' + username + '"');
           }
 
-          if (!compUser.isUserPresent(username)) {
+          // get username without "@domain" if it is present
+          var clUser = username.indexOf('@') !== -1 ? username.substring(0, username.lastIndexOf('@')) : username;
+
+          if (!compUser.isUserPresent(clUser)) {
             var errmsg = 'user ' + username + ' is not configured';
             compUtil.net.sendHttp401(IDLOG, res, errmsg);
             return;
