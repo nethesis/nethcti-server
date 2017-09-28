@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.1
+Version: 3.0.2
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -82,6 +82,11 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu Sep 28 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.2-1
+- fix login with username@domain
+- fix user list of audio conference
+- add rest api for audio conference
+
 * Fri Sep 01 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.1-1
 - Release 3.0.1
 
