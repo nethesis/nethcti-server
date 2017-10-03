@@ -1165,6 +1165,11 @@ function start() {
       command: 'listParkings'
     }, initializeParkings);
 
+    // validates all sip trunks
+    astProxy.doCmd({
+      command: 'listSipPeers'
+    }, initializeSipTrunk);
+
     // initializes meetme conferences
     initMeetmeConf();
 
@@ -1414,7 +1419,7 @@ function updateParkedChannelOfOneParking(err, resp, parking) {
       logger.log.info(IDLOG, 'request all channels to update parked caller information for parking ' + parking);
       astProxy.doCmd({
         command: 'listChannels'
-      }, function(err, resp) {
+      }, function (err, resp) {
         // update the parked caller of one parking in "parkings" object list
         updateParkedCallerOfOneParking(err, resp, parking);
       });
@@ -1524,7 +1529,7 @@ function updateParkedCallerForAllParkings(err, resp) {
         logger.log.info(IDLOG, 'added parked call ' + pCall.getNumber() + ' to parking ' + p);
       }
     }
-    Object.keys(parkings).forEach(function(p) {
+    Object.keys(parkings).forEach(function (p) {
       logger.log.info(IDLOG, 'emit event ' + EVT_PARKING_CHANGED + ' for parking ' + p);
       astProxy.emit(EVT_PARKING_CHANGED, parkings[p]);
     });
@@ -1542,11 +1547,11 @@ function updateParkedCallerForAllParkings(err, resp) {
  * @private
  */
 function getQueueDetails(qid) {
-  return function(callback) {
+  return function (callback) {
     astProxy.doCmd({
       command: 'queueDetails',
       queue: qid
-    }, function(err, resp) {
+    }, function (err, resp) {
       queueDetails(err, resp, callback);
       callback(null);
     });
@@ -1577,11 +1582,11 @@ function initializeQueues(err, results) {
       arr.push(getQueueDetails(q.getQueue()));
     }
     async.parallel(arr,
-      function(err) {
+      function (err) {
         if (err) {
           logger.log.error(IDLOG, err);
         }
-        results.forEach(function(o) {
+        results.forEach(function (o) {
           logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + o.queue);
           astProxy.emit(EVT_QUEUE_CHANGED, queues[o.queue]);
         });
@@ -1609,7 +1614,7 @@ function startIntervalUpdateQueuesDetails(interval) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    intervalUpdateQueuesDetails = setInterval(function() {
+    intervalUpdateQueuesDetails = setInterval(function () {
 
       var q;
       for (q in queues) {
@@ -1957,10 +1962,10 @@ function updateQueueMemberLastPauseData(memberName, memberId, queueId) {
 
     async.parallel([
 
-      function(callback) {
+      function (callback) {
 
         // set the last started pause data of the member
-        compDbconn.getQueueMemberLastPausedInData(memberName, queueId, memberId, function(err1, result) {
+        compDbconn.getQueueMemberLastPausedInData(memberName, queueId, memberId, function (err1, result) {
           try {
             if (err1) {
               throw err1;
@@ -1978,10 +1983,10 @@ function updateQueueMemberLastPauseData(memberName, memberId, queueId) {
           }
         });
       },
-      function(callback) {
+      function (callback) {
 
         // set the last ended pause data of the member
-        compDbconn.getQueueMemberLastPausedOutData(memberName, queueId, memberId, function(err3, result3) {
+        compDbconn.getQueueMemberLastPausedOutData(memberName, queueId, memberId, function (err3, result3) {
           try {
             if (err3) {
               throw err3;
@@ -2000,7 +2005,7 @@ function updateQueueMemberLastPauseData(memberName, memberId, queueId) {
         });
       }
 
-    ], function(err) {
+    ], function (err) {
 
       if (err) {
         logger.log.error(IDLOG, err);
@@ -2033,7 +2038,7 @@ function getJSONQueuesStats(day, callback) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    compDbconn.getQueuesStats(day, function(err1, result) {
+    compDbconn.getQueuesStats(day, function (err1, result) {
       callback(err1, result);
     });
 
@@ -2058,7 +2063,7 @@ function getJSONQueuesQOS(day, callback) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    compDbconn.getQueuesQOS(day, function(err1, result) {
+    compDbconn.getQueuesQOS(day, function (err1, result) {
       callback(err1, result);
     });
 
@@ -2083,7 +2088,7 @@ function getJSONAgentsStats(day, callback) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    compDbconn.getAgentsStats(day, function(err1, result) {
+    compDbconn.getAgentsStats(day, function (err1, result) {
       callback(err1, result);
     });
 
@@ -2339,11 +2344,11 @@ function initializeSipExten() {
  * @private
  */
 function getDndExten(exten) {
-  return function(callback) {
+  return function (callback) {
     astProxy.doCmd({
       command: 'dndGet',
       exten: exten
-    }, function(err, resp) {
+    }, function (err, resp) {
       setDndStatus(err, resp);
       callback(null);
     });
@@ -2359,11 +2364,11 @@ function getDndExten(exten) {
  * @private
  */
 function getCfExten(exten) {
-  return function(callback) {
+  return function (callback) {
     astProxy.doCmd({
       command: 'cfGet',
       exten: exten
-    }, function(err, resp) {
+    }, function (err, resp) {
       setCfStatus(err, resp);
       callback(null);
     });
@@ -2379,11 +2384,11 @@ function getCfExten(exten) {
  * @private
  */
 function getCfbExten(exten) {
-  return function(callback) {
+  return function (callback) {
     astProxy.doCmd({
       command: 'cfbGet',
       exten: exten
-    }, function(err, resp) {
+    }, function (err, resp) {
       setCfbStatus(err, resp);
       callback(null);
     });
@@ -2399,11 +2404,11 @@ function getCfbExten(exten) {
  * @private
  */
 function getCfuExten(exten) {
-  return function(callback) {
+  return function (callback) {
     astProxy.doCmd({
       command: 'cfuGet',
       exten: exten
-    }, function(err, resp) {
+    }, function (err, resp) {
       setCfuStatus(err, resp);
       callback(null);
     });
@@ -2419,11 +2424,11 @@ function getCfuExten(exten) {
  * @private
  */
 function getCfVmExten(exten) {
-  return function(callback) {
+  return function (callback) {
     astProxy.doCmd({
       command: 'cfVmGet',
       exten: exten
-    }, function(err, resp) {
+    }, function (err, resp) {
       setCfVmStatus(err, resp);
       callback(null);
     });
@@ -2439,11 +2444,11 @@ function getCfVmExten(exten) {
  * @private
  */
 function getCfbVmExten(exten) {
-  return function(callback) {
+  return function (callback) {
     astProxy.doCmd({
       command: 'cfbVmGet',
       exten: exten
-    }, function(err, resp) {
+    }, function (err, resp) {
       setCfbVmStatus(err, resp);
       callback(null);
     });
@@ -2459,11 +2464,11 @@ function getCfbVmExten(exten) {
  * @private
  */
 function getCfuVmExten(exten) {
-  return function(callback) {
+  return function (callback) {
     astProxy.doCmd({
       command: 'cfuVmGet',
       exten: exten
-    }, function(err, resp) {
+    }, function (err, resp) {
       setCfuVmStatus(err, resp);
       callback(null);
     });
@@ -2479,11 +2484,11 @@ function getCfuVmExten(exten) {
  * @private
  */
 function getPjsipDetailExten(exten) {
-  return function(callback) {
+  return function (callback) {
     astProxy.doCmd({
       command: 'pjsipDetails',
       exten: exten
-    }, function(err, resp) {
+    }, function (err, resp) {
       extPjsipDetails(err, resp);
       callback(null);
     });
@@ -2498,10 +2503,10 @@ function getPjsipDetailExten(exten) {
  * @private
  */
 function getListChannels() {
-  return function(callback) {
+  return function (callback) {
     astProxy.doCmd({
       command: 'listChannels'
-    }, function(err, resp) {
+    }, function (err, resp) {
       updateConversationsForAllExten(err, resp);
       callback(null);
     });
@@ -2546,7 +2551,7 @@ function initializePjsipExten(err, results) {
       arr.push(getListChannels());
     }
     async.parallel(arr,
-      function(err) {
+      function (err) {
         if (err) {
           logger.log.error(IDLOG, err);
         }
@@ -2559,7 +2564,7 @@ function initializePjsipExten(err, results) {
           logger.log.info(IDLOG, 'emit "' + EVT_RELOADED + '" event');
           astProxy.emit(EVT_RELOADED);
         }
-        results.forEach(function(obj) {
+        results.forEach(function (obj) {
           if (extensions[obj.ext]) {
             logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for pjsip extension ' + obj.ext);
             astProxy.emit(EVT_EXTEN_CHANGED, extensions[obj.ext]);
@@ -2664,44 +2669,91 @@ function initMeetmeConf() {
 }
 
 /**
- * Initialize all sip trunks as _Trunk_ object into the
- * _trunks_ property.
+ * Get trunk sip details.
  *
- * @method initializeSipTrunk
+ * @method getTrunkSipDetails
+ * @param {string} trunk The trunk identifier
+ * @return {function} The function to be called by _initializeSipTrunk_.
  * @private
  */
-function initializeSipTrunk() {
+function getTrunkSipDetails(trunk) {
+  return function (callback) {
+    astProxy.doCmd({
+      command: 'sipDetails',
+      exten: trunk
+    }, function (err, resp) {
+      trunkSipDetails(err, resp);
+      callback(null);
+    });
+  };
+}
+
+/**
+ * Get status of trunk sip.
+ *
+ * @method getSipTrunkStatus
+ * @param {string} trunk The trunk identifier
+ * @return {function} The function to be called by _initializeSipTrunk_.
+ * @private
+ */
+function getSipTrunkStatus(trunk) {
+  return function (callback) {
+    astProxy.doCmd({
+      command: 'sipTrunkStatus',
+      trunk: trunk
+    }, function (err, resp) {
+      sipTrunkStatus(err, resp);
+      callback(null);
+    });
+  };
+}
+
+/**
+ * Initialize all sip trunks as _Trunk_ object into the _trunks_ property.
+ *
+ * @method initializeSipTrunk
+ * @param {object} err The error received from the command
+ * @param {array} resp The response received from the command
+ * @private
+ */
+function initializeSipTrunk(err, results) {
   try {
-    var k, trunk;
-    for (k in struct) {
-
-      if (struct[k].type === INI_STRUCT.TYPE.TRUNK &&
-        struct[k].tech === INI_STRUCT.TECH.SIP) { // all sip trunks
-
-        trunk = new Trunk(struct[k].extension, struct[k].tech, struct[k].max_channels);
-        trunks[trunk.getExten()] = trunk;
-        trunks[trunk.getExten()].setName(struct[k].label);
-
-        // request sip details for current trunk
-        astProxy.doCmd({
-          command: 'sipDetails',
-          exten: trunk.getExten()
-        }, trunkSipDetails);
-
-        // request the trunk status
-        astProxy.doCmd({
-          command: 'sipTrunkStatus',
-          trunk: trunk.getExten()
-        }, sipTrunkStatus);
-      }
+    if (err) {
+      logger.log.error(IDLOG, err);
+      return;
     }
 
-    // request all channels
-    logger.log.info(IDLOG, 'requests the channel list to initialize sip trunks');
-    astProxy.doCmd({
-      command: 'listChannels'
-    }, updateConversationsForAllTrunk);
+    var arr = [];
+    var i;
+    for (i = 0; i < results.length; i++) {
+      // skip if the current sip is not a trunk
+      if (!staticDataTrunks[results[i].ext]) {
+        continue;
+      }
 
+      trunk = new Trunk(
+        results[i].ext,
+        staticDataTrunks[results[i].ext].tech,
+        staticDataTrunks[results[i].ext].maxchans
+      );
+      trunks[trunk.getExten()] = trunk;
+      trunks[trunk.getExten()].setName(staticDataTrunks[results[i].ext].name);
+
+      arr.push(getTrunkSipDetails(trunk.getExten()));
+      arr.push(getSipTrunkStatus(trunk.getExten()));
+    }
+    async.parallel(arr,
+      function (err) {
+        if (err) {
+          logger.log.error(IDLOG, err);
+        }
+        // request all channels
+        logger.log.info(IDLOG, 'requests the channel list to initialize sip trunks');
+        astProxy.doCmd({
+          command: 'listChannels'
+        }, updateConversationsForAllTrunk);
+      }
+    );
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -3778,7 +3830,7 @@ function evtExtenStatusChanged(exten, status) {
       logger.log.info(IDLOG, 'requests all parked channels to update the parking ' + parking);
       astProxy.doCmd({
         command: 'listParkedCalls'
-      }, function(err, resp) {
+      }, function (err, resp) {
         // update the parked channel of one parking in "parkedChannels"
         updateParkedChannelOfOneParking(err, resp, parking);
       });
@@ -4025,7 +4077,7 @@ function evtNewExternalCall(number) {
     }
 
     // get the caller notes data
-    compCallerNote.getAllValidCallerNotesByNum(number, function(err, results) {
+    compCallerNote.getAllValidCallerNotesByNum(number, function (err, results) {
       try {
         if (err) {
           logger.log.warn(IDLOG, 'retrieving caller notes data for new external call from number ' + number);
@@ -4040,7 +4092,7 @@ function evtNewExternalCall(number) {
     });
 
     // get the phonebook contacts
-    compPhonebook.getPbContactsByNum(number, function(err, results) {
+    compPhonebook.getPbContactsByNum(number, function (err, results) {
       try {
         if (err) {
           logger.log.warn(IDLOG, 'retrieving phonebook contacts data for new external call from number ' + number);
@@ -4451,7 +4503,7 @@ function setDnd(exten, activate, cb) {
         exten: exten,
         activate: activate
 
-      }, function(err) {
+      }, function (err) {
         cb(err);
         if (err === null) {
           evtExtenDndChanged(exten, activate);
@@ -4703,7 +4755,7 @@ function setUnconditionalCf(exten, activate, to, cb) {
         exten: exten,
         activate: activate,
         val: to
-      }, function(err) {
+      }, function (err) {
 
         cb(err);
         if (err === null) {
@@ -4747,7 +4799,7 @@ function setCfb(exten, activate, to, cb) {
         exten: exten,
         activate: activate,
         val: to
-      }, function(err) {
+      }, function (err) {
 
         cb(err);
         if (err === null) {
@@ -4792,7 +4844,7 @@ function setCfbVm(exten, activate, to, cb) {
         exten: exten,
         activate: activate,
         val: to
-      }, function(err, resp) {
+      }, function (err, resp) {
 
         cb(err, resp);
         if (err === null) {
@@ -4837,7 +4889,7 @@ function setCfuVm(exten, activate, to, cb) {
         exten: exten,
         activate: activate,
         val: to
-      }, function(err, resp) {
+      }, function (err, resp) {
 
         cb(err, resp);
         if (err === null) {
@@ -4881,7 +4933,7 @@ function setCfu(exten, activate, to, cb) {
         exten: exten,
         activate: activate,
         val: to
-      }, function(err) {
+      }, function (err) {
 
         cb(err);
         if (err === null) {
@@ -4926,7 +4978,7 @@ function setUnconditionalCfVm(exten, activate, to, cb) {
         exten: exten,
         activate: activate,
         val: to
-      }, function(err, resp) {
+      }, function (err, resp) {
 
         cb(err, resp);
         if (err === null) {
@@ -5100,7 +5152,7 @@ function evtRemoveMeetmeUserConf(data) {
       meetmeConfCode: getMeetmeConfCode(),
       confId: data.confId,
       remoteSitesPrefixes: remoteSitesPrefixes
-    }, function(err, resp) {
+    }, function (err, resp) {
       updateMeetmeConf(err, resp[(Object.keys(resp))[0]]);
     });
 
@@ -5162,7 +5214,7 @@ function evtAddMeetmeUserConf(data) {
       meetmeConfCode: getMeetmeConfCode(),
       confId: data.confId,
       remoteSitesPrefixes: remoteSitesPrefixes
-    }, function(err, resp) {
+    }, function (err, resp) {
       updateMeetmeConf(err, resp[(Object.keys(resp))[0]]);
     });
 
@@ -5171,7 +5223,7 @@ function evtAddMeetmeUserConf(data) {
       logger.log.info(IDLOG, 'requests the channel list to update the extension ' + data.extenId);
       astProxy.doCmd({
         command: 'listChannels'
-      }, function(err, resp) {
+      }, function (err, resp) {
         // update the conversations of the extension
         updateExtenConversations(err, resp, data.extenId);
       });
@@ -5204,7 +5256,7 @@ function evtMeetmeUserConfMute(data) {
       meetmeConfCode: getMeetmeConfCode(),
       confId: data.confId,
       remoteSitesPrefixes: remoteSitesPrefixes
-    }, function(err, resp) {
+    }, function (err, resp) {
       updateMeetmeConf(err, resp[(Object.keys(resp))[0]]);
     });
 
@@ -5262,7 +5314,7 @@ function evtSpyStartConversation(data) {
 
     astProxy.doCmd({
       command: 'listChannels'
-    }, function(err, resp) {
+    }, function (err, resp) {
 
       // update the conversations of the spier
       if (extensions[data.spierId]) {
@@ -5327,7 +5379,7 @@ function evtConversationDialing(data) {
     // it in the following manner
     astProxy.doCmd({
       command: 'listChannels'
-    }, function(err, resp) {
+    }, function (err, resp) {
       try {
         // update the conversations of the extensions
         if (extensions[data.chSourceExten]) {
@@ -5393,7 +5445,7 @@ function updateConversationsOfNum(num) {
       logger.log.info(IDLOG, 'requests the channel list to update the extension ' + num);
       astProxy.doCmd({
         command: 'listChannels'
-      }, function(err, resp) {
+      }, function (err, resp) {
         updateExtenConversations(err, resp, num);
       });
     }
@@ -5401,7 +5453,7 @@ function updateConversationsOfNum(num) {
       logger.log.info(IDLOG, 'requests the channel list to update the trunk ' + num);
       astProxy.doCmd({
         command: 'listChannels'
-      }, function(err, resp) {
+      }, function (err, resp) {
         updateTrunkConversations(err, resp, num);
       });
     }
@@ -5684,7 +5736,7 @@ function call(endpointType, endpointId, to, extenForContext, cb) {
       from: endpointId,
       chanType: extensions[endpointId].getChanType(),
       to: to
-    }, function(error) {
+    }, function (error) {
       cb(error);
       callCb(error);
     });
@@ -5722,7 +5774,7 @@ function muteConversation(extension, convid, cb) {
       astProxy.doCmd({
         command: 'mute',
         channel: ch
-      }, function(error) {
+      }, function (error) {
         cb(error);
         muteCb(error);
       });
@@ -5762,7 +5814,7 @@ function unmuteConversation(extension, convid, cb) {
       astProxy.doCmd({
         command: 'unmute',
         channel: ch
-      }, function(error) {
+      }, function (error) {
         cb(error);
         muteCb(error);
       });
@@ -5803,7 +5855,7 @@ function muteUserMeetmeConf(confId, userId, cb) {
         usernum: userId,
         meetmeConfCode: getMeetmeConfCode()
       },
-      function(error) {
+      function (error) {
         cb(error);
         muteUserMeetmeConfCb(error);
       });
@@ -5839,7 +5891,7 @@ function unmuteUserMeetmeConf(confId, userId, cb) {
         usernum: userId,
         meetmeConfCode: getMeetmeConfCode()
       },
-      function(error) {
+      function (error) {
         cb(error);
         unmuteUserMeetmeConfCb(error);
       });
@@ -5893,7 +5945,7 @@ function hangupUserMeetmeConf(confId, extenId, cb) {
     astProxy.doCmd({
       command: 'hangup',
       channel: ch
-    }, function(err) {
+    }, function (err) {
       cb(err);
       hangupConvCb(err);
     });
@@ -5936,7 +5988,7 @@ function sendDtmfToConversation(extension, convid, tone, cb) {
         command: 'playDTMF',
         channel: chToSend,
         digit: tone
-      }, function(error) {
+      }, function (error) {
         if (error) {
           logger.log.warn(IDLOG, 'play dtmf tone "' + tone + '" to channel "' + chToSend + '": failed: ' + error.message);
         } else {
@@ -5992,7 +6044,7 @@ function pickupParking(parking, destId, extForCtx, cb) {
         context: ctx,
         chToRedirect: ch,
         to: destId
-      }, function(err) {
+      }, function (err) {
         cb(err);
         redirectConvCb(err);
       });
@@ -6069,7 +6121,7 @@ function pickupQueueWaitingCaller(queue, waitCallerId, destId, extForCtx, cb) {
       context: ctx,
       chToRedirect: ch,
       to: destId
-    }, function(err) {
+    }, function (err) {
       cb(err);
       pickupQueueWaitingCallerCb(err);
     });
@@ -6113,7 +6165,7 @@ function pickupConversation(endpointId, destId, extForCtx, cb) {
         chanType: extensions[endpointId].getChanType(),
         from: destId,
         to: getPickupCode() + endpointId
-      }, function(err) {
+      }, function (err) {
         cb(err);
         pickupConvCb(err);
       });
@@ -6154,7 +6206,7 @@ function evtHangupConversation(data) {
       // request all channel list and update channels of extension
       astProxy.doCmd({
         command: 'listChannels'
-      }, function(err, resp) {
+      }, function (err, resp) {
 
         // update the conversations of the extension
         updateExtenConversations(err, resp, data.channelExten);
@@ -6172,7 +6224,7 @@ function evtHangupConversation(data) {
       // request all channel list and update channels of trunk
       astProxy.doCmd({
         command: 'listChannels'
-      }, function(err, resp) {
+      }, function (err, resp) {
 
         // update the conversations of the trunk
         updateTrunkConversations(err, resp, data.channelExten);
@@ -6225,7 +6277,7 @@ function startMeetmeConference(convid, ownerExtenId, addExtenId, cb) {
 
     // redirect the channel of the counterpart to the conference number of the owner extension
     var confnum = getMeetmeConfCode() + ownerExtenId;
-    redirectConversation(ownerExtenId, convid, confnum, ownerExtenId, function(err) {
+    redirectConversation(ownerExtenId, convid, confnum, ownerExtenId, function (err) {
       // newUser is true if the conversation "convid"
       // involves both "ownerExtenId" and "addExtenId"
       var newUser = conv.getCounterpartNum() === addExtenId;
@@ -6269,7 +6321,7 @@ function endMeetmeConf(confId, cb) {
     }
 
     logger.log.info(IDLOG, 'starting end entire meetme conf "' + confId + '"');
-    async.each(arrUsers, function(u, eachCb) {
+    async.each(arrUsers, function (u, eachCb) {
 
       var ch = u.getChannel();
       var uid = u.getId();
@@ -6278,7 +6330,7 @@ function endMeetmeConf(confId, cb) {
       astProxy.doCmd({
         command: 'hangup',
         channel: ch
-      }, function(err) {
+      }, function (err) {
         if (err) {
           logger.log.error(IDLOG, 'hanging up channel "' + ch + '" of user "' + uid + '" ' +
             'exten "' + eid + '" of conf "' + confId + '"');
@@ -6289,7 +6341,7 @@ function endMeetmeConf(confId, cb) {
           eachCb();
         }
       });
-    }, function(err) {
+    }, function (err) {
 
       if (err) {
         logger.log.error(IDLOG, 'ending entire meetme conf "' + confId + '": ' + err.toString());
@@ -6357,7 +6409,7 @@ function hangupConversation(endpointId, convid, cb) {
         astProxy.doCmd({
           command: 'hangup',
           channel: ch
-        }, function(err) {
+        }, function (err) {
           cb(err);
           hangupConvCb(err);
         });
@@ -6405,7 +6457,7 @@ function hangupChannel(endpointType, endpointId, ch, cb) {
       astProxy.doCmd({
         command: 'hangup',
         channel: ch
-      }, function(err) {
+      }, function (err) {
         cb(err);
         hangupConvCb(err);
       });
@@ -6707,7 +6759,7 @@ function redirectConversation(extension, convid, to, extForCtx, cb) {
           context: ctx,
           chToRedirect: chToRedirect,
           to: to
-        }, function(err) {
+        }, function (err) {
           cb(err);
           redirectConvCb(err);
         });
@@ -6779,7 +6831,7 @@ function forceHangupConversation(endpointType, endpointId, convid, extForCtx, cb
           context: ctx,
           chToRedirect: chToHangup,
           to: to
-        }, function(err) {
+        }, function (err) {
           cb(err);
           if (err) {
             logger.log.error(IDLOG, 'force hangup channel failed: ' + err.toString());
@@ -6843,7 +6895,7 @@ function redirectWaitingCaller(waitingCallerId, queue, to, extForCtx, cb) {
           context: ctx,
           chToRedirect: ch,
           to: to
-        }, function(err) {
+        }, function (err) {
           cb(err);
           redirectConvCb(err);
         });
@@ -6901,7 +6953,7 @@ function redirectParking(parking, to, extForCtx, cb) {
           context: ctx,
           chToRedirect: ch,
           to: to
-        }, function(err) {
+        }, function (err) {
           cb(err);
           redirectConvCb(err);
         });
@@ -6971,7 +7023,7 @@ function attendedTransferConversation(extension, convid, to, cb) {
           command: 'attendedTransfer',
           chToTransfer: chToTransfer,
           to: to
-        }, function(err) {
+        }, function (err) {
           cb(err);
           attendedTransferConvCb(err);
         });
@@ -7048,7 +7100,7 @@ function transferConversationToVoicemail(endpointType, endpointId, convid, voice
           context: ctx,
           chToTransfer: chToTransfer,
           voicemail: voicemail
-        }, function(err) {
+        }, function (err) {
           cb(err);
           transferConvToVoicemailCb(err);
         });
@@ -7136,7 +7188,7 @@ function parkConversation(extension, convid, applicantId, cb) {
           command: 'parkChannel',
           chToPark: chToPark,
           chToReturn: chToReturn
-        }, function(err, resp) {
+        }, function (err, resp) {
           try {
             if (err) {
               logger.log.error(IDLOG, 'parking the channel ' + chToPark + ' by the applicant ' + applicantId);
@@ -7188,7 +7240,7 @@ function recordAudioFile(data, cb) {
       exten: data.exten,
       filepath: data.filepath
     };
-    astProxy.doCmd(cmd, function(err) {
+    astProxy.doCmd(cmd, function (err) {
       try {
         if (err) {
           logger.log.error(IDLOG, 'recording audio file "' + data.filepath + '" with exten "' + data.exten + '"');
@@ -7232,7 +7284,7 @@ function inoutDynQueues(endpointId, cb) {
         command: 'inoutDynQueues',
         context: extensions[endpointId].getContext(),
         exten: endpointId
-      }, function(err) {
+      }, function (err) {
         try {
           if (err) {
             logger.log.error(IDLOG, 'inout to all queues for which exten ' + endpointId + ' is dynamic');
@@ -7299,7 +7351,7 @@ function queueMemberPauseUnpause(endpointId, queueId, reason, paused, cb) {
       async.series([
 
         // add the member to the queue
-        function(callback) {
+        function (callback) {
 
           obj = {
             command: 'queueMemberPauseUnpause',
@@ -7314,7 +7366,7 @@ function queueMemberPauseUnpause(endpointId, queueId, reason, paused, cb) {
           }
 
           logger.log.info(IDLOG, 'execute ' + logWord + ' ' + endpointId + ' of ' + logQueue);
-          astProxy.doCmd(obj, function(err1) {
+          astProxy.doCmd(obj, function (err1) {
             try {
               if (err1) {
                 var str = logWord + ' extension ' + endpointId + ' from ' + logQueue + ' has been failed: ' + err1.toString();
@@ -7332,7 +7384,7 @@ function queueMemberPauseUnpause(endpointId, queueId, reason, paused, cb) {
         },
 
         // add the entry into the "asteriskcdrdb.queue_log" database
-        function(callback) {
+        function (callback) {
 
           var name = extensions[endpointId].getName();
           var queueLogEvent = (paused ? 'PAUSE' : 'UNPAUSE');
@@ -7348,7 +7400,7 @@ function queueMemberPauseUnpause(endpointId, queueId, reason, paused, cb) {
           logger.log.info(IDLOG, 'add new entry in queue_log asterisk db: interface "' + name + '", queue "' +
             queueId + '", event "' + queueLogEvent + '" and reason "' + reason + '"');
 
-          astProxy.doCmd(obj, function(err3) {
+          astProxy.doCmd(obj, function (err3) {
             try {
               if (err3) {
                 var str = 'add new entry in "queue_log" asterisk db has been failed: interface "' + name + '", queue "' +
@@ -7368,7 +7420,7 @@ function queueMemberPauseUnpause(endpointId, queueId, reason, paused, cb) {
           });
         }
 
-      ], function(err5) {
+      ], function (err5) {
 
         if (err5) {
           logger.log.error(IDLOG, err5);
@@ -7422,7 +7474,7 @@ function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
       async.series([
 
         // add the member to the queue
-        function(callback) {
+        function (callback) {
 
           obj = {
             command: 'queueMemberAdd',
@@ -7440,7 +7492,7 @@ function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
           }
 
           logger.log.info(IDLOG, 'execute queue member add of ' + endpointId + ' to queue ' + queueId);
-          astProxy.doCmd(obj, function(err1) {
+          astProxy.doCmd(obj, function (err1) {
             try {
               if (err1) {
                 var str = 'queue member add of ' + endpointId + ' to queue ' + queueId + ' has been failed: ' + err1.toString();
@@ -7459,7 +7511,7 @@ function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
         },
 
         // add the entry into the "asteriskcdrdb.queue_log" database
-        function(callback) {
+        function (callback) {
 
           var name = extensions[endpointId].getName();
 
@@ -7471,7 +7523,7 @@ function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
           };
 
           logger.log.info(IDLOG, 'add new entry in queue_log asterisk db: interface "' + name + '", queue "' + queueId + '" and event "ADDMEMBER"');
-          astProxy.doCmd(obj, function(err3) {
+          astProxy.doCmd(obj, function (err3) {
             try {
               if (err3) {
                 var str = 'add new entry in "queue_log" asterisk db has been failed: interface "' + name + '", queue "' + queueId + '" and event "ADDMEMBER": ' + err3.toString();
@@ -7489,7 +7541,7 @@ function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
           });
         }
 
-      ], function(err5) {
+      ], function (err5) {
 
         if (err5) {
           logger.log.error(IDLOG, err5);
@@ -7540,7 +7592,7 @@ function queueMemberRemove(endpointId, queueId, cb) {
       async.series([
 
         // remove the member from the queue
-        function(callback) {
+        function (callback) {
 
           obj = {
             command: 'queueMemberRemove',
@@ -7549,7 +7601,7 @@ function queueMemberRemove(endpointId, queueId, cb) {
           };
 
           logger.log.info(IDLOG, 'execute queue member remove of ' + endpointId + ' from queue ' + queueId);
-          astProxy.doCmd(obj, function(err1) {
+          astProxy.doCmd(obj, function (err1) {
             try {
               if (err1) {
                 var str = 'queue member remove of ' + endpointId + ' from queue ' + queueId + ' has been failed: ' + err1.toString();
@@ -7568,7 +7620,7 @@ function queueMemberRemove(endpointId, queueId, cb) {
         },
 
         // add the entry into the "asteriskcdrdb.queue_log" database
-        function(callback) {
+        function (callback) {
 
           var name = extensions[endpointId].getName();
 
@@ -7580,7 +7632,7 @@ function queueMemberRemove(endpointId, queueId, cb) {
           };
 
           logger.log.info(IDLOG, 'add new entry in queue_log asterisk db: interface "' + name + '", queue "' + queueId + '" and event "REMOVEMEMBER"');
-          astProxy.doCmd(obj, function(err3) {
+          astProxy.doCmd(obj, function (err3) {
             try {
               if (err3) {
                 var str = 'add new entry in "queue_log" asterisk db has been failed: interface "' + name + '", queue "' + queueId + '" and event "REMOVEMEMBER": ' + err3.toString();
@@ -7598,7 +7650,7 @@ function queueMemberRemove(endpointId, queueId, cb) {
           });
         }
 
-      ], function(err5) {
+      ], function (err5) {
 
         if (err5) {
           logger.log.error(IDLOG, err5);
@@ -7767,7 +7819,7 @@ function stopRecordConversation(extension, convid, cb) {
         astProxy.doCmd({
           command: 'stopRecordCall',
           channel: chid
-        }, function(err) {
+        }, function (err) {
           cb(err);
           stopRecordCallCb(err, convid);
         });
@@ -7827,7 +7879,7 @@ function startSpySpeakConversation(endpointId, convid, destId, cb) {
         spierId: spierId,
         spiedId: endpointId,
         chToSpy: chToSpy
-      }, function(err) {
+      }, function (err) {
         cb(err);
         startSpySpeakConvCb(err, convid);
       });
@@ -7879,7 +7931,7 @@ function startSpyListenConversation(endpointId, convid, destId, cb) {
         spierId: spierId,
         spiedId: endpointId,
         chToSpy: chToSpy
-      }, function(err) {
+      }, function (err) {
         cb(err);
         startSpyListenConvCb(err, convid);
       });
@@ -7933,7 +7985,7 @@ function muteRecordConversation(extension, convid, cb) {
         astProxy.doCmd({
           command: 'muteRecordCall',
           channel: chid
-        }, function(err) {
+        }, function (err) {
           try {
             if (err) {
               logger.log.error(IDLOG, 'muting recording of convid "' + convid + '" of extension "' + extension + '" with channel ' + chid);
@@ -8006,7 +8058,7 @@ function unmuteRecordConversation(extension, convid, cb) {
         astProxy.doCmd({
           command: 'unmuteRecordCall',
           channel: chid
-        }, function(err) {
+        }, function (err) {
           try {
             if (err) {
               logger.log.error(IDLOG, 'unmuting recording of convid "' + convid + '" of extension "' + extension + '" with channel ' + chid);
@@ -8084,7 +8136,7 @@ function startRecordConversation(extension, convid, cb) {
         async.series([
 
           // set the asterisk variables
-          function(callback) {
+          function (callback) {
 
             logger.log.info(IDLOG, 'set "MASTER_CHANNEL(ONETOUCH_REC)" asterisk variable');
             astProxy.doCmd({
@@ -8092,7 +8144,7 @@ function startRecordConversation(extension, convid, cb) {
               name: 'MASTER_CHANNEL(ONETOUCH_REC)',
               value: 'RECORDING',
               channel: chid
-            }, function(err) {
+            }, function (err) {
               try {
                 if (err) {
                   callback(err);
@@ -8107,7 +8159,7 @@ function startRecordConversation(extension, convid, cb) {
             });
           },
 
-          function(callback) {
+          function (callback) {
 
             logger.log.info(IDLOG, 'set "MASTER_CHANNEL(REC_STATUS)" asterisk variable');
             astProxy.doCmd({
@@ -8115,7 +8167,7 @@ function startRecordConversation(extension, convid, cb) {
               name: 'MASTER_CHANNEL(REC_STATUS)',
               value: 'RECORDING',
               channel: chid
-            }, function(err) {
+            }, function (err) {
               try {
                 if (err) {
                   callback(err);
@@ -8130,7 +8182,7 @@ function startRecordConversation(extension, convid, cb) {
             });
           },
 
-          function(callback) {
+          function (callback) {
 
             logger.log.info(IDLOG, 'set "AUDIOHOOK_INHERIT(MixMonitor)" asterisk variable');
             astProxy.doCmd({
@@ -8138,7 +8190,7 @@ function startRecordConversation(extension, convid, cb) {
               name: 'AUDIOHOOK_INHERIT(MixMonitor)',
               value: 'yes',
               channel: chid
-            }, function(err) {
+            }, function (err) {
               try {
                 if (err) {
                   callback(err);
@@ -8153,7 +8205,7 @@ function startRecordConversation(extension, convid, cb) {
             });
           },
 
-          function(callback) {
+          function (callback) {
 
             logger.log.info(IDLOG, 'set "MASTER_CHANNEL(CDR(recordingfile))" asterisk variable with filename "' + filename + '"');
             astProxy.doCmd({
@@ -8161,7 +8213,7 @@ function startRecordConversation(extension, convid, cb) {
               name: 'MASTER_CHANNEL(CDR(recordingfile))',
               value: filename,
               channel: chid
-            }, function(err) {
+            }, function (err) {
               try {
                 if (err) {
                   callback(err);
@@ -8176,7 +8228,7 @@ function startRecordConversation(extension, convid, cb) {
             });
           },
 
-          function(callback) {
+          function (callback) {
 
             logger.log.info(IDLOG, 'set "MASTER_CHANNEL(CDR(recordingfile))" asterisk variable');
             astProxy.doCmd({
@@ -8184,7 +8236,7 @@ function startRecordConversation(extension, convid, cb) {
               name: 'MASTER_CHANNEL(ONETOUCH_RECFILE)',
               value: filename,
               channel: chid
-            }, function(err) {
+            }, function (err) {
               try {
                 if (err) {
                   callback(err);
@@ -8199,7 +8251,7 @@ function startRecordConversation(extension, convid, cb) {
             });
           }
 
-        ], function(err) {
+        ], function (err) {
 
           if (err) {
             logger.log.error(IDLOG, 'setting asterisk variables to record the convid "' + convid + '" of extension "' + extension + '"');
@@ -8214,7 +8266,7 @@ function startRecordConversation(extension, convid, cb) {
             command: 'recordCall',
             channel: chid,
             filepath: filepath
-          }, function(err) {
+          }, function (err) {
             try {
               if (err) {
                 logger.log.error(IDLOG, 'recording the convid "' + convid + '" of extension "' + extension + '"');
@@ -8472,7 +8524,7 @@ function sendDTMFSequence(extension, sequence, callerid, fromExten, cb) {
     // the DMTF tones
     astProxy.doCmd({
       command: 'listChannels'
-    }, function(err, resp) {
+    }, function (err, resp) {
       try {
         if (err) {
           cb(err);
@@ -8534,16 +8586,16 @@ function sendDTMFSequenceToChannel(channel, sequence, cb) {
     var DTMF_DELAY = 300;
 
     // play DTMF tone for each digits
-    async.eachSeries(arrSequence, function(digit, seriesCb) {
+    async.eachSeries(arrSequence, function (digit, seriesCb) {
 
-      setTimeout(function() {
+      setTimeout(function () {
 
         // play one DTMF digit into the specified channel
         astProxy.doCmd({
           command: 'playDTMF',
           channel: channel,
           digit: digit
-        }, function(err) {
+        }, function (err) {
 
           if (err) {
             logger.log.error(IDLOG, 'playing DTMF digit "' + digit + '" to channel ' + channel);
@@ -8557,7 +8609,7 @@ function sendDTMFSequenceToChannel(channel, sequence, cb) {
 
       }, DTMF_DELAY);
 
-    }, function(err) {
+    }, function (err) {
 
       if (err) {
         logger.log.error(IDLOG, 'playing DTMF sequence "' + sequence + '" to channel ' + channel + ': ' + err.toString());
@@ -8605,7 +8657,7 @@ function callAndSendDTMFSequence(chanType, extension, sequence, callerid, fromEx
       sequence: sequence,
       callerid: callerid
     };
-    astProxy.doCmd(opts, function(err) {
+    astProxy.doCmd(opts, function (err) {
       try {
         if (err) {
           logger.log.error(IDLOG, 'calling and sending DTMF sequence "' + sequence + '" to ' + chanType + ' ' + extension + ' with callerid ' + callerid);
@@ -8735,7 +8787,7 @@ function setAsteriskPresence(extension, presenceState, cb) {
       command: 'setPresenceState',
       exten: extension,
       state: presenceState
-    }, function(error) {
+    }, function (error) {
       cb(error);
     });
   } catch (e) {
@@ -8783,21 +8835,21 @@ function createAlarm(extension, time, date, cb) {
 
     // create temporary file into the current directory
     var tmpfilepath = path.join(os.tmpdir(), filename);
-    fs.writeFile(tmpfilepath, content, function(err) {
+    fs.writeFile(tmpfilepath, content, function (err) {
       if (err) {
         logger.log.error(IDLOG, 'creating alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
         cb(err);
         return;
       }
       // set the file timestamp
-      fs.utimes(tmpfilepath, timestamp, timestamp, function(err2) {
+      fs.utimes(tmpfilepath, timestamp, timestamp, function (err2) {
         if (err2) {
           logger.log.error(IDLOG, 'creating alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
           cb(err);
           return;
         }
         // move the file to the correct asterisk destination
-        fs.rename(tmpfilepath, filepath, function() {
+        fs.rename(tmpfilepath, filepath, function () {
           logger.log.info(IDLOG, 'created alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
           cb();
         });
@@ -8821,7 +8873,7 @@ function getAlarms(cb) {
     if (typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    fs.readdir(AST_ALARMS_DIRPATH, function(err, files) {
+    fs.readdir(AST_ALARMS_DIRPATH, function (err, files) {
       if (err) {
         logger.log.error(IDLOG, 'getting the list of all alarms');
         cb(err);
@@ -8849,7 +8901,7 @@ function deleteAlarm(filename, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var filepath = path.join(AST_ALARMS_DIRPATH, filename);
-    fs.unlink(filepath, function(err) {
+    fs.unlink(filepath, function (err) {
       if (err) {
         logger.log.error(IDLOG, 'deleting alarm wakeup ' + filepath);
         cb(err);

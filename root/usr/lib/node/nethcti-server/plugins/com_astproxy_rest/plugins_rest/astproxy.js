@@ -131,6 +131,7 @@ var compConfigManager;
         * 1. [`astproxy/prefix`](#prefixget)
         * 1. [`astproxy/wakeup`](#wakeupget)
         * 1. [`astproxy/queues`](#queuesget)
+        * 1. [`astproxy/trunks`](#trunksget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
         * 1. [`astproxy/extension/:id`](#extensionget)
@@ -161,6 +162,27 @@ var compConfigManager;
          ...
      ]
         *
+        * ---
+        *
+        * ### <a id="trunksget">**`astproxy/trunks`**</a>
+        *
+        * Gets the trunks of the operator panel of the user.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "2001": {
+               "ip": "",
+               "port": "",
+               "name": "",
+               "exten": "2001",
+               "status": "offline",
+               "chanType": "sip",
+               "maxChannels": 4,
+               "sipuseragent": "",
+               "conversations": {}
+         }
+     }
         * ---
         *
         * ### <a id="queuesget">**`astproxy/queues`**</a>
@@ -1182,9 +1204,9 @@ var compConfigManager;
        *     GET trunks
        *
        * @method trunks
-       * @param {object}   req  The client request.
-       * @param {object}   res  The client response.
-       * @param {function} next Function to run the next handler in the chain.
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @param {function} next Function to run the next handler in the chain
        */
       trunks: function (req, res, next) {
         try {
@@ -1192,21 +1214,18 @@ var compConfigManager;
 
           // check if the user has the operator panel authorization
           if (compAuthorization.authorizeOpTrunksUser(username) !== true) {
-
-            logger.log.warn(IDLOG, 'requesting trunks: authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'getting trunks: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
 
           var trunks;
-
           // check if the user has the privacy enabled
           if (compAuthorization.isPrivacyEnabled(username) === true) {
             trunks = compAstProxy.getJSONTrunks(privacyStrReplace);
           } else {
             trunks = compAstProxy.getJSONTrunks();
           }
-
           logger.log.info(IDLOG, 'sent all trunks in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, trunks);
 

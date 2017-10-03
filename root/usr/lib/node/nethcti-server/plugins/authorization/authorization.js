@@ -978,9 +978,12 @@ function authorizeOpTrunksUser(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    // return authorizeUser(authorizationTypes.TYPES.trunks, username);
-
+    var profid = getUserProfileId(username);
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.presence_panel.value === true &&
+      profiles[profid].macro_permissions.presence_panel.permissions.trunks.value === true
+    );
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
@@ -1716,7 +1719,7 @@ function verifyOffhourListenAnnouncement(username, announcementId, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    compDbconn.getAnnouncement(announcementId, function(err, result) {
+    compDbconn.getAnnouncement(announcementId, function (err, result) {
       try {
         if (err) {
           var str = 'checking audio announcement id "' + announcementId + '" for user "' + username + '": ' + err;
@@ -1759,7 +1762,7 @@ function verifyOffhourUserAnnouncement(username, announcementId, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    compDbconn.getAnnouncement(announcementId, function(err, result) {
+    compDbconn.getAnnouncement(announcementId, function (err, result) {
       try {
         if (err) {
           var str = 'checking audio announcement id "' + announcementId + '" for user "' + username + '": ' + err;
