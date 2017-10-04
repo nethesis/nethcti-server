@@ -111,8 +111,20 @@ exports.TrunkConversation = function (ownerId, sourceChan, destChan) {
    * @private
    */
   var throughQueue;
-  if ((chSource && (chSource.getChannel().indexOf('from-queue') !== -1 || chSource.getBridgedChannel().indexOf('from-queue') !== -1)) ||
-    (chDest && (chDest.getChannel().indexOf('from-queue') !== -1 || chDest.getBridgedChannel().indexOf('from-queue') !== -1))
+  if (
+    (chSource &&
+      (
+        chSource.getChannel().indexOf('from-queue') !== -1 ||
+        (chSource.getBridgedChannel() && chSource.getBridgedChannel().indexOf('from-queue') !== -1)
+      )
+    ) ||
+    (
+      chDest &&
+      (
+        chDest.getChannel().indexOf('from-queue') !== -1 ||
+        chDest.getBridgedChannel().indexOf('from-queue') !== -1
+      )
+    )
   ) {
 
     throughQueue = true;

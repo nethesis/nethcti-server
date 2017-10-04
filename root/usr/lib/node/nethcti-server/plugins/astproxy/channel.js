@@ -25,8 +25,7 @@ exports.Channel = function(obj) {
     obj.callerNum === undefined ||
     obj.callerName === undefined ||
     obj.bridgedNum === undefined ||
-    obj.bridgedName === undefined ||
-    obj.bridgedChannel === undefined) {
+    obj.bridgedName === undefined) {
 
     throw new Error('wrong parameter: ' + JSON.stringify(obj));
   }
@@ -129,7 +128,7 @@ exports.Channel = function(obj) {
    * @private
    */
   var type;
-  if (channelStatus === STATUS_ENUM.RING) {
+  if (channelStatus === STATUS_ENUM.RING || !obj.uniqueid_linked) {
     type = TYPE.SOURCE;
 
   } else if (channelStatus === STATUS_ENUM.RINGING) {
