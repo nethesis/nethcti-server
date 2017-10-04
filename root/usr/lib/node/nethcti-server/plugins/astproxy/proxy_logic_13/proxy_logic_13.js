@@ -29,7 +29,7 @@ var utilChannel13 = require('./util_channel_13');
 var MeetmeConfUser = require('../meetmeConfUser').MeetmeConfUser;
 var MeetmeConference = require('../meetmeConference').MeetmeConference;
 var RECORDING_STATUS = require('../conversation').RECORDING_STATUS;
-// var TrunkConversation = require('../trunkConversation').TrunkConversation;
+var TrunkConversation = require('../trunkConversation').TrunkConversation;
 var QueueWaitingCaller = require('../queueWaitingCaller').QueueWaitingCaller;
 var QUEUE_MEMBER_TYPES_ENUM = require('../queueMember').QUEUE_MEMBER_TYPES_ENUM;
 
@@ -1174,6 +1174,11 @@ function start() {
     astProxy.doCmd({
       command: 'listPjsipPeers'
     }, initializePjsipTrunk);
+
+    // initialize all iax trunks
+    astProxy.doCmd({
+      command: 'listIaxPeers'
+    }, initializeIaxTrunk);
 
     // initializes meetme conferences
     initMeetmeConf();
@@ -2820,39 +2825,38 @@ function initializePjsipTrunk(err, results) {
  * Initialize all iax trunks as _Trunk_ object into the _trunks_ property.
  *
  * @method initializeIaxTrunk
- * @param {object} resp The response of the _listIaxPeers_ command plugin.
+ * @param {object} err The error received from the command
+ * @param {array} resp The response received from the command
  * @private
  */
-function initializeIaxTrunk(resp) {
+function initializeIaxTrunk(err, results) {
   try {
-    var k, trunk;
-    for (k in struct) {
-
-      if (struct[k].type === INI_STRUCT.TYPE.TRUNK &&
-        struct[k].tech === INI_STRUCT.TECH.IAX) { // all iax trunks
-
-        trunk = new Trunk(struct[k].extension, struct[k].tech, struct[k].max_channels);
-        trunks[trunk.getExten()] = trunk;
-        trunks[trunk.getExten()].setName(struct[k].label);
-      }
+    if (err) {
+      logger.log.error(IDLOG, err);
+      return;
     }
 
-    // set iax information
-    for (i = 0; i < resp.length; i++) {
+    var arr = [];
+    var k, trunk;
 
-      // this check is because some iax extensions can be present in the resp,
-      // so in this function extensions are not considered
-      if (trunks[resp[i].exten]) {
-
-        trunks[resp[i].exten].setIp(resp[i].ip);
-        trunks[resp[i].exten].setPort(resp[i].port);
-        trunks[resp[i].exten].setStatus(resp[i].status);
-        logger.log.info(IDLOG, 'set iax details for trunk ' + resp[i].exten);
+    for (i = 0; i < results.length; i++) {
+      // skip if the current iax is not a trunk
+      if (!staticDataTrunks[results[i].exten]) {
+        continue;
       }
+
+      trunk = new Trunk(
+        results[i].exten,
+        staticDataTrunks[results[i].exten].tech,
+        staticDataTrunks[results[i].exten].maxchans
+      );
+      trunks[trunk.getExten()] = trunk;
+      trunks[trunk.getExten()].setName(staticDataTrunks[results[i].exten].name);
+      logger.log.info(IDLOG, 'set iax details for trunk ' + results[i].exten);
     }
 
     // request all channels
-    logger.log.info(IDLOG, 'requests the channel list to initialize sip trunks');
+    logger.log.info(IDLOG, 'requests the channel list to initialize iax trunks');
     astProxy.doCmd({
       command: 'listChannels'
     }, updateConversationsForAllTrunk);
