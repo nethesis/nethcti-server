@@ -1165,10 +1165,15 @@ function start() {
       command: 'listParkings'
     }, initializeParkings);
 
-    // validates all sip trunks
+    // initialize sip trunks
     astProxy.doCmd({
       command: 'listSipPeers'
     }, initializeSipTrunk);
+
+    // initialize pjsip trunks
+    astProxy.doCmd({
+      command: 'listPjsipPeers'
+    }, initializePjsipTrunk);
 
     // initializes meetme conferences
     initMeetmeConf();
@@ -2749,6 +2754,58 @@ function initializeSipTrunk(err, results) {
         }
         // request all channels
         logger.log.info(IDLOG, 'requests the channel list to initialize sip trunks');
+        astProxy.doCmd({
+          command: 'listChannels'
+        }, updateConversationsForAllTrunk);
+      }
+    );
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Initialize all pjsip trunks as _Trunk_ object into the _trunks_ property.
+ *
+ * @method initializePjsipTrunk
+ * @param {object} err The error received from the command
+ * @param {array} resp The response received from the command
+ * @private
+ */
+function initializePjsipTrunk(err, results) {
+  try {
+    if (err) {
+      logger.log.error(IDLOG, err);
+      return;
+    }
+
+    var arr = [];
+    var i;
+    for (i = 0; i < results.length; i++) {
+      // skip if the current pjsip is not a trunk
+      if (!staticDataTrunks[results[i].ext]) {
+        continue;
+      }
+
+      trunk = new Trunk(
+        results[i].ext,
+        staticDataTrunks[results[i].ext].tech,
+        staticDataTrunks[results[i].ext].maxchans
+      );
+      trunks[trunk.getExten()] = trunk;
+      trunks[trunk.getExten()].setName(staticDataTrunks[results[i].ext].name);
+
+      // todo for pjsip
+      // arr.push(getTrunkSipDetails(trunk.getExten()));
+      // arr.push(getSipTrunkStatus(trunk.getExten()));
+    }
+    async.parallel(arr,
+      function (err) {
+        if (err) {
+          logger.log.error(IDLOG, err);
+        }
+        // request all channels
+        logger.log.info(IDLOG, 'requests the channel list to initialize pjsip trunks');
         astProxy.doCmd({
           command: 'listChannels'
         }, updateConversationsForAllTrunk);
