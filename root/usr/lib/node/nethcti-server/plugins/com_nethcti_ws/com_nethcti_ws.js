@@ -50,6 +50,36 @@ var EventEmitter = require('events').EventEmitter;
 var EVT_EXTEN_UPDATE = 'extenUpdate';
 
 /**
+ * Emitted to a websocket client connection on trunk update.
+ *
+ * Example:
+ *
+ *                         {
+        "ip": "",
+        "port": "",
+        "name": "",
+        "exten": "2001",
+        "status": "offline",
+        "chanType": "sip",
+        "maxChannels": 4,
+        "sipuseragent": "",
+        "conversations": { Conversation.{{#crossLink "Conversation/toJSON"}}{{/crossLink}}() }
+     }
+ *
+ * @event trunkUpdate
+ * @param {object} trunk The data about the trunk
+ *
+ */
+/**
+ * The name of the trunk update event.
+ *
+ * @property EVT_TRUNK_UPDATE
+ * @type string
+ * @default "trunkUpdate"
+ */
+var EVT_TRUNK_UPDATE = 'trunkUpdate';
+
+/**
  * Fired when the componente has been reloaded.
  *
  * @event reloaded
@@ -1292,11 +1322,11 @@ function sendEvtToUserWithExtenId(evtName, evtObj, extenId) {
 function trunkChanged(trunk) {
   try {
     logger.log.info(IDLOG, 'received event trunkChanged for trunk ' + trunk.getExten());
-    logger.log.info(IDLOG, 'emit event trunkUpdate for trunk ' + trunk.getExten() + ' to websockets');
+    logger.log.info(IDLOG, 'emit event ' + EVT_TRUNK_UPDATE + ' for trunk ' + trunk.getExten() + ' to websockets');
     // emits the event with clear numbers to all users with privacy disabled
-    wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('trunkUpdate', trunk.toJSON());
+    wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit(EVT_TRUNK_UPDATE, trunk.toJSON());
     // emits the event with hide numbers to all users with privacy enabled
-    wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('trunkUpdate', trunk.toJSON(privacyStrReplace));
+    wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit(EVT_TRUNK_UPDATE, trunk.toJSON(privacyStrReplace));
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -1902,18 +1932,18 @@ function loginHdlr(socket, obj) {
         }
       }
 
-      // // if the user has the trunks permission, than he will receive the asterisk events that affects the trunks
-      // if (compAuthorization.authorizeOpTrunksUser(username) === true) {
+      // if the user has the trunks permission, than he will receive the asterisk events that affects the trunks
+      if (compAuthorization.authorizeOpTrunksUser(username) === true) {
 
-      //   if (compAuthorization.isPrivacyEnabled(username) === true) {
-      //     // join the user to the websocket room to receive the asterisk events that affects the trunks, using hide numbers
-      //     socket.join(WS_ROOM.TRUNKS_AST_EVT_PRIVACY);
+        if (compAuthorization.isPrivacyEnabled(username) === true) {
+          // join the user to the websocket room to receive the asterisk events that affects the trunks, using hide numbers
+          socket.join(WS_ROOM.TRUNKS_AST_EVT_PRIVACY);
 
-      //   } else {
-      //     // join the user to the websocket room to receive the asterisk events that affects the trunks, using clear numbers
-      //     socket.join(WS_ROOM.TRUNKS_AST_EVT_CLEAR);
-      //   }
-      // }
+        } else {
+          // join the user to the websocket room to receive the asterisk events that affects the trunks, using clear numbers
+          socket.join(WS_ROOM.TRUNKS_AST_EVT_CLEAR);
+        }
+      }
 
       // if the user has the parkings permission, than he will receive the asterisk events that affects the parkings
       if (compAuthorization.authorizeOpParkingsUser(username) === true) {
