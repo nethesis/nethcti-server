@@ -7297,9 +7297,9 @@ function parkConversation(extension, convid, applicantId, cb) {
  *
  * @method recordAudioFile
  * @param {object} data
- *   @param {string} data.exten    The extension to be used for recording
+ *   @param {string} data.exten The extension to be used for recording
  *   @param {string} data.filepath The path of the audio file to be stored
- * @param {function} cb            The callback function
+ * @param {function} cb The callback function
  */
 function recordAudioFile(data, cb) {
   try {
@@ -7315,7 +7315,8 @@ function recordAudioFile(data, cb) {
       command: 'recordAudioFile',
       context: extensions[data.exten].getContext(),
       exten: data.exten,
-      filepath: data.filepath
+      filepath: data.filepath,
+      chanType: extensions[data.exten].getChanType()
     };
     astProxy.doCmd(cmd, function (err) {
       try {

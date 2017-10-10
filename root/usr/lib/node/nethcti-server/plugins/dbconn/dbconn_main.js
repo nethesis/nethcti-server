@@ -121,7 +121,9 @@ var logSequelize = false;
 * @default {
     CEL:           "cel",
     POSTIT:        "postit",
+    OFFHOUR:       "offhour",
     AMPUSERS:      "ampusers",
+    INCOMING:      "incoming",
     VOICEMAIL:     "voicemail",
     PHONEBOOK:     "phonebook",
     QUEUE_LOG:     "queue_log",
@@ -129,6 +131,7 @@ var logSequelize = false;
     CALLER_NOTE:   "caller_note",
     QUEUE_RECALL:  "queue_recall",
     HISTORY_CALL:  "history_call",
+    OFFHOUR_FILES: "offhour_files",
     CTI_PHONEBOOK: "cti_phonebook",
     USER_SETTINGS: "user_settings"
 }
@@ -136,7 +139,9 @@ var logSequelize = false;
 var JSON_KEYS = {
   CEL: 'cel',
   POSTIT: 'postit',
+  OFFHOUR: 'offhour',
   AMPUSERS: 'ampusers',
+  INCOMING: 'incoming',
   VOICEMAIL: 'voicemail',
   PHONEBOOK: 'phonebook',
   QUEUE_LOG: 'queue_log',

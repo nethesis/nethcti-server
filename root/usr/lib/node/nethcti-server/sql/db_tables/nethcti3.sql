@@ -114,3 +114,18 @@ CREATE TABLE IF NOT EXISTS `customer_card` (
   `permission_id` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `offhour_files` (
+  `id` int(11) NOT NULL auto_increment,
+  `username` varchar(50) NOT NULL,
+  `description` varchar(50) NOT NULL,
+  `privacy` varchar(50) NOT NULL,
+  `creation` datetime NOT NULL,
+  `path` varchar(250) NOT NULL,
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `path` (`path`),
+  UNIQUE KEY `username_description` (`description`, `username`),
+  KEY `index_username` (`username`),
+  KEY `index_privacy` (`privacy`),
+  KEY `index_description` (`description`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;

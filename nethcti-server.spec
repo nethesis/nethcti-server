@@ -26,6 +26,7 @@ cd root/usr/lib/node/nethcti-server && npm install && cd -
 mkdir -p root/etc/nethcti
 mkdir -p root/etc/nethcti/dbstatic.d
 mkdir -p root/var/lib/nethserver/nethcti/static
+mkdir -p root/var/lib/asterisk/sounds/nethcti
 
 # clean nodejs npm modules
 find root/usr/lib/node/nethcti-server/node_modules -iname readme.\* -o \
@@ -60,6 +61,7 @@ rm -rf %{buildroot}
 --dir /var/lib/nethserver/nethcti/static 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/nethserver/nethcti/templates/customer_card 'attr(0775,asterisk,asterisk)' \
 --dir /usr/lib/node/nethcti-server/plugins/com_static_http/static 'attr(0775,asterisk,asterisk)' \
+--dir /var/lib/asterisk/sounds/nethcti 'attr(0775,asterisk,asterisk)' \
 --dir /etc/nethcti/dbstatic.d 'attr(0775,asterisk,asterisk)' \
 --dir /etc/nethcti 'attr(0775,asterisk,asterisk)' > %{name}-%{version}-filelist
 

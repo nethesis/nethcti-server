@@ -98,13 +98,17 @@ function sendHttp200(parentIdLog, resp) {
  *
  * @method sendHttp400
  * @param {string} parentIdLog The identifier of the component that uses the utility
- * @param {object} resp        The client response object
+ * @param {object} resp The client response object
+ * @param {object} [params] The parameters of the request
  * @static
  */
-function sendHttp400(parentIdLog, resp) {
+function sendHttp400(parentIdLog, resp, params) {
   try {
     resp.writeHead(400);
     logger.log.warn(parentIdLog, 'send HTTP 400 response to ' + getRemoteClientIp(resp));
+    if (params) {
+      logger.log.warn(parentIdLog, JSON.stringify(params));
+    }
     resp.end();
   } catch (err) {
     logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);

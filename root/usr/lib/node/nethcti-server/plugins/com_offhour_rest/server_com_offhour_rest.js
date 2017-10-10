@@ -1,19 +1,19 @@
 /**
- * Provides the REST server for dbconn functions using
- * _dbconn_ component.
+ * Provides the REST server for offhour functions using
+ * _offhour_ component.
  *
- * @module com_dbconn_rest
- * @main com_dbconn_rest
+ * @module com_offhour_rest
+ * @main com_offhour_rest
  */
 
 /**
  * Provides the REST server.
  *
- * @class server_com_dbconn_rest
+ * @class server_com_offhour_rest
  */
 var fs = require('fs');
 var restify = require('restify');
-var plugins = require('jsplugs')().require('./plugins/com_dbconn_rest/plugins_rest');
+var plugins = require('jsplugs')().require('./plugins/com_offhour_rest/plugins_rest');
 
 /**
  * The module identifier used by the logger.
@@ -23,9 +23,9 @@ var plugins = require('jsplugs')().require('./plugins/com_dbconn_rest/plugins_re
  * @private
  * @final
  * @readOnly
- * @default [server_com_dbconn_rest]
+ * @default [server_com_offhour_rest]
  */
-var IDLOG = '[server_com_dbconn_rest]';
+var IDLOG = '[server_com_offhour_rest]';
 
 /**
  * The logger. It must have at least three methods: _info, warn and error._
@@ -54,9 +54,8 @@ var port;
  * @property address
  * @type string
  * @private
- * @default "localhost"
  */
-var address = 'localhost';
+var address;
 
 /**
  * Set the logger to be used.
@@ -68,10 +67,10 @@ var address = 'localhost';
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object'
-    && typeof log.log.info === 'function'
-    && typeof log.log.warn === 'function'
-    && typeof log.log.error === 'function') {
+    if (typeof log === 'object' &&
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
 
       logger = log;
       logger.log.info(IDLOG, 'new logger has been set');
@@ -133,25 +132,68 @@ function execute(req, res, next) {
 }
 
 /**
- * Set the dbconn architect component to be used by REST plugins.
+ * Set the offhour architect component to be used by REST plugins.
  *
- * @method setCompDbConn
- * @param {object} compDbConn The architect dbconn component
+ * @method setCompOffhour
+ * @param {object} comp The architect offhour component
  * @static
  */
-function setCompDbConn(compDbConn) {
+function setCompOffhour(comp) {
   try {
     // check parameter
-    if (typeof compDbConn !== 'object') {
+    if (typeof comp !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var p;
-    // set dbconn architect component to all REST plugins
+    // set offhour architect component to all REST plugins
     for (p in plugins) {
-      plugins[p].setCompDbConn(compDbConn);
+      plugins[p].setCompOffhour(comp);
     }
 
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the authorization architect component.
+ *
+ * @method setCompAuthorization
+ * @param {object} comp The architect authorization component
+ * @static
+ */
+function setCompAuthorization(comp) {
+  try {
+    // check parameter
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    setAllRestPluginsAuthorization(comp);
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Calls _setCompAuthorization_ function for all REST plugins.
+ *
+ * @method setAllRestPluginsAuthorization
+ * @param {object} comp The authorization component
+ * @private
+ */
+function setAllRestPluginsAuthorization(comp) {
+  try {
+    var key;
+    for (key in plugins) {
+
+      if (typeof plugins[key].setCompAuthorization === 'function') {
+        plugins[key].setCompAuthorization(comp);
+        logger.log.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
+      }
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -181,21 +223,19 @@ function config(path) {
   var json = (JSON.parse(fs.readFileSync(path, 'utf8'))).rest;
 
   // initialize the port of the REST server
-  if (json.dbconn && json.dbconn.port) {
-    port = json.dbconn.port;
-
+  if (json.offhour && json.offhour.port) {
+    port = json.offhour.port;
   } else {
-    logger.log.warn(IDLOG, 'no port has been specified in JSON file ' + path);
+    logger.log.warn(IDLOG, 'wrong ' + path + ': no "port" key in rest offhour');
   }
 
   // initialize the address of the REST server
-  if (json.dbconn && json.dbconn.address) {
-    address = json.dbconn.address;
-
+  if (json.offhour && json.offhour.address) {
+    address = json.offhour.address;
   } else {
-    logger.log.warn(IDLOG, 'no address has been specified in JSON file ' + path);
+    logger.log.warn(IDLOG, 'wrong ' + path + ': no "port" key in rest offhour');
   }
-  logger.log.info(IDLOG, 'configuration by file ' + path + ' ended');
+  logger.log.info(IDLOG, 'configuration done by ' + path);
 }
 
 /**
@@ -221,11 +261,6 @@ function start() {
     server.use(restify.acceptParser(server.acceptable));
     server.use(restify.queryParser());
     server.use(restify.bodyParser());
-    server.use(restify.CORS({
-      origins: ['*'],
-      credentials: false
-      // headers: ['WWW-Authenticate', 'Authorization']
-    }));
 
     // load plugins
     for (p in plugins) {
@@ -233,6 +268,7 @@ function start() {
       root = plugins[p].api.root;
       post = plugins[p].api.post;
 
+      var k;
       // add routing functions
       for (k in get) {
         logger.log.info(IDLOG, 'Binding GET: /' + root + '/' + get[k]);
@@ -245,7 +281,7 @@ function start() {
     }
 
     // start the REST server
-    server.listen(port, address, function() {
+    server.listen(port, address, function () {
       logger.log.info(IDLOG, server.name + ' listening at ' + server.url);
     });
 
@@ -285,4 +321,5 @@ exports.start = start;
 exports.config = config;
 exports.setLogger = setLogger;
 exports.setCompUtil = setCompUtil;
-exports.setCompDbConn = setCompDbConn;
+exports.setCompOffhour = setCompOffhour;
+exports.setCompAuthorization = setCompAuthorization;

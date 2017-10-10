@@ -525,7 +525,11 @@ function authorizeOffhourUser(username) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.offhour, username);
+    var profid = getUserProfileId(username);
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.off_hour.value === true
+    );
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -547,8 +551,39 @@ function authorizeAdminOffhourUser(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+    var profid = getUserProfileId(username);
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.off_hour.value === true &&
+      profiles[profid].macro_permissions.off_hour.permissions.ad_off_hour.value === true
+    );
 
-    // return authorizeUser(authorizationTypes.TYPES.admin_offhour, username);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    // in the case of exception it returns false for security reasons
+    return false;
+  }
+}
+
+/**
+ * Returns true if the specified user has the admin_offhour authorization.
+ *
+ * @method authorizeAdvancedOffhourUser
+ * @param  {string}  username The username
+ * @return {boolean} True if the user has the admin offhour authorization.
+ */
+function authorizeAdvancedOffhourUser(username) {
+  try {
+    // check parameter
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var profid = getUserProfileId(username);
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.off_hour.value === true &&
+      profiles[profid].macro_permissions.off_hour.permissions.advanced_off_hour.value === true
+    );
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1749,9 +1784,9 @@ function verifyOffhourListenAnnouncement(username, announcementId, cb) {
  * Returns true if the announcement is owned by the specified user.
  *
  * @method verifyOffhourUserAnnouncement
- * @param {string}   username       The user to verify
- * @param {string}   announcementId The announcement identifier
- * @param {function} cb             The callback function
+ * @param {string} username The user to verify
+ * @param {string} announcementId The announcement identifier
+ * @param {function} cb The callback function
  */
 function verifyOffhourUserAnnouncement(username, announcementId, cb) {
   try {
@@ -1884,6 +1919,7 @@ exports.getAllUsersAuthorizations = getAllUsersAuthorizations;
 exports.authorizeCustomerCardUser = authorizeCustomerCardUser;
 exports.authorizePresencePanelUser = authorizePresencePanelUser;
 exports.authorizeAdminOffhourUser = authorizeAdminOffhourUser;
+exports.authorizeAdvancedOffhourUser = authorizeAdvancedOffhourUser;
 exports.authorizeStreamingSourceUser = authorizeStreamingSourceUser;
 exports.authorizeAdminParkingsUser = authorizeAdminParkingsUser;
 exports.authorizeAdminTransferUser = authorizeAdminTransferUser;

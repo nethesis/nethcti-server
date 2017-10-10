@@ -2136,7 +2136,9 @@ function on(type, cb) {
  * @method onDestroy
  */
 function stop() {
-  wsServer.close();
+  if (wsServer && wsServer.close) {
+    wsServer.close();
+  }
 }
 
 /**

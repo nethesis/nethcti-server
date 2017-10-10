@@ -32,7 +32,7 @@ module.exports = function(options, imports, register) {
 
   try {
     authorization.setLogger(logger.ctilog);
-    // authorization.setCompDbconn(imports.dbconn);
+    authorization.setCompDbconn(imports.dbconn);
     authorization.setCompUser(imports.user);
     authorization.config({
       users: '/etc/nethcti/users.json',
