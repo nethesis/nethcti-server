@@ -363,11 +363,23 @@ function getHistorySwitchCallInterval(data, cb) {
       data.filter = '%';
     }
 
+    data.extens = '("' + data.extens.join('","') + '")';
+
     var whereClause;
     if (data.type === 'in') {
 
       whereClause = [
-        'channel REGEXP ? AND ' +
+        '(' +
+          'channel REGEXP ? OR ' +
+          // include attended transfered calls
+          '(' +
+            'channel LIKE "Local/%;2" AND ' + // "Local/207@from-internal-000001f5;1"
+            'cnum IN ' + data.extens + ' AND ' +
+            'dst IN ' + data.extens + ' AND ' +
+            'src NOT IN ' + data.extens +
+          ')' +
+          // end include attended transfered calls
+        ') AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
         data.trunks,
@@ -389,7 +401,12 @@ function getHistorySwitchCallInterval(data, cb) {
     } else if (data.type === 'internal') {
 
       whereClause = [
-        'channel NOT REGEXP ? AND dstchannel NOT REGEXP ? AND ' +
+        'channel NOT REGEXP ? AND ' +
+        'channel NOT LIKE "%@from-queue-%" AND ' +
+        'dstchannel NOT REGEXP ? AND ' +
+        'src IN ' + data.extens + ' AND ' +
+        'cnum IN ' + data.extens + ' AND ' +
+        'dst IN ' + data.extens + ' AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
         data.trunks, data.trunks,

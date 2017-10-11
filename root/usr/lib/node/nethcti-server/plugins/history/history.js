@@ -195,6 +195,7 @@ function getHistorySwitchCallInterval(data, cb) {
       (data.recording ? ' with recording data' : ''));
 
     data.trunks = compAstProxy.getTrunksList();
+    data.extens = compAstProxy.getExtensList();
     dbconn.getHistorySwitchCallInterval(data, cb);
 
   } catch (err) {
