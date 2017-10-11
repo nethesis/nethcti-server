@@ -2146,6 +2146,22 @@ function getTrunksList() {
 }
 
 /**
+ * Returns the list of the extensions.
+ *
+ * @method getExtensList
+ * @return {array} The extensions list.
+ */
+function getExtensList() {
+  try {
+    return Object.keys(extensions);
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return [];
+  }
+}
+
+/**
  * Returns the JSON representation of all trunks.
  *
  * @method getJSONTrunks
@@ -9018,6 +9034,7 @@ exports.getJSONQueues = getJSONQueues;
 exports.endMeetmeConf = endMeetmeConf;
 exports.getJSONTrunks = getJSONTrunks;
 exports.getTrunksList = getTrunksList;
+exports.getExtensList = getExtensList;
 exports.getExtensionIp = getExtensionIp;
 exports.queueMemberAdd = queueMemberAdd;
 exports.inoutDynQueues = inoutDynQueues;
