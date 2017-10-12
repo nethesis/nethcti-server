@@ -196,7 +196,7 @@ function deleteVoiceMessage(dbid, cb) {
 
             // emits the event for a deleted voice message
             logger.log.info(IDLOG, 'emit event "' + EVT_DELETED_VOICE_MESSAGE + '" for voicemail ' + task.selectedValues.mailboxuser);
-            emitter.emit(EVT_DELETED_VOICE_MESSAGE, task.selectedValues.mailboxuser);
+            compDbconnMain.emit(EVT_DELETED_VOICE_MESSAGE, task.selectedValues.mailboxuser);
           });
 
         } else {
@@ -301,7 +301,7 @@ function listenVoiceMessage(dbid, cb) {
 
             // emits the event for a listened voice message
             logger.log.info(IDLOG, 'emit event "' + EVT_LISTENED_VOICE_MESSAGE + '" for voicemail ' + result.dataValues.mailboxuser);
-            emitter.emit(EVT_LISTENED_VOICE_MESSAGE, result.dataValues.mailboxuser);
+            compDbconnMain.emit(EVT_LISTENED_VOICE_MESSAGE, result.dataValues.mailboxuser);
           });
         }
       } else {
