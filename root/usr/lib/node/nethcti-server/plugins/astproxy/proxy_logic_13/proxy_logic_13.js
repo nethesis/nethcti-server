@@ -8877,29 +8877,36 @@ function setAsteriskPresence(extension, presenceState, cb) {
  * Create an alarm for a specified date, time and extension.
  *
  * @method createAlarm
- * @param {string} extension The endpoint identifier (e.g. the extension number)
- * @param {string} time The time of the alarm. Use hh:mm in 24 format
- * @param {string} date The date of the alarm. Use YYYYMMDD format
+ * @param {object} params
+ *  @param {string} params.extension The endpoint identifier (e.g. the extension number)
+ *  @param {string} params.time The time of the alarm. Use hh:mm in 24 format
+ *  @param {string} params.date The date of the alarm. Use YYYYMMDD format
+ *  @param {string} [params.maxRetries] Number of retries before failing
+ *  @param {string} [params.retryTime] Seconds between retries
+ *  @param {string} [params.waitTime] Seconds to wait for an answer
  * @param {function} cb The callback function
  */
-function createAlarm(extension, time, date, cb) {
+function createAlarm(params, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' ||
-      typeof extension !== 'string' ||
-      typeof date !== 'string' ||
-      typeof time !== 'string') {
+      typeof params.extension !== 'string' ||
+      typeof params.date !== 'string' ||
+      typeof params.time !== 'string' ||
+      (params.maxRetries && typeof params.maxRetries !== 'string' && typeof params.maxRetries !== 'number') ||
+      (params.retryTime && typeof params.retryTime !== 'string' && typeof params.retryTime !== 'number') ||
+      (params.waitTime && typeof params.waitTime !== 'string' && typeof params.waitTime !== 'number')) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    var timestamp = moment(date + time, 'YYYYMMDDhh:mm').unix();
-    var filename = extension + '-' + timestamp + '.call';
+    var timestamp = moment(params.date + params.time, 'YYYYMMDDhh:mm').unix();
+    var filename = params.extension + '-' + timestamp + '.call';
     var filepath = path.join(AST_ALARMS_DIRPATH, filename);
     var content = [
-      'Channel: Local/', extension, '@from-internal\n',
-      'MaxRetries: 2\n',
-      'RetryTime: 60\n',
-      'WaitTime: 30\n',
+      'Channel: Local/', params.extension, '@from-internal\n',
+      'MaxRetries: ' + (params.maxRetries ? params.maxRetries : '5') + '\n',
+      'RetryTime: ' + (params.retryTime ? params.retryTime : '60') + '\n',
+      'WaitTime: ' + (params.waitTime ? params.waitTime : '30') + '\n',
       'CallerID: \'Sveglia\' <Sveglia>\n',
       // 'Set: CAMERA=', extension, '\n',
       // 'Set: RECEPTION=\n',
@@ -8914,20 +8921,20 @@ function createAlarm(extension, time, date, cb) {
     var tmpfilepath = path.join(os.tmpdir(), filename);
     fs.writeFile(tmpfilepath, content, function (err) {
       if (err) {
-        logger.log.error(IDLOG, 'creating alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
+        logger.log.error(IDLOG, 'creating alarm for "' + params.extension + '" on ' + params.date + ' - ' + params.time + ' (' + timestamp + ')');
         cb(err);
         return;
       }
       // set the file timestamp
       fs.utimes(tmpfilepath, timestamp, timestamp, function (err2) {
         if (err2) {
-          logger.log.error(IDLOG, 'creating alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
+          logger.log.error(IDLOG, 'creating alarm for "' + params.extension + '" on ' + params.date + ' - ' + params.time + ' (' + timestamp + ')');
           cb(err);
           return;
         }
         // move the file to the correct asterisk destination
         fs.rename(tmpfilepath, filepath, function () {
-          logger.log.info(IDLOG, 'created alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
+          logger.log.info(IDLOG, 'created alarm for "' + params.extension + '" on ' + params.date + ' - ' + params.time + ' (' + timestamp + ')');
           cb();
         });
       });

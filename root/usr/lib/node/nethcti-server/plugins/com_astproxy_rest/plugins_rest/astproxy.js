@@ -523,10 +523,15 @@ var compConfigManager;
         * * `time: (hh:mm 24 hours format) the alarm clock `
         * * `date: (YYYYMMDD format) the alarm day`
         * * `extension: the extension for the alarm`
+        * * `[maxRetries]: number of retries before failing (not including the initial attempt, e.g. 0 = total
+          *                of 1 attempt to make the call). Default is 5`
+        * * `[retryTime]: seconds between retries, don't hammer an unavailable phone. Default is 60 (1 min)`
+        * * `[waitTime]: seconds to wait for an answer. Default is 30`
         *
         * Example JSON request parameters:
         *
         *     { "time": "14:42", "date": "20170528", "extension": "221" }
+        *     { "time": "14:42", "date": "20170528", "extension": "221", "maxRetries": "3" }
         *
         * ---
         *
@@ -4578,12 +4583,15 @@ function wakeupPost(req, res, next) {
     if (typeof req.params !== 'object' ||
       typeof req.params.time !== 'string' ||
       typeof req.params.extension !== 'string' ||
-      typeof req.params.date !== 'string') {
+      typeof req.params.date !== 'string' ||
+      (req.params.maxRetries && typeof req.params.maxRetries !== 'string' && typeof req.params.maxRetries !== 'number') ||
+      (req.params.retryTime && typeof req.params.retryTime !== 'string' && typeof req.params.retryTime !== 'number') ||
+      (req.params.waitTime && typeof req.params.waitTime !== 'string' && typeof req.params.waitTime !== 'number')) {
 
       compUtil.net.sendHttp400(IDLOG, res);
       return;
     }
-    compAstProxy.createAlarm(req.params.extension, req.params.time, req.params.date, function (err) {
+    compAstProxy.createAlarm(req.params, function (err) {
       try {
         if (err) {
           logger.log.warn(IDLOG, 'creating alarm in ' + req.params.date + ' - ' + req.params.time + ' for exten "' +
