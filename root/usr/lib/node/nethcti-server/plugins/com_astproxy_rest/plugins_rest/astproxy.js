@@ -180,7 +180,7 @@ var compConfigManager;
                "chanType": "sip",
                "maxChannels": 4,
                "sipuseragent": "",
-               "conversations": { Conversation.{{#crossLink "Conversation/toJSON"}}{{/crossLink}}() }
+               "conversations": { TrunkConversation.{{#crossLink "TrunkConversation/toJSON"}}{{/crossLink}}() }
          }
      }
         * ---

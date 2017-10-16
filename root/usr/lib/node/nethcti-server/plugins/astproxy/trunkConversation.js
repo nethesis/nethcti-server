@@ -334,8 +334,8 @@ exports.TrunkConversation = function (ownerId, sourceChan, destChan) {
    *     {
    *         id:           "SIP/214-000002f4>SIP/209-000002f5",
    *         owner:        "214",
-   *         chDest:       Channel.toJSON(),                    // the source channel of the call
-   *         chSource:     Channel.toJSON(),                    // the destination channel of the call
+   *         chDest:       Channel.{{#crossLink "Channel/toJSON"}}{{/crossLink}}(), // the source channel of the call
+   *         chSource:     Channel.{{#crossLink "Channel/toJSON"}}{{/crossLink}}(), // the destination channel of the call
    *         duration:     26,
    *         recording:    false,                               // it's true if the conversation is recording, false otherwise
    *         direction:    "in",
