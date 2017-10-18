@@ -217,9 +217,9 @@ function setCompAuthorization(comp) {
         * ### <a id="listen_announcementget">**`offhour/listen_announcement/:id`**</a>
         *
         * Listen the specified audio announcement. The _id_ is the announcement indentifier in the database
-        * (_id_ field of the nethcti3.offhour_files_ database table). The user with _admin\_offhour_
-        * authorization can listen all announcements, while the user with the _offhour_ permission can listen
-        * only the audio file of his own calls.
+        * (_id_ field of the nethcti3.offhour_files_ database table). The user with admin permission can listen all
+        * announcements, while the user with advanced and basic permissions can listen only the owned file and these
+        * with public visibility.
         *
         * # POST requests
         *
@@ -450,27 +450,32 @@ function setCompAuthorization(comp) {
        *     listen_announcement
        *
        * @method list
-       * @param {object}   req  The client request
-       * @param {object}   res  The client response
+       * @param {object} req The client request
+       * @param {object} res The client response
        * @param {function} next Function to run the next handler in the chain
        */
       listen_announcement: function (req, res, next) {
         try {
           // extract the username added in the authentication step
           var username = req.headers.authorization_user;
+          if (typeof req.params.id !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res, req.params);
+            return;
+          }
           var id = req.params.id;
 
           // check if the user has the admin_offhour authorization
           if (compAuthorization.authorizeAdminOffhourUser(username) === true) {
-            logger.log.info(IDLOG, 'listening audio announcement with id "' + id + '": user "' + username + '" has the "amdin_offhour" authorization');
+            logger.log.info(IDLOG, 'listening audio announcement with id "' + id + '": user "' + username + '" has the admin authorization');
 
             listenAnnouncement(id, username, res);
 
-          } else if (compAuthorization.authorizeOffhourUser(username) === true) {
-            logger.log.info(IDLOG, 'listening audio announcement with id "' + id + '": user "' + username + '" has the "offhour" authorization');
+          } else if (compAuthorization.authorizeOffhourUser(username) === true ||
+            compAuthorization.authorizeAdvancedOffhourUser(username) === true) {
 
-            // check if the user has the permission to listen the file. The user with "offhour" permission
-            // can listen all his announcements and only the public ones of other users
+            logger.log.info(IDLOG, 'listening audio announcement with id "' + id + '": user "' + username + '" has the basic or advanced authorization');
+
+            // check if the user has the permission to listen the file. The user can listen all his announcements and only the public one of other users
             compAuthorization.verifyOffhourListenAnnouncement(username, id, function (err, result) {
               try {
                 if (err) {
@@ -482,7 +487,6 @@ function setCompAuthorization(comp) {
                 if (result === true) {
                   var strlog = 'verified announcement "' + id + '" for user "' + username + '": he has the authorization to listen it';
                   logger.log.info(IDLOG, strlog);
-
                   listenAnnouncement(id, username, res);
 
                 } else {
@@ -1020,9 +1024,9 @@ function setCompAuthorization(comp) {
  * the audio file using base64 enconding. So the data is sent to the client.
  *
  * @method listenAnnouncement
- * @param {string} id       The identifier of the announcement
+ * @param {string} id The identifier of the announcement
  * @param {string} username The name of the user
- * @param {object} res      The client response
+ * @param {object} res The client response
  * @private
  */
 function listenAnnouncement(id, username, res) {
