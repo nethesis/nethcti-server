@@ -343,7 +343,8 @@ function getAllInboundRoutes(username, param, cb) {
           objResult[inRouteId] = {
             calledIdNum: arrInRoutes[i].extension,
             callerIdNum: arrInRoutes[i].cidnum,
-            destination: arrInRoutes[i].destination
+            destination: arrInRoutes[i].destination,
+            description: arrInRoutes[i].description
           };
         }
 
@@ -359,7 +360,8 @@ function getAllInboundRoutes(username, param, cb) {
             objResult[inRouteId] = {
               calledIdNum: arrInRoutes[i].extension,
               callerIdNum: arrInRoutes[i].cidnum,
-              destination: arrInRoutes[i].destination
+              destination: arrInRoutes[i].destination,
+              description: arrInRoutes[i].description
             };
           }
         }
