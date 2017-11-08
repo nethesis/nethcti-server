@@ -7945,8 +7945,7 @@ function startSpySpeakConversation(endpointId, convid, destId, cb) {
       var convs = extensions[endpointId].getAllConversations();
       var conv = convs[convid];
       var chSource = conv.getSourceChannel();
-      var callerNum = chSource.getCallerNum();
-      var chToSpy = callerNum === endpointId ? chSource.getChannel() : chSource.getBridgedChannel();
+      var chToSpy = ((chSource.getChannel()).split('/')[1]).split('-')[0] === endpointId ? chSource.getChannel() : chSource.getDestinationChannel();
       var spyChanType = extensions[destId].getChanType();
       var spierId = spyChanType + '/' + destId;
 
