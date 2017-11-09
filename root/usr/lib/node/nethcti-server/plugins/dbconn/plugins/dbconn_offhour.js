@@ -489,7 +489,8 @@ function getAnnouncement(id, cb) {
  *   @param {string} data.calledIdNum The called number of the inbound route
  *   @param {string} data.callerIdNum The caller number of the inbound route
  *   @param {string} data.username The user who requested the operation
- *   @param {string} data.action The offhour service action: ("audiomsg" | "audiomsg_voicemail" | "redirect")
+ *   @param {string} data.action The offhour service action: ("audiomsg" | "audiomsg_voicemail" | "redirect"). Corresponding
+ *                               values into the db are: "audiomsg": 0, "audiomsg_voicemail": 1, "redirect": 2
  *   @param {string} data.redirectTo The destination to use with "action" = "redirect"
  *   @param {string} data.voicemailId The voicemail destination to use with "action" = "audiomsg_voicemail"
  *   @param {string} data.announcementFilePath File path of the audio announcement
@@ -518,9 +519,6 @@ function setOffhour(data, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    var actionValue = (data.action === 'audiomsg_voicemail' ? 1 : (data.action === 'redirect' ? 2 : 0));
-    var paramValue = ( data.action === 'audiomsg_voicemail' ? data.voicemailId :
-      (data.action === 'audiomsg' ? data.announcementId : data.redirectTo) );
     var id = data.calledIdNum + '/' + data.callerIdNum;
 
     compDbconnMain.models[DB_TABLE_OFFHOUR].find({
@@ -528,21 +526,27 @@ function setOffhour(data, cb) {
 
     }).then(function (task) {
       try {
-
         var startDateTime = data.startDate + ' ' + data.startTime;
         var endDateTime = data.endDate + ' ' + data.endTime;
 
-        var entry = compDbconnMain.models[compDbconnMain.JSON_KEYS.OFFHOUR].build({
+        var obj = {
           enabled: data.enabled === 'always' ? 1 : (data.enabled === 'period' ? 2 : 0),
-          tsbegin: Math.floor(moment(startDateTime, 'YYYYMMDD HHmmss').valueOf() / 1000),
-          tsend: Math.floor(moment(endDateTime, 'YYYYMMDD HHmmss').valueOf() / 1000),
           didcidnum: data.calledIdNum,
           didextension: data.callerIdNum,
-          action: actionValue,
-          param: paramValue,
-          message: data.announcementFilePath,
           displayname: data.description ? data.description : ''
-        });
+        };
+        if (data.startDate && data.endDate) {
+          obj.tsbegin = Math.floor(moment(startDateTime, 'YYYYMMDD HHmmss').valueOf() / 1000);
+          obj.tsend = Math.floor(moment(endDateTime, 'YYYYMMDD HHmmss').valueOf() / 1000);
+        }
+        if (data.action) {
+          obj.action = (data.action === 'audiomsg_voicemail' ? 1 : (data.action === 'redirect' ? 2 : 0));
+          obj.param = (data.action === 'audiomsg_voicemail' ? data.voicemailId : (data.action === 'audiomsg' ? data.announcementId : data.redirectTo));
+        }
+        if (data.action !== 'redirect') {
+          obj.message = data.announcementFilePath;
+        }
+        var entry = compDbconnMain.models[compDbconnMain.JSON_KEYS.OFFHOUR].build(obj);
 
         if (task) {
 

@@ -384,14 +384,13 @@ function getAllInboundRoutes(username, param, cb) {
             objResult[k].offhour.enabled = arrOffhour[i].enabled === 2 ? 'period' :
               (arrOffhour[i].enabled === 1 ? 'always' : 'never');
 
-            if (objResult[k].offhour.enabled === 'period') {
-              objResult[k].offhour.period = {
-                datebegin: arrOffhour[i].datebegin,
-                dateend: arrOffhour[i].dateend,
-                timebegin: arrOffhour[i].timebegin,
-                timeend: arrOffhour[i].timeend
-              };
-            }
+            objResult[k].offhour.period = {
+              datebegin: arrOffhour[i].datebegin,
+              dateend: arrOffhour[i].dateend,
+              timebegin: arrOffhour[i].timebegin,
+              timeend: arrOffhour[i].timeend
+            };
+
             if (objResult[k].offhour.action === 'redirect') {
               objResult[k].offhour.redirect = {
                 redirect_to: arrOffhour[i].param
@@ -412,11 +411,6 @@ function getAllInboundRoutes(username, param, cb) {
             if (objResult[k].offhour.action === 'audiomsg_voicemail') {
               objResult[k].offhour.voicemail = { voicemail_id: arrOffhour[i].param };
             }
-          } else {
-            objResult[k].offhour = {};
-            objResult[k].offhour.calledIdNum = arrOffhour[i].didcidnum;
-            objResult[k].offhour.callerIdNum = arrOffhour[i].didextension;
-            objResult[k].offhour.enabled = 'never';
           }
         }
       }
