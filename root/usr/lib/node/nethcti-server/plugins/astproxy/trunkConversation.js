@@ -97,10 +97,7 @@ exports.TrunkConversation = function (ownerId, sourceChan, destChan) {
    * @private
    */
   var direction;
-  // if (chDest && chDest.isExtension(owner) && chDest.isDown() === true) {
-  if (!chDest ||
-    (chDest && chDest.isExtension(owner))) {
-
+  if (!chDest || (chDest && chDest.isExtension(owner))) {
     direction = DIRECTION.OUT;
   } else {
     direction = DIRECTION.IN;

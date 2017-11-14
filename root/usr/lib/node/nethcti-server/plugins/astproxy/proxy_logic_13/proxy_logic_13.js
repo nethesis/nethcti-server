@@ -2818,10 +2818,6 @@ function initializePjsipTrunk(err, results) {
       trunks[trunk.getExten()] = trunk;
       trunks[trunk.getExten()].setName(staticDataTrunks[results[i].ext].name);
       trunks[trunk.getExten()].setUserContext(staticDataTrunks[results[i].ext].usercontext);
-
-      // todo for pjsip
-      // arr.push(getTrunkSipDetails(trunk.getExten()));
-      // arr.push(getSipTrunkStatus(trunk.getExten()));
     }
     async.parallel(arr,
       function (err) {
@@ -3603,7 +3599,6 @@ function updateTrunkConversations(err, resp, trunk) {
           chid.indexOf('@from') === -1 &&
           trunkid === trunk) { // the current trunk is of interest
 
-          console.log('\n1 updateTrunkConversations');
           addConversationToTrunk(trunkid, resp, chid);
         }
       }
