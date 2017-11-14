@@ -19,6 +19,7 @@ var Queue = require('../queue').Queue;
 var Trunk = require('../trunk').Trunk;
 var moment = require('moment');
 var Channel = require('../channel').Channel;
+var TrunkChannel = require('../trunkChannel').TrunkChannel;
 var Parking = require('../parking').Parking;
 var Extension = require('../extension').Extension;
 var QueueMember = require('../queueMember').QueueMember;
@@ -2764,6 +2765,7 @@ function initializeSipTrunk(err, results) {
       );
       trunks[trunk.getExten()] = trunk;
       trunks[trunk.getExten()].setName(staticDataTrunks[results[i].ext].name);
+      trunks[trunk.getExten()].setUserContext(staticDataTrunks[results[i].ext].usercontext);
 
       arr.push(getTrunkSipDetails(trunk.getExten()));
       arr.push(getSipTrunkStatus(trunk.getExten()));
@@ -2815,6 +2817,7 @@ function initializePjsipTrunk(err, results) {
       );
       trunks[trunk.getExten()] = trunk;
       trunks[trunk.getExten()].setName(staticDataTrunks[results[i].ext].name);
+      trunks[trunk.getExten()].setUserContext(staticDataTrunks[results[i].ext].usercontext);
 
       // todo for pjsip
       // arr.push(getTrunkSipDetails(trunk.getExten()));
@@ -2868,6 +2871,7 @@ function initializeIaxTrunk(err, results) {
       );
       trunks[trunk.getExten()] = trunk;
       trunks[trunk.getExten()].setName(staticDataTrunks[results[i].exten].name);
+      trunks[trunk.getExten()].setUserContext(staticDataTrunks[results[i].exten].usercontext);
       logger.log.info(IDLOG, 'set iax details for trunk ' + results[i].exten);
     }
 
@@ -3427,7 +3431,6 @@ function updateConversationsForAllTrunk(err, resp) {
     if (!resp) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
     // removes all conversations of all trunks
     var trunk;
     for (trunk in trunks) {
@@ -3445,7 +3448,7 @@ function updateConversationsForAllTrunk(err, resp) {
       // conversation SIP/3001-00000592>Local/221@from-queue-000009dc;1)
       if (chid.indexOf('Local') === -1 &&
         chid.indexOf('@from') === -1 &&
-        trunks[trunk]) { // the trunk exists
+        isTrunk(trunk)) { // the trunk exists
 
         addConversationToTrunk(trunk, resp, chid);
       }
@@ -3512,6 +3515,51 @@ function updateExtenConversations(err, resp, exten) {
 }
 
 /**
+ * Check if the exten is a trunk.
+ *
+ * @method isTrunk
+ * @param {string} trunk The trunk name
+ * @return {boolean} True if the exten is a trunk.
+ */
+function isTrunk(trunk) {
+  try {
+    var t;
+    for (t in trunks) {
+      if (t === trunk || trunks[t].getUserContext() === trunk) {
+        return true;
+      }
+    }
+    return false;
+
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+    return false;
+  }
+}
+
+/**
+ * Return the trunk name. This is used because in same cases
+ * trunk name obtained from channels correspond to the "usercontext"
+ * of the trunk itself, as in the case of incoming calls on IAX2 trunks.
+ *
+ * @method getTrunkName
+ * @param {string} trunk The trunk name
+ * @return {string} The name of the trunk.
+ */
+function getTrunkName(trunk) {
+  try {
+    var t;
+    for (t in trunks) {
+      if (t === trunk || trunks[t].getUserContext() === trunk) {
+        return t;
+      }
+    }
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
+
+/**
  * Update the conversations of the extension.
  *
  * @method updateTrunkConversations
@@ -3533,11 +3581,13 @@ function updateTrunkConversations(err, resp, trunk) {
     }
 
     // check if the extension exists, otherwise there is some error
-    if (trunks[trunk]) {
+    if (isTrunk(trunk)) {
+
+      var realTrunkName = getTrunkName(trunk);
 
       // reset all conversations of the trunk
-      trunks[trunk].removeAllConversations();
-      logger.log.info(IDLOG, 'reset all conversations of the trunk ' + trunk);
+      trunks[realTrunkName].removeAllConversations();
+      logger.log.info(IDLOG, 'reset all conversations of the trunk ' + realTrunkName);
 
       // cycle in all received channels
       var trunkid, chid;
@@ -3553,13 +3603,14 @@ function updateTrunkConversations(err, resp, trunk) {
           chid.indexOf('@from') === -1 &&
           trunkid === trunk) { // the current trunk is of interest
 
+          console.log('\n1 updateTrunkConversations');
           addConversationToTrunk(trunkid, resp, chid);
         }
       }
 
       // emit the event
-      logger.log.info(IDLOG, 'emit event ' + EVT_TRUNK_CHANGED + ' for trunk ' + trunk);
-      astProxy.emit(EVT_TRUNK_CHANGED, trunks[trunk]);
+      logger.log.info(IDLOG, 'emit event ' + EVT_TRUNK_CHANGED + ' for trunk ' + realTrunkName);
+      astProxy.emit(EVT_TRUNK_CHANGED, trunks[realTrunkName]);
 
     } else {
       logger.log.warn(IDLOG, 'try to update channel list of the non existent trunk ' + trunk);
@@ -3686,7 +3737,7 @@ function isMainExtension(exten) {
  * Add new conversation to the trunk.
  *
  * @method addConversationToTrunk
- * @param {string} trunk The trunk number
+ * @param {string} trunk The trunk number. It can be also the "usercontext" of the trunk
  * @param {object} resp  The channel list object received by the _listChannels_ command plugin
  * @param {string} chid  The channel identifier
  * @private
@@ -3701,19 +3752,34 @@ function addConversationToTrunk(trunk, resp, chid) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    if (trunks[trunk]) {
+    // add "bridgedChannel" information to the response
+    var ch, ch2;
+    for (ch in resp) {
+      for (ch2 in resp) {
+        if (resp[ch2].bridgeid === resp[ch].bridgeid &&
+          resp[ch2].channel !== resp[ch].channel) {
+
+          resp[ch].bridgedChannel = resp[ch2].channel;
+          resp[ch2].bridgedChannel = resp[ch].channel;
+          resp[ch].uniqueid_linked = resp[ch2].uniqueid;
+          resp[ch2].uniqueid_linked = resp[ch].uniqueid;
+        }
+      }
+    }
+
+    if (isTrunk(trunk)) {
 
       var chDest, chSource, chBridged;
 
       // creates the source and destination channels
-      var ch = new Channel(resp[chid]);
+      var ch = new TrunkChannel(resp[chid]);
 
       if (ch.isSource()) {
 
         chSource = ch;
         chBridged = resp[chid].bridgedChannel;
         if (resp[chBridged]) { // the call is connected
-          chDest = new Channel(resp[chBridged]);
+          chDest = new TrunkChannel(resp[chBridged]);
         }
 
       } else {
@@ -3721,11 +3787,12 @@ function addConversationToTrunk(trunk, resp, chid) {
         chDest = ch;
         chBridged = resp[chid].bridgedChannel;
         if (resp[chBridged]) { // the call is connected
-          chSource = new Channel(resp[chBridged]);
+          chSource = new TrunkChannel(resp[chBridged]);
         }
       }
 
       // create a new conversation
+      var realTrunkName = getTrunkName(trunk);
       var conv = new TrunkConversation(trunk, chSource, chDest);
       var convid = conv.getId();
 
@@ -3753,12 +3820,12 @@ function addConversationToTrunk(trunk, resp, chid) {
       }
 
       // add the created conversation to the trunk
-      trunks[trunk].addConversation(conv);
-      logger.log.info(IDLOG, 'the conversation ' + convid + ' has been added to trunk ' + trunk);
+      trunks[realTrunkName].addConversation(conv);
+      logger.log.info(IDLOG, 'the conversation ' + convid + ' has been added to trunk ' + realTrunkName);
 
       // emit the event
-      logger.log.info(IDLOG, 'emit event ' + EVT_TRUNK_CHANGED + ' for trunk ' + trunk);
-      astProxy.emit(EVT_TRUNK_CHANGED, trunks[trunk]);
+      logger.log.info(IDLOG, 'emit event ' + EVT_TRUNK_CHANGED + ' for trunk ' + realTrunkName);
+      astProxy.emit(EVT_TRUNK_CHANGED, trunks[realTrunkName]);
 
     } else {
       logger.log.warn(IDLOG, 'try to add new conversation to a non existent trunk ' + trunk);
@@ -4522,30 +4589,6 @@ function isExten(id) {
     }
 
     if (extensions[id]) {
-      return true;
-    }
-    return false;
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-  }
-}
-
-/**
- * Check if the identifier is a trunk.
- *
- * @method isTrunk
- * @param {string} id The number identifier
- * @return {boolean} True if the id is a trunk
- */
-function isTrunk(id) {
-  try {
-    // check parameters
-    if (typeof id !== 'string') {
-      throw new Error('wrong parameter: ' + id);
-    }
-
-    if (trunks[id]) {
       return true;
     }
     return false;
@@ -5465,7 +5508,6 @@ function evtConversationDialing(data) {
         if (extensions[data.chDestExten]) {
           updateExtenConversations(err, resp, data.chDestExten);
         }
-
         // update conversations of all trunks
         logger.log.info(IDLOG, 'update conversations of all trunks');
         updateConversationsForAllTrunk(err, resp);
@@ -6296,7 +6338,7 @@ function evtHangupConversation(data) {
     }
 
     // check the trunk existence
-    if (trunks[data.channelExten]) {
+    if (isTrunk(data.channelExten)) {
 
       // request all channel list and update channels of trunk
       astProxy.doCmd({
@@ -6307,7 +6349,6 @@ function evtHangupConversation(data) {
         updateTrunkConversations(err, resp, data.channelExten);
       });
     }
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -6473,6 +6514,7 @@ function hangupConversation(endpointId, convid, cb) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+
     var err;
     // check the endpoint existence
     if (extensions[endpointId]) {
@@ -6875,6 +6917,7 @@ function forceHangupConversation(endpointType, endpointId, convid, extForCtx, cb
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+
     var msg;
     // check the endpoint existence
     if (endpointType === 'extension' && extensions[endpointId]) {
