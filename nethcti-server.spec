@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.2
+Version: 3.0.3
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -84,6 +84,14 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Tue Nov 14 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.3-1
+- trunks: add support for sip,pjsip,iax trunks. nethesis/dev#5202 (#16)
+- fix get channel for intrude. nethesis/dev#5246
+- offhour: add support. nethesis/dev#5211
+- wakeup: add retryTimes. nethesis/dev#5216
+- voicemail: fix event emitter
+- switchboard: fix entries for internal,out&in. nethesis/dev#5213
+
 * Thu Sep 28 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.2-1
 - fix login with username@domain
 - fix user list of audio conference
