@@ -66,6 +66,16 @@ exports.Trunk = function(ext, chType, maxCh) {
   var chanType = chType;
 
   /**
+   * The user context.
+   *
+   * @property userContext
+   * @type {string}
+   * @required
+   * @private
+   */
+  var userContext;
+
+  /**
    * The sip user agent.
    *
    * @property sipuseragent
@@ -195,6 +205,26 @@ exports.Trunk = function(ext, chType, maxCh) {
    */
   function setName(extName) {
     name = extName;
+  }
+
+  /**
+   * Set the user context.
+   *
+   * @method setUserContext
+   * @param {string} ctx The user context
+   */
+  function setUserContext(ctx) {
+    userContext = ctx;
+  }
+
+  /**
+   * Return the user context.
+   *
+   * @method getUserContext
+   * @return {string} The user context.
+   */
+  function getUserContext() {
+    return userContext;
   }
 
   /**
@@ -370,6 +400,8 @@ exports.Trunk = function(ext, chType, maxCh) {
     setStatus: setStatus,
     getStatus: getStatus,
     getChanType: getChanType,
+    getUserContext: getUserContext,
+    setUserContext: setUserContext,
     addConversation: addConversation,
     setSipUserAgent: setSipUserAgent,
     getConversation: getConversation,

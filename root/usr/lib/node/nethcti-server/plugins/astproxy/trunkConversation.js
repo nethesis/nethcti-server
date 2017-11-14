@@ -14,7 +14,7 @@ exports.TrunkConversation = function (ownerId, sourceChan, destChan) {
   if (typeof ownerId !== 'string' ||
     (typeof destChan !== 'object' && typeof sourceChan !== 'object')) {
 
-    throw new Error('wrong parameters');
+    throw new Error('wrong parameters: ' + JSON.stringify(arguments));
   }
 
   /**
@@ -97,7 +97,7 @@ exports.TrunkConversation = function (ownerId, sourceChan, destChan) {
    * @private
    */
   var direction;
-  if (chDest && chDest.isExtension(owner) && chDest.isDown() === true) {
+  if (!chDest || (chDest && chDest.isExtension(owner))) {
     direction = DIRECTION.OUT;
   } else {
     direction = DIRECTION.IN;
@@ -159,7 +159,7 @@ exports.TrunkConversation = function (ownerId, sourceChan, destChan) {
     externalNum = chSource.getCallerNum();
     externalName = chSource.getCallerName();
   }
-  if (externalName.substring(0, 4) === 'CID:') {
+  if (typeof externalName === 'string' && externalName.substring(0, 4) === 'CID:') {
     externalName = '';
   }
 
@@ -181,6 +181,7 @@ exports.TrunkConversation = function (ownerId, sourceChan, destChan) {
   // during the boot, if there are some ringing calls, they may lack
   var internalNum;
   var internalName;
+
   if (chDest && chDest.isExtension(owner) === true) {
     internalNum = chDest.getBridgedNum();
     internalName = chDest.getBridgedName();
@@ -362,8 +363,8 @@ exports.TrunkConversation = function (ownerId, sourceChan, destChan) {
       duration: duration,
       recording: recording,
       direction: direction,
-      internalNum: privacyStr ? (internalNum.slice(0, -privacyStr.length) + privacyStr) : internalNum,
-      externalNum: privacyStr ? (externalNum.slice(0, -privacyStr.length) + privacyStr) : externalNum,
+      internalNum: privacyStr && internalNum ? (internalNum.slice(0, -privacyStr.length) + privacyStr) : internalNum,
+      externalNum: privacyStr && externalNum ? (externalNum.slice(0, -privacyStr.length) + privacyStr) : externalNum,
       internalName: privacyStr ? privacyStr : internalName,
       externalName: privacyStr ? privacyStr : externalName,
       throughQueue: throughQueue
