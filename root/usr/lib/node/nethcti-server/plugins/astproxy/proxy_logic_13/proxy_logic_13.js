@@ -3422,7 +3422,6 @@ function updateConversationsForAllTrunk(err, resp) {
       logger.log.error(IDLOG, 'updating conversations of all trunk: ' + err.toString());
       return;
     }
-
     // check parameter
     if (!resp) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -3758,6 +3757,17 @@ function addConversationToTrunk(trunk, resp, chid) {
           resp[ch2].bridgedChannel = resp[ch].channel;
           resp[ch].uniqueid_linked = resp[ch2].uniqueid;
           resp[ch2].uniqueid_linked = resp[ch].uniqueid;
+        }
+        if (resp[ch2].linkedid === resp[ch].uniqueid &&
+          resp[ch2].channel !== resp[ch].channel &&
+          isTrunk(resp[ch].channelExten)) {
+
+          resp[ch].bridgedNum = resp[ch2].callerNum;
+          resp[ch].bridgedName = resp[ch2].callerName;
+        }
+        if (isTrunk(resp[ch].channelExten)) {
+          resp[ch].bridgedNum = resp[ch].bridgedNum === '<unknown>' ? '...' : resp[ch].bridgedNum;
+          resp[ch].bridgedName = resp[ch].bridgedName === '<unknown>' ? '...' : resp[ch].bridgedName;
         }
       }
     }
@@ -5538,6 +5548,13 @@ function evtConversationConnected(num1, num2) {
       num1: num1,
       num2: num2
     });
+
+    // request all channels to update the conversations of all trunks
+    logger.log.info(IDLOG, 'requests the channel list to update the conversations of all trunks');
+    astProxy.doCmd({
+      command: 'listChannels'
+    }, updateConversationsForAllTrunk);
+
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
