@@ -33,6 +33,7 @@ module.exports = function (options, imports, register) {
     serverRest.setCompUtil(imports.util);
     serverRest.setCompAuthorization(imports.authorization);
     serverRest.setCompOffhour(imports.offhour);
+    serverRest.setCompStaticHttp(imports.staticHttp);
     serverRest.start();
   } catch (err) {
     logger.error(IDLOG, err.stack);

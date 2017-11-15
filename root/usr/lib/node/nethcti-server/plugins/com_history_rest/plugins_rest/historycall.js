@@ -136,7 +136,6 @@ function setCompStaticHttp(comp) {
   }
 }
 
-
 /**
  * Set history architect component used by history functions.
  *
@@ -835,8 +834,8 @@ function listenCallRecording(id, username, data, res) {
 }
 
 /**
- * Download call recording using the history component. This returns the content of
- * the audio file using base64 enconding. So the data is sent to the client.
+ * Download call recording using the history component. It return the filename
+ * to be served by the static component.
  *
  * @method downCallRecording
  * @param {string} id              The identifier of the call
