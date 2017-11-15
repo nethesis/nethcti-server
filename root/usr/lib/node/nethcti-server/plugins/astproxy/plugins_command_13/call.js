@@ -118,10 +118,11 @@ var FAIL_REASON = {
        */
       execute: function(am, args, cb) {
         try {
+          var ch = args.chanType ? (args.chanType + '/' + args.from) : ('Local/' + args.from + '@' + args.context);
           // action for asterisk
           var act = {
             Action: 'Originate',
-            Channel: args.chanType + '/' + args.from, // the caller
+            Channel: ch, // the caller
             Context: args.context,
             Priority: 1,
             CallerID: args.from,

@@ -5865,7 +5865,7 @@ function call(endpointType, endpointId, to, extenForContext, cb) {
       command: 'call',
       context: extensions[extenForContext].getContext(),
       from: endpointId,
-      chanType: extensions[endpointId].getChanType(),
+      chanType: extensions[endpointId] ? extensions[endpointId].getChanType() : undefined,
       to: to
     }, function (error) {
       cb(error);
