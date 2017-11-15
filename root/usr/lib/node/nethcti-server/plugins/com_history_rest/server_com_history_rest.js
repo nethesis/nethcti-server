@@ -178,7 +178,6 @@ function setCompHistory(compHistory) {
   }
 }
 
-
 /**
  * Set the static http architect component to be used by REST plugins.
  *

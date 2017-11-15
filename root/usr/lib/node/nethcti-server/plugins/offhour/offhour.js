@@ -1016,6 +1016,42 @@ function deleteAnnouncement(id, cb) {
 }
 
 /**
+ * Return the filepath of the announcement audio file.
+ *
+ * @method getAnnouncementFilePath
+ * @param {string} id The announcement identifier
+ * @param {function} cb The callback function
+ */
+function getAnnouncementFilePath(id, cb) {
+  try {
+    // check parameters
+    if (typeof id !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    // get file path of announcement from the database
+    compDbconn.getAnnouncementFilePath(id, function (err, filepath) {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'getting file path of announcement with id "' + id + '"');
+          cb(err);
+
+        } else {
+          logger.log.info(IDLOG, 'got file path "' + filepath + '" of announcement with id "' + id + '"');
+          cb(null, filepath);
+        }
+      } catch (err) {
+        logger.log.error(IDLOG, err.stack);
+        cb(err);
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Reads the audio file of announcement using base64 encoding and
  * returns the content in the callback.
  *
@@ -1229,6 +1265,7 @@ exports.enableAnnouncement = enableAnnouncement;
 exports.listAllAnnouncement = listAllAnnouncement;
 exports.listUserAnnouncement = listUserAnnouncement;
 exports.setCompConfigManager = setCompConfigManager;
+exports.getAnnouncementFilePath = getAnnouncementFilePath;
 exports.getAnnouncementFileContent = getAnnouncementFileContent;
 exports.getAdminInboundRoutes = getAdminInboundRoutes;
 exports.getAdvancedInboundRoutes = getAdvancedInboundRoutes;

@@ -37,6 +37,15 @@ var logger = console;
 var compOffhour;
 
 /**
+ * The http static module.
+ *
+ * @property compStaticHttp
+ * @type object
+ * @private
+ */
+var compStaticHttp;
+
+/**
  * The architect component to be used for authorization.
  *
  * @property compAuthorization
@@ -100,6 +109,21 @@ function setCompOffhour(comp) {
 }
 
 /**
+ * Set static http architecht component used by history functions.
+ *
+ * @method setCompStatic
+ * @param {object} comp The http static architect component.
+ */
+function setCompStaticHttp(comp) {
+  try {
+    compStaticHttp = comp;
+    logger.log.info(IDLOG, 'set http static component');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Sets the utility architect component.
  *
  * @method setCompUtil
@@ -151,6 +175,7 @@ function setCompAuthorization(comp) {
         * 1. [`offhour/list`](#listget)
         * 1. [`offhour/list_announcement`](#list_announcementget)
         * 1. [`offhour/listen_announcement/:id`](#listen_announcementget)
+        * 1. [`offhour/download_announcement/:id`](#download_announcementget)
         *
         * ---
         *
@@ -220,6 +245,14 @@ function setCompAuthorization(comp) {
         * (_id_ field of the nethcti3.offhour_files_ database table). The user with admin permission can listen all
         * announcements, while the user with advanced and basic permissions can listen only the owned file and these
         * with public visibility.
+        *
+        * ---
+        *
+        * ### <a id="download_announcementget">**`offhour/download_announcement/:id`**</a>
+        *
+        * The user can download the announcement message of the user. The id must be the identifier of the announcement
+        * in the database. It returns the filename that can be downloaded getting it from /webrest/static/.
+        *
         *
         * # POST requests
         *
@@ -321,11 +354,13 @@ function setCompAuthorization(comp) {
          *   @param {string} list To get the list of all the inbound routes base on user permission
          *   @param {string} list_announcement To get the list of all public and user private audio file for announcements
          *   @param {string} listen_announcement/:id To listen the specified audio file of announcement
+         *   @param {string} download_announcement/:id To download the specified audio file of announcement
          */
         'get': [
           'list',
           'list_announcement',
-          'listen_announcement/:id'
+          'listen_announcement/:id',
+          'download_announcement/:id'
         ],
 
         /**
@@ -449,7 +484,7 @@ function setCompAuthorization(comp) {
        *
        *     listen_announcement
        *
-       * @method list
+       * @method listen_announcement
        * @param {object} req The client request
        * @param {object} res The client response
        * @param {function} next Function to run the next handler in the chain
@@ -491,6 +526,76 @@ function setCompAuthorization(comp) {
 
                 } else {
                   var strlog = 'verified announcement "' + id + '" for user "' + username + '" to listen it: authorization failed';
+                  logger.log.warn(IDLOG, strlog);
+                  compUtil.net.sendHttp403(IDLOG, res);
+                  return;
+                }
+
+              } catch (error) {
+                logger.log.error(IDLOG, error.stack);
+                compUtil.net.sendHttp500(IDLOG, res, error.toString());
+              }
+            });
+
+          } else {
+            logger.log.warn(IDLOG, 'listening audio announcement with id "' + id + '": authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * The user download the audio file of the specified announcement with the following REST API:
+       *
+       *     download_announcement
+       *
+       * @method download_announcement
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      download_announcement: function (req, res, next) {
+        try {
+          // extract the username added in the authentication step
+          var username = req.headers.authorization_user;
+          if (typeof req.params.id !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res, req.params);
+            return;
+          }
+          var id = req.params.id;
+
+          // check if the user has the admin_offhour authorization
+          if (compAuthorization.authorizeAdminOffhourUser(username) === true) {
+            logger.log.info(IDLOG, 'downloading audio announcement with id "' + id + '": user "' + username + '" has the admin authorization');
+
+            downloadAnnouncement(id, username, res);
+
+          } else if (compAuthorization.authorizeOffhourUser(username) === true ||
+            compAuthorization.authorizeAdvancedOffhourUser(username) === true) {
+
+            logger.log.info(IDLOG, 'downloading audio announcement with id "' + id + '": user "' + username + '" has the basic or advanced authorization');
+
+            // check if the user has the permission to listen the file. The user can listen all his announcements and only the public one of other users
+            compAuthorization.verifyOffhourListenAnnouncement(username, id, function (err, result) {
+              try {
+                if (err) {
+                  logger.log.error(IDLOG, 'verifying announcement "' + id + '" for user "' + username + '" to downloading it');
+                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                  return;
+                }
+
+                if (result === true) {
+                  var strlog = 'verified announcement "' + id + '" for user "' + username + '": he has the authorization to downloading it';
+                  logger.log.info(IDLOG, strlog);
+                  downloadAnnouncement(id, username, res);
+
+                } else {
+                  var strlog = 'verified announcement "' + id + '" for user "' + username + '" to downloading it: authorization failed';
                   logger.log.warn(IDLOG, strlog);
                   compUtil.net.sendHttp403(IDLOG, res);
                   return;
@@ -1006,13 +1111,15 @@ function setCompAuthorization(comp) {
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;
     exports.setCompOffhour = setCompOffhour;
+    exports.setCompStaticHttp = setCompStaticHttp;
     exports.list_announcement = offhour.list_announcement;
     exports.listen_announcement = offhour.listen_announcement;
     exports.modify_announcement = offhour.modify_announcement;
     exports.delete_announcement = offhour.delete_announcement;
     exports.record_announcement = offhour.record_announcement;
     exports.enable_announcement = offhour.enable_announcement,
-      exports.setCompAuthorization = setCompAuthorization;
+    exports.download_announcement = offhour.download_announcement;
+    exports.setCompAuthorization = setCompAuthorization;
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1319,6 +1426,54 @@ function setOffhourOfAdvancedUser(username, req, res) {
         }
       });
     }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+  }
+}
+
+/**
+ * Download audio announcement. It return the filename to be served by the static component.
+ *
+ * @method downloadAnnouncement
+ * @param {string} id The identifier of the call
+ * @param {string} username The name of the user
+ * @param {object} res The client response
+ * @private
+ */
+function downloadAnnouncement(id, username, res) {
+  try {
+    compOffhour.getAnnouncementFilePath(id, function(err1, filepath) {
+      try {
+        if (err1) {
+          throw err1;
+        } else {
+          logger.log.info(IDLOG, 'download of the recording call with id "' + id + '" has been sent successfully to user "' + username + '"');
+          // get base path of the call recordings and then construct the filepath using the arguments
+          var filename = 'announcement' + id + 'tmpaudio.wav';
+
+          compStaticHttp.copyFile(filepath, filename, function(err1) {
+            try {
+              if (err1) {
+                logger.log.warn(IDLOG, 'copying static file "' + filepath + '" -> "' + filename + '": ' + err1.toString());
+                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+
+              } else {
+                logger.log.info(IDLOG, 'send audio announcement filename to download "' + filename + '" to user "' + username + '"');
+                res.send(200, filename);
+              }
+            } catch (err3) {
+              logger.log.error(IDLOG, err3.stack);
+              compUtil.net.sendHttp500(IDLOG, res, err3.toString());
+            }
+          });
+        }
+      } catch (err2) {
+        logger.log.error(IDLOG, err2.stack);
+        compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+      }
+    });
+
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());

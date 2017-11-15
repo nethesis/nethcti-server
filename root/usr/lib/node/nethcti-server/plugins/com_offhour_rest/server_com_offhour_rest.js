@@ -316,10 +316,38 @@ function setCompUtil(comp) {
   }
 }
 
+/**
+ * Set the static http architect component to be used by REST plugins.
+ *
+ * @method setCompStaticHttp
+ * @param {object} comp The architect static http component
+ * @static
+ */
+function setCompStaticHttp(comp) {
+  try {
+    // check parameter
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameter');
+    }
+
+    var p;
+    // set static http call architect component to all REST plugins
+    for (p in plugins) {
+      if (typeof plugins[p].setCompStaticHttp === 'function') {
+        plugins[p].setCompStaticHttp(comp);
+      }
+    }
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.start = start;
 exports.config = config;
 exports.setLogger = setLogger;
 exports.setCompUtil = setCompUtil;
 exports.setCompOffhour = setCompOffhour;
+exports.setCompStaticHttp = setCompStaticHttp;
 exports.setCompAuthorization = setCompAuthorization;
