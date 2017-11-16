@@ -508,11 +508,6 @@ function setOffhour(data, cb) {
       ) ||
       typeof data.calledIdNum !== 'string' ||
       typeof data.callerIdNum !== 'string' ||
-      typeof data.action !== 'string' ||
-      typeof data.redirectTo !== 'string' ||
-      typeof data.voicemailId !== 'string' ||
-      typeof data.announcementFilePath !== 'string' ||
-      typeof data.announcementId !== 'string' ||
       typeof data.username !== 'string' ||
       typeof cb !== 'function') {
 

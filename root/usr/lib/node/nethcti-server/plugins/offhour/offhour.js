@@ -800,13 +800,6 @@ function setOffhour(data, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    // set the optional parameters if they has not been specified
-    data.action = data.action ? data.action : '';
-    data.redirectTo = data.redirectTo ? data.redirectTo : '';
-    data.voicemailId = data.voicemailId ? data.voicemailId : '';
-    data.announcementId = data.announcementId ? data.announcementId : '';
-    data.announcementFilePath = '';
-
     getAllInboundRoutes(null, 'all', function (err, ibroutes) {
       try {
         if (err) {
