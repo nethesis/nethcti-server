@@ -268,7 +268,7 @@ function setCompAuthorization(comp) {
         * ### <a id="enable_announcementpost">**`offhour/enable_announcement`**</a>
         *
         * Enable the specified audio file for announcement. It is to be used after "offhour/record_announcement" rest api
-        * invocation. The request must contains the following parameters:
+        * invocation. The request must contain the following parameters:
         *
         * * `type: ("uploaded" | "recorded") the type of the announcement to be enabled`
         * * `privacy: ("public" | "private" ) the visibility of the announcement`
@@ -283,7 +283,7 @@ function setCompAuthorization(comp) {
         *
         * ### <a id="modify_announcementpost">**`offhour/modify_announcement`**</a>
         *
-        * Modify data about the specified audio file for announcement. The request must contains
+        * Modify data about the specified audio file for announcement. The request must contain
         * at least one the following optional parameters:
         *
         * * `id: the announcement identifier`
@@ -298,7 +298,7 @@ function setCompAuthorization(comp) {
         *
         * ### <a id="delete_announcementpost">**`offhour/delete_announcement`**</a>
         *
-        * Delete the specified audio file for announcement. The request must contains the following parameters:
+        * Delete the specified audio file for announcement. The request must contain the following parameters:
         *
         * * `id: the announcement identifier`
         *
@@ -317,7 +317,7 @@ function setCompAuthorization(comp) {
         *
         * ### <a id="upload_announcementpost">**`offhour/upload_announcement`**</a>
         *
-        * Upload an audio file as announcement to be used. The request must contains the following parameters:
+        * Upload an audio file as announcement to be used. The request must contain the following parameters:
         *
         * * `privacy: ("public" | "private" ) the visibility of the announcement`
         * * `description: the announcement description`
@@ -333,7 +333,7 @@ function setCompAuthorization(comp) {
         * ### <a id="set_offhourpost">**`offhour/set_offhour`**</a>
         *
         * Set the offhour service. It provides the functions to set offhour announcement,
-        * announcement + voicemail or redirect. The request must contains the following parameters:
+        * announcement + voicemail or redirect. The request must contain the following parameters:
         *
         * * `calledIdNum: called number of the incoming route`
         * * `callerIdNum: caller number of the incoming route`

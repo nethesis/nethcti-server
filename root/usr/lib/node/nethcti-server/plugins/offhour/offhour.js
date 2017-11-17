@@ -712,7 +712,7 @@ function storeWavAnnouncement(data, cb) {
 }
 
 /**
- * Get do not disturb (DND) status of the extension.
+ * Convert a wav file to an asterisk suitable format.
  *
  * @method convertWavToAsteriskFormat
  * @param {string} filename The final wav filename
