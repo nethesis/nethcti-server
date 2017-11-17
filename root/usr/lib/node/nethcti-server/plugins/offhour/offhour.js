@@ -7,6 +7,7 @@
 var fs = require('fs');
 var path = require('path');
 var async = require('async');
+var childProcess = require('child_process');
 
 /**
  * Provides the offhour functionalities.
@@ -50,6 +51,24 @@ var AUDIO_ASTERISK_PATH = '/var/lib/asterisk/sounds';
  * @default "nethcti"
  */
 var AUDIO_DIRNAME = 'nethcti';
+
+/**
+ * The path of the mpg123 script.
+ *
+ * @property MPG123_SCRIPT_PATH
+ * @type string
+ * @private
+ */
+var MPG123_SCRIPT_PATH = '/usr/bin/mpg123';
+
+/**
+ * The path of the sox script.
+ *
+ * @property SOX_SCRIPT_PATH
+ * @type string
+ * @private
+ */
+var SOX_SCRIPT_PATH = '/usr/bin/sox';
 
 /**
  * The destination path of audio file for announcements. It is made
@@ -574,7 +593,7 @@ function enableAnnouncement(data, cb) {
           description: data.description
         };
 
-        // add a new entry into the "nethcti2.offhour_files" database
+        // add a new entry into the "offhour_files" database
         compDbconn.storeAudioFileAnnouncement(param, function (err) {
           try {
             if (err) {
@@ -615,6 +634,327 @@ function enableAnnouncement(data, cb) {
       }
       cb(err);
     });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Store wav audio file for announcement into "audioAnnouncementPath" directory.
+ *
+ * @method storeWavAnnouncement
+ * @param {object} data
+ *   @param {string} data.user The user who requested the operation
+ *   @param {string} data.privacy The privacy for audio file for announcement
+ *   @param {string} data.description The description of the announcement
+ *   @param {string} data.audio_content The audio file content base64 encoded
+ * @param {function} cb The callback function
+ */
+function storeWavAnnouncement(data, cb) {
+  try {
+    // check parameters
+    if (typeof data !== 'object' ||
+      typeof data.description !== 'string' ||
+      typeof data.user !== 'string' || typeof cb !== 'function' ||
+      (data.privacy !== 'public' && data.privacy !== 'private') ||
+      typeof data.audio_content !== 'string') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var filename = data.user + '-cti-' + (new Date()).getTime();
+    var datauri = data.audio_content.split(',')[0];
+    data.audio_content = data.audio_content.replace(datauri + ',', ''); // clean audio content
+    var binaryData = new Buffer(data.audio_content, 'base64').toString('binary');
+    var wavFilePath = path.join(audioAnnouncementPath, 'wav_' + filename + '.wav');
+
+    // write temporary binary wav file
+    fs.writeFile(wavFilePath, binaryData, 'binary', function (err1) {
+      try {
+        if (err1) {
+          var str = 'writing temporary wav audio file to convert for announcement "' + wavFilePath + '" by user "' + data.user + '" failed: ' + err1;
+          logger.log.error(IDLOG, str);
+          cb(str);
+          return;
+        }
+        logger.log.info(IDLOG, 'temporary wav audio file to convert for announcement has been written "' + wavFilePath + '" by user "' + data.user + '"');
+
+        // convert to a suitable wav format for asterisk
+        convertWavToAsteriskFormat(filename, wavFilePath, function (err2, finalWavFilePath) {
+          try {
+            // remove temporary files
+            fs.unlink(wavFilePath, function (err3) {});
+            logger.log.info(IDLOG, 'removed temporary file ' + wavFilePath);
+            if (err2) {
+              var str = 'converting "' + wavFilePath + '" to a suitable wav format for asterisk';
+              logger.log.error(IDLOG, str);
+              fs.unlink(wavFilePath, function (err3) {});
+              cb(str);
+              return;
+            }
+            logger.log.info(IDLOG, 'created wav audio file with correct format for asterisk ' + finalWavFilePath);
+            cb(null, finalWavFilePath);
+
+          } catch (error2) {
+            logger.log.error(IDLOG, error2.stack);
+            cb(error2);
+          }
+        });
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        callback(error);
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Convert a wav file to an asterisk suitable format.
+ *
+ * @method convertWavToAsteriskFormat
+ * @param {string} filename The final wav filename
+ * @param {string} filepathToConvert The path of the wav file to be converted
+ * @param {function} cb The callback function
+ * @private
+ */
+function convertWavToAsteriskFormat(filename, filepathToConvert, cb) {
+  try {
+    if (typeof filename !== 'string' ||
+      typeof filepathToConvert !== 'string' ||
+      typeof cb !== 'function') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var finalWavFilePath = path.join(audioAnnouncementPath, filename + '.wav');
+    var child2 = childProcess.spawn(SOX_SCRIPT_PATH, [filepathToConvert, '-r', '8000', '-c', '1', finalWavFilePath, 'rate', '-ql']);
+    child2.stdin.end();
+    child2.on('close', function(code, signal) {
+      if (code !== 0) {
+        cb({ errorCode: code });
+        return;
+      }
+      cb(null, finalWavFilePath);
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Store mp3 audio file for announcement into "audioAnnouncementPath" directory.
+ *
+ * @method storeMp3Announcement
+ * @param {object} data
+ *   @param {string} data.user The user who requested the operation
+ *   @param {string} data.privacy The privacy for audio file for announcement
+ *   @param {string} data.description The description of the announcement
+ *   @param {string} data.audio_content The audio file content base64 encoded
+ * @param {function} cb The callback function
+ */
+function storeMp3Announcement(data, cb) {
+  try {
+    // check parameters
+    if (typeof data !== 'object' ||
+      typeof data.description !== 'string' ||
+      typeof data.user !== 'string' || typeof cb !== 'function' ||
+      (data.privacy !== 'public' && data.privacy !== 'private') ||
+      typeof data.audio_content !== 'string') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var filename = data.user + '-cti-' + (new Date()).getTime();
+    var datauri = data.audio_content.split(',')[0];
+    data.audio_content = data.audio_content.replace(datauri + ',', ''); // clean audio content
+    var binaryData = new Buffer(data.audio_content, 'base64').toString('binary');
+    var mp3FilePath = path.join(audioAnnouncementPath, filename + '.mp3');
+
+    // write temporary binary mp3 file
+    fs.writeFile(mp3FilePath, binaryData, 'binary', function (err1) {
+      try {
+        if (err1) {
+          var str = 'writing temporary mp3 audio file to convert for announcement "' + mp3FilePath + '" by user "' + data.user + '" failed: ' + err1;
+          logger.log.error(IDLOG, str);
+          cb(str);
+          return;
+        }
+        logger.log.info(IDLOG, 'temporary mp3 audio file to convert for announcement has been written "' + mp3FilePath + '" by user "' + data.user + '"');
+
+        // conversion from mp3 to wav
+        var wavFromMp3FilePath = path.join(audioAnnouncementPath, 'wav_' + filename + '.wav');
+        var child = childProcess.spawn(MPG123_SCRIPT_PATH, ['-w', wavFromMp3FilePath, mp3FilePath]);
+        child.stdin.end();
+        child.on('close', function(code, signal) {
+
+          if (code !== 0) {
+            var str = 'converting "' + mp3FilePath + '" to "' + wavFromMp3FilePath + '"';
+            logger.log.erro(IDLOG, str);
+            cb(str);
+
+          } else {
+            logger.log.info(IDLOG, 'converted from "' + mp3FilePath + '" -> "' + wavFromMp3FilePath + '"');
+            // convert to a suitable wav format for asterisk
+            convertWavToAsteriskFormat(filename, wavFromMp3FilePath, function (err2, finalWavFilePath) {
+              try {
+                // remove temporary files
+                fs.unlink(mp3FilePath, function (err3) {});
+                fs.unlink(wavFromMp3FilePath, function (err3) {});
+                logger.log.info(IDLOG, 'removed temporary file ' + mp3FilePath);
+                logger.log.info(IDLOG, 'removed temporary file ' + wavFromMp3FilePath);
+                if (err2) {
+                  var str = 'converting "' + wavFromMp3FilePath + '" to a suitable wav format for asterisk';
+                  logger.log.error(IDLOG, str);
+                  fs.unlink(mp3FilePath, function (err3) {});
+                  fs.unlink(wavFromMp3FilePath, function (err3) {});
+                  cb(str);
+                  return;
+                }
+                logger.log.info(IDLOG, 'created wav audio file with correct format for asterisk ' + finalWavFilePath);
+                cb(null, finalWavFilePath);
+
+              } catch (error2) {
+                logger.log.error(IDLOG, error2.stack);
+                cb(error2);
+              }
+            });
+          }
+        });
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        callback(error);
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Store an entry in "offhour_files" db table for a new audio announcement.
+ *
+ * @method storeDBAudioFileAnnouncement
+ * @param {object} data
+ *   @param {string} data.user The user who requested the operation
+ *   @param {string} data.privacy The privacy for audio file for announcement
+ *   @param {string} data.description The description of the announcement
+ * @param {string} destPath The destinatino audio file path
+ * @param {function} cb The callback function
+ */
+function storeDBAudioFileAnnouncement(data, destPath, cb) {
+  try {
+    // check parameters
+    if (typeof data !== 'object' ||
+      typeof data.description !== 'string' ||
+      typeof data.user !== 'string' ||
+      (data.privacy !== 'public' && data.privacy !== 'private') ||
+      typeof cb !== 'function') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var param = {
+      username: data.user,
+      filepath: destPath,
+      privacy: data.privacy,
+      description: data.description
+    };
+    compDbconn.storeAudioFileAnnouncement(param, function (err) {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'storing new audio file metadata "' + destPath + '" for announcement in databse by user "' + data.user + '"');
+          cb(err);
+          return;
+        }
+        cb();
+
+      } catch (err) {
+        logger.log.error(IDLOG, err.stack);
+        cb(err);
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Upload audio file for announcement. Store the file into "audioAnnouncementPath" directory.
+ *
+ * @method uploadAnnouncement
+ * @param {object} data
+ *   @param {string} data.user The user who requested the operation
+ *   @param {string} data.privacy The privacy for audio file for announcement
+ *   @param {string} data.description The description of the announcement
+ *   @param {string} data.audio_content The audio file content base64 encoded
+ * @param {function} cb The callback function
+ */
+function uploadAnnouncement(data, cb) {
+  try {
+    // check parameters
+    if (typeof data !== 'object' ||
+      typeof data.description !== 'string' ||
+      typeof data.user !== 'string' || typeof cb !== 'function' ||
+      (data.privacy !== 'public' && data.privacy !== 'private') ||
+      typeof data.audio_content !== 'string') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var datauri = data.audio_content.split(',')[0];
+    var mimeType = (datauri.split(';')[0]).split(':')[1];
+    if (mimeType !== 'audio/mp3' && mimeType !== 'audio/wav') {
+      var str = 'wrong audio content format (mimeType: "' + mimeType + '")';
+      logger.log.warn(IDLOG, str);
+      cb(str);
+      return;
+    }
+
+    if (mimeType === 'audio/mp3') {
+      storeMp3Announcement(data, function (error, destPath) {
+        if (error) {
+          cb(error);
+          return;
+        }
+        storeDBAudioFileAnnouncement(data, destPath, function (err1) {
+          if (err1) {
+            logger.log.error(IDLOG, 'adding db entry for audio announcement: ' + err1.message);
+            fs.unlink(destPath, function (err2) {});
+            logger.log.info(IDLOG, 'removed created announcement audio file "' + destPath + '"');
+            cb(err1);
+            return;
+          }
+          logger.log.info(IDLOG, 'add new db entry for audio announcement');
+          cb();
+        });
+      });
+
+    } else if (mimeType === 'audio/wav') {
+      storeWavAnnouncement(data, function (error, destPath) {
+        if (error) {
+          cb(error);
+          return;
+        }
+        storeDBAudioFileAnnouncement(data, destPath, function (err1) {
+          if (err1) {
+            logger.log.error(IDLOG, 'adding db entry for audio announcement: ' + err1.message);
+            fs.unlink(destPath, function (err2) {});
+            logger.log.info(IDLOG, 'removed created announcement audio file "' + destPath + '"');
+            cb(err1);
+            return;
+          }
+          logger.log.info(IDLOG, 'add new db entry for audio announcement');
+          cb();
+        });
+      });
+
+    } else {
+      var str = 'uploading audio announcement: wrong mimeType "' + mimeType + '"';
+      logger.log.warn(IDLOG, str);
+      cb(str);
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -1255,6 +1595,7 @@ exports.deleteAnnouncement = deleteAnnouncement;
 exports.modifyAnnouncement = modifyAnnouncement;
 exports.recordAnnouncement = recordAnnouncement;
 exports.enableAnnouncement = enableAnnouncement;
+exports.uploadAnnouncement = uploadAnnouncement;
 exports.listAllAnnouncement = listAllAnnouncement;
 exports.listUserAnnouncement = listUserAnnouncement;
 exports.setCompConfigManager = setCompConfigManager;

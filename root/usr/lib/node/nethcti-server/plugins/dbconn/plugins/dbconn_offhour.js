@@ -275,7 +275,7 @@ function storeAudioFileAnnouncement(data, cb) {
       } else if (results.length > 0) { // there is already an announcement with the same user and description
         var str = 'saving announcement by user "' + data.username + '": duplicate entry "username-description" -> "' + data.username + '-' + data.description + '"';
         logger.log.warn(IDLOG, str);
-        cb(new Error('duplicate'));
+        cb(new Error('duplicate entry'));
       }
 
     }, function (err) { // manage the error

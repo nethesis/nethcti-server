@@ -10,6 +10,8 @@ BuildRequires: nodejs >= 6.9.1
 Requires: nodejs >= 6.9.1
 Requires: nethserver-nethvoice14
 Requires: nethserver-janus
+Requires: sox
+Requires: mpg123
 Conflicts: nethcti-server
 AutoReq: no
 
