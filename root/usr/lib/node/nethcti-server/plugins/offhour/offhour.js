@@ -421,7 +421,7 @@ function getAllInboundRoutes(username, param, cb) {
               var filename = arrOffhour[i].announcement_filepath.split('/').pop() + FILEEXT_AUDIO_ANNOUNCEMENT;
 
               objResult[k].offhour.audiomsg = {
-                announcement_id: arrAnnouncements[filename].id,
+                announcement_id: arrAnnouncements[filename] ? arrAnnouncements[filename].id : '',
                 description: arrAnnouncements[filename] ? arrAnnouncements[filename].description : '',
                 privacy: arrAnnouncements[filename] ? arrAnnouncements[filename].privacy : '',
                 username: arrAnnouncements[filename] ? arrAnnouncements[filename].username : ''
@@ -1307,7 +1307,7 @@ function recordAnnouncement(username, cb) {
 }
 
 /**
- * Delete the specified announcement.
+ * Delete the specified audio announcement.
  *
  * @method deleteAnnouncement
  * @param {string} id The announcement identifier

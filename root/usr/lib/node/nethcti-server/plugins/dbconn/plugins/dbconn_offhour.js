@@ -5,6 +5,7 @@
  * @submodule plugins
  */
 var fs = require('fs');
+var path = require('path');
 var async = require('async');
 var moment = require('moment');
 
@@ -268,7 +269,7 @@ function storeAudioFileAnnouncement(data, cb) {
             cb();
 
           }, function (err) {
-            logger.log.error(IDLOG, 'saving audio file announcement "' + data.description + '" "' + data.filepath + '" for user "' + data.username + '" with privacy "' + data.privacy + '": ' + err.toString());
+            logger.log.error(IDLOG, 'saving audio file announcement "' + data.description + '" "' + data.file + '" for user "' + data.username + '" with privacy "' + data.privacy + '": ' + err.toString());
             cb(err.toString());
           });
 
@@ -694,7 +695,9 @@ function modifyAnnouncement(data, cb) {
 }
 
 /**
- * Delete the specified announcement.
+ * Delete the specified announcement. It deletes the audio file, the relative
+ * entry from "offhour_files" db table and the associated "offhour" entry table
+ * if it is present.
  *
  * @method deleteAnnouncement
  * @param {string} id The announcement identifier
@@ -717,6 +720,7 @@ function deleteAnnouncement(id, cb) {
 
         async.parallel([
 
+          // delete entry from offhour_files db table
           function (callback) {
             try {
               task.destroy().then(function () {
@@ -728,6 +732,12 @@ function deleteAnnouncement(id, cb) {
               callback(err);
             }
           },
+          // delete entry from offhour db table if it is present
+          function (callback) {
+            var filename = (path.basename(filepath)).replace(path.extname(filepath), '');
+            deleteOffhourByFilename(filename, callback);
+          },
+          // delete audio file
           function (callback) {
             try {
               fs.unlink(filepath, function (err) {
@@ -766,6 +776,50 @@ function deleteAnnouncement(id, cb) {
     }, function (err1) { // manage the error
 
       logger.log.error(IDLOG, 'deleting announcement with db id "' + id + '": ' + err1.toString());
+      cb(err1.toString());
+    });
+
+    compDbconnMain.incNumExecQueries();
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Delete the specified offhour based on filename.
+ *
+ * @method deleteOffhourByFilename
+ * @param {string} filename The filename of the audio announcement associated with offhour to be deleted
+ * @param {function} cb The callback function
+ * @private
+ */
+function deleteOffhourByFilename(filename, cb) {
+  try {
+    if (typeof filename !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    compDbconnMain.models[DB_TABLE_OFFHOUR].find({
+      where: ['message LIKE ?', '%' + filename]
+
+    }).then(function (task) {
+
+      if (task) {
+        task.destroy().then(function () {
+          logger.log.info(IDLOG, 'offhour with associated filename "' + filename + '" has been deleted successfully');
+          cb();
+        });
+        compDbconnMain.incNumExecQueries();
+
+      } else {
+        cb();
+      }
+
+    }, function (err1) { // manage the error
+
+      logger.log.error(IDLOG, 'deleting offhour with associated filename "' + filename + '": ' + err1.toString());
       cb(err1.toString());
     });
 
