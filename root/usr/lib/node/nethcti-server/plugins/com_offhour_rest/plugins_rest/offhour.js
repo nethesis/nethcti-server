@@ -260,13 +260,15 @@ function setCompAuthorization(comp) {
         * 1. [`offhour/modify_announcement`](#modify_announcementpost)
         * 1. [`offhour/delete_announcement`](#delete_announcementpost)
         * 1. [`offhour/record_announcement`](#record_announcementpost)
+        * 1. [`offhour/upload_announcement`](#upload_announcementpost)
         * 1. [`offhour/set_offhour`](#set_offhourpost)
         *
         * ---
         *
         * ### <a id="enable_announcementpost">**`offhour/enable_announcement`**</a>
         *
-        * Enable the specified audio file for announcement. The request must contains the following parameters:
+        * Enable the specified audio file for announcement. It is to be used after "offhour/record_announcement" rest api
+        * invocation. The request must contains the following parameters:
         *
         * * `type: ("uploaded" | "recorded") the type of the announcement to be enabled`
         * * `privacy: ("public" | "private" ) the visibility of the announcement`
@@ -308,7 +310,23 @@ function setCompAuthorization(comp) {
         *
         * ### <a id="record_announcementpost">**`offhour/record_announcement`**</a>
         *
-        * Record new audio file for announcement.
+        * Record new audio file for announcement. It returns a filename that must be enabled invoking
+        * "offhour/enable_announcement" rest api.
+        *
+        * ---
+        *
+        * ### <a id="upload_announcementpost">**`offhour/upload_announcement`**</a>
+        *
+        * Upload an audio file as announcement to be used. The request must contains the following parameters:
+        *
+        * * `privacy: ("public" | "private" ) the visibility of the announcement`
+        * * `description: the announcement description`
+        * * `audio_content: the audio file content base64 encoded. Supported formats are: mp3, wav`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "privacy": "public", "description": "pause", "audio_content": "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAA..." }
+        *
         *
         * ---
         *
@@ -374,13 +392,15 @@ function setCompAuthorization(comp) {
          *   @param {string} delete_announcement To delete the audio file for announcement
          *   @param {string} record_announcement To record new audio file for announcement
          *   @param {string} enable_announcement To enable the uploaded audio file for announcement
+         *   @param {string} upload_announcement To upload the audio file for announcement
          */
         'post': [
           'set_offhour',
           'modify_announcement',
           'delete_announcement',
           'record_announcement',
-          'enable_announcement'
+          'enable_announcement',
+          'upload_announcement'
         ],
 
         'head': [],
@@ -1103,6 +1123,74 @@ function setCompAuthorization(comp) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
+      },
+
+      /**
+       * Upload the audio file for announcement with the following REST API:
+       *
+       *     upload_announcement
+       *
+       * @method upload_announcement
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      upload_announcement: function (req, res, next) {
+        try {
+          // extract the username added in the authentication step
+          var username = req.headers.authorization_user;
+          var privacy = req.params.privacy;
+          var description = req.params.description;
+          var audio_content = req.params.audio_content;
+
+          if (typeof description !== 'string' || description === '' ||
+            (privacy !== 'public' && privacy !== 'private') ||
+            typeof audio_content !== 'string') {
+
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+
+          // check if the user has the offhour authorization
+          if (compAuthorization.authorizeAdminOffhourUser(username) === true) {
+            logger.log.info(IDLOG, 'uploading audio file for announcement: user "' + username + '" has the "admin_offhour" authorization');
+
+          } else if (compAuthorization.authorizeOffhourUser(username) === true) {
+            logger.log.info(IDLOG, 'uploading audio file for announcement: user "' + username + '" has the "offhour" authorization');
+
+          } else {
+            logger.log.warn(IDLOG, 'uploading audio file for announcement: authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+
+          compOffhour.uploadAnnouncement({
+            user: username,
+            privacy: privacy,
+            description: description,
+            audio_content: audio_content
+
+          }, function (err) {
+            try {
+              if (err) {
+                logger.log.error(IDLOG, 'uploading audio file for announcement by user "' + username + '" ("' + privacy + '")');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
+              }
+              var strlog = 'uploaded audio file for announcement by user "' + username + '" ("' + privacy + '")';
+              logger.log.info(IDLOG, strlog);
+              compUtil.net.sendHttp200(IDLOG, res);
+
+            } catch (error) {
+              logger.log.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
+
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
       }
     }
     exports.api = offhour.api;
@@ -1118,6 +1206,7 @@ function setCompAuthorization(comp) {
     exports.delete_announcement = offhour.delete_announcement;
     exports.record_announcement = offhour.record_announcement;
     exports.enable_announcement = offhour.enable_announcement,
+    exports.upload_announcement = offhour.upload_announcement,
     exports.download_announcement = offhour.download_announcement;
     exports.setCompAuthorization = setCompAuthorization;
 
