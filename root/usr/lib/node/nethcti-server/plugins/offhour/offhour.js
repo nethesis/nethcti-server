@@ -528,11 +528,10 @@ function getFilenameOfAudioFileForAnnouncement(username, fileExt) {
 }
 
 /**
- * Enable the uploaded audio file for announcement. It moves temporary file to the correct destination.
+ * Enable the recorded audio file for announcement. It moves temporary file to the correct destination.
  *
  * @method enableAnnouncement
  * @param {object} data
- *   @param {string} data.type The type of the audio file for announcement
  *   @param {string} data.user The user who requested the operation
  *   @param {string} data.privacy The privacy for audio file for announcement
  *   @param {string} data.tempFilename The temporary file name given by the upload service
@@ -543,7 +542,6 @@ function enableAnnouncement(data, cb) {
     // check parameters
     if (typeof data !== 'object' || typeof data.description !== 'string' ||
       typeof data.user !== 'string' || typeof cb !== 'function' ||
-      (data.type !== 'uploaded' && data.type !== 'recorded') ||
       (data.privacy !== 'public' && data.privacy !== 'private') ||
       typeof data.tempFilename !== 'string') {
 
@@ -552,13 +550,7 @@ function enableAnnouncement(data, cb) {
 
     var filename = getFilenameOfAudioFileForAnnouncement(data.user, FILEEXT_AUDIO_ANNOUNCEMENT);
     var destPath = path.join(audioAnnouncementPath, filename);
-    var sourcePath;
-
-    if (data.type === 'recorded') {
-      sourcePath = path.join(AUDIO_RECORDED_PATH, data.tempFilename);
-    } else {
-      sourcePath = path.join(compUploadHttp.getUploadRootPath(), data.tempFilename);
-    }
+    var sourcePath = path.join(AUDIO_RECORDED_PATH, data.tempFilename);
 
     // sequentially executes two operations:
     // 1. move the audio file for announcement

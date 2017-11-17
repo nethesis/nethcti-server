@@ -270,14 +270,13 @@ function setCompAuthorization(comp) {
         * Enable the specified audio file for announcement. It is to be used after "offhour/record_announcement" rest api
         * invocation. The request must contain the following parameters:
         *
-        * * `type: ("uploaded" | "recorded") the type of the announcement to be enabled`
         * * `privacy: ("public" | "private" ) the visibility of the announcement`
         * * `description: the announcement description`
         * * `tempFilename: the temporary file name given by the server when receives the upload or when the offhour/record_announcement has been used`
         *
         * Example JSON request parameters:
         *
-        *     { "type": "uploaded", "privacy": "public", "description": "holidays time", "tempFilename": "upload_456b484edba171871e44b9d64b3bad3d.wav" }
+        *     { "privacy": "public", "description": "holidays time", "tempFilename": "upload_456b484edba171871e44b9d64b3bad3d.wav" }
         *
         * ---
         *
@@ -1067,7 +1066,6 @@ function setCompAuthorization(comp) {
         try {
           // extract the username added in the authentication step
           var username = req.headers.authorization_user;
-          var type = req.params.type;
           var privacy = req.params.privacy;
           var tempFilename = req.params.tempFilename;
           var description = req.params.description;
@@ -1075,7 +1073,6 @@ function setCompAuthorization(comp) {
           if (typeof tempFilename !== 'string' ||
             typeof description !== 'string' ||
             description === '' ||
-            (type !== 'uploaded' && type !== 'recorded') ||
             (privacy !== 'public' && privacy !== 'private')) {
 
             compUtil.net.sendHttp400(IDLOG, res);
@@ -1084,19 +1081,18 @@ function setCompAuthorization(comp) {
 
           // check if the user has the offhour authorization
           if (compAuthorization.authorizeAdminOffhourUser(username) === true) {
-            logger.log.info(IDLOG, 'enabling ' + type + ' audio file for announcement: user "' + username + '" has the "admin_offhour" authorization');
+            logger.log.info(IDLOG, 'enabling recorded audio file for announcement: user "' + username + '" has the "admin_offhour" authorization');
 
           } else if (compAuthorization.authorizeOffhourUser(username) === true) {
-            logger.log.info(IDLOG, 'enabling ' + type + ' audio file for announcement: user "' + username + '" has the "offhour" authorization');
+            logger.log.info(IDLOG, 'enabling recorded audio file for announcement: user "' + username + '" has the "offhour" authorization');
 
           } else {
-            logger.log.warn(IDLOG, 'enabling ' + type + ' audio file for announcement: authorization failed for user "' + username + '"');
+            logger.log.warn(IDLOG, 'enabling recorded audio file for announcement: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
 
           compOffhour.enableAnnouncement({
-            type: type,
             user: username,
             privacy: privacy,
             description: description,
@@ -1105,11 +1101,11 @@ function setCompAuthorization(comp) {
           }, function (err) {
             try {
               if (err) {
-                logger.log.error(IDLOG, 'enabling ' + type + ' audio file for announcement by user "' + username + '" ("' + tempFilename + '" - "' + privacy + '")');
+                logger.log.error(IDLOG, 'enabling recorded audio file for announcement by user "' + username + '" ("' + tempFilename + '" - "' + privacy + '")');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              var strlog = 'enabled ' + type + ' audio file for announcement by user "' + username + '" ("' + tempFilename + '" - "' + privacy + '")';
+              var strlog = 'enabled recorded audio file for announcement by user "' + username + '" ("' + tempFilename + '" - "' + privacy + '")';
               logger.log.info(IDLOG, strlog);
               compUtil.net.sendHttp200(IDLOG, res);
 
