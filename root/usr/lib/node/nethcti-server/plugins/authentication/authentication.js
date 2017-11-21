@@ -635,8 +635,6 @@ function newToken(username, password, nonce, isRemoteSite) {
     grants[username][token] = newTokenObj;
     logger.log.info(IDLOG, 'new token has been generated for username ' + username);
 
-    console.log('newToken grants=',grants)
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
