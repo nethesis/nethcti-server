@@ -403,12 +403,14 @@ function getAllInboundRoutes(username, param, cb) {
             objResult[k].offhour.enabled = arrOffhour[i].enabled === 2 ? 'period' :
               (arrOffhour[i].enabled === 1 ? 'always' : 'never');
 
-            objResult[k].offhour.period = {
-              datebegin: arrOffhour[i].datebegin,
-              dateend: arrOffhour[i].dateend,
-              timebegin: arrOffhour[i].timebegin,
-              timeend: arrOffhour[i].timeend
-            };
+            if(arrOffhour[i].datebegin !== null) {
+              objResult[k].offhour.period = {
+                datebegin: arrOffhour[i].datebegin,
+                dateend: arrOffhour[i].dateend,
+                timebegin: arrOffhour[i].timebegin,
+                timeend: arrOffhour[i].timeend
+              };
+            }
 
             if (objResult[k].offhour.action === 'redirect') {
               objResult[k].offhour.redirect = {

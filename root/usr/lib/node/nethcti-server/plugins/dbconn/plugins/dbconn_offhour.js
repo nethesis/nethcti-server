@@ -138,11 +138,11 @@ function getOffhours(cb) {
         'id', ['param', 'action_to'],
         ['displayname', 'name'],
         ['message', 'announcement_filepath'],
-        ['FROM_UNIXTIME(tsbegin)', 'datebegin'],
-        ['FROM_UNIXTIME(tsend)', 'dateend'],
-        ['FROM_UNIXTIME(tsbegin)', 'timebegin'],
-        ['FROM_UNIXTIME(tsend)', 'timeend'],
-        'action', 'param', 'enabled', 'didcidnum', 'didextension'
+        ['IF(tsbegin=0, NULL, FROM_UNIXTIME(tsbegin))', 'datebegin'],
+        ['IF(tsend=0, NULL, FROM_UNIXTIME(tsend))', 'dateend'],
+        ['IF(tsbegin=0, NULL, FROM_UNIXTIME(tsbegin))', 'timebegin'],
+        ['IF(tsend=0, NULL, FROM_UNIXTIME(tsend))', 'timeend'],
+        'action', 'param', 'enabled', 'didcidnum', 'didextension', 'tsbegin'
       ]
     }).then(function (results) {
 
