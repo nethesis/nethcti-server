@@ -635,6 +635,8 @@ function newToken(username, password, nonce, isRemoteSite) {
     grants[username][token] = newTokenObj;
     logger.log.info(IDLOG, 'new token has been generated for username ' + username);
 
+    console.log('newToken grants=',grants)
+
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -880,8 +882,8 @@ function authRemoteSiteByFile(username, password, remoteIp, cb) {
  * Removes the grant for an access key.
  *
  * @method removeToken
- * @param  {string}  username The access key
- * @param  {string}  token       The token
+ * @param  {string} username The access key
+ * @param  {string} token The token
  * @return {boolean} True if the grant removing has been successful.
  */
 function removeToken(username, token) {
@@ -891,9 +893,15 @@ function removeToken(username, token) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     // check the grant presence
-    if (grants[username]) {
-      delete grants[username][token];
-      logger.log.info(IDLOG, 'removed token "' + token + '" for username ' + username);
+    var key;
+    for (key in grants) {
+      if (key.toLowerCase() === username) {
+        delete grants[key][token];
+        logger.log.info(IDLOG, 'removed token "' + token + '" for username ' + key);
+      }
+      if (Object.keys(grants[key]).length === 0) {
+        delete grants[key];
+      }
     }
 
     if (grants[username] === undefined || grants[username][token] === undefined) {

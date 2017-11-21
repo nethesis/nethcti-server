@@ -239,7 +239,10 @@ function setCompUser(comp) {
         try {
           // username can be a real username or an extension number. This is because
           // the user can do the login with his username or with the main extension number
-          var username = req.params.username;
+          var usernameOri = req.params.username;
+          // username is converted to lower case because of system authentication method.
+          // So the login becomes case-insensitive
+          var username = usernameOri.toLowerCase();
           var password = req.params.password;
 
           if (!username || !password) {
@@ -274,7 +277,7 @@ function setCompUser(comp) {
 
               } else {
                 logger.log.info(IDLOG, 'user "' + username + '" successfully authenticated');
-                var nonce = compAuthe.getNonce((extension ? extension : username), password, false);
+                var nonce = compAuthe.getNonce((extension ? extension : usernameOri), password, false);
                 compUtil.net.sendHttp401Nonce(IDLOG, res, nonce);
               }
             } catch (error) {
