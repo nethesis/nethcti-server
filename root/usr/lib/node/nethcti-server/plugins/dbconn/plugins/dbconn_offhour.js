@@ -801,28 +801,17 @@ function deleteOffhourByFilename(filename, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    compDbconnMain.models[DB_TABLE_OFFHOUR].find({
+    compDbconnMain.models[DB_TABLE_OFFHOUR].destroy({
       where: ['message LIKE ?', '%' + filename]
-
     }).then(function (task) {
 
-      if (task) {
-        task.destroy().then(function () {
-          logger.log.info(IDLOG, 'offhour with associated filename "' + filename + '" has been deleted successfully');
-          cb();
-        });
-        compDbconnMain.incNumExecQueries();
-
-      } else {
-        cb();
-      }
+      logger.log.info(IDLOG, '#' + task + ' offhour with associated filename "' + filename + '" has been deleted successfully');
+      cb();
 
     }, function (err1) { // manage the error
-
       logger.log.error(IDLOG, 'deleting offhour with associated filename "' + filename + '": ' + err1.toString());
       cb(err1.toString());
     });
-
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
