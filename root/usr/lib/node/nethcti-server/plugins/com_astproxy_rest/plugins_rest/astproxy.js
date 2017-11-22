@@ -1930,6 +1930,7 @@ var compConfigManager;
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
+          req.params.number = req.params.number.replace(/^[+]/, '00').replace(/[^\d]/g, '');
 
           if (!req.params.endpointId && !req.params.endpointType) {
             req.params.endpointType = 'extension';
