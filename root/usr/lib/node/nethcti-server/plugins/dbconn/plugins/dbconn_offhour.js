@@ -482,7 +482,8 @@ function getAnnouncement(id, cb) {
  *
  * @method setOffhour
  * @param {object} data
- *   @param {string} data.enabled ("always" | "period" | "never")
+ *   @param {string} data.enabled ("always" | "period" | "never") corresponding values into the db are:
+ *                                "never": 0, "always": 1, "period": 2
  *   @param {string} [data.startDate] The start date of the period (YYYYMMDD)
  *   @param {string} [data.startTime] The start time of the period (HHmmss)
  *   @param {string} [data.endDate] The end date of the period (YYYYMMDD)
@@ -534,6 +535,9 @@ function setOffhour(data, cb) {
         if (data.startDate && data.endDate) {
           obj.tsbegin = Math.floor(moment(startDateTime, 'YYYYMMDD HHmmss').valueOf() / 1000);
           obj.tsend = Math.floor(moment(endDateTime, 'YYYYMMDD HHmmss').valueOf() / 1000);
+        } else if (data.enabled === 'always') {
+          obj.tsbegin = 0;
+          obj.tsend = 0;
         }
         if (data.action) {
           obj.action = (data.action === 'audiomsg_voicemail' ? 1 : (data.action === 'redirect' ? 2 : 0));
