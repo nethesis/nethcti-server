@@ -92,6 +92,12 @@ exports.Channel = function(obj) {
    * @private
    */
   var bridgedNum = obj.bridgedNum;
+  // workaround: if a number with national prefix is called, asterisk
+  // return "<unknown>" as bridgedNum and the right number as bridgedName.
+  // In this case a copy from bridgedName to bridgedNum is done
+  if (bridgedNum === '<unknown>' && obj.bridgedName && !isNaN(obj.bridgedName)) {
+    bridgedNum = obj.bridgedName;
+  }
 
   /**
    * The connected name.
