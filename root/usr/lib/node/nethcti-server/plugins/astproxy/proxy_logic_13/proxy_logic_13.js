@@ -3665,14 +3665,13 @@ function addConversationToExten(exten, resp, chid) {
           chSource = new Channel(resp[chBridged]);
         }
       }
-
       var queue;
       if ((resp[chid].bridgedChannel.slice(-2) === ';2' || resp[chid].bridgedChannel.slice(-2) === ';1') &&
         resp[chid].bridgedChannel.indexOf('Local/') !== -1 &&
         resp[chid].bridgedChannel.indexOf('@from-queue') !== -1) {
 
         var tempChid = resp[chid].bridgedChannel.substring(0, resp[chid].bridgedChannel.length - 2) + ';1';
-        queue = resp[tempChid].queue;
+        queue = resp[tempChid] ? resp[tempChid].queue : undefined;
       }
 
       // create a new conversation
