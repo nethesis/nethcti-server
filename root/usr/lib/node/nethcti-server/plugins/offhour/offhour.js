@@ -899,7 +899,11 @@ function uploadAnnouncement(data, cb) {
     }
     var datauri = data.audio_content.split(',')[0];
     var mimeType = (datauri.split(';')[0]).split(':')[1];
-    if (mimeType !== 'audio/mp3' && mimeType !== 'audio/wav') {
+    if (mimeType !== 'audio/mp3' &&
+      mimeType !== 'audio/wav' &&
+      mimeType !== 'audio/wave' &&
+      mimeType !== 'audio/x-wav') {
+
       var str = 'wrong audio content format (mimeType: "' + mimeType + '")';
       logger.log.warn(IDLOG, str);
       cb(str);
@@ -925,7 +929,10 @@ function uploadAnnouncement(data, cb) {
         });
       });
 
-    } else if (mimeType === 'audio/wav') {
+    } else if (mimeType === 'audio/wav' ||
+      mimeType === 'audio/wave' ||
+      mimeType === 'audio/x-wav') {
+
       storeWavAnnouncement(data, function (error, destPath) {
         if (error) {
           cb(error);
