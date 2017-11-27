@@ -392,12 +392,12 @@ function getAllInboundRoutes(username, param, cb) {
 
         for (i = 0; i < arrOffhour.length; i++) {
 
-          if (objResult[k].calledIdNum === arrOffhour[i].didcidnum &&
-            objResult[k].callerIdNum === arrOffhour[i].didextension) {
+          if (objResult[k].calledIdNum === arrOffhour[i].didextension &&
+            objResult[k].callerIdNum === arrOffhour[i].didcidnum) {
 
             objResult[k].offhour = {};
-            objResult[k].offhour.calledIdNum = arrOffhour[i].didcidnum;
-            objResult[k].offhour.callerIdNum = arrOffhour[i].didextension;
+            objResult[k].offhour.calledIdNum = arrOffhour[i].didextension;
+            objResult[k].offhour.callerIdNum = arrOffhour[i].didcidnum;
             objResult[k].offhour.action = arrOffhour[i].action === 0 ? 'audiomsg' :
               (arrOffhour[i].action === 1 ? 'audiomsg_voicemail' : 'redirect');
             objResult[k].offhour.enabled = arrOffhour[i].enabled === 2 ? 'period' :

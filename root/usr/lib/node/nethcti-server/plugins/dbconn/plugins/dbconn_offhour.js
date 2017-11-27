@@ -519,7 +519,7 @@ function setOffhour(data, cb) {
     var id = data.calledIdNum + '/' + data.callerIdNum;
 
     compDbconnMain.models[DB_TABLE_OFFHOUR].find({
-      where: ['didcidnum=? AND didextension=?', data.calledIdNum, data.callerIdNum]
+      where: ['didcidnum=? AND didextension=?', data.callerIdNum, data.calledIdNum]
 
     }).then(function (task) {
       try {
@@ -528,8 +528,8 @@ function setOffhour(data, cb) {
 
         var obj = {
           enabled: data.enabled === 'always' ? 1 : (data.enabled === 'period' ? 2 : 0),
-          didcidnum: data.calledIdNum,
-          didextension: data.callerIdNum,
+          didcidnum: data.callerIdNum,
+          didextension: data.calledIdNum,
           displayname: data.description ? data.description : ''
         };
         if (data.startDate && data.endDate) {
