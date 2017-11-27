@@ -36,6 +36,6 @@ module.exports = function(options, imports, register) {
     serverRest.setCompStreaming(imports.streaming);
     serverRest.start();
   } catch (err) {
-    logger.log.error(IDLOG, err.stack);
+    logger.ctilog.log.error(IDLOG, err.stack);
   }
 }

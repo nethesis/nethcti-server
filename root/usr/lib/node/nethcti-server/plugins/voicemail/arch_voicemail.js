@@ -44,6 +44,6 @@ module.exports = function(options, imports, register) {
       voicemail.setDbconn(imports.dbconn);
     });
   } catch (err) {
-    logger.log.error(IDLOG, err.stack);
+    logger.ctilog.log.error(IDLOG, err.stack);
   }
 };

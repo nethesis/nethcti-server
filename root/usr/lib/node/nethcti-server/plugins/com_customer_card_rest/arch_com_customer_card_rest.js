@@ -35,6 +35,6 @@ module.exports = function(options, imports, register) {
     serverRest.setCompCustomerCard(imports.customerCard);
     serverRest.start();
   } catch (err) {
-    logger.log.error(IDLOG, err.stack);
+    logger.ctilog.log.error(IDLOG, err.stack);
   }
 };

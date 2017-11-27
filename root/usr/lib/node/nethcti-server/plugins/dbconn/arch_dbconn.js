@@ -35,7 +35,7 @@ module.exports = function(options, imports, register) {
       dbconnMain.start();
       logger.ctilog.log.warn(IDLOG, 'reloaded');
     } catch (err) {
-      logger.log.error(IDLOG, err.stack);
+      logger.ctilog.log.error(IDLOG, err.stack);
     }
   };
   dbconnPluginsManager.apiDbconn.on = dbconnMain.on;
@@ -58,6 +58,6 @@ module.exports = function(options, imports, register) {
     dbconnPluginsManager.setCompDbconnMain(dbconnMain);
     dbconnPluginsManager.start();
   } catch (err) {
-    logger.log.error(IDLOG, err.stack);
+    logger.ctilog.log.error(IDLOG, err.stack);
   }
 };

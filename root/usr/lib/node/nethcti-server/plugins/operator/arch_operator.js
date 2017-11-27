@@ -33,6 +33,6 @@ module.exports = function(options, imports, register) {
     operator.setLogger(logger.ctilog);
     operator.config('/etc/nethcti/operator.json');
   } catch (err) {
-    logger.log.error(IDLOG, err.stack);
+    logger.ctilog.log.error(IDLOG, err.stack);
   }
 };
