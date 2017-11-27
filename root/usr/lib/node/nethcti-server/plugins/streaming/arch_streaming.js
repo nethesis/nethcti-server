@@ -36,6 +36,6 @@ module.exports = function(options, imports, register) {
     streaming.setCompAuthorization(imports.authorization);
     streaming.start();
   } catch (err) {
-    logger.log.error(IDLOG, err.stack);
+    logger.ctilog.log.error(IDLOG, err.stack);
   }
 };

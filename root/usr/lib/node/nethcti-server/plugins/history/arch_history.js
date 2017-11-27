@@ -37,6 +37,6 @@ module.exports = function(options, imports, register) {
       history.setCompAstProxy(imports.astProxy);
     });
   } catch (err) {
-    logger.log.error(IDLOG, err.stack);
+    logger.ctilog.log.error(IDLOG, err.stack);
   }
 };

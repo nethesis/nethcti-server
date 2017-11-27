@@ -40,6 +40,6 @@ module.exports = function(options, imports, register) {
     });
     // authorization.configRemoteOperators('/etc/nethcti/remote_operators.json');
   } catch (err) {
-    logger.log.error(IDLOG, err.stack);
+    logger.ctilog.log.error(IDLOG, err.stack);
   }
 };

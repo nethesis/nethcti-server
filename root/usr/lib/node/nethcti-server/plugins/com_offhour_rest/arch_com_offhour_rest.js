@@ -36,6 +36,6 @@ module.exports = function (options, imports, register) {
     serverRest.setCompStaticHttp(imports.staticHttp);
     serverRest.start();
   } catch (err) {
-    logger.error(IDLOG, err.stack);
+    logger.ctilog.log.error(IDLOG, err.stack);
   }
 }

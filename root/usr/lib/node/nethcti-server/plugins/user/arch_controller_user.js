@@ -99,6 +99,6 @@ module.exports = function(options, imports, register) {
       controllerUser.reload();
     });
   } catch (err) {
-    logger.log.error(IDLOG, err.stack);
+    logger.ctilog.log.error(IDLOG, err.stack);
   }
 };

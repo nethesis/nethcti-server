@@ -41,6 +41,6 @@ module.exports = function(options, imports, register) {
     serverRest.setCompComNethctiWs(imports.com_nethcti_ws);
     serverRest.start();
   } catch (err) {
-    logger.log.error(IDLOG, err.stack);
+    logger.ctilog.log.error(IDLOG, err.stack);
   }
 }
