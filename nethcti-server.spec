@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.3
+Version: 3.0.4
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -86,6 +86,15 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu Nov 30 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.4-1
+- new service offhour with mp3 & wav audio announcements for routes - nethesis/dev#5211
+- support call to not clean phone numbers (e.g. with empty space) - nethesis/dev#5225
+- fix default empty db sources after update on some cases
+- fix authentication: enable case-sensitive login - nethesis/dev#5247
+- fix download call recordings and voicemail messages - nethesis/dev#5252
+- fix call started from a cellphone - nethesis/dev#5251
+- fix other minor bugs
+
 * Tue Nov 14 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.3-1
 - trunks: add support for sip,pjsip,iax trunks. nethesis/dev#5202 (#16)
 - fix get channel for intrude. nethesis/dev#5246
