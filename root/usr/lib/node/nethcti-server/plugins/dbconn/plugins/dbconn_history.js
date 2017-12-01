@@ -257,11 +257,7 @@ function getHistorySmsInterval(data, cb) {
         }
 
         // define the mysql fields to be returned
-        var attributes = [
-            [ 'DATE_FORMAT(date, "%d/%m/%Y")', 'datesent'],
-            [ 'DATE_FORMAT(date, "%H:%i:%S")', 'timesent'],
-            'id', 'status'
-        ];
+        var attributes = ['id', 'status', 'date'];
 
         // if the privacy string is present, than hide the numbers and names
         if (data.privacyStr) {
@@ -295,6 +291,8 @@ function getHistorySmsInterval(data, cb) {
             var i;
             for (i = 0; i < results.length; i++) {
                 results[i] = results[i].selectedValues;
+                results[i].datesent = moment(results[i].date).format('DD/MM/YYYY');
+                results[i].timesent = moment(results[i].date).format('hh:mm:ss');
             }
 
             logger.info(IDLOG, results.length + ' results searching history sms interval between ' +
