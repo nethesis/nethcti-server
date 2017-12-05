@@ -152,6 +152,7 @@ function setCompUtil(comp) {
      *
      * # GET requests
      *
+     * 1. [`user/presence`](#presenceget)
      * 1. [`user/presencelist`](#presencelistget)
      * 1. [`user/presencelist_onbusy`](#presencelist_onbusyget)
      * 1. [`user/presencelist_onunavailable`](#presencelist_onunavailableget)
@@ -159,6 +160,16 @@ function setCompUtil(comp) {
      * 1. [`user/presence_onunavailable`](#presence_onunavailableget)
      * 1. [`user/me`](#meget)
      * 1. [`user/endpoints/all`](#userendpointsallget)
+     *
+     * ---
+     *
+     * ### <a id="presenceget">**`user/presence`**</a>
+     *
+     * Returns the user presence status.
+     *
+     * Example JSON response:
+     *
+     *     { "status": "online" }
      *
      * ---
      *
