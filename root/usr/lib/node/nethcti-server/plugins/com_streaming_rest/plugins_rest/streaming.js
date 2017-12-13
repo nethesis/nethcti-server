@@ -157,6 +157,7 @@ function setCompConfigManager(comp) {
         * # GET requests
         *
         * 1. [`streaming/sources`](#sourcesget)
+        * 1. [`streaming/image/:source`](#imageget)
         *
         * ---
         *
@@ -178,6 +179,20 @@ function setCompConfigManager(comp) {
               "extension": "609",
               "description": "door"
          }
+     }
+        *
+        * ---
+        *
+        * ### <a id="imageget">**`streaming/image/:source`**</a>
+        *
+        * Returns the image of the streaming source base64 encoded. The _source_
+        * parameter is the source identifier that can be obtained with
+        * _streaming/sources_ rest api.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "image": "id": "data:image/jpeg;base64,AA879..."
      }
         *
         * <br>
@@ -249,8 +264,12 @@ function setCompConfigManager(comp) {
          * @type {array}
          *
          *   @param {string} sources To gets all the streaming sources
+         *   @param {string} image/:source To get the image of the streaming source
          */
-        'get': ['sources'],
+        'get': [
+          'sources',
+          'image/:source'
+        ],
 
         /**
          * REST API to be requested using HTTP POST request.
@@ -289,6 +308,53 @@ function setCompConfigManager(comp) {
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * Return the image of the streaming source by the following REST API:
+       *
+       *     image/:source
+       *
+       * @method sources
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      image: function(req, res, next) {
+        try {
+          // get the username from the authorization header
+          var username = req.headers.authorization_user;
+          var sourceId = req.params.source;
+
+          // check if the user is authorized to use the streaming source
+          if (compAuthorization.getAllowedStreamingSources(username).filter(function(e) {
+            return e.permissionId === sourceId;
+          }).length > 0) {
+
+            logger.log.info(IDLOG, 'getting image of source "' + sourceId + '": authorization ok for user "' + username + '"');
+
+            compStreaming.getVideoSample(sourceId, function(err, videoSample) {
+              try {
+                if (err) {
+                  logger.log.error(IDLOG, 'getting video sample of "' + sourceId + '": ' + err);
+                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                  return;
+                }
+                logger.log.info(IDLOG, 'send image of source "' + sourceId + '" to the user "' + username + '"');
+                res.send(200, { id: sourceId, image: videoSample });
+
+              } catch (err1) {
+                logger.log.error(IDLOG, err1.stack);
+              }
+            });
+          } else {
+            logger.log.warn(IDLOG, 'getting img of source "' + sourceId + '": authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+          }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -450,6 +516,7 @@ function setCompConfigManager(comp) {
     exports.subscribe = streaming.subscribe;
     exports.unsubscribe = streaming.unsubscribe;
     exports.sources = streaming.sources;
+    exports.image = streaming.image;
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;
     exports.setCompStreaming = setCompStreaming;

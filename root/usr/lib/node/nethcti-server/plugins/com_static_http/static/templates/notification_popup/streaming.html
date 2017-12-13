@@ -49,7 +49,6 @@
             float: left;
             padding: 10px 0px;
             text-align: center;
-            display: inline-block;
             cursor: pointer;
         }
 
@@ -127,6 +126,18 @@
                 });
             };
 
+            var getRequest = function(protocol, host, port, url, data, cb) {
+                var url = protocol + '//' + host + (port ? ':' + port : '') + url;
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    beforeSend: ajaxBeforeSend,
+                    cache: false
+                }).done(function (msg) {
+                    cb(msg);
+                });
+            };
+
             $('#open-stream-but').click(function () {
                 var params = getUrlParams();
 
@@ -148,9 +159,21 @@
             });
 
             var params = getUrlParams();
-
             document.getElementById('stream-description').innerHTML = params.description;
             document.getElementById('stream-img').src = params.url + '?ie=' + (new Date()).getTime();
+
+            setTimeout(function () {
+                getRequest(
+                    window.location.protocol,
+                    window.location.hostname,
+                    window.location.port ? (':' + window.location.port) : '',
+                    '/webrest/streaming/image/' + params.id,
+                    'null',
+                    function (data) {
+                        document.getElementById('stream-img').src = data.image;
+                    }
+                );
+            }, 0);
 
             if (!params.open || params.open === 'false') {
                 document.getElementById('open-stream-but').style.display = 'none';
