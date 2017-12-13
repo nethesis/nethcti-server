@@ -738,52 +738,39 @@ function sendStreamingNotificationEvent(username, data, socket) {
       return;
     }
 
-    compStreaming.getVideoSample(streamingData.id, function(err, videoSample) {
+    var params = [
+      'description=', escape(streamingData.description),
+      '&ctiProto=', ctiProto,
+      '&open=', streamingData.open,
+      '&webrtc=', compUser.isExtenWebrtc(data.dialingExten),
+      '&id=', streamingData.id
+    ].join('');
+
+    // add parameters to the HTTP GET url
+    var url = streamingNotifTemplatePath + '?' + params;
+
+    // create the id to identify the notification popup
+    var notifid = data.callerIdentity.numCalled + '<-' + data.callerIdentity.callerNum;
+
+    var notif = {
+      notification: {
+        id: notifid,
+        url: url,
+        width: streamNotifSize.width,
+        height: streamNotifSize.height,
+        action: 'open',
+        closetimeout: notifCloseTimeout
+      }
+    };
+
+    socket.write(JSON.stringify(notif), ENCODING, function() {
       try {
-        if (err) {
-          logger.log.error(IDLOG, 'getting video sample of "' + streamingData.id + '": ' + err);
-          return;
-        }
-        // always add this informations without filter them
-        var params = [
-          'description=', escape(streamingData.description),
-          '&videoSample=', videoSample,
-          '&ctiProto=', ctiProto,
-          '&open=', streamingData.open,
-          '&url=', escape(streamingData.url),
-          '&webrtc=', compUser.isExtenWebrtc(data.dialingExten),
-          '&id=', streamingData.id
-        ].join('');
-
-        // add parameters to the HTTP GET url
-        var url = streamingNotifTemplatePath + '?' + params;
-
-        // create the id to identify the notification popup
-        var notifid = data.callerIdentity.numCalled + '<-' + data.callerIdentity.callerNum;
-
-        var notif = {
-          notification: {
-            id: notifid,
-            url: url,
-            width: streamNotifSize.width,
-            height: streamNotifSize.height,
-            action: 'open',
-            closetimeout: notifCloseTimeout
-          }
-        };
-
-        socket.write(JSON.stringify(notif), ENCODING, function() {
-          try {
-            logger.log.info(IDLOG, 'sent "open streaming notification" to ' + socket.username + ' with socket.id ' + socket.id);
-          } catch (err1) {
-            logger.log.error(IDLOG, err1.stack);
-          }
-        });
-
+        logger.log.info(IDLOG, 'sent "open streaming notification" to ' + socket.username + ' with socket.id ' + socket.id);
       } catch (err1) {
         logger.log.error(IDLOG, err1.stack);
       }
     });
+
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
