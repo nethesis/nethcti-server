@@ -611,19 +611,22 @@ function extenDialing(data) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+
     logger.log.info(IDLOG, 'received event extenDialing for extension ' + data.dialingExten + ' with caller identity');
     var user = compUser.getUserUsingEndpointExtension(data.dialingExten);
+
     // emit the notification event for each logged in user associated
     // with the ringing extension to open a desktop notification popup
-    var sockId, username;
+    var sockId, username, defaultExten;
     for (sockId in sockets) {
 
       // "sockets[sockId]" is a socket object that contains the "username", "token"
       // and "id" properties added by "connHdlr" and "loginHdlr" methods
       username = sockets[sockId].username;
+      defaultExten = compConfigManager.getDefaultUserExtensionConf(username);
 
       // the user is associated with the ringing extension and is logged in, so send to notification event
-      if (user === username) {
+      if (user === username && data.dialingExten === defaultExten) {
 
         // check if the caller is a streaming source
         var isStreaming = compStreaming.isExtenStreamingSource(data.callerIdentity.callerNum);
