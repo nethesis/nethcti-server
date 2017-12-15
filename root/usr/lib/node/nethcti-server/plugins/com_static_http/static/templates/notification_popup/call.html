@@ -191,6 +191,9 @@
             // Hide customer card button if webrtc
             if (params.webrtc === 'true') {
                 $('#customer-card-button').hide();
+
+                // temporary hide: to re-enable when actions will be implemented
+                $('.call-actions').hide();
             }
 
             // Handle Hangup button click
