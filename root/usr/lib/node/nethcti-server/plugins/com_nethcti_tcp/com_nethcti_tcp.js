@@ -24,6 +24,10 @@ var EventEmitter = require('events').EventEmitter;
 /**
  * The name of the reloaded event.
  *
+ * Example:
+ *
+ *     "reloaded"
+ *
  * @property EVT_RELOADED
  * @type string
  * @default "reloaded"
@@ -42,16 +46,17 @@ var emitter = new EventEmitter();
 /**
  * Emitted to a tcp client connection on extension hangup.
  *
- * Example:
- *
- *     { "extenHangup": "223" }
- *
  * @event extenHangup
  * @param {object} data The data about the event
  *
  */
 /**
  * The name of the extension hangup event.
+ *
+ * Example:
+ *
+ *     { "extenHangup": "223" }
+ *
  *
  * @property EVT_EXTEN_HANGUP
  * @type string
@@ -62,9 +67,16 @@ var EVT_EXTEN_HANGUP = 'extenHangup';
 /**
  * Emitted to a tcp client with supported commands on login action received.
  *
+ * @event commands
+ * @param {object} data The data about the event
+ *
+ */
+/**
+ * The name of the suported commands event.
+ *
  * Example:
  *
- *                         {
+     {
         "commands": {
           "url": {
             "command": "url",
@@ -73,12 +85,6 @@ var EVT_EXTEN_HANGUP = 'extenHangup';
         }
      }
  *
- * @event commands
- * @param {object} data The data about the event
- *
- */
-/**
- * The name of the suported commands event.
  *
  * @property EVT_COMMANDS
  * @type string
@@ -89,12 +95,18 @@ var EVT_COMMANDS = 'commands';
 /**
  * Emitted to a tcp client connection on extension ringing.
  *
+ * @event notification
+ * @param {object} data The data about the event
+ *
+ */
+/**
+ * The name of the extension ringing event.
+ *
  * Example:
  *
- *                         {
+     {
         "notification": {
-          "cf": "",
-          "id": "123345",
+          "id": "91200<-202",
           "url": "https://<server>/webrest/...",
           "width": "480",
           "height": "280",
@@ -102,13 +114,6 @@ var EVT_COMMANDS = 'commands';
           "closetimeout": "10"
         }
      }
- *
- * @event notification
- * @param {object} data The data about the event
- *
- */
-/**
- * The name of the extension update event.
  *
  * @property EVT_NOTIFICATION
  * @type string
@@ -119,18 +124,18 @@ var EVT_NOTIFICATION = 'notification';
 /**
  * Emitted to a tcp client connection on action ping received.
  *
- * Example:
- *
- *                         {
-        "ping": "active"
-     }
- *
  * @event ping
  * @param {object} data The data about the event
  *
  */
 /**
  * The name of the ping event.
+ *
+ * Example:
+ *
+     {
+        "ping": "active"
+     }
  *
  * @property EVT_PING
  * @type string
@@ -141,16 +146,16 @@ var EVT_PING = 'ping';
 /**
  * Emitted to a tcp client connection on extension connected on a conversation.
  *
- * Example:
- *
- *     { "extenConnected": "223" }
- *
  * @event extenConnected
  * @param {object} data The data about the event
  *
  */
 /**
  * The name of the extension connected event.
+ *
+ * Example:
+ *
+ *     { "extenConnected": "223" }
  *
  * @property EVT_EXTEN_CONNECTED
  * @type string
