@@ -137,23 +137,6 @@ function getProcMem() {
 }
 
 /**
- * Returns the data about the system cpus.
- *
- * @method getSysCpus
- * @return {array} an array of objects containing information about each CPU/core installed:
- *                 model, speed (in MHz), and times (an object containing the number of milliseconds
- *                 the CPU/core spent in: user, nice, sys, idle, and irq).
- */
-function getSysCpus() {
-  try {
-    return os.cpus();
-  } catch (err) {
-    logger.log.error(err.stack);
-    return {};
-  }
-}
-
-/**
  * Returns the number of connected clients by websocket.
  *
  * @method getWsNumConnectedClients
@@ -227,52 +210,6 @@ function getCtiPackageRelease(cb) {
 }
 
 /**
- * Returns the information about the system.
- *
- * @method getSystemInfo
- * @param {function} cb The callback function
- */
-function getSystemInfo(cb) {
-  try {
-    // check parameters
-    if (typeof cb !== 'function') {
-      throw new Error('wrong parameters');
-    }
-
-    logger.log.info(IDLOG, 'get the system data');
-    childProcess.exec('cat /etc/redhat-release', function (error, stdout, stderr) {
-      try {
-        if (error || stderr) { // some error
-          logger.log.error(IDLOG, error + ' ' + stderr);
-          cb(error);
-
-        } else { // add the result
-          var arr = stdout.split('\n');
-          var result = {
-            cpus: getSysCpus(),
-            arch: os.arch(),
-            kernel: os.release,
-            distro: arr[0],
-            totmem: os.totalmem(),
-            freemem: os.freemem(),
-            hostname: os.hostname(),
-            node_ver: getNodeVersion(),
-            load_avg: os.loadavg()
-          };
-          cb(null, result);
-        }
-      } catch (err) {
-        logger.log.error(IDLOG, err.stack);
-        cb(err.stack);
-      }
-    });
-  } catch (err) {
-    logger.log.error(err.stack);
-    cb(err.stack);
-  }
-}
-
-/**
  * Returns the node version.
  *
  * @method getNodeVersion
@@ -303,53 +240,12 @@ function getProcessPid() {
   }
 }
 
-/**
- * Returns the listening network ports.
- *
- * @method getListeningNetPorts
- * @return {number} pid The process PID.
- */
-function getListeningNetPorts() {
-  try {
-    logger.log.info(IDLOG, 'get the listening ports');
-
-    var path = '/etc/nethcti/services.json';
-
-    // check file presence
-    if (!fs.existsSync(path)) {
-      throw new Error(path + ' does not exist');
-    }
-
-    // read configuration file
-    var json = require(path);
-
-    var result = {
-      tcp: json.tcp.port,
-      websocket: {
-        http: json.websocket.http_port,
-        https: json.websocket.https_port
-      },
-      http_proxy: {
-        http: json.http_proxy.http_port
-      }
-    };
-    return result;
-
-  } catch (err) {
-    logger.log.error(err.stack);
-    return -1;
-  }
-}
-
 // public interface
 exports.setLogger = setLogger;
 exports.getProcMem = getProcMem;
-exports.getSysCpus = getSysCpus;
-exports.getSystemInfo = getSystemInfo;
 exports.getProcessPid = getProcessPid;
 exports.getNodeVersion = getNodeVersion;
 exports.setCompComNethctiWs = setCompComNethctiWs;
-exports.getListeningNetPorts = getListeningNetPorts;
 exports.setCompComNethctiTcp = setCompComNethctiTcp;
 exports.getCtiPackageRelease = getCtiPackageRelease;
 exports.getWsNumConnectedClients = getWsNumConnectedClients;
