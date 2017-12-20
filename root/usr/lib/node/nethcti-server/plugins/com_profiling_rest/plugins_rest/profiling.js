@@ -156,9 +156,7 @@ function setCompUtil(comp) {
         *
         * # GET requests
         *
-        * 1. [`profiling/proc`](#procget)
-        * 1. [`profiling/pkg_ver`](#pkg_verget)
-        * 1. [`profiling/node_ver`](#node_verget)
+        * 1. [`profiling/all`](#allget)
         * 1. [`profiling/proc_mem`](#proc_memget)
         * 1. [`profiling/db_stats`](#db_statsget)
         * 1. [`profiling/log_stats`](#log_statsget)
@@ -168,15 +166,16 @@ function setCompUtil(comp) {
         *
         * ---
         *
-        * ### <a id="procget">**`profiling/proc`**</a>
+        * ### <a id="allget">**`profiling/all`**</a>
         *
-        * Returns the data about the process.
+        * Returns all the profiling data.
         *
         * Example JSON response:
         *
         *     {
          "pid": 23511,
          "uptime": "0 Days - 00:00:04",
+         "node_ver": "v6.12.10",
          "pkg_ver": {
              "nethcti3": "nethcti3-3.0.5-1.ns7.noarch",
              "nethcti-server3": "nethcti-server3-3.0.4-1.ns7.x86_64",
@@ -205,31 +204,6 @@ function setCompUtil(comp) {
         *
         * ---
         *
-        * ### <a id="pkg_verget">**`profiling/pkg_ver`**</a>
-        *
-        * Returns the package software version.
-        *
-        * Example JSON response:
-        *
-        *     {
-          "nethcti3": "nethcti3-3.0.5-1.ns7.noarch",
-         "nethcti-server3": "nethcti-server3-3.0.4-1.ns7.x86_64",
-         "janus-gateway": "janus-gateway-0.2.5-1.ns7.x86_64",
-         "nethserver-nethvoice14": "nethserver-nethvoice14-14.0.9-1.ns7.noarch"
-     }
-        *
-        * ---
-        *
-        * ### <a id="node_verget">**`profiling/node_ver`**</a>
-        *
-        * Returns the node version.
-        *
-        * Example JSON response:
-        *
-        *     { "node_ver": "v6.12.10" }
-        *
-        * ---
-        *
         * ### <a id="proc_memget">**`profiling/proc_mem`**</a>
         *
         * Returns the quantity of the memory used by the process in byte.
@@ -242,16 +216,6 @@ function setCompUtil(comp) {
          "heapUsed": 36679920,
          "external": 4317024
      }
-        *
-        * ---
-        *
-        * ### <a id="tot_usersget">**`profiling/tot_users`**</a>
-        *
-        * Returns the total number of the configured users.
-        *
-        * Example JSON response:
-        *
-        *     { tot_users: 15 }
         *
         * ---
         *
@@ -298,19 +262,14 @@ function setCompUtil(comp) {
          * @property get
          * @type {array}
          *
-         *   @param {string} proc         To get the data about the process
-         *   @param {string} pkg_ver      To get version of the packages
-         *   @param {string} node_ver     To get version of the node
+         *   @param {string} all          To get all the profiling data
          *   @param {string} proc_mem     To get the quantity of the memory usage by the process
          *   @param {string} db_stats     To get the database statistics
          *   @param {string} log_stats    To get the log statistics
-         *   @param {string} tot_users    To get the total number of the configured users
          *   @param {string} conn_clients To get the number of connected clients
          */
         'get': [
-          'proc',
-          'pkg_ver',
-          'node_ver',
+          'all',
           'proc_mem',
           'db_stats',
           'log_stats',
@@ -324,16 +283,16 @@ function setCompUtil(comp) {
       },
 
       /**
-       * Get the data about the process by the following REST API:
+       * Get all the profiling data by the following REST API:
        *
-       *     proc
+       *     all
        *
-       * @method proc
+       * @method all
        * @param {object}   req The client request
        * @param {object}   res The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      proc: function (req, res, next) {
+      all: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
           compProfiling.getCtiPackageRelease(function (err1, result) {
@@ -374,6 +333,7 @@ function setCompUtil(comp) {
                   pid: compProfiling.getProcessPid(),
                   uptime: uptime,
                   pkg_ver: result,
+                  node_ver: compProfiling.getNodeVersion(),
                   proc_mem: compProfiling.getProcMem(),
                   db_stats: compDbConn.getStats(),
                   log_stats: getLogStats(),
@@ -387,71 +347,6 @@ function setCompUtil(comp) {
               compUtil.net.sendHttp500(IDLOG, res, err2.toString());
             }
           });
-        } catch (err) {
-          logger.log.error(IDLOG, err.stack);
-          compUtil.net.sendHttp500(IDLOG, res, err.toString());
-        }
-      },
-
-      /**
-       * Get version of the packages by the following REST API:
-       *
-       *     pkg_ver
-       *
-       * @method pkg_ver
-       * @param {object}   req The client request
-       * @param {object}   res The client response
-       * @param {function} next Function to run the next handler in the chain
-       */
-      pkg_ver: function (req, res, next) {
-        try {
-          var username = req.headers.authorization_user;
-          compProfiling.getCtiPackageRelease(function (err1, result) {
-            try {
-              if (err1) {
-                logger.log.error(IDLOG, err1);
-                compUtil.net.sendHttp500(IDLOG, res, err1);
-              } else {
-                logger.log.info(IDLOG, 'send sw pkg release data to user "' + username + '"');
-                res.send(200, result);
-              }
-            } catch (err2) {
-              logger.log.error(IDLOG, err2.stack);
-              compUtil.net.sendHttp500(IDLOG, res, err2.toString());
-            }
-          });
-        } catch (err) {
-          logger.log.error(IDLOG, err.stack);
-          compUtil.net.sendHttp500(IDLOG, res, err.toString());
-        }
-      },
-
-      /**
-       * Get the version of the node by the following REST API:
-       *
-       *     node_ver
-       *
-       * @method node_ver
-       * @param {object}   req The client request
-       * @param {object}   res The client response
-       * @param {function} next Function to run the next handler in the chain
-       */
-      node_ver: function (req, res, next) {
-        try {
-          var username = req.headers.authorization_user;
-          var results = compProfiling.getNodeVersion();
-
-          if (typeof results !== 'string') {
-            var strerr = 'wrong node version result for user "' + username + '"';
-            logger.log.error(IDLOG, strerr);
-            compUtil.net.sendHttp500(IDLOG, res, strerr);
-
-          } else {
-            logger.log.info(IDLOG, 'send node version to user "' + username + '"');
-            res.send(200, {
-              node_ver: results
-            });
-          }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -581,50 +476,14 @@ function setCompUtil(comp) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
-      },
-
-      /**
-       * Gets the total number of the configured users with the following REST API:
-       *
-       *     tot_users
-       *
-       * @method tot_users
-       * @param {object}   req  The client request
-       * @param {object}   res  The client response
-       * @param {function} next Function to run the next handler in the chain
-       */
-      tot_users: function (req, res, next) {
-        try {
-          var username = req.headers.authorization_user;
-          var results = {
-            tot_users: compConfigManager.getTotNumUsers()
-          };
-
-          if (typeof results !== 'object') {
-            var strerr = 'wrong tot num users result for user "' + username + '"';
-            logger.log.error(IDLOG, strerr);
-            compUtil.net.sendHttp500(IDLOG, res, strerr);
-
-          } else {
-
-            logger.log.info(IDLOG, 'send tot num users data to user "' + username + '"');
-            res.send(200, results);
-          }
-        } catch (err) {
-          logger.log.error(IDLOG, err.stack);
-          compUtil.net.sendHttp500(IDLOG, res, err.toString());
-        }
       }
     }
     exports.api = profiling.api;
-    exports.proc = profiling.proc;
-    exports.pkg_ver = profiling.pkg_ver;
-    exports.node_ver = profiling.node_ver;
+    exports.all = profiling.all;
     exports.proc_mem = profiling.proc_mem;
     exports.db_stats = profiling.db_stats;
     exports.log_stats = profiling.log_stats,
     exports.setLogger = setLogger;
-    exports.tot_users = profiling.tot_users;
     exports.setCompUtil = setCompUtil;
     exports.conn_clients = profiling.conn_clients;
     exports.setCompDbConn = setCompDbConn;
