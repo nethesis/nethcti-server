@@ -42,3 +42,7 @@
       "port": "50009",
       "address": "localhost"
     \},
+    "profiling": \{
+      "port": "50010",
+      "address": "localhost"
+    \},
