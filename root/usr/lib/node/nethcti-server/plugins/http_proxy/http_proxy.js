@@ -276,17 +276,18 @@ function start() {
         // 3. unauthenticated call enabled
         // 4. an remote authentication nonce request
         if (req.url !== '/authentication/login' &&
+          req.url.indexOf('/profiling') !== 0 &&
           req.url !== '/authentication/remotelogin' &&
           req.url !== '/static' &&
           (req.url === '/astproxy/unauthe_call' && compAuthentication.isUnautheCallEnabled() === false) &&
           req.headers.authorization === undefined) { // no authentication token present
 
-          compUtil.net.sendHttp401(IDLOG, res);
-          return;
-        }
+            compUtil.net.sendHttp401(IDLOG, res);
+            return;
+          }
 
-        if ((req.headers.authorization !== undefined && typeof req.headers.authorization !== 'string') ||
-          (req.headers.authorization !== undefined && (req.headers.authorization.split(':')).length !== 2)) {
+          if ((req.headers.authorization !== undefined && typeof req.headers.authorization !== 'string') ||
+            (req.headers.authorization !== undefined && (req.headers.authorization.split(':')).length !== 2)) {
 
           compUtil.net.sendHttp401(IDLOG, res);
           return;
