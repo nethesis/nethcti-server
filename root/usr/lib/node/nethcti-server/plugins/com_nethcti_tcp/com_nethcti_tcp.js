@@ -35,6 +35,24 @@ var EventEmitter = require('events').EventEmitter;
 var EVT_RELOADED = 'reloaded';
 
 /**
+ * Fired when the nethifier led has to be set.
+ *
+ * @event setColorLed
+ */
+/**
+ * The name of the set led color event.
+ *
+ * Example:
+ *
+ *     "setColorLed"
+ *
+ * @property EVT_COLOR_LED
+ * @type string
+ * @default "setColorLed"
+ */
+var EVT_COLOR_LED = 'setColorLed';
+
+/**
  * The event emitter.
  *
  * @property emitter
@@ -174,6 +192,34 @@ var EVT_EXTEN_CONNECTED = 'extenConnected';
  * @default [com_nethcti_tcp]
  */
 var IDLOG = '[com_nethcti_tcp]';
+
+/**
+ * The color mapping for nethifier led.
+ *
+ * @property LED_COLOR_MAPPING
+ * @type {object}
+ * @private
+ * @final
+ * @readOnly
+ * @default {
+  ringing: 'blinking',
+  dnd: 'red',
+  busy: 'red',
+  online: 'green',
+  callForward: 'blu',
+  voicemail: 'blu',
+  cellphone: 'blu'
+}
+ */
+var LED_COLOR_MAPPING = {
+  ringing: 'blinking',
+  dnd: 'red',
+  busy: 'red',
+  online: 'green',
+  callforward: 'blu',
+  voicemail: 'blu',
+  cellphone: 'blu'
+};
 
 /**
  * The enconding used to write the TCP client sockets.
@@ -641,6 +687,7 @@ function extenDialing(data) {
         } else {
           sendCallNotificationEvent(username, data, sockets[sockId]);
         }
+        sendColorLed(username, LED_COLOR_MAPPING.ringing, sockets[sockId]);
       }
     }
   } catch (err) {
@@ -682,6 +729,8 @@ function extenHangup(data) {
       // the user is associated with the ringing extension and is logged in, so send to notification event
       if (user === username) {
         sendHangupNotificationEvent(username, data, sockets[sockId]);
+        var presence = compUser.getPresence(username);
+        sendColorLed(username, LED_COLOR_MAPPING[presence], sockets[sockId]);
       }
     }
   } catch (err) {
@@ -718,6 +767,7 @@ function extenConnected(data) {
       // the user is associated with the connected data.num1 extension and is logged in, so send to notification event
       if (user === username) {
         sendCallConnectedNotificationEvent(username, data, sockets[sockId]);
+        sendColorLed(username, LED_COLOR_MAPPING.busy, sockets[sockId]);
       }
     }
   } catch (err) {
@@ -826,6 +876,34 @@ function sendCallNotificationEvent(username, data, socket) {
     socket.write(JSON.stringify(notif), ENCODING, function() {
       try {
         logger.log.info(IDLOG, 'sent "' + EVT_NOTIFICATION + '" evt to open call notification to ' + socket.username + ' with socket.id ' + socket.id);
+      } catch (err1) {
+        logger.log.error(IDLOG, err1.stack);
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Send the color to be set in nethifier led.
+ *
+ * @method sendColorLed
+ * @param {string} username The username of the client
+ * @param {object} color The color to be set
+ * @param {object} socket The TCP socket client
+ * @private
+ */
+function sendColorLed(username, color, socket) {
+  try {
+    var notif = {
+      EVT_COLOR_LED: {
+        color: color
+      }
+    };
+    socket.write(JSON.stringify(notif), ENCODING, function() {
+      try {
+        logger.log.info(IDLOG, 'sent "' + EVT_COLOR_LED + '" evt to set led color to ' + socket.username + ' with socket.id ' + socket.id);
       } catch (err1) {
         logger.log.error(IDLOG, err1.stack);
       }
@@ -1219,6 +1297,8 @@ function loginHdlr(socket, obj) {
 
       // send supported commands by windows notifications
       sendNotificationSupportedCommands(socket);
+      var presence = compUser.getPresence(socket.username);
+      sendColorLed(socket.username, LED_COLOR_MAPPING[presence], socket);
 
     } else { // authentication failed
       logger.log.warn(IDLOG, 'authentication failed for user "' + obj.username + '" from ' + getClientSocketEndpoint(socket));
