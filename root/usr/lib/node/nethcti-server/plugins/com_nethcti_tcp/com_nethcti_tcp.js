@@ -194,7 +194,8 @@ var EVT_EXTEN_CONNECTED = 'extenConnected';
 var IDLOG = '[com_nethcti_tcp]';
 
 /**
- * The color mapping for nethifier led.
+ * The color mapping for nethifier led. The colors are in RGB format and
+ * if you want to bliking it append "|blink" at the end.
  *
  * @property LED_COLOR_MAPPING
  * @type {object}
@@ -202,23 +203,23 @@ var IDLOG = '[com_nethcti_tcp]';
  * @final
  * @readOnly
  * @default {
-  ringing: 'blinking',
-  dnd: 'red',
-  busy: 'red',
-  online: 'green',
-  callForward: 'blu',
-  voicemail: 'blu',
-  cellphone: 'blu'
+  ringing: '255:0:0|blink',
+  dnd: '255:0:0',
+  busy: '255:0:0',
+  online: '0:255:0',
+  callForward: '0:0:255',
+  voicemail: '0:0:255',
+  cellphone: '0:0:255'
 }
  */
 var LED_COLOR_MAPPING = {
-  ringing: 'blinking',
-  dnd: 'red',
-  busy: 'red',
-  online: 'green',
-  callforward: 'blu',
-  voicemail: 'blu',
-  cellphone: 'blu'
+  ringing: '255:0:0|blink',
+  dnd: '255:0:0',
+  busy: '255:0:0',
+  online: '0:255:0',
+  callforward: '0:0:255',
+  voicemail: '0:0:255',
+  cellphone: '0:0:255'
 };
 
 /**
@@ -821,7 +822,7 @@ function sendStreamingNotificationEvent(username, data, socket) {
       }
     };
 
-    socket.write(JSON.stringify(notif), ENCODING, function() {
+    socket.write(JSON.stringify(notif), ENCODING, function () {
       try {
         logger.log.info(IDLOG, 'sent "open streaming notification" to ' + socket.username + ' with socket.id ' + socket.id);
       } catch (err1) {
@@ -873,7 +874,7 @@ function sendCallNotificationEvent(username, data, socket) {
       action: 'open',
       closetimeout: notifCloseTimeout
     };
-    socket.write(JSON.stringify(notif), ENCODING, function() {
+    socket.write(JSON.stringify(notif), ENCODING, function () {
       try {
         logger.log.info(IDLOG, 'sent "' + EVT_NOTIFICATION + '" evt to open call notification to ' + socket.username + ' with socket.id ' + socket.id);
       } catch (err1) {
@@ -896,12 +897,9 @@ function sendCallNotificationEvent(username, data, socket) {
  */
 function sendColorLed(username, color, socket) {
   try {
-    var notif = {
-      EVT_COLOR_LED: {
-        color: color
-      }
-    };
-    socket.write(JSON.stringify(notif), ENCODING, function() {
+    var notif = {};
+    notif[EVT_COLOR_LED] = { color: color };
+    socket.write(JSON.stringify(notif), ENCODING, function () {
       try {
         logger.log.info(IDLOG, 'sent "' + EVT_COLOR_LED + '" evt to set led color to ' + socket.username + ' with socket.id ' + socket.id);
       } catch (err1) {
@@ -926,7 +924,7 @@ function sendCallConnectedNotificationEvent(username, data, socket) {
   try {
     var evt = {};
     evt[EVT_EXTEN_CONNECTED] = data.num1;
-    socket.write(JSON.stringify(evt), ENCODING, function() {
+    socket.write(JSON.stringify(evt), ENCODING, function () {
       try {
         logger.log.info(IDLOG, 'sent "' + EVT_EXTEN_CONNECTED + '" evt between "' + data.num1 + '" and "' + data.num2 +
           '" to close call notification to ' + socket.username + ' with socket.id ' + socket.id);
@@ -952,7 +950,7 @@ function sendHangupNotificationEvent(username, data, socket) {
   try {
     var evt = {};
     evt[EVT_EXTEN_HANGUP] = data.channelExten;
-    socket.write(JSON.stringify(evt), ENCODING, function() {
+    socket.write(JSON.stringify(evt), ENCODING, function () {
       try {
         logger.log.info(IDLOG, 'sent "' + EVT_EXTEN_HANGUP + '" evt for exten "' + data.channelExten +
           '" to close call notification to ' + socket.username + ' with socket.id ' + socket.id);
@@ -1114,13 +1112,13 @@ function start() {
 
     // add listeners
     server.on('connection', connHdlr);
-    server.listen(port, function() {
+    server.listen(port, function () {
       logger.log.warn(IDLOG, 'tcp server listening on ' + server.address().address + ':' + server.address().port);
     });
 
     // start the automatic update of token expiration of all the users that are connected by tcp.
     // The interval is the half value of expiration provided by authentication component
-    setInterval(function() {
+    setInterval(function () {
       updateTokenExpirationOfAllTcpUsers();
     }, updateTokenExpirationInterval);
 
@@ -1166,7 +1164,7 @@ function connHdlr(socket) {
 
     // add listeners to the new socket connection
     // Emitted when data is received.
-    socket.on('data', function(data) {
+    socket.on('data', function (data) {
       try {
         var parameters = JSON.parse(data);
 
@@ -1185,7 +1183,7 @@ function connHdlr(socket) {
     });
 
     // Emitted when the other end of the socket sends a FIN packet
-    socket.on('end', function() {
+    socket.on('end', function () {
       try {
         disconnHdlr(socket);
 
@@ -1196,7 +1194,7 @@ function connHdlr(socket) {
 
     // Emitted once the socket is fully closed. The argument had_error is a
     // boolean which says if the socket was closed due to a transmission error.
-    socket.on('close', function(had_error) {
+    socket.on('close', function (had_error) {
       try {
         disconnHdlr(socket);
 
@@ -1206,7 +1204,7 @@ function connHdlr(socket) {
     });
 
     // Emitted when an error occurs. The 'close' event will be called directly following this event.
-    socket.on('error', function(error) {
+    socket.on('error', function (error) {
       try {
         logger.log.error(IDLOG, error.stack);
 
@@ -1216,7 +1214,7 @@ function connHdlr(socket) {
     });
 
     // Emitted when the write buffer becomes empty. Can be used to throttle uploads.
-    socket.on('drain', function() {});
+    socket.on('drain', function () {});
 
     logger.log.info(IDLOG, 'listeners for the new socket connection have been set');
 
@@ -1288,6 +1286,7 @@ function loginHdlr(socket, obj) {
       // sets the username and the token property to the client socket
       socket.token = obj.token;
       socket.username = obj.username;
+      socket.nethifierVersion = obj.version ? obj.version : '<3.0.0';
 
       // add client socket to future fast authentication for each request from the clients
       addSocket(socket);
@@ -1364,7 +1363,7 @@ function pingHdlr(socket) {
     }
     var data = {};
     data[EVT_PING] = 'active';
-    socket.write(JSON.stringify(data), ENCODING, function() {
+    socket.write(JSON.stringify(data), ENCODING, function () {
       try {
         logger.log.info(IDLOG, 'sent "' + EVT_PING + '" evt response "active" to ping request to ' + socket.username + ' with socket.id ' + socket.id);
       } catch (err1) {
@@ -1390,7 +1389,7 @@ function sendNotificationSupportedCommands(socket) {
     }
     var cmds = {};
     cmds[EVT_COMMANDS] = notifSupportedCommands;
-    socket.write(JSON.stringify(cmds), ENCODING, function() {
+    socket.write(JSON.stringify(cmds), ENCODING, function () {
       try {
         logger.log.info(IDLOG, 'sent "' + EVT_COMMANDS + '" evt notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
       } catch (err1) {
@@ -1420,7 +1419,7 @@ function sendResetNotificationSupportedCommands(socket) {
       type: 'commands',
       commands: notifSupportedCommands
     };
-    socket.write(JSON.stringify(obj), ENCODING, function() {
+    socket.write(JSON.stringify(obj), ENCODING, function () {
       try {
         logger.log.info(IDLOG, 'sent reset notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
 
@@ -1499,7 +1498,7 @@ function addSocket(socket) {
  */
 function send401(socket) {
   try {
-    socket.write('401', ENCODING, function() {
+    socket.write('401', ENCODING, function () {
       try {
         logger.log.info(IDLOG, 'sent 401 unauthorized to ' + getClientSocketEndpoint(socket));
 
@@ -1525,7 +1524,7 @@ function sendAutheSuccess(socket) {
       message: 'authe_ok'
     };
 
-    socket.write(JSON.stringify(data), ENCODING, function() {
+    socket.write(JSON.stringify(data), ENCODING, function () {
       try {
         logger.log.info(IDLOG, 'sent authorized successfully to ' + socket.username + ' with socket.id ' + socket.id);
 
