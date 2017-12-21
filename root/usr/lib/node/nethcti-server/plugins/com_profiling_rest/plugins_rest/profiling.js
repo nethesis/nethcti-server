@@ -159,7 +159,6 @@ function setCompUtil(comp) {
         * 1. [`profiling/all`](#allget)
         * 1. [`profiling/proc_mem`](#proc_memget)
         * 1. [`profiling/db_stats`](#db_statsget)
-        * 1. [`profiling/log_stats`](#log_statsget)
         * 1. [`profiling/tot_users`](#tot_usersget)
         * 1. [`profiling/conn_clients`](#conn_clientsget)
         *
@@ -190,10 +189,6 @@ function setCompUtil(comp) {
          },
          "db_stats": {
              "numExecQueries": 7
-         },
-         "log_stats": {
-             "warn": 5,
-             "error": 0
          },
          "tot_users": 7,
          "conn_clients": {
@@ -248,16 +243,6 @@ function setCompUtil(comp) {
         *
         *     { "num_exec_queries": 151 }
         *
-        * ---
-        *
-        * ### <a id="log_statsget">**`profiling/log_stats`**</a>
-        *
-        * Returns the log statistics.
-        *
-        * Example JSON response:
-        *
-        *     { "warn": 5, "error": 0 }
-        *
         * @class plugin_rest_profiling
         * @static
         */
@@ -276,14 +261,12 @@ function setCompUtil(comp) {
          *   @param {string} all          To get all the profiling data
          *   @param {string} proc_mem     To get the quantity of the memory usage by the process
          *   @param {string} db_stats     To get the database statistics
-         *   @param {string} log_stats    To get the log statistics
          *   @param {string} conn_clients To get the number of connected clients
          */
         'get': [
           'all',
           'proc_mem',
           'db_stats',
-          'log_stats',
           'tot_users',
           'conn_clients'
         ],
@@ -347,7 +330,6 @@ function setCompUtil(comp) {
                   node_ver: compProfiling.getNodeVersion(),
                   proc_mem: compProfiling.getProcMem(),
                   db_stats: compDbConn.getStats(),
-                  log_stats: getLogStats(),
                   tot_users: compConfigManager.getTotNumUsers(),
                   conn_clients: getConnectedClientsNum()
                 };
@@ -458,42 +440,12 @@ function setCompUtil(comp) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
-      },
-
-      /**
-       * Gets the number of warning and error logs with the following REST API:
-       *
-       *     log_stats
-       *
-       * @method log_stats
-       * @param {object}   req  The client request
-       * @param {object}   res  The client response
-       * @param {function} next Function to run the next handler in the chain
-       */
-      log_stats: function (req, res, next) {
-        try {
-          var username = req.headers.authorization_user;
-          var results = getLogStats();
-
-          if (typeof results !== 'object') {
-            var strerr = 'wrong log stats result for user "' + username + '"';
-            logger.log.error(IDLOG, strerr);
-            compUtil.net.sendHttp500(IDLOG, res, strerr);
-          } else {
-            logger.log.info(IDLOG, 'send log stats data to user "' + username + '"');
-            res.send(200, results);
-          }
-        } catch (err) {
-          logger.log.error(IDLOG, err.stack);
-          compUtil.net.sendHttp500(IDLOG, res, err.toString());
-        }
       }
     }
     exports.api = profiling.api;
     exports.all = profiling.all;
     exports.proc_mem = profiling.proc_mem;
     exports.db_stats = profiling.db_stats;
-    exports.log_stats = profiling.log_stats,
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;
     exports.conn_clients = profiling.conn_clients;
@@ -522,24 +474,5 @@ function getConnectedClientsNum() {
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     return {};
-  }
-}
-
-/**
- * Returns the log statistics.
- *
- * @method getLogStats
- * @private
- * @return {object} The log statistics.
- */
-function getLogStats() {
-  try {
-    return {
-      warn: logger.log.getWarnCounter(),
-      error: logger.log.getErrorCounter()
-    };
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    return -1;
   }
 }
