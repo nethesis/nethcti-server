@@ -1541,15 +1541,25 @@ function sendAutheSuccess(socket) {
  * Returns the number of connected clients.
  *
  * @method getNumConnectedClients
- * @param {number} The number of connected clients.
+ * @return {object} The number of connected clients grouped by version and the total
  * @private
  */
 function getNumConnectedClients() {
   try {
-    return Object.keys(sockets).length;
+    var s;
+    var o = { tot: 0 };
+    for (s in sockets) {
+      if (!o[sockets[s].nethifierVersion]) {
+        o[sockets[s].nethifierVersion] = 1;
+      } else {
+        o[sockets[s].nethifierVersion] += 1;
+      }
+      o.tot += 1;
+    }
+    return o;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
-    return -1;
+    return {};
   }
 }
 
