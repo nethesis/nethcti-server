@@ -290,9 +290,10 @@ function getHistorySmsInterval(data, cb) {
             // extract results to return in the callback function
             var i;
             for (i = 0; i < results.length; i++) {
+
                 results[i] = results[i].selectedValues;
-                results[i].datesent = moment(results[i].date).format('DD/MM/YYYY');
-                results[i].timesent = moment(results[i].date).format('hh:mm:ss');
+                results[i].datesent = moment(results[i].date).utc().format('DD/MM/YYYY');
+                results[i].timesent = moment(results[i].date).utc().format('HH:mm:ss');
             }
 
             logger.info(IDLOG, results.length + ' results searching history sms interval between ' +
