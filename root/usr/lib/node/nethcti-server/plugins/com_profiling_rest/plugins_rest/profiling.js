@@ -198,7 +198,11 @@ function setCompUtil(comp) {
          "tot_users": 7,
          "conn_clients": {
              "ws_conn_clients": 1,
-             "tcp_conn_clients": 0
+             "tcp_conn_clients": {
+                 "tot": 2,
+                 "<3.0.0": 1,
+                 "3.0.0": 1
+             }
          }
      }
         *
@@ -225,7 +229,14 @@ function setCompUtil(comp) {
         *
         * Example JSON response:
         *
-        *     { ws_conn_clients: 4, tcp_conn_clients: 2 }
+        *     {
+          "ws_conn_clients": 4,
+          "tcp_conn_clients": {
+              "tot": 2,
+              "<3.0.0": 1,
+              "3.0.0": 1
+         }
+     }
         *
         * ---
         *
@@ -235,7 +246,7 @@ function setCompUtil(comp) {
         *
         * Example JSON response:
         *
-        *     { num_exec_queries: 151 }
+        *     { "num_exec_queries": 151 }
         *
         * ---
         *
@@ -245,7 +256,7 @@ function setCompUtil(comp) {
         *
         * Example JSON response:
         *
-        *     { warn: 5, error: 0 }
+        *     { "warn": 5, "error": 0 }
         *
         * @class plugin_rest_profiling
         * @static
