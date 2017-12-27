@@ -898,7 +898,7 @@ function sendCallNotificationEvent(username, data, socket) {
 function sendColorLed(username, color, socket) {
   try {
     var notif = {};
-    notif[EVT_COLOR_LED] = { color: color };
+    notif[EVT_COLOR_LED] = color;
     socket.write(JSON.stringify(notif), ENCODING, function () {
       try {
         logger.log.info(IDLOG, 'sent "' + EVT_COLOR_LED + '" evt to set led color to ' + socket.username + ' with socket.id ' + socket.id);
