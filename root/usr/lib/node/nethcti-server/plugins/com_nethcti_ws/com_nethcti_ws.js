@@ -416,6 +416,25 @@ var WS_LOG_LEVEL = 0;
 var USER_AGENT = 'nethcti';
 
 /**
+ * The user agent type used to recognize cti client application. The user agent type is set
+ * to the socket properties when client login (loginHdlr).
+ *
+ * @property USER_AGENT_TYPE
+ * @type {object}
+ * @private
+ * @final
+ * @readOnly
+ * @default {
+ *   "MOBILE": "mobile",
+ *   "DESKTOP": "desktop"
+ * }
+ */
+var USER_AGENT_TYPE = {
+  MOBILE: 'mobile',
+  DESKTOP: 'desktop'
+};
+
+/**
 * The websocket rooms used to update clients with asterisk events.
 *
 * @property WS_ROOM
@@ -1829,7 +1848,7 @@ function badRequest(socket) {
  */
 function getWebsocketEndpoint(socket) {
   try {
-    return socket.handshake.address.address + ':' + socket.handshake.address.port;
+    return socket.handshake.headers.origin;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -1860,12 +1879,18 @@ function unauthorized(socket) {
  * @param {object} obj The data passed by the client
  *   @param {string} obj.accessKeyId The username of the account
  *   @param {string} obj.token The token received by the authentication REST request
+ *   @param {string} [obj.uaType] The user agent type ("mobile" | "desktop")
  * @private
  */
 function loginHdlr(socket, obj) {
   try {
     // check parameters
-    if (typeof socket !== 'object' || typeof obj !== 'object' || typeof obj.token !== 'string' || typeof obj.accessKeyId !== 'string') {
+    if (typeof socket !== 'object' ||
+      typeof obj !== 'object' ||
+      typeof obj.token !== 'string' ||
+      typeof obj.accessKeyId !== 'string' ||
+      (typeof obj.uaType === 'string' && obj.uaType !== USER_AGENT_TYPE.MOBILE && obj.uaType !== USER_AGENT_TYPE.DESKTOP)) {
+
       logger.log.warn(IDLOG, 'bad authentication login request from ' + getWebsocketEndpoint(socket));
       unauthorized(socket);
       return;
@@ -1876,97 +1901,166 @@ function loginHdlr(socket, obj) {
       logger.log.info(IDLOG, 'user "' + obj.accessKeyId + '" successfully authenticated from ' + getWebsocketEndpoint(socket) +
         ' with socket id ' + socket.id);
 
-      // add websocket id for future fast authentication for each request from the clients
-      addWebsocketId(obj.accessKeyId, obj.token, socket.id);
+      // if uaType has been specified it checks for other already logged in user.
+      // If it is already present, it logout previously logged in user and login current one
+      var takeOvered = false;
+      if (obj.uaType) {
+        for (var sid in wsid) {
+          if (wsServer.sockets &&
+            wsServer.sockets.sockets[sid] &&
+            wsServer.sockets.sockets[sid].nethcti &&
+            wsServer.sockets.sockets[sid].nethcti.username === obj.accessKeyId &&
+            wsServer.sockets.sockets[sid].nethcti.uaType === obj.uaType) {
 
-      // sets the socket object that will contains the cti data
-      if (!socket.nethcti) {
-        socket.nethcti = {};
-      }
+              takeOvered = true;
+              wsServer.sockets.sockets[sid].on('takeOverAck', function () {
+                try {
+                  if (wsServer.takeOverTimeouts[sid]) {
+                    clearTimeout(wsServer.takeOverTimeouts[sid]);
+                    delete wsServer.takeOverTimeouts[sid];
+                  }
+                  if (wsServer.sockets.sockets[sid]) {
+                    wsServer.sockets.sockets[sid].removeAllListeners('takeOverAck');
+                  }
+                  doLogin(socket, obj);
 
-      if (socket.handshake &&
-        socket.handshake.headers &&
-        socket.handshake.headers.referer &&
-        socket.handshake.headers.referer.split('/')[3] &&
-        socket.handshake.headers.referer.split('/')[3].indexOf('cti') > -1) {
+                } catch (err) {
+                  logger.log.error(IDLOG, err.stack);
+                  unauthorized(socket);
+                }
+              });
 
-        // sets the origin application (cti) property to the client socket
-        socket.nethcti.userAgent = USER_AGENT;
-        logger.log.info(IDLOG, 'setted userAgent property "' + USER_AGENT + '" to the socket ' + socket.id);
-      }
+              wsServer.sockets.sockets[sid].emit('takeOver');
 
-      // sets username property to the client socket
-      socket.nethcti.username = obj.accessKeyId;
-
-      // send authenticated successfully response
-      sendAutheSuccess(socket);
-
-      var username = astProxy.isExten(obj.accessKeyId) ? compUser.getUserUsingEndpointExtension(obj.accessKeyId) : obj.accessKeyId;
-
-      // if the user has the "presence panel" permission, than he will receive
-      // the asterisk events that involve the extensions
-      if (compAuthorization.authorizePresencePanelUser(username) === true) {
-
-        if (compAuthorization.isPrivacyEnabled(username) === true) {
-          // join the user to the websocket room to receive the asterisk events that
-          // involve the extensions, using hide numbers
-          socket.join(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY);
-
-        } else {
-          // join the user to the websocket room to receive the asterisk events that
-          // affects the extensions, using clear numbers
-          socket.join(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR);
+              // in case takeOverAck event never arrives
+              if (!wsServer.takeOverTimeouts) {
+                wsServer.takeOverTimeouts = {};
+              }
+              wsServer.takeOverTimeouts[sid] = setTimeout(function () {
+                try {
+                  if (wsServer.sockets.sockets[sid]) {
+                    wsServer.sockets.sockets[sid].removeAllListeners('takeOverAck');
+                  }
+                  doLogin(socket, obj);
+                  delete wsServer.takeOverTimeouts[sid];
+                } catch (err) {
+                  logger.log.error(IDLOG, err.stack);
+                  unauthorized(socket);
+                }
+              }, 8000);
+          }
         }
       }
-
-      // if the user has the queues permission, than he will receive the asterisk events that affect the queues
-      if (compAuthorization.authorizeQueuesUser(username) === true || compAuthorization.authorizeAdminQueuesUser(username) === true) {
-
-        if (compAuthorization.isPrivacyEnabled(username) === true && compAuthorization.authorizeAdminQueuesUser(username) === false) {
-          // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
-          socket.join(WS_ROOM.QUEUES_AST_EVT_PRIVACY);
-
-        } else {
-          // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
-          socket.join(WS_ROOM.QUEUES_AST_EVT_CLEAR);
-        }
+      if (!takeOvered) {
+        doLogin(socket, obj);
       }
-
-      // if the user has the trunks permission, than he will receive the asterisk events that affects the trunks
-      if (compAuthorization.authorizeOpTrunksUser(username) === true) {
-
-        if (compAuthorization.isPrivacyEnabled(username) === true) {
-          // join the user to the websocket room to receive the asterisk events that affects the trunks, using hide numbers
-          socket.join(WS_ROOM.TRUNKS_AST_EVT_PRIVACY);
-
-        } else {
-          // join the user to the websocket room to receive the asterisk events that affects the trunks, using clear numbers
-          socket.join(WS_ROOM.TRUNKS_AST_EVT_CLEAR);
-        }
-      }
-
-      // if the user has the parkings permission, than he will receive the asterisk events that affects the parkings
-      if (compAuthorization.authorizeOpParkingsUser(username) === true) {
-
-        if (compAuthorization.isPrivacyEnabled(username) === true) {
-          // join the user to the websocket room to receive the asterisk events that affects the parkings, using hide numbers
-          socket.join(WS_ROOM.PARKINGS_AST_EVT_PRIVACY);
-
-        } else {
-          // join the user to the websocket room to receive the asterisk events that affects the parkings, using clear numbers
-          socket.join(WS_ROOM.PARKINGS_AST_EVT_CLEAR);
-        }
-      }
-
-      // emits the event for a logged in client. This event is emitted when a user has been logged in by a websocket connection
-      logger.log.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_LOGGEDIN + '" for username "' + obj.accessKeyId + '"');
-      emitter.emit(EVT_WS_CLIENT_LOGGEDIN, obj.accessKeyId);
-
     } else { // authentication failed
-      logger.log.warn(IDLOG, 'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
-        ' with id ' + socket.id);
+      logger.log.warn(IDLOG, 'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
       unauthorized(socket);
     }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    unauthorized(socket);
+  }
+}
+
+/**
+ * Does the login.
+ *
+ * @method doLogin
+ * @param {object} socket The client websocket
+ * @param {object} obj The data passed by the client
+ *   @param {string} obj.accessKeyId The username of the account
+ *   @param {string} obj.token The token received by the authentication REST request
+ *   @param {string} [obj.uaType] The user agent type ("mobile" | "desktop")
+ * @private
+ */
+function doLogin(socket, obj) {
+  try {
+    // add websocket id for future fast authentication for each request from the clients
+    addWebsocketId(obj.accessKeyId, obj.token, socket.id);
+
+    // sets the socket object that will contains the cti data
+    if (!socket.nethcti) {
+      socket.nethcti = {};
+    }
+
+    if (socket.handshake &&
+      socket.handshake.headers &&
+      socket.handshake.headers['user-agent']) {
+
+      // sets the origin application (cti) property to the client socket
+      socket.nethcti.userAgent = socket.handshake.headers['user-agent'];
+      logger.log.info(IDLOG, 'setted userAgent property "' + socket.nethcti.userAgent + '" to socket "' + socket.id + '"');
+    }
+
+    socket.nethcti.uaType = obj.uaType;
+    // sets username property to the client socket
+    socket.nethcti.username = obj.accessKeyId;
+
+    // send authenticated successfully response
+    sendAutheSuccess(socket);
+
+    var username = astProxy.isExten(obj.accessKeyId) ? compUser.getUserUsingEndpointExtension(obj.accessKeyId) : obj.accessKeyId;
+
+    // if the user has the "presence panel" permission, than he will receive
+    // the asterisk events that involve the extensions
+    if (compAuthorization.authorizePresencePanelUser(username) === true) {
+
+      if (compAuthorization.isPrivacyEnabled(username) === true) {
+        // join the user to the websocket room to receive the asterisk events that
+        // involve the extensions, using hide numbers
+        socket.join(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY);
+
+      } else {
+        // join the user to the websocket room to receive the asterisk events that
+        // affects the extensions, using clear numbers
+        socket.join(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR);
+      }
+    }
+
+    // if the user has the queues permission, than he will receive the asterisk events that affect the queues
+    if (compAuthorization.authorizeQueuesUser(username) === true || compAuthorization.authorizeAdminQueuesUser(username) === true) {
+
+      if (compAuthorization.isPrivacyEnabled(username) === true && compAuthorization.authorizeAdminQueuesUser(username) === false) {
+        // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
+        socket.join(WS_ROOM.QUEUES_AST_EVT_PRIVACY);
+
+      } else {
+        // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
+        socket.join(WS_ROOM.QUEUES_AST_EVT_CLEAR);
+      }
+    }
+
+    // if the user has the trunks permission, than he will receive the asterisk events that affects the trunks
+    if (compAuthorization.authorizeOpTrunksUser(username) === true) {
+
+      if (compAuthorization.isPrivacyEnabled(username) === true) {
+        // join the user to the websocket room to receive the asterisk events that affects the trunks, using hide numbers
+        socket.join(WS_ROOM.TRUNKS_AST_EVT_PRIVACY);
+
+      } else {
+        // join the user to the websocket room to receive the asterisk events that affects the trunks, using clear numbers
+        socket.join(WS_ROOM.TRUNKS_AST_EVT_CLEAR);
+      }
+    }
+
+    // if the user has the parkings permission, than he will receive the asterisk events that affects the parkings
+    if (compAuthorization.authorizeOpParkingsUser(username) === true) {
+
+      if (compAuthorization.isPrivacyEnabled(username) === true) {
+        // join the user to the websocket room to receive the asterisk events that affects the parkings, using hide numbers
+        socket.join(WS_ROOM.PARKINGS_AST_EVT_PRIVACY);
+
+      } else {
+        // join the user to the websocket room to receive the asterisk events that affects the parkings, using clear numbers
+        socket.join(WS_ROOM.PARKINGS_AST_EVT_CLEAR);
+      }
+    }
+    // emits the event for a logged in client. This event is emitted when a user has been logged in by a websocket connection
+    logger.log.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_LOGGEDIN + '" for username "' + obj.accessKeyId + '"');
+    emitter.emit(EVT_WS_CLIENT_LOGGEDIN, obj.accessKeyId);
+
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     unauthorized(socket);
@@ -1995,7 +2089,10 @@ function disconnHdlr(socket) {
 
       // count the number of cti sockets for the user from both websocket secure and not
       for (sid in wsServer.sockets.sockets) {
-        if (wsServer.sockets.sockets[sid].nethcti && wsServer.sockets.sockets[sid].nethcti.username === username && wsServer.sockets.sockets[sid].nethcti.userAgent === USER_AGENT) {
+        if (wsServer.sockets.sockets[sid].nethcti &&
+          wsServer.sockets.sockets[sid].nethcti.username === username &&
+          wsServer.sockets.sockets[sid].nethcti.userAgent === USER_AGENT) {
+
           count += 1;
         }
       }
