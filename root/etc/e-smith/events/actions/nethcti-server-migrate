@@ -35,6 +35,7 @@ my $old = $srcConfigDb->get($service);
 my $new = $dstConfigDb->get($service) || $dstConfigDb->new_record($service);
 $new->merge_props($old->props);
 $new->set_prop('TCPPorts','8179,8181,8182,8183');
+$new->set_prop('AuthType','pam');
 
 my $srcNethctiPath = join('', $sourceDir, '/home/e-smith/nethcti');
 my $dstNethctiPath = '/var/lib/nethserver';

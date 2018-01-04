@@ -1,0 +1,9 @@
+{
+    my $nethcti = $DB->get("nethcti-server") or return;
+    my $auth_type = $nethcti->prop('AuthType') or return;
+        if ($auth_type ne "pam")
+        {
+                $nethcti->set_prop('AuthType',"pam");
+        }
+}
+
