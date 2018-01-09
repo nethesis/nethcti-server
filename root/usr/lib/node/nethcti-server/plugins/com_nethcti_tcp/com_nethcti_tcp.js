@@ -83,6 +83,26 @@ var emitter = new EventEmitter();
 var EVT_EXTEN_HANGUP = 'extenHangup';
 
 /**
+ * Emitted to a tcp client connection on extension presence changed.
+ *
+ * @event userPresenceChanged
+ * @param {object} data The data about the event
+ *
+ */
+/**
+ * The name of the extension presence changed event.
+ *
+ * Example:
+ *
+ *     { presence: { username: 'andrea', status: 'dnd' } }
+ *
+ * @property EVT_USER_PRESENCE_CHANGED
+ * @type string
+ * @default "userPresenceChanged"
+ */
+var EVT_USER_PRESENCE_CHANGED = 'userPresenceChanged';
+
+/**
  * Emitted to a tcp client with supported commands on login action received.
  *
  * @event commands
@@ -600,6 +620,7 @@ function setAstProxyListeners() {
     compAstProxy.on(compAstProxy.EVT_EXTEN_HANGUP, extenHangup);
     compAstProxy.on(compAstProxy.EVT_EXTEN_DIALING, extenDialing);
     compAstProxy.on(compAstProxy.EVT_EXTEN_CONNECTED, extenConnected);
+    compUser.on(compUser.EVT_USER_PRESENCE_CHANGED, evtUserPresenceChanged);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -682,6 +703,7 @@ function extenDialing(data) {
 
         // check if the caller is a streaming source
         var isStreaming = compStreaming.isExtenStreamingSource(data.callerIdentity.callerNum);
+        data.mainExten = compUser.getEndpointMainExtension(username).getId();
 
         if (isStreaming) {
           sendStreamingNotificationEvent(username, data, sockets[sockId]);
@@ -689,6 +711,44 @@ function extenDialing(data) {
           sendCallNotificationEvent(username, data, sockets[sockId]);
         }
         sendColorLed(username, LED_COLOR_MAPPING.ringing, sockets[sockId]);
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Handler for the _evtUserPresenceChanged_ event emitted by _user_ component.
+ * The user has changed the presence, so notify all users associated with it, with the
+ * presence data of the user.
+ *
+ * @method evtUserPresenceChanged
+ * @param {object} data
+ *   @param {object} data.presence The presence data
+ * @private
+ */
+function evtUserPresenceChanged(data) {
+  try {
+    if (typeof data !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (data.presence) {
+      logger.log.info(IDLOG, 'received event "' + EVT_USER_PRESENCE_CHANGED + '" for user "' + data.presence.username + '" (presence: "' + data.presence.status + '")');
+
+      // emit the notification event for each logged in user associated
+      // with the user that has changed the presence to set color led
+      var sockId, username;
+      for (sockId in sockets) {
+
+        // "sockets[sockId]" is a socket object that contains the "username", "token"
+        // and "id" properties added by "connHdlr" and "loginHdlr" methods
+        username = sockets[sockId].username;
+
+        // the user is associated with the user that has changed the presence and is logged in, so send notification event
+        if (data.presence.username === username) {
+          sendColorLed(username, LED_COLOR_MAPPING[data.presence.status], sockets[sockId]);
+        }
       }
     }
   } catch (err) {
@@ -821,15 +881,27 @@ function sendStreamingNotificationEvent(username, data, socket) {
         closetimeout: notifCloseTimeout
       }
     };
-
-    socket.write(JSON.stringify(notif), ENCODING, function () {
-      try {
-        logger.log.info(IDLOG, 'sent "open streaming notification" to ' + socket.username + ' with socket.id ' + socket.id);
-      } catch (err1) {
-        logger.log.error(IDLOG, err1.stack);
-      }
+    socketSend(socket, notif, function () {
+      logger.log.info(IDLOG, 'sent "open streaming notification" to ' + socket.username + ' with socket.id ' + socket.id);
     });
 
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Send a message.
+ *
+ * @method socketSend
+ * @param {object} socket The socket
+ * @param {object} msg The message
+ * @param {function} cb The callback function
+ * @private
+ */
+function socketSend(socket, msg, cb) {
+  try {
+    socket.write(JSON.stringify(msg) + '\n', ENCODING, cb);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -855,7 +927,7 @@ function sendCallNotificationEvent(username, data, socket) {
       'callerNum=', data.callerIdentity.callerNum,
       '&ctiProto=', ctiProto,
       '&callerName=', data.callerIdentity.callerName,
-      '&channel=', data.channel,
+      '&mainExten=', data.mainExten,
       '&dialExten=', data.dialingExten,
       '&answerAction=', answerAction,
       '&webrtc=', compUser.isExtenWebrtc(data.dialingExten),
@@ -874,12 +946,8 @@ function sendCallNotificationEvent(username, data, socket) {
       action: 'open',
       closetimeout: notifCloseTimeout
     };
-    socket.write(JSON.stringify(notif), ENCODING, function () {
-      try {
-        logger.log.info(IDLOG, 'sent "' + EVT_NOTIFICATION + '" evt to open call notification to ' + socket.username + ' with socket.id ' + socket.id);
-      } catch (err1) {
-        logger.log.error(IDLOG, err1.stack);
-      }
+    socketSend(socket, notif, function () {
+      logger.log.info(IDLOG, 'sent "' + EVT_NOTIFICATION + '" evt to open call notification to ' + socket.username + ' with socket.id ' + socket.id);
     });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -899,12 +967,8 @@ function sendColorLed(username, color, socket) {
   try {
     var notif = {};
     notif[EVT_COLOR_LED] = color;
-    socket.write(JSON.stringify(notif), ENCODING, function () {
-      try {
-        logger.log.info(IDLOG, 'sent "' + EVT_COLOR_LED + '" evt to set led color to ' + socket.username + ' with socket.id ' + socket.id);
-      } catch (err1) {
-        logger.log.error(IDLOG, err1.stack);
-      }
+    socketSend(socket, notif, function () {
+      logger.log.info(IDLOG, 'sent "' + EVT_COLOR_LED + '" evt to set led color to ' + socket.username + ' with socket.id ' + socket.id);
     });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -924,13 +988,9 @@ function sendCallConnectedNotificationEvent(username, data, socket) {
   try {
     var evt = {};
     evt[EVT_EXTEN_CONNECTED] = data.num1;
-    socket.write(JSON.stringify(evt), ENCODING, function () {
-      try {
-        logger.log.info(IDLOG, 'sent "' + EVT_EXTEN_CONNECTED + '" evt between "' + data.num1 + '" and "' + data.num2 +
-          '" to close call notification to ' + socket.username + ' with socket.id ' + socket.id);
-      } catch (err1) {
-        logger.log.error(IDLOG, err1.stack);
-      }
+    socketSend(socket, evt, function () {
+      logger.log.info(IDLOG, 'sent "' + EVT_EXTEN_CONNECTED + '" evt between "' + data.num1 + '" and "' + data.num2 +
+        '" to close call notification to ' + socket.username + ' with socket.id ' + socket.id);
     });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -950,13 +1010,9 @@ function sendHangupNotificationEvent(username, data, socket) {
   try {
     var evt = {};
     evt[EVT_EXTEN_HANGUP] = data.channelExten;
-    socket.write(JSON.stringify(evt), ENCODING, function () {
-      try {
-        logger.log.info(IDLOG, 'sent "' + EVT_EXTEN_HANGUP + '" evt for exten "' + data.channelExten +
-          '" to close call notification to ' + socket.username + ' with socket.id ' + socket.id);
-      } catch (err1) {
-        logger.log.error(IDLOG, err1.stack);
-      }
+    socketSend(socket, evt, function () {
+      logger.log.info(IDLOG, 'sent "' + EVT_EXTEN_HANGUP + '" evt for exten "' + data.channelExten +
+        '" to close call notification to ' + socket.username + ' with socket.id ' + socket.id);
     });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1363,12 +1419,8 @@ function pingHdlr(socket) {
     }
     var data = {};
     data[EVT_PING] = 'active';
-    socket.write(JSON.stringify(data), ENCODING, function () {
-      try {
-        logger.log.info(IDLOG, 'sent "' + EVT_PING + '" evt response "active" to ping request to ' + socket.username + ' with socket.id ' + socket.id);
-      } catch (err1) {
-        logger.log.error(IDLOG, err1.stack);
-      }
+    socketSend(socket, data, function () {
+      logger.log.info(IDLOG, 'sent "' + EVT_PING + '" evt response "active" to ping request to ' + socket.username + ' with socket.id ' + socket.id);
     });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1389,12 +1441,8 @@ function sendNotificationSupportedCommands(socket) {
     }
     var cmds = {};
     cmds[EVT_COMMANDS] = notifSupportedCommands;
-    socket.write(JSON.stringify(cmds), ENCODING, function () {
-      try {
-        logger.log.info(IDLOG, 'sent "' + EVT_COMMANDS + '" evt notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
-      } catch (err1) {
-        logger.log.error(IDLOG, err1.stack);
-      }
+    socketSend(socket, cmds, function () {
+      logger.log.info(IDLOG, 'sent "' + EVT_COMMANDS + '" evt notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
     });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1419,13 +1467,8 @@ function sendResetNotificationSupportedCommands(socket) {
       type: 'commands',
       commands: notifSupportedCommands
     };
-    socket.write(JSON.stringify(obj), ENCODING, function () {
-      try {
-        logger.log.info(IDLOG, 'sent reset notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
-
-      } catch (err1) {
-        logger.log.error(IDLOG, err1.stack);
-      }
+    socketSend(socket, obj, function () {
+      logger.log.info(IDLOG, 'sent reset notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
     });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1498,13 +1541,8 @@ function addSocket(socket) {
  */
 function send401(socket) {
   try {
-    socket.write('401', ENCODING, function () {
-      try {
-        logger.log.info(IDLOG, 'sent 401 unauthorized to ' + getClientSocketEndpoint(socket));
-
-      } catch (err1) {
-        logger.log.error(IDLOG, err1.stack);
-      }
+    socketSend(socket, '401', function () {
+      logger.log.info(IDLOG, 'sent 401 unauthorized to ' + getClientSocketEndpoint(socket));
     });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1520,17 +1558,8 @@ function send401(socket) {
  */
 function sendAutheSuccess(socket) {
   try {
-    var data = {
-      message: 'authe_ok'
-    };
-
-    socket.write(JSON.stringify(data), ENCODING, function () {
-      try {
-        logger.log.info(IDLOG, 'sent authorized successfully to ' + socket.username + ' with socket.id ' + socket.id);
-
-      } catch (err1) {
-        logger.log.error(IDLOG, err1.stack);
-      }
+    socketSend(socket, { message: 'authe_ok' }, function () {
+      logger.log.info(IDLOG, 'sent authorized successfully to ' + socket.username + ' with socket.id ' + socket.id);
     });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);

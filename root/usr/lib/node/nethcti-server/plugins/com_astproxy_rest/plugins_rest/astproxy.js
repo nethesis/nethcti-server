@@ -331,6 +331,7 @@ var compConfigManager;
         * 1. [`astproxy/unmute_record`](#unmute_recordpost)
         * 1. [`astproxy/start_spy`](#start_spypost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
+        * 1. [`astproxy/hangup_mainexten`](#hangup_mainextenpost)
         * 1. [`astproxy/pickup_qwaitcaller`](#pickup_qwaitcallerpost)
         * 1. [`astproxy/queuemember_add`](#queuemember_addpost)
         * 1. [`astproxy/inout_dyn_queues`](#inout_dyn_queuespost)
@@ -429,6 +430,20 @@ var compConfigManager;
         * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointId": "214" }
+        *
+        * ---
+        *
+        * ### <a id="hangup_mainextenpost">**`astproxy/hangup_mainexten`**</a>
+        *
+        * Hangup all calls of main extension and so even of the secondary extensions. The user can hangup
+        * only if he has the appropriate permission, otherwise he can hangup only his main extension. The
+        * request must contains the following parameters:
+        *
+        * * `exten: the main extension identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "exten": "214" }
         *
         * ---
         *
@@ -898,6 +913,7 @@ var compConfigManager;
          *   @param {string} hangup_userconf       Hangup a user of a meetme conference
          *   @param {string} queuemember_add       Adds the specified extension to the queue
          *   @param {string} inout_dyn_queues      Alternates the logon and logout of the extension in all the queues for which it's a dynamic member
+         *   @param {string} hangup_mainexten      Hangup all conversations of the main extension
          *   @param {string} queuemember_pause     Pause the specified extension from receive calls from the queue
          *   @param {string} pickup_qwaitcaller    Pickup a waiting caller from a queue
          *   @param {string} queuemember_remove    Removes the specified extension from the queue
@@ -942,6 +958,7 @@ var compConfigManager;
           'unmute_userconf',
           'hangup_userconf',
           'queuemember_add',
+          'hangup_mainexten',
           'inout_dyn_queues',
           'queuemember_pause',
           'pickup_qwaitcaller',
@@ -2328,6 +2345,58 @@ var compConfigManager;
             compUtil.net.sendHttp400(IDLOG, res);
           }
 
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * Hangup all the conversations of the main extension and so even the associated seconday extensions
+       * with the following REST API:
+       *
+       *     POST hangup_mainexten
+       *
+       * @method hangup_mainexten
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      hangup_mainexten: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+
+          if (typeof req.params !== 'object' || typeof req.params.exten !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+          // check if the user has the authorization to hangup every calls
+          if (compAuthorization.authorizeAdminHangupUser(username) === true) {
+            logger.log.info(IDLOG, 'hangup main exten "' + req.params.exten + '": authorization admin hangup successful for user "' + username + '"');
+          }
+          // check if the endpoint of the request is owned by the user
+          else if (compAuthorization.verifyUserEndpointExten(username, req.params.exten) !== true) {
+            logger.log.warn(IDLOG, 'hangup main exten "' + req.params.exten + '" by user "' + username + '" has been failed: ' +
+              ' the ' + req.params.exten + ' is not owned by the user');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          } else {
+            logger.log.info(IDLOG, 'hangup main exten "' + req.params.exten + '": is owned by "' + username + '"');
+          }
+          compAstProxy.hangupMainExtension(req.params.exten, function (err, response) {
+            try {
+              if (err) {
+                logger.log.warn(IDLOG, 'hangup main exten ' + req.params.exten + ' by user "' + username + '" has been failed');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
+              }
+              logger.log.info(IDLOG, 'main exten ' + req.params.exten + ' has been hangup successfully by user "' + username + '"');
+              compUtil.net.sendHttp200(IDLOG, res);
+            } catch (error) {
+              logger.log.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -4482,6 +4551,7 @@ var compConfigManager;
     exports.setCompAstProxy = setCompAstProxy;
     exports.queuemember_add = astproxy.queuemember_add;
     exports.remote_prefixes = astproxy.remote_prefixes;
+    exports.hangup_mainexten = astproxy.hangup_mainexten;
     exports.inout_dyn_queues = astproxy.inout_dyn_queues;
     exports.remote_extensions = astproxy.remote_extensions;
     exports.queuemember_pause = astproxy.queuemember_pause;
