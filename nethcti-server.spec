@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.7.11
+Version: 2.7.12
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -57,6 +57,10 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Tue Jan 09 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.12-1
+- login fail after migration - nethesis/dev#5277
+- fix sms send date - nethesis/dev#5249
+
 * Tue Sep 05 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.11-1
 - fix query of queue lost calls
 - add support for dnd toggle (*76 using phone)
