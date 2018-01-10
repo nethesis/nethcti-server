@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.6.10
+Version: 2.6.11
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -61,6 +61,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Wed Jan 10 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.11-1
+- dbconn history sms: fix date. nethesis/dev#5249
+
 * Tue Sep 05 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.10-1
 - fix query of queue lost calls
 - add support for dnd toggle (*76 using phone)
