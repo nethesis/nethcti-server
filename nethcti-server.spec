@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.4
+Version: 3.0.5
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,17 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Jan 10 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.5-1
+- disable multiple login of the same type (desktop/mobile) - nethesis/5248
+- add profiling component - nethesis/5271
+- add layer to set nethifier led color
+- add support for nethifier streaming popup - nethesis/dev#5265
+- better doc for tcp events
+- nethifier: temporary disable actions when use webrtc
+- spec: sign streaming.json as config
+- intrude does not work on some scenario - nethesis/5262
+- restapi: add doc of user/presence get
+
 * Thu Nov 30 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.4-1
 - new service offhour with mp3 & wav audio announcements for routes - nethesis/dev#5211
 - support call to not clean phone numbers (e.g. with empty space) - nethesis/dev#5225
