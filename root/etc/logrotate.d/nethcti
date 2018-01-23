@@ -3,7 +3,7 @@
    rotate 10
    compress
    weekly
-   create 0644 asterisk asterisk
+   create 0640 asterisk asterisk
    postrotate
        /usr/bin/systemctl reload nethcti-server &> /dev/null
    endscript
