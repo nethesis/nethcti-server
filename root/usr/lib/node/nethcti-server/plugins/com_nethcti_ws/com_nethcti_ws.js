@@ -1200,7 +1200,9 @@ function extenChanged(exten) {
       }
 
       extJson.username = compUser.getUserUsingEndpointExtension(exten.getExten());
-      wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, extJson);
+      if (wsServer.sockets.sockets[sockid]) {
+        wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, extJson);
+      }
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -2077,7 +2079,6 @@ function doLogin(socket, obj) {
 function disconnHdlr(socket) {
   try {
     logger.log.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket));
-
     var username;
     // when the user is not authenticated but connected by websocket,
     // the "socket.id" is not present in the "wsid" property
@@ -2147,12 +2148,13 @@ function removeWebsocketId(socketId) {
  */
 function addWebsocketId(user, token, socketId) {
   try {
-    wsid[socketId] = {
-      username: user,
-      token: token
-    };
-    logger.log.info(IDLOG, 'added client websocket identifier ' + socketId + ' for user ' + user + ' with token ' + token);
-
+    if (wsServer.sockets.sockets[socketId]) {
+      wsid[socketId] = {
+        username: user,
+        token: token
+      };
+      logger.log.info(IDLOG, 'added client websocket identifier ' + socketId + ' for user ' + user + ' with token ' + token);
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }

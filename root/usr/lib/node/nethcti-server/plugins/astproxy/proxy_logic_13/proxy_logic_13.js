@@ -3691,10 +3691,6 @@ function addConversationToExten(exten, resp, chid) {
       // add the created conversation to the extension
       extensions[exten].addConversation(conv);
       logger.log.info(IDLOG, 'the conversation ' + convid + ' has been added to exten ' + exten);
-
-    } else {
-      logger.log.warn(IDLOG, 'try to add new conversation to a non existent extension ' + exten +
-        ' or no bridgedChannel present');
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
