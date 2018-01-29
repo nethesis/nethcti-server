@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.5
+Version: 3.0.6
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,10 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Jan 29 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.6-1
+- Sporadic error in websocket send - nethesis/dev#5299
+- Logrotate: fix permissions - nethesis/dev#5411
+
 * Wed Jan 10 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.5-1
 - disable multiple login of the same type (desktop/mobile) - nethesis/5248
 - add profiling component - nethesis/5271
