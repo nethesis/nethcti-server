@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.6
+Version: 3.0.7
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,10 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu Feb 01 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.7-1
+- Calling numbers that start or end with * and/or # does not work - nethesis/dev#5312
+- Add .travis.yml
+
 * Mon Jan 29 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.6-1
 - Sporadic error in websocket send - nethesis/dev#5299
 - Logrotate: fix permissions - nethesis/dev#5411
