@@ -445,6 +445,35 @@ function deleteUserSettings(username, cb) {
 }
 
 /**
+ * Delete a single user setting.
+ *
+ * @method deleteUserSetting
+ * @param {string} username The username
+ * @param {string} prop The setting property to be deleted
+ * @param {function} cb The callback function
+ */
+function deleteUserSetting(username, prop, cb) {
+  try {
+    if (typeof username !== 'string' || typeof prop !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.USER_SETTINGS].destroy({
+      where: ['username=? AND key_name=?', username, prop]
+    }).then(function(numdel) {
+      logger.log.info(IDLOG, 'deleted "' + prop + '" setting of user "' + username + '"');
+      cb();
+    }, function(err1) { // manage the error
+      logger.log.error(IDLOG, 'deleting "' + prop + '" setting of user "' + username + '" : ' + err1.toString());
+      cb(err1.toString());
+    });
+    compDbconnMain.incNumExecQueries();
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Save the user settings. The settings are saved in mysql table _user\_settings_.
  * If the settings are already present, they will be updated.
  *
@@ -587,6 +616,7 @@ function getAllUsersSettings(cb) {
 apiList.getUserSettings = getUserSettings;
 apiList.getAllUsersSettings = getAllUsersSettings;
 apiList.saveUserSettings = saveUserSettings;
+apiList.deleteUserSetting = deleteUserSetting;
 apiList.deleteUserSettings = deleteUserSettings;
 apiList.saveUserNotifySetting = saveUserNotifySetting;
 apiList.saveUserAutoQueueLogin = saveUserAutoQueueLogin;

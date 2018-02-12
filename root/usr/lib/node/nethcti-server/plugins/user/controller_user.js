@@ -2678,6 +2678,38 @@ function deleteSettings(username, cb) {
 }
 
 /**
+ * Delete a single user setting from the database.
+ *
+ * @method deleteSetting
+ * @param {string} username The username
+ * @param {string} prop The property to be deleted
+ * @param {function} cb The callback function
+ */
+function deleteSetting(username, prop, cb) {
+  try {
+    if (typeof username !== 'string' || typeof prop !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (typeof users[username] !== 'object') {
+      var msg = 'deleting user setting "' + prop + '": user "' + username + '" does not exist';
+      logger.log.warn(IDLOG, msg);
+      cb(msg);
+      return;
+    }
+    compDbconn.deleteUserSetting(username, prop, function (err) {
+      cb(err);
+      // if deleted prop is "avatar" an event is emitted
+      if (!err && prop === 'avatar') {
+        logger.log.info(IDLOG, 'emit event "' + EVT_USER_PROFILE_AVATAR_CHANGED + '"');
+        emitter.emit(EVT_USER_PROFILE_AVATAR_CHANGED, { username: username });
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Save the user settings into the database.
  *
  * @method saveSettings
@@ -2757,6 +2789,7 @@ exports.getUsernames = getUsernames;
 exports.isUserPresent = isUserPresent;
 exports.isExtenWebrtc = isExtenWebrtc;
 exports.setCompDbconn = setCompDbconn;
+exports.deleteSetting = deleteSetting;
 exports.deleteSettings = deleteSettings;
 exports.getUserSettings = getUserSettings;
 exports.getUserInfoJSON = getUserInfoJSON;
