@@ -998,10 +998,7 @@ function evtUserPresenceChanged(evt) {
  */
 function evtUserProfileAvatarChanged(evt) {
   try {
-    if (typeof evt !== 'object' ||
-      typeof evt.username !== 'string' ||
-      typeof evt.avatar !== 'string') {
-
+    if (typeof evt !== 'object' || typeof evt.username !== 'string') {
       throw new Error('wrong parameter: ' + JSON.stringify(arguments));
     }
     logger.log.info(IDLOG, 'received event "' + compUser.EVT_USER_PROFILE_AVATAR_CHANGED + '" for user ' + evt.username);

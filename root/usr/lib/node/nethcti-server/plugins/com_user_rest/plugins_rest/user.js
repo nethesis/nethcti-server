@@ -511,14 +511,24 @@ function setCompUtil(comp) {
      *
      * # DELETE requests
      *
-     * 1. [`user/settings`](#settingspost)
+     * 1. [`user/settings`](#settingsdelete)
+     * 1. [`user/setting/:prop`](#settingdelete)
      *
      * ---
      *
-     * ### <a id="#settingspost">**`user/settings`**</a>
+     * ### <a id="#settingsdelete">**`user/settings`**</a>
      *
      * Delete all the user settings.
      *
+     * ### <a id="#settingdelete">**`user/setting/:prop`**</a>
+     *
+     * Delete the setting property of the user. The request must contain the following parameters:
+     *
+     * * `prop: the setting property to be deleted. It can be a key set with "user/settings" POST api`
+     *
+     * Example JSON request parameters:
+     *
+     *     { "prop": "avatar" }
      *
      * @class plugin_rest_user
      * @static
@@ -584,8 +594,12 @@ function setCompUtil(comp) {
          * @type {array}
          *
          *   @param {string} settings Delete all user settings
+         *   @param {string} setting/:prop Delete a single user setting
          */
-        'del': ['settings']
+        'del': [
+          'settings',
+          'setting/:prop'
+        ]
       },
 
       /**
@@ -869,13 +883,14 @@ function setCompUtil(comp) {
       },
 
       /**
-       * Save the user settings by the following REST API:
+       * Save/Delete the user settings by the following REST API:
        *
-       *     settings
+       *     POST settings
+       *     DELETE settings
        *
        * @method settings
-       * @param {object}   req  The client request
-       * @param {object}   res  The client response
+       * @param {object} req The client request
+       * @param {object} res The client response
        * @param {function} next Function to run the next handler in the chain
        */
       settings: function(req, res, next) {
@@ -887,6 +902,41 @@ function setCompUtil(comp) {
           } else {
             logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
           }
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * Delete a single user setting by the following REST API:
+       *
+       *     DELETE setting
+       *
+       * @method settings
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      setting: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          var prop = req.params.prop;
+
+          compUser.deleteSetting(username, prop, function(err) {
+            try {
+              if (err) {
+                logger.log.error(IDLOG, 'deleting setting "' + prop + '" for user "' + username + '"');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+              } else {
+                logger.log.info(IDLOG, 'deleted setting "' + prop + '" for user "' + username + '"');
+                compUtil.net.sendHttp200(IDLOG, res);
+              }
+            } catch (error) {
+              logger.log.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -964,6 +1014,7 @@ function setCompUtil(comp) {
 
     exports.me = user.me;
     exports.api = user.api;
+    exports.setting = user.setting;
     exports.presence = user.presence;
     exports.settings = user.settings;
     exports.setLogger = setLogger;

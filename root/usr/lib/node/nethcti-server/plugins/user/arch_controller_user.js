@@ -45,6 +45,7 @@ module.exports = function(options, imports, register) {
       isUserPresent: controllerUser.isUserPresent,
       isExtenWebrtc: controllerUser.isExtenWebrtc,
       setCompDbconn: controllerUser.setCompDbconn,
+      deleteSetting: controllerUser.deleteSetting,
       deleteSettings: controllerUser.deleteSettings,
       getUserSettings: controllerUser.getUserSettings,
       getUserInfoJSON: controllerUser.getUserInfoJSON,
