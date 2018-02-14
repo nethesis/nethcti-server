@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.7
+Version: 3.0.8
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Feb 14 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.8-1
+- NethCTI 3: add the possibility to remove customized avatar image (re-setting it to default) - nethesis/dev#5330
+
 * Thu Feb 01 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.7-1
 - Calling numbers that start or end with * and/or # does not work - nethesis/dev#5312
 - Add .travis.yml
