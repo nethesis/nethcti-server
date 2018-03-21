@@ -4,7 +4,7 @@
  * @class arch_astproxy
  */
 var astProxy = require('./astproxy');
-// var queueRecallingManager = require('./queue_recalling_manager');
+var queueRecallingManager = require('./queue_recalling_manager');
 
 /**
  * The module identifier used by the logger.
@@ -132,10 +132,10 @@ module.exports = function(options, imports, register) {
       isExtenCfuVm: astProxy.proxyLogic.isExtenCfuVm,
       setDnd: astProxy.proxyLogic.setDnd,
       isExtenDnd: astProxy.proxyLogic.isExtenDnd,
-      isAutoC2CEnabled: astProxy.proxyLogic.isAutoC2CEnabled
-        // getQueueRecallData: queueRecallingManager.getQueueRecallData,
-        // getQueueRecallInfo: queueRecallingManager.getQueueRecallInfo,
-        // checkQueueRecallingStatus: queueRecallingManager.checkQueueRecallingStatus
+      isAutoC2CEnabled: astProxy.proxyLogic.isAutoC2CEnabled,
+      getQueueRecallData: queueRecallingManager.getQueueRecallData,
+      getQueueRecallInfo: queueRecallingManager.getQueueRecallInfo,
+      checkQueueRecallingStatus: queueRecallingManager.checkQueueRecallingStatus
     }
   });
 
@@ -151,9 +151,9 @@ module.exports = function(options, imports, register) {
     // astProxy.proxyLogic.setCompPhonebook(imports.phonebook);
     // astProxy.proxyLogic.setCompCallerNote(imports.callerNote);
     astProxy.start();
-    // queueRecallingManager.setLogger(logger.ctilog);
-    // queueRecallingManager.setCompAstProxy(astProxy);
-    // queueRecallingManager.setCompDbconn(imports.dbconn);
+    queueRecallingManager.setLogger(logger.ctilog);
+    queueRecallingManager.setCompAstProxy(astProxy);
+    queueRecallingManager.setCompDbconn(imports.dbconn);
     // });
   } catch (err) {
     logger.ctilog.log.error(err.stack);
