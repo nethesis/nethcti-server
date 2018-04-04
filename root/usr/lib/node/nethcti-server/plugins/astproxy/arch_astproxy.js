@@ -59,6 +59,7 @@ module.exports = function(options, imports, register) {
       isExten: astProxy.proxyLogic.isExten,
       hangupChannel: astProxy.proxyLogic.hangupChannel,
       hangupConversation: astProxy.proxyLogic.hangupConversation,
+      hangupMainExtension: astProxy.proxyLogic.hangupMainExtension,
       forceHangupConversation: astProxy.proxyLogic.forceHangupConversation,
       startRecordConversation: astProxy.proxyLogic.startRecordConversation,
       stopRecordConversation: astProxy.proxyLogic.stopRecordConversation,

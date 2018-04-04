@@ -57,10 +57,8 @@ var IDLOG = '[hangup]';
             *
             * @method execute
             * @param {object} am Asterisk manager to send the action
-            * @param {object} args The object contains optional parameters
-            * passed to _doCmd_ method of the ast_proxy component
-            * @param {function} cb The callback function called at the end
-            * of the command
+            * @param {object} args The object contains optional parameters passed to _doCmd_ method of the ast_proxy component
+            * @param {function} cb The callback function called at the end of the command
             * @static
             */
             execute: function (am, args, cb) {
@@ -96,18 +94,13 @@ var IDLOG = '[hangup]';
             data: function (data) {
                 try {
                     // check callback and info presence and execute it
-                    if (map[data.actionid] &&
-                        data.response === 'Success') {
-
+                    if (map[data.actionid] && data.response === 'Success') {
                         map[data.actionid](null);
 
-                    } else if (map[data.actionid] &&
-                               data.message       &&
-                               data.response === 'Error') {
-
+                    } else if (map[data.actionid] && data.message && data.response === 'Error') {
                         map[data.actionid](new Error(data.message));
 
-                    } else {
+                    } else if (map[data.actionid]) {
                         map[data.actionid](new Error('error'));
                     }
                     delete map[data.actionid]; // remove association ActionID-callback

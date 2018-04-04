@@ -174,7 +174,7 @@
 
             var argCtiCCUrl = params.ctiProto + '://' + window.location.hostname +
                 (window.location.port ? ':' + window.location.port : '') +
-                '/cti/#/customerCard/search/' + params.callerNum;
+                '/cti/#/customercard/' + params.callerNum;
 
             // Open browser only if not webrtc
             if (!(params.webrtc === 'true')) {
@@ -191,9 +191,6 @@
             // Hide customer card button if webrtc
             if (params.webrtc === 'true') {
                 $('#customer-card-button').hide();
-
-                // temporary hide: to re-enable when actions will be implemented
-                $('.call-actions').hide();
             }
 
             // Handle Hangup button click
@@ -203,11 +200,7 @@
                     window.location.protocol,
                     window.location.hostname,
                     window.location.port ? ':' + window.location.port : '',
-                    '/webrest/astproxy/hangup_channel', {
-                        channel: params.channel,
-                        endpointType: 'extension',
-                        endpointId: params.dialExten
-                    }
+                    '/webrest/astproxy/hangup_mainexten', { exten: params.mainExten }
                 );
             });
 

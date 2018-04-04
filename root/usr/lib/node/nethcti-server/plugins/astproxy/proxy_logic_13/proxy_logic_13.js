@@ -6506,6 +6506,40 @@ function isExtenInMeetmeConf(ownerExtenId) {
 }
 
 /**
+ * Hangup all the conversations of the main extensions and so event all of the
+ * associated secondary extensions.
+ *
+ * @method hangupMainExtension
+ * @param {string} endpointId The main extension identifier
+ * @param {function} cb The callback function
+ */
+function hangupMainExtension(endpointId, cb) {
+  try {
+    if (typeof endpointId !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var err;
+    if (extensions[endpointId]) {
+      logger.log.info(IDLOG, 'execute hangup of main exten "' + endpointId + '"');
+      astProxy.doCmd({
+        command: 'hangup',
+        channel: '/^PJSIP/[0123456789]*' + endpointId + '-/'
+      }, function (err) {
+        cb(err);
+        hangupConvCb(err);
+      });
+    } else {
+      err = 'try to hangup main extension for the non existent endpoint ' + endpointId;
+      logger.log.warn(IDLOG, err);
+      cb(err);
+    }
+  } catch (e) {
+    logger.log.error(IDLOG, e.stack);
+    cb(e);
+  }
+}
+
+/**
  * Hangup the conversation of the endpoint.
  *
  * @method hangupConversation
@@ -9137,6 +9171,7 @@ exports.evtNewExternalCall = evtNewExternalCall;
 exports.pickupConversation = pickupConversation;
 exports.evtExtenDndChanged = evtExtenDndChanged;
 exports.muteUserMeetmeConf = muteUserMeetmeConf;
+exports.hangupMainExtension = hangupMainExtension;
 exports.EVT_EXTEN_CONNECTED = EVT_EXTEN_CONNECTED;
 exports.isExtenInMeetmeConf = isExtenInMeetmeConf;
 exports.evtRemoveMeetmeConf = evtRemoveMeetmeConf;
