@@ -2779,26 +2779,20 @@ var compConfigManager;
           }
           // check if the endpoint of the request is owned by the user
           else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
-
             logger.log.warn(IDLOG, 'blind transfer convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
               ' the ' + req.params.endpointId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
-            return;
 
+            return;
           } else {
             logger.log.info(IDLOG, 'blind transfer convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           }
-
           logger.log.info(IDLOG, 'user "' + username + '" blind transfer convid "' + req.params.convid + '" of extension "' + req.params.endpointId + '"');
 
-          // var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
-          var extForCtx = req.params.endpointId;
-
-          compAstProxy.redirectConversation(
+          compAstProxy.blindTransferConversation(
             req.params.endpointId,
             req.params.convid,
             req.params.to,
-            extForCtx,
             function (err) {
               try {
                 if (err) {

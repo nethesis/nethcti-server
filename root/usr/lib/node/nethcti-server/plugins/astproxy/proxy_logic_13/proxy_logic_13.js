@@ -591,6 +591,15 @@ var staticDataQueues = {};
 var featureCodes = {};
 
 /**
+ * Context used for blind transfer.
+ *
+ * @property blindTransferContext
+ * @type string
+ * @private
+ */
+var blindTransferContext;
+
+/**
  * All trunks. The key is the trunk number and the value
  * is the _Trunk_ object.
  *
@@ -1039,6 +1048,21 @@ function setStaticDataQueues(obj) {
 }
 
 /**
+ * Set the context used for blind transfer.
+ *
+ * @method setBlindTransferContext
+ * @param {string} ctx The context for blind transfer
+ * @static
+ */
+function setBlindTransferContext(ctx) {
+  try {
+    blindTransferContext = ctx;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Set the asterisk feature codes read from JSON configuration file.
  *
  * @method setFeatureCodes
@@ -1138,6 +1162,7 @@ function reset() {
     staticDataTrunks = {};
     staticDataQueues = {};
     featureCodes = {};
+    blindTransferContext = undefined;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -6686,7 +6711,25 @@ function redirectConvCb(err) {
     } else {
       logger.log.info(IDLOG, 'redirect channel succesfully');
     }
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
 
+/**
+ * This is the callback of _blindTransfer_ command plugin.
+ *
+ * @method blindTransferConvCb
+ * @param {object} err The error object of the operation
+ * @private
+ */
+function blindTransferConvCb(err) {
+  try {
+    if (err) {
+      logger.log.error(IDLOG, 'blind transfer conversation failed: ' + err.toString());
+    } else {
+      logger.log.info(IDLOG, 'blind transfer channel successfully');
+    }
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
   }
@@ -6706,7 +6749,6 @@ function attendedTransferConvCb(err) {
     } else {
       logger.log.info(IDLOG, 'attended transfer channel successfully');
     }
-
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
   }
@@ -7127,6 +7169,66 @@ function redirectParking(parking, to, extForCtx, cb) {
 
     } else {
       var msg = 'redirecting parked caller of parking ' + parking + ' to ' + to + ': non existent parking ' + parking;
+      logger.log.warn(IDLOG, msg);
+      cb(msg);
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Blind transfer the conversation.
+ *
+ * @method blindTransferConversation
+ * @param {string} extension The endpoint identifier (e.g. the extension number)
+ * @param {string} convid The conversation identifier
+ * @param {string} to The destination number to redirect the conversation
+ * @param {function} cb The callback function
+ */
+function blindTransferConversation(extension, convid, to, cb) {
+  try {
+    if (typeof convid !== 'string' || typeof cb !== 'function' ||
+      typeof to !== 'string' || typeof extension !== 'string') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var msg;
+    if (extensions[extension]) {
+      var convs = extensions[extension].getAllConversations();
+      var conv = convs[convid];
+      if (!conv) {
+        msg = 'blind transfer convid "' + convid + '": no conversation present in extension ' + extension;
+        logger.log.warn(IDLOG, msg);
+        cb(msg);
+        return;
+      }
+      var chSource = conv.getSourceChannel();
+      var channel = chSource.getChannel();
+      var bridgedChannel = chSource.getBridgedChannel();
+      // blind transfer is only possible on own calls. So when the extension is the caller, the
+      // channel to transfer is the source channel, otherwise it is the destination channel
+      var chToTransfer = utilChannel13.extractExtensionFromChannel(channel) === extension ? channel : bridgedChannel;
+
+      if (chToTransfer !== undefined) {
+        logger.log.info(IDLOG, 'blind transfer channel ' + chToTransfer + ' of exten ' + extension + ' to ' + to);
+        astProxy.doCmd({
+          command: 'blindTransfer',
+          chToTransfer: chToTransfer,
+          context: blindTransferContext,
+          to: to
+        }, function (err) {
+          cb(err);
+          blindTransferConvCb(err);
+        });
+      } else {
+        msg = 'blind transfer: no channel to transfer ' + chToTransfer;
+        logger.log.error(IDLOG, msg);
+        cb(msg);
+      }
+    } else {
+      msg = 'blind transfer conversation: extension ' + extension + ' not present';
       logger.log.warn(IDLOG, msg);
       cb(msg);
     }
@@ -9151,6 +9253,7 @@ exports.getJSONExtensions = getJSONExtensions;
 exports.setCompCallerNote = setCompCallerNote;
 exports.queueMemberRemove = queueMemberRemove;
 exports.EVT_EXTEN_CHANGED = EVT_EXTEN_CHANGED;
+exports.setBlindTransferContext = setBlindTransferContext;
 exports.EVT_EXTEN_CF_CHANGED = EVT_EXTEN_CF_CHANGED;
 exports.EVT_EXTEN_CFB_CHANGED = EVT_EXTEN_CFB_CHANGED;
 exports.EVT_EXTEN_CFU_CHANGED = EVT_EXTEN_CFU_CHANGED;
@@ -9218,6 +9321,7 @@ exports.unmuteRecordConversation = unmuteRecordConversation;
 exports.isDynMemberLoggedInQueue = isDynMemberLoggedInQueue;
 exports.EVT_UPDATE_VOICE_MESSAGES = EVT_UPDATE_VOICE_MESSAGES;
 exports.startSpySpeakConversation = startSpySpeakConversation;
+exports.blindTransferConversation = blindTransferConversation;
 exports.evtConversationInfoChanged = evtConversationInfoChanged;
 exports.startSpyListenConversation = startSpyListenConversation;
 exports.evtUpdateVoicemailMessages = evtUpdateVoicemailMessages;
