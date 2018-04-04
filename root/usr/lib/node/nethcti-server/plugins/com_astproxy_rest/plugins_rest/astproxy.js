@@ -1657,6 +1657,7 @@ var compConfigManager;
           }
 
           var queues = compUser.getQueueIds(username);
+          var authorizedQueues = [];
           if (queues.length === 0) {
             logger.log.warn(IDLOG, 'getting recall of queues of the user: user "' + username + '" do not belong to any queue');
           }
@@ -1665,11 +1666,11 @@ var compConfigManager;
               logger.log.warn(IDLOG, 'requesting last #' + req.params.hours + ' hours ' +
                 'recalls info of queues "' + req.params.qids + '": authorization failed for user "' +
                 username + '" who does not belong to queue "' + qids[i] + '"');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
+            } else {
+              authorizedQueues.push(qids[i]);
             }
           }
-          compAstProxy.getQueueRecallData(req.params.hours, qids, function (err, results) {
+          compAstProxy.getQueueRecallData(req.params.hours, authorizedQueues, function (err, results) {
             try {
               if (err) { throw err; }
 
