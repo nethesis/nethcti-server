@@ -39,6 +39,7 @@ module.exports = function(options, imports, register) {
       setLogger: controllerUser.setLogger,
       setPresence: controllerUser.setPresence,
       getPresence: controllerUser.getPresence,
+      getQueueIds: controllerUser.getQueueIds,
       EVT_RELOADED: controllerUser.EVT_RELOADED,
       saveSettings: controllerUser.saveSettings,
       getUsernames: controllerUser.getUsernames,

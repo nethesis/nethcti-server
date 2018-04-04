@@ -394,16 +394,20 @@ function authorizeRecordingUser(username) {
  */
 function authorizeLostQueueCallsUser(username) {
   try {
-    // check parameter
     if (typeof username !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.lost_queue_calls, username);
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.queue_agent.value === true &&
+      profiles[profid].macro_permissions.queue_agent.permissions.lost_queue_call.value === true
+    );
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
-    // in the case of exception it returns false for security reasons
     return false;
   }
 }

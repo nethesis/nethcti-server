@@ -1776,6 +1776,37 @@ function getEndpointVoicemail(username) {
 }
 
 /**
+ * Returns the identifiers of the queues to which the user belongs.
+ *
+ * @method getQueueIds
+ * @param {string} username The username
+ * @return {array} The queue identifiers of the user.
+ * @private
+ */
+function getQueueIds(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var exts = Object.keys(getAllEndpointsExtension(username));
+    var queues = [];
+    var arr;
+    for (var i = 0; i < exts.length; i++) {
+      arr = Object.keys(compAstProxy.getQueueIdsOfExten(exts[i]));
+      for (var k = 0; k < arr.length; k++) {
+        if (queues.indexOf() === -1) {
+          queues.push(arr[k]);
+        }
+      }
+    }
+    return queues;
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Update the user presence.
  *
  * @method updateUserPresence
@@ -2783,6 +2814,7 @@ exports.reload = reload;
 exports.setLogger = setLogger;
 exports.setPresence = setPresence;
 exports.getPresence = getPresence;
+exports.getQueueIds = getQueueIds;
 exports.EVT_RELOADED = EVT_RELOADED;
 exports.saveSettings = saveSettings;
 exports.getUsernames = getUsernames;
