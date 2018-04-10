@@ -127,7 +127,7 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
       return;
     }
 
-    if (compDbconnMain.dbConfigCustCardData[dbConnId].type === 'mysql') {
+    if ((compDbconnMain.getDbConfigCustCardData())[dbConnId].type === 'mysql') {
 
       // escape of the number
       num = compDbconnMain.dbConnCustCard[dbConnId].getQueryInterface().escape(num); // e.g. num = '123456'
@@ -149,7 +149,7 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
         cb(err1.toString());
       });
 
-    } else if (compDbconnMain.dbConfigCustCardData[dbConnId].type === 'postgres') {
+    } else if ((compDbconnMain.getDbConfigCustCardData())[dbConnId].type === 'postgres') {
 
       query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$NUMBER/g, num);
       compDbconnMain.dbConnCustCard[dbConnId].query(query, function(err2, results) {
@@ -165,7 +165,7 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
         }
       });
 
-    } else if (compDbconnMain.isMssqlType(compDbconnMain.dbConfigCustCardData[dbConnId].type)) {
+    } else if (compDbconnMain.isMssqlType((compDbconnMain.getDbConfigCustCardData())[dbConnId].type)) {
 
       var request = new mssql.Request(compDbconnMain.dbConnCustCard[dbConnId]);
       query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$NUMBER/g, num);
@@ -338,7 +338,7 @@ function getCustomerCardPreview(query, dbConnId, templateName, cb) {
       return;
     }
 
-    if (compDbconnMain.dbConfigCustCardData[dbConnId].type === 'mysql') {
+    if ((compDbconnMain.getDbConfigCustCardData())[dbConnId].type === 'mysql') {
 
       compDbconnMain.dbConnCustCard[dbConnId].query(query).then(function(results) {
 
@@ -351,7 +351,7 @@ function getCustomerCardPreview(query, dbConnId, templateName, cb) {
         cb(err1.toString());
       });
 
-    } else if (compDbconnMain.dbConfigCustCardData[dbConnId].type === 'postgres') {
+    } else if ((compDbconnMain.getDbConfigCustCardData())[dbConnId].type === 'postgres') {
 
       compDbconnMain.dbConnCustCard[dbConnId].query(query, function(err2, results) {
         if (err2) {
@@ -364,7 +364,7 @@ function getCustomerCardPreview(query, dbConnId, templateName, cb) {
         }
       });
 
-    } else if (compDbconnMain.isMssqlType(compDbconnMain.dbConfigCustCardData[dbConnId].type)) {
+    } else if (compDbconnMain.isMssqlType((compDbconnMain.getDbConfigCustCardData())[dbConnId].type)) {
 
       var request = new mssql.Request(compDbconnMain.dbConnCustCard[dbConnId]);
       request.query(query, function(err2, recordset) {
