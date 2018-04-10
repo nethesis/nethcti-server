@@ -488,6 +488,20 @@ function initCustCardConnections() {
 }
 
 /**
+ * Returns the configurations of customer cards.
+ *
+ * @method getDbConfigCustCardData
+ * @param {return} The configurations of customer cards.
+ */
+function getDbConfigCustCardData() {
+  try {
+    return dbConfigCustCardData;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Read database connection data for customer cards.
  *
  * @method initCustCardData
@@ -1046,6 +1060,6 @@ exports.testConnection = testConnection;
 exports.configDbStatic = configDbStatic;
 exports.readCustomerCard = readCustomerCard;
 exports.incNumExecQueries = incNumExecQueries;
-exports.dbConfigCustCardData = dbConfigCustCardData
 exports.custCardTemplatesData = custCardTemplatesData;
 exports.setReady = setReady
+exports.getDbConfigCustCardData = getDbConfigCustCardData;
