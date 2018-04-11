@@ -16,7 +16,6 @@ var pg = require('pg');
 var path = require('path');
 var async = require('async');
 var mssql = require('mssql');
-var moment = require('moment');
 var Sequelize = require("sequelize");
 var EventEmitter = require('events').EventEmitter;
 
