@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.8
+Version: 3.0.9
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,12 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu Apr 12 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.9-1
+- Upgrade moment.js dependency due to security vulnerability - Bug nethesis/dev#5375
+- Wizard: no source available when create new customer card - Bug nethesis/dev#5362
+- Add support for hangup and answer on webrtc - Bug nethesis/dev#5335
+- List of unanswered calls for every queue - nethesis/dev#5363
+
 * Wed Feb 14 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.8-1
 - NethCTI 3: add the possibility to remove customized avatar image (re-setting it to default) - nethesis/dev#5330
 
