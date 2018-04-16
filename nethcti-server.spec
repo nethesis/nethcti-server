@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.9
+Version: 3.0.10
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Apr 16 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.10-1
+- Return on blind transfer - nethesis/dev#5360
+
 * Thu Apr 12 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.9-1
 - Upgrade moment.js dependency due to security vulnerability - Bug nethesis/dev#5375
 - Wizard: no source available when create new customer card - Bug nethesis/dev#5362
