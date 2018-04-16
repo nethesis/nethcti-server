@@ -70,6 +70,7 @@ module.exports = function(options, imports, register) {
       redirectWaitingCaller: astProxy.proxyLogic.redirectWaitingCaller,
       redirectParking: astProxy.proxyLogic.redirectParking,
       attendedTransferConversation: astProxy.proxyLogic.attendedTransferConversation,
+      blindTransferConversation: astProxy.proxyLogic.blindTransferConversation,
       transferConversationToVoicemail: astProxy.proxyLogic.transferConversationToVoicemail,
       call: astProxy.proxyLogic.call,
       muteConversation: astProxy.proxyLogic.muteConversation,

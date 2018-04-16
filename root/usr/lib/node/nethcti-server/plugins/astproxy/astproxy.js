@@ -260,6 +260,7 @@ function configAstObjects(path) {
     proxyLogic.setStaticDataTrunks(json.trunks);
     proxyLogic.setStaticDataQueues(json.queues);
     proxyLogic.setFeatureCodes(json.feature_codes);
+    proxyLogic.setBlindTransferContext(json.transfer_context);
     logger.log.info(IDLOG, 'asterisk objects configuration done by ' + AST_OBJECTS_FILEPATH);
 
   } catch (err) {
