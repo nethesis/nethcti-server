@@ -17,14 +17,15 @@ CDRDBNAME=$(/usr/bin/php -r "include_once('/etc/freepbx.conf');global \$amp_conf
 /usr/bin/mysql -unethcti -p$PASS -e "INSERT IGNORE INTO nethcti3.customer_card VALUES (1, 'Identity', NOW(), \"select * from phonebook where homephone like '%\$NUMBER' or workphone like '%\$NUMBER' or cellphone like '%\$NUMBER' or fax like '%\$NUMBER'\", 'identity', 1, NULL);"
 /usr/bin/mysql -unethcti -p$PASS -e "INSERT IGNORE INTO nethcti3.customer_card VALUES (2, 'Last calls', NOW(), \"select DATE_FORMAT(calldate,'%d/%m/%Y') as date, DATE_FORMAT(calldate,'%H:%i:%S') as time, clid, src, dst, uniqueid,duration, time_format(billsec, '%H:%i:%S') as billsec, disposition,if(src='\$NUMBER','in','out') as direction from cdr where (src = '\$NUMBER' or dst = '\$NUMBER') and disposition = 'ANSWERED' order by calldate desc limit 0,10\", 'lastcalls', 2, NULL);"
 
-EXISTS=$(/usr/bin/mysql -unethcti -p$PASS -e "SHOW KEYS FROM asteriskcdrdb.queue_log WHERE Key_name='event'");
+EXISTS=$(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "SHOW KEYS FROM asteriskcdrdb.queue_log WHERE Key_name='event'");
 if [[ $EXISTS == "" ]]; then
-  $(/usr/bin/mysql -unethcti -p$PASS -e "ALTER TABLE asteriskcdrdb.queue_log ADD INDEX event(event)");
+  $(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "ALTER TABLE asteriskcdrdb.queue_log ADD INDEX event(event)");
 fi
-EXISTS=$(/usr/bin/mysql -unethcti -p$PASS -e "SHOW KEYS FROM asteriskcdrdb.queue_log WHERE Key_name='ib1'");
+EXISTS=$(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "SHOW KEYS FROM asteriskcdrdb.queue_log WHERE Key_name='ib1'");
 if [[ $EXISTS == "" ]]; then
-  $(/usr/bin/mysql -unethcti -p$PASS -e "ALTER TABLE asteriskcdrdb.queue_log ADD INDEX ib1(agent,queuename)");
+  $(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "ALTER TABLE asteriskcdrdb.queue_log ADD INDEX ib1(agent,queuename)");
 fi
-EXISTS=$(/usr/bin/mysql -unethcti -p$PASS -e "SHOW KEYS FROM asteriskcdrdb.queue_log WHERE Key_name='callid_idx'");
+EXISTS=$(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "SHOW KEYS FROM asteriskcdrdb.queue_log WHERE Key_name='callid_idx'");
 if [[ $EXISTS == "" ]]; then
-  $(/usr/bin/mysql -unethcti -p$PASS -e "ALTER TABLE asteriskcdrdb.queue_log ADD INDEX callid_idx(callid)");
+  $(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "ALTER TABLE asteriskcdrdb.queue_log ADD INDEX callid_idx(callid)");
+fi
