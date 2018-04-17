@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.10
+Version: 3.0.11
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Tue Apr 17 2018 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 3.0.11-1
+- NethCTI3: queue_log table index creation fails during install - Bug nethesis/dev#5383
+
 * Mon Apr 16 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.10-1
 - Return on blind transfer - nethesis/dev#5360
 
