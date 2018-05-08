@@ -779,13 +779,19 @@ function setCompUtil(comp) {
         try {
           var username = req.headers.authorization_user;
           var results = compUser.getPresenceList(username);
-          if (!compAuthorization.authorizeDndUser(username)) {
+          if (!compAuthorization.authorizeDndUser(username) && results.indexOf(compUser.USER_PRESENCE_STATUS.dnd) !== -1) {
             results.splice(results.indexOf(compUser.USER_PRESENCE_STATUS.dnd), 1);
           }
           if (!compAuthorization.authorizeCfUser(username)) {
-            results.splice(results.indexOf(compUser.USER_PRESENCE_STATUS.call_forward), 1);
-            results.splice(results.indexOf(compUser.USER_PRESENCE_STATUS.voicemail), 1);
-            results.splice(results.indexOf(compUser.USER_PRESENCE_STATUS.cellphone), 1);
+            if (results.indexOf(compUser.USER_PRESENCE_STATUS.callforward) !== -1) {
+              results.splice(results.indexOf(compUser.USER_PRESENCE_STATUS.callforward), 1);
+            }
+            if (results.indexOf(compUser.USER_PRESENCE_STATUS.voicemail) !== -1) {
+              results.splice(results.indexOf(compUser.USER_PRESENCE_STATUS.voicemail), 1);
+            }
+            if (results.indexOf(compUser.USER_PRESENCE_STATUS.cellphone) !== -1) {
+              results.splice(results.indexOf(compUser.USER_PRESENCE_STATUS.cellphone), 1);
+            }
           }
           if (results instanceof Array) {
             logger.log.info(IDLOG, 'send user presence list to user "' + username + '"');
