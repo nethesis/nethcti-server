@@ -19,7 +19,7 @@ foreach (array('history_call','cel','voicemail','queue_log') as $dbobj) {
 $res1 = file_put_contents('/etc/nethcti/dbstatic.d/'.$amp_conf['CDRDBNAME'].'.json',json_encode($asteriskcdrdb, JSON_PRETTY_PRINT));
 
 $asterisk = array();
-foreach (array('ampusers','incoming','offhour') as $dbobj) {
+foreach (array('ampusers','incoming','offhour','rest_users','userman_users') as $dbobj) {
     $asterisk[$dbobj] = array();
     $asterisk[$dbobj]['dbhost'] = 'localhost';
     $asterisk[$dbobj]['dbport'] = '/var/lib/mysql/mysql.sock';

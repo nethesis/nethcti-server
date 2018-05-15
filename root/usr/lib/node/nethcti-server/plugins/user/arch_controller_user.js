@@ -61,6 +61,7 @@ module.exports = function(options, imports, register) {
       getPresenceOnBusy: controllerUser.getPresenceOnBusy,
       getConfigurations: controllerUser.getConfigurations,
       setConfigurations: controllerUser.setConfigurations,
+      setMobilePhoneNumber: controllerUser.setMobilePhoneNumber,
       getAllEndpointsEmail: controllerUser.getAllEndpointsEmail,
       hasExtensionEndpoint: controllerUser.hasExtensionEndpoint,
       hasCellphoneEndpoint: controllerUser.hasCellphoneEndpoint,
