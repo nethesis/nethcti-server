@@ -126,13 +126,15 @@ var logSequelize = false;
     VOICEMAIL:     "voicemail",
     PHONEBOOK:     "phonebook",
     QUEUE_LOG:     "queue_log",
+    REST_USERS:    "rest_users",
     SMS_HISTORY:   "sms_history",
     CALLER_NOTE:   "caller_note",
     QUEUE_RECALL:  "queue_recall",
     HISTORY_CALL:  "history_call",
     OFFHOUR_FILES: "offhour_files",
     CTI_PHONEBOOK: "cti_phonebook",
-    USER_SETTINGS: "user_settings"
+    USER_SETTINGS: "user_settings",
+    USERMAN_USERS: "userman_users"
 }
 */
 var JSON_KEYS = {
@@ -144,6 +146,7 @@ var JSON_KEYS = {
   VOICEMAIL: 'voicemail',
   PHONEBOOK: 'phonebook',
   QUEUE_LOG: 'queue_log',
+  REST_USERS: 'rest_users',
   SMS_HISTORY: 'sms_history',
   USER_DBCONN: 'user_dbconn',
   QUEUE_RECALL: 'queue_recall',
@@ -151,7 +154,8 @@ var JSON_KEYS = {
   HISTORY_CALL: 'history_call',
   CTI_PHONEBOOK: 'cti_phonebook',
   USER_SETTINGS: 'user_settings',
-  CUSTOMER_CARD: 'customer_card'
+  CUSTOMER_CARD: 'customer_card',
+  USERMAN_USERS: 'userman_users'
 };
 
 /**

@@ -4,6 +4,7 @@
  * @module util
  * @main arch_util
  */
+var childProcess = require('child_process');
 
 /**
  * Provides the utility functions.
@@ -25,6 +26,19 @@
 var IDLOG = '[util]';
 
 /**
+ * The path of the script to do the expansion of templates
+ * through the use of signal-event.
+ *
+ * @property SIGNAL_EVENT_SCRIPT_PATH
+ * @type string
+ * @private
+ * @final
+ * @readOnly
+ * @default "/var/www/html/freepbx/rest/lib/retrieveHelper.sh"
+ */
+var SIGNAL_EVENT_SCRIPT_PATH = '/var/www/html/freepbx/rest/lib/retrieveHelper.sh';
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -44,7 +58,10 @@ var logger = console;
  */
 function setLogger(log) {
   try {
-    if (typeof log === 'object' && typeof log.log.info === 'function' && typeof log.log.warn === 'function' && typeof log.log.error === 'function') {
+    if (typeof log === 'object' &&
+      typeof log.log.info === 'function' &&
+      typeof log.log.warn === 'function' &&
+      typeof log.log.error === 'function') {
 
       logger = log;
       logger.log.info(IDLOG, 'new logger has been set');
@@ -266,6 +283,40 @@ function getRemoteClientPort(resp) {
 }
 
 /**
+ * Call a script to expand all templates and cause reload of this server.
+ * This is used after the REST API call of POST user/mobile that associate
+ * a user with a mobile phone number.
+ *
+ * @method signalEventApplyChanges
+ * @param {function} [cb] The callback function
+ */
+function signalEventApplyChanges(cb) {
+  try {
+    var child = childProcess.spawn(SIGNAL_EVENT_SCRIPT_PATH);
+    child.stdin.end();
+    child.on('close', function(code, signal) {
+
+      if (code !== 0) {
+        logger.log.error(IDLOG, 'signaling event apply changes: code ' + code);
+        if (cb) {
+          cb({ errorCode: code });
+        }
+        return;
+      }
+      if (cb) {
+        cb();
+      }
+      logger.log.warn('applied changes with signal event');
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, 'signaling event apply changes: ' + err.stack);
+    if (cb) {
+      cb(err);
+    }
+  }
+}
+
+/**
 * Network utility functions.
 *
 * @property net
@@ -295,3 +346,4 @@ var net = {
 // public interface
 exports.net = net;
 exports.setLogger = setLogger;
+exports.signalEventApplyChanges = signalEventApplyChanges;

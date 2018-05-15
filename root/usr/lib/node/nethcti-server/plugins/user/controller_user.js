@@ -1192,6 +1192,34 @@ function setPresenceOnBusy(param, cb) {
 }
 
 /**
+ * Associate the mobile phone number to the user.
+ *
+ * @method setMobilePhoneNumber
+ * @param {string} username The username of the user to be set
+ * @param {string} pnumber The mobile phone number
+ * @param {function} cb The callback function
+ */
+function setMobilePhoneNumber(username, pnumber, cb) {
+  try {
+    if (typeof username !== 'string' ||
+      typeof pnumber !== 'string' ||
+      isNaN(pnumber) ||
+      typeof cb !== 'function') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (users[username]) {
+      compDbconn.setUserMobilePhoneNumber(username, pnumber, cb);
+    } else {
+      logger.log.warn(IDLOG, 'setting mobile phone number of not existent user "' + username + '"');
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
  * Set the user presence status on unavailable.
  *
  * @method setPresenceOnUnavailable
@@ -2842,6 +2870,7 @@ exports.hasCellphoneEndpoint = hasCellphoneEndpoint;
 exports.getEndpointVoicemail = getEndpointVoicemail;
 exports.hasVoicemailEndpoint = hasVoicemailEndpoint;
 exports.getUsernamesWithData = getUsernamesWithData;
+exports.setMobilePhoneNumber = setMobilePhoneNumber;
 exports.getPresenceListOnBusy = getPresenceListOnBusy;
 exports.getPresenceOnUnavailable = getPresenceOnUnavailable;
 exports.setPresenceOnUnavailable = setPresenceOnUnavailable;

@@ -54,10 +54,10 @@ var compDbconnMain;
 var apiDbconn = {};
 
 /**
- * Set the post-it architect component to be used by REST plugins.
+ * Set the component to be used by REST plugins.
  *
  * @method setCompDbconnMain
- * @param {object} comp The architect post-it component
+ * @param {object} comp The architect component
  * @static
  */
 function setCompDbconnMain(comp) {
@@ -77,11 +77,51 @@ function setCompDbconnMain(comp) {
 }
 
 /**
- * Call _setLogger_ function for all REST plugins.
+ * Set the util component to be used by REST plugins.
+ *
+ * @method setCompUtil
+ * @param {object} comp The util component
+ * @static
+ */
+function setCompUtil(comp) {
+  try {
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameter');
+    }
+    setAllPluginsUtil(comp);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Call _setCompUtil_ function for all REST plugins.
+ *
+ * @method setAllPluginsUtil
+ * @private
+ * @param comp The util object.
+ * @type {object}
+ */
+function setAllPluginsUtil(comp) {
+  try {
+    var key;
+    for (key in plugins) {
+      if (typeof plugins[key].setCompUtil === 'function') {
+        plugins[key].setCompUtil(comp);
+        logger.log.info(IDLOG, 'util component has been set for plugin ' + key);
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Call _setCompDbconnMain_ function for all REST plugins.
  *
  * @method setAllPluginsDbconnMain
  * @private
- * @param log The logger object.
+ * @param comp The component.
  * @type {object}
  */
 function setAllPluginsDbconnMain(comp) {
@@ -175,4 +215,5 @@ function start() {
 exports.start = start;
 exports.apiDbconn = apiDbconn;
 exports.setLogger = setLogger;
+exports.setCompUtil = setCompUtil;
 exports.setCompDbconnMain = setCompDbconnMain;

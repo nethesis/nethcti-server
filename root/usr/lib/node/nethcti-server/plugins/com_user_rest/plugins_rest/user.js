@@ -432,6 +432,7 @@ function setCompUtil(comp) {
      * 1. [`user/presence_onunavailable`](#presence_onunavailablepost)
      * 1. [`user/settings`](#settingspost)
      * 1. [`user/default_device`](#default_devicepost)
+     * 1. [`user/mobile`](#mobilepost)
      *
      * ---
      *
@@ -506,6 +507,18 @@ function setCompUtil(comp) {
      *
      *     { "id": "214" }
      *
+     * ---
+     *
+     * ### <a id="#mobilepost">**`user/mobile`**</a>
+     *
+     * Associate a mobile phone number to the user. The request must contain the following parameters:
+     *
+     * * `number: the mobile phone number`
+     *
+     * Example JSON request parameters:
+     *
+     *     { "number": "3401234567" }
+     *
      *
      * <br>
      *
@@ -577,13 +590,15 @@ function setCompUtil(comp) {
          *   @param {string} default_device Set a default extension for the user
          *   @param {string} presence_onbusy Set a conditional presence status on busy for the user
          *   @param {string} presence_onunavailable Set a conditional presence status on unavailable for the user
+         *   @param {string} mobile Associate a mobile phone number to the user
          */
         'post': [
           'presence',
           'settings',
           'default_device',
           'presence_onbusy',
-          'presence_onunavailable'
+          'presence_onunavailable',
+          'mobile'
         ],
         'head': [],
 
@@ -889,6 +904,41 @@ function setCompUtil(comp) {
       },
 
       /**
+       * Associate a mobile phone number to the user with the following REST API:
+       *
+       *     POST mobile
+       *
+       * @method mobile
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      mobile: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          var pnumber = req.params.number;
+
+          compUser.setMobilePhoneNumber(username, pnumber, function(err) {
+            try {
+              if (err) {
+                logger.log.error(IDLOG, 'setting mobile phone number "' + pnumber + '" to user "' + username + '"');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+              } else {
+                logger.log.info(IDLOG, 'set mobile phone number "' + pnumber + '" to user "' + username + '"');
+                compUtil.net.sendHttp200(IDLOG, res);
+              }
+            } catch (error) {
+              logger.log.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
        * Save/Delete the user settings by the following REST API:
        *
        *     POST settings
@@ -1020,6 +1070,7 @@ function setCompUtil(comp) {
 
     exports.me = user.me;
     exports.api = user.api;
+    exports.mobile = user.mobile;
     exports.setting = user.setting;
     exports.presence = user.presence;
     exports.settings = user.settings;
