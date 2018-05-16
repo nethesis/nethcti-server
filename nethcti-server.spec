@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.11
+Version: 3.0.12
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,10 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed May 16 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.12-1
+- New REST API POST "user/mobile" to associate cellphone number to a user - nethesis/dev#5396
+- Presence list is not updated at runtime (upper right icon) - Bug nethesis/dev#5394
+
 * Tue Apr 17 2018 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 3.0.11-1
 - NethCTI3: queue_log table index creation fails during install - Bug nethesis/dev#5383
 
