@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.12
+Version: 3.0.13
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu May 17 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.13-1
+- NethVoice14: agi fails with FreePBX framework 14.0.3.2 - Bug nethesis/dev#5406
+
 * Wed May 16 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.12-1
 - New REST API POST "user/mobile" to associate cellphone number to a user - nethesis/dev#5396
 - Presence list is not updated at runtime (upper right icon) - Bug nethesis/dev#5394
