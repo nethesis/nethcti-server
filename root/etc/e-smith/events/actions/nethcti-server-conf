@@ -7,9 +7,9 @@ PASS=$(perl -e 'use NethServer::Password; my $ctidb_pwd = NethServer::Password::
 # Insert default sources and customer card
 /usr/bin/mysql -unethcti -p$PASS -e "INSERT IGNORE INTO nethcti3.user_dbconn VALUES (1, 'localhost', '/var/lib/mysql/mysql.sock', 'mysql', 'nethcti', '$PASS', 'phonebook', NOW());"
 
-CDRDBUSER=$(/usr/bin/php -r "include_once('/etc/freepbx.conf');global \$amp_conf;echo (\$amp_conf['CDRDBUSER']?\$amp_conf['CDRDBUSER']:\$amp_conf['AMPDBUSER']);")
-CDRDBPASS=$(/usr/bin/php -r "include_once('/etc/freepbx.conf');global \$amp_conf;echo (\$amp_conf['CDRDBPASS']?\$amp_conf['CDRDBPASS']:\$amp_conf['AMPDBPASS']);")
-CDRDBNAME=$(/usr/bin/php -r "include_once('/etc/freepbx.conf');global \$amp_conf;echo (\$amp_conf['CDRDBNAME']?\$amp_conf['CDRDBNAME']:'asteriskcdrdb');")
+CDRDBUSER=$(/usr/bin/scl enable rh-php56 -- php -r "include_once('/etc/freepbx.conf');global \\\$amp_conf;echo (\\\$amp_conf['CDRDBUSER']?\\\$amp_conf['CDRDBUSER']:\\\$amp_conf['AMPDBUSER']);")
+CDRDBPASS=$(/usr/bin/scl enable rh-php56 -- php -r "include_once('/etc/freepbx.conf');global \\\$amp_conf;echo (\\\$amp_conf['CDRDBPASS']?\\\$amp_conf['CDRDBPASS']:\\\$amp_conf['AMPDBPASS']);")
+CDRDBNAME=$(/usr/bin/scl enable rh-php56 -- php -r "include_once('/etc/freepbx.conf');global \\\$amp_conf;echo (\\\$amp_conf['CDRDBNAME']?\\\$amp_conf['CDRDBNAME']:'asteriskcdrdb');")
 
 /usr/bin/mysql -unethcti -p$PASS -e "INSERT IGNORE INTO nethcti3.user_dbconn VALUES (2, 'localhost', '/var/lib/mysql/mysql.sock', 'mysql', '$CDRDBUSER', '$CDRDBPASS', '$CDRDBNAME', NOW());"
 /usr/bin/mysql -unethcti -p$PASS -e "UPDATE IGNORE nethcti3.user_dbconn SET name='$CDRDBNAME' WHERE name='' AND id = 2"

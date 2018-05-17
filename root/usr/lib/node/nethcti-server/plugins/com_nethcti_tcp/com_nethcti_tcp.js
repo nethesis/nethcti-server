@@ -764,7 +764,7 @@ function evtUserPresenceChanged(data) {
  * @method extenHangup
  * @param {object} data
  *   @param {string} data.callerNum The identifier of the hangup extension
- *   @param {string} data.cause The cause of hangup
+ *   @param {string} [data.cause] The cause of hangup
  *   @param {string} data.channelExten The extension of the channel
  * @private
  */
@@ -773,7 +773,6 @@ function extenHangup(data) {
     // check parameters
     if (typeof data !== 'object' ||
       typeof data.callerNum !== 'string' ||
-      typeof data.cause !== 'string' ||
       typeof data.channelExten !== 'string') {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
