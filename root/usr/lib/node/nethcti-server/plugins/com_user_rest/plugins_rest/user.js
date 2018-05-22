@@ -1147,8 +1147,15 @@ function settingsPost(req, res, next) {
           logger.log.error(IDLOG, 'saving settings for user "' + username + '"');
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         } else {
-          logger.log.info(IDLOG, 'saved settings for user "' + username + '"');
-          compUtil.net.sendHttp200(IDLOG, res);
+          compConfigManager.loadAllUsersSettings(function (err) {
+            if (err) {
+              logger.log.error(IDLOG, 're-loading all user settings from db');
+              compUtil.net.sendHttp500(IDLOG, res, err.toString());
+              return;
+            }
+            logger.log.info(IDLOG, 'saved settings for user "' + username + '"');
+            compUtil.net.sendHttp200(IDLOG, res);
+          });
         }
       } catch (error) {
         logger.log.error(IDLOG, error.stack);

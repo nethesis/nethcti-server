@@ -35,6 +35,7 @@ module.exports = function(options, imports, register) {
       configManager.setLogger(logger.ctilog);
       configManager.setCompUser(imports.user);
       configManager.setCompAstProxy(imports.astProxy);
+      configManager.setCompAuthorization(imports.authorization);
       configManager.setCompComNethctiWs(imports.com_nethcti_ws);
       configManager.config('/etc/nethcti/nethcti.json');
       configManager.configUser();

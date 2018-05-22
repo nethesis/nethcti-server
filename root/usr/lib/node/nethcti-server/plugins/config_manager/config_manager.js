@@ -119,6 +119,15 @@ var compUser;
 var compAstProxy;
 
 /**
+ * The authorization module.
+ *
+ * @property compAuthorization
+ * @type object
+ * @private
+ */
+var compAuthorization;
+
+/**
  * The websocket communication module.
  *
  * @property compComNethctiWs
@@ -244,6 +253,24 @@ function setCompComNethctiWs(comp) {
       throw new Error('wrong user object');
     }
     compComNethctiWs = comp;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Sets the module to be used.
+ *
+ * @method setCompAuthorization
+ * @param {object} comp The module.
+ */
+function setCompAuthorization(comp) {
+  try {
+    // check parameter
+    if (typeof comp !== 'object') {
+      throw new Error('wrong authorization object');
+    }
+    compAuthorization = comp;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -399,16 +426,14 @@ function configUser() {
  * _userSettings_ property.
  *
  * @method loadAllUsersSettings
- * @private
+ * @param {function} [cb] The callback function
  */
-function loadAllUsersSettings() {
+function loadAllUsersSettings(cb) {
   try {
     // initialize settings of all the users getting data from db
-    var i, username;
     var users = compUser.getUsernames();
-    for (i = 0; i < users.length; i++) {
-      (function(username) {
-
+    var functs = users.map(function (username) {
+      return function (callback) {
         compDbconn.getUserSettings(username, function(err, results) {
           try {
             if (err) {
@@ -416,15 +441,30 @@ function loadAllUsersSettings() {
             } else {
               userSettings[username] = results;
             }
+            callback();
           } catch (error) {
             logger.log.error(IDLOG, error.stack);
-            cb(error);
+            callback();
           }
         });
-      })(users[i]);
-    }
+      }
+    });
+
+    async.parallel(functs,
+      function (err) {
+        if (err) {
+          logger.log.error(IDLOG, err);
+        }
+        if (cb) {
+          cb(err);
+        }
+      }
+    );
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
+    if (cb) {
+      cb(err);
+    }
   }
 }
 
@@ -624,30 +664,31 @@ function checkAutoDndOffLogin(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong username "' + username + '"');
     }
-
     logger.log.info(IDLOG, 'received "new logged in user by ws" event for username "' + username + '"');
+
+    if (compAuthorization.authorizeDndUser(username) === false) {
+      logger.log.info(IDLOG, 'no check for "auto dnd off login": user "' + username + '" does not have "dnd" permission');
+      return;
+    }
 
     // get the prefence of the user: automatic dnd off when login to cti
     var autoDndOffLoginEnabled = userSettings[username][USER_CONFIG_KEYS.auto_dndoff_login];
     if (autoDndOffLoginEnabled) {
 
-      var extens = compUser.getAllEndpointsExtension(username);
-      var e;
-      for (e in extens) {
+      var e = compUser.getEndpointMainExtension(username).getId();
 
-        logger.log.info(IDLOG, 'set DND OFF for exten "' + e + '" due to automatic DND OFF on login setting');
-        compAstProxy.setDnd(e, false, function(err, resp) {
-          try {
-            if (err) {
-              logger.log.warn(IDLOG, err);
-            } else {
-              logger.log.info(IDLOG, 'DND OFF has been set for exten "' + e + '" due to "auto dnd off login" setting of user "' + username + '"');
-            }
-          } catch (err1) {
-            logger.log.error(IDLOG, err1.stack);
+      logger.log.info(IDLOG, 'set DND OFF for exten "' + e + '" due to automatic DND OFF on login setting');
+      compAstProxy.setDnd(e, false, function(err, resp) {
+        try {
+          if (err) {
+            logger.log.warn(IDLOG, err);
+          } else {
+            logger.log.info(IDLOG, 'DND OFF has been set for exten "' + e + '" due to "auto dnd off login" setting of user "' + username + '"');
           }
-        });
-      }
+        } catch (err1) {
+          logger.log.error(IDLOG, err1.stack);
+        }
+      });
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -720,30 +761,31 @@ function checkAutoDndOnLogout(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong username "' + username + '"');
     }
-
     logger.log.info(IDLOG, 'received "new websocket disconnection" event for username "' + username + '"');
+
+    if (compAuthorization.authorizeDndUser(username) === false) {
+      logger.log.info(IDLOG, 'no check for "auto dnd on logout": user "' + username + '" does not have "dnd" permission');
+      return;
+    }
 
     // get the prefence of the user: automatic dnd on when logout from cti
     var autoDndOnLogoutEnabled = userSettings[username][USER_CONFIG_KEYS.auto_dndon_logout];
     if (autoDndOnLogoutEnabled) {
 
-      var extens = compUser.getAllEndpointsExtension(username);
-      var e;
-      for (e in extens) {
+      var e = compUser.getEndpointMainExtension(username).getId();
 
-        logger.log.info(IDLOG, 'set DND ON for exten "' + e + '" due to automatic DND ON on logout setting');
-        compAstProxy.setDnd(e, true, function(err, resp) {
-          try {
-            if (err) {
-              logger.log.warn(IDLOG, err);
-            } else {
-              logger.log.info(IDLOG, 'DND ON has been set for exten "' + e + '" due to "auto dnd on logout" setting of user "' + username + '"');
-            }
-          } catch (err1) {
-            logger.log.error(IDLOG, err1.stack);
+      logger.log.info(IDLOG, 'set DND ON for exten "' + e + '" due to automatic DND ON on logout setting');
+      compAstProxy.setDnd(e, true, function(err, resp) {
+        try {
+          if (err) {
+            logger.log.warn(IDLOG, err);
+          } else {
+            logger.log.info(IDLOG, 'DND ON has been set for exten "' + e + '" due to "auto dnd on logout" setting of user "' + username + '"');
           }
-        });
-      }
+        } catch (err1) {
+          logger.log.error(IDLOG, err1.stack);
+        }
+      });
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1857,6 +1899,7 @@ exports.getTotNumUsers = getTotNumUsers;
 exports.getUserSettings = getUserSettings;
 exports.retrieveUsersSettings = retrieveUsersSettings;
 exports.setCompAstProxy = setCompAstProxy;
+exports.setCompAuthorization = setCompAuthorization;
 exports.configPhoneUrls = configPhoneUrls;
 exports.getServerHostname = getServerHostname;
 exports.getDtmfUrlFromAgent = getDtmfUrlFromAgent;
@@ -1888,3 +1931,4 @@ exports.verifySendPostitNotificationBySms = verifySendPostitNotificationBySms;
 exports.verifySendPostitNotificationByEmail = verifySendPostitNotificationByEmail;
 exports.verifySendVoicemailNotificationBySms = verifySendVoicemailNotificationBySms;
 exports.verifySendVoicemailNotificationByEmail = verifySendVoicemailNotificationByEmail;
+exports.loadAllUsersSettings = loadAllUsersSettings;
