@@ -8,6 +8,7 @@
       "dbconn",
       "logger",
       "astProxy",
+      "authorization",
       "com_nethcti_ws"
     ],
     "provides": [

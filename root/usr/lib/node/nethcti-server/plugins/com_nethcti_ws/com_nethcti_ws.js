@@ -2095,8 +2095,8 @@ function disconnHdlr(socket) {
         }
       }
       // set the offline cti presence only if the socket is the last and comes from the cti application
-      if (socket.nethcti.userAgent === USER_AGENT && // the socket connection comes from the cti application
-        count === 1) { // only last socket connection is present
+      if ((socket.nethcti.userAgent === USER_AGENT && // the socket connection comes from the cti application
+        count === 1) || count === 0) { // only last socket connection is present
 
         username = wsid[socket.id].username;
         // emits the event for the disconnected client. This event is emitted when
