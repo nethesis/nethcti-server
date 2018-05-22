@@ -334,6 +334,52 @@ var EVT_USER_PROFILE_AVATAR_UPDATE = 'userProfileAvatarUpdate';
 var EVT_STREAMING_SOURCE_UPDATE = 'streamingSourceUpdate';
 
 /**
+ * Emitted to a websocket client connection on a meetme conference update event.
+ *
+ *                         {
+      "id": "201",
+      "users": {
+        "201": {
+          "id": "1",
+          "name": "John",
+          "owner": false,
+          "muted": false,
+          "extenId": "201"
+        }
+      }
+ *
+ * @event meetmeConfUpdate
+ * @param {object} data The data about the meetme conference update event
+ *
+ */
+/**
+ * The name of the meetme conference update event.
+ *
+ * @property EVT_MEETME_CONF_UPDATE
+ * @type string
+ * @default "meetmeConfUpdate"
+ */
+var EVT_MEETME_CONF_UPDATE = 'meetmeConfUpdate';
+
+/**
+ * Emitted to a websocket client connection on a meetme conference end event.
+ *
+ *     { id: "201" }
+ *
+ * @event meetmeConfEnd
+ * @param {object} data The data about the meetme conference end event
+ *
+ */
+/**
+ * The name of the meetme conference end event.
+ *
+ * @property EVT_MEETME_CONF_END
+ * @type string
+ * @default "meetmeConfEnd"
+ */
+var EVT_MEETME_CONF_END = 'meetmeConfEnd';
+
+/**
  * Fired when a websocket client connection has been closed.
  *
  * @event wsClientDisonnection
@@ -1274,8 +1320,8 @@ function queueMemberChanged(member) {
 function meetmeConfChanged(conf) {
   try {
     logger.log.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_CHANGED + '" for conf id ' + conf.getId());
-    logger.log.info(IDLOG, 'emit event "meetmeConfUpdate" for conf id ' + conf.getId() + ' to websockets');
-    sendEvtToUserWithExtenId('meetmeConfUpdate', conf.toJSON(), conf.getId());
+    logger.log.info(IDLOG, 'emit event "' + EVT_MEETME_CONF_UPDATE + '" for conf id ' + conf.getId() + ' to websockets');
+    sendEvtToUserWithExtenId(EVT_MEETME_CONF_UPDATE, conf.toJSON(), conf.getId());
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -1293,8 +1339,8 @@ function meetmeConfChanged(conf) {
 function meetmeConfEnd(confId) {
   try {
     logger.log.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_END + '" for conf id ' + confId);
-    logger.log.info(IDLOG, 'emit event "meetmeConfEnd" for conf id ' + confId + ' to websockets');
-    sendEvtToUserWithExtenId('meetmeConfEnd', {
+    logger.log.info(IDLOG, 'emit event "' + EVT_MEETME_CONF_END + '" for conf id ' + confId + ' to websockets');
+    sendEvtToUserWithExtenId(EVT_MEETME_CONF_END, {
       id: confId
     }, confId);
   } catch (err) {
