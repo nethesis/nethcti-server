@@ -613,6 +613,10 @@ function checkQueueAutoLogin(username) {
       throw new Error('wrong username "' + username + '"');
     }
     logger.log.info(IDLOG, 'received "new logged in user by ws" event for username "' + username + '"');
+    if (compAuthorization.authorizeQueuesUser(username) === false) {
+      logger.log.info(IDLOG, 'no check for "queue auto login": user "' + username + '" does not have "queue" permission');
+      return;
+    }
 
     // get the prefence of the user: automatic login into dynamic queues when login to cti
     var queueAutoLoginEnabled = userSettings[username][USER_CONFIG_KEYS.queue_auto_login];
@@ -710,6 +714,10 @@ function checkQueueAutoLogout(username) {
       throw new Error('wrong username "' + username + '"');
     }
     logger.log.info(IDLOG, 'received "new websocket disconnection" event for username "' + username + '"');
+    if (compAuthorization.authorizeQueuesUser(username) === false) {
+      logger.log.info(IDLOG, 'no check for "queue auto logout": user "' + username + '" does not have "queue" permission');
+      return;
+    }
 
     // get the prefence of the user: automatic logout from dynamic queues when logout from cti
     var queueAutoLogoutEnabled = userSettings[username][USER_CONFIG_KEYS.queue_auto_logout];
