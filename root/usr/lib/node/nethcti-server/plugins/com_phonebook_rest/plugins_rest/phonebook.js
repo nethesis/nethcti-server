@@ -608,6 +608,20 @@ function setCompUtil(comp) {
         *
         * The NethCTI phonebook is the _nethcti.cti\_phonebook_ database table.
         *
+        *
+        * <br>
+        *
+        * # DELETE requests
+        *
+        * 1. [`phonebook/speeddials`](#speeddialsdelete)
+        *
+        * ---
+        *
+        * ### <a id="#speeddialsdelete">**`phonebook/speeddials`**</a>
+        *
+        * Delete all speed dial contacts of the user.
+        *
+        *
         * @class plugin_rest_phonebook
         * @static
         */
@@ -657,41 +671,40 @@ function setCompUtil(comp) {
           'import_csv_speeddial'
         ],
         'head': [],
-        'del': []
+
+        /**
+         * REST API to be requested using HTTP DELETE request.
+         *
+         * @property del
+         * @type {array}
+         *
+         *   @param {string} speeddials Delete all speed dial contacts of the user
+         */
+        'del': [
+          'speeddials'
+        ]
       },
 
       /**
-       * Returns all the speeddial contacts of the user. The contacts are in the _NethCTI_ phonebook.
-       * It returns all database entries that have the field _type_ equal to "speeddial".
+       * Get/Delete all speed dial contacts of the user by the following REST API:
        *
-       *     speeddials
+       *     GET speeddials
+       *     DELETE speeddials
        *
        * @method speeddials
-       * @param {object}   req  The client request
-       * @param {object}   res  The client response
+       * @param {object} req The client request
+       * @param {object} res The client response
        * @param {function} next Function to run the next handler in the chain
        */
       speeddials: function(req, res, next) {
         try {
-          var username = req.headers.authorization_user;
-
-          // use phonebook component
-          compPhonebook.getPbSpeeddialContacts(username, function(err, results) {
-            try {
-
-              if (err) {
-                throw err;
-              } else {
-                logger.log.info(IDLOG, 'send to user "' + username + '" all his #' + results.length + ' speeddial contacts');
-                res.send(200, results);
-              }
-
-            } catch (err1) {
-              logger.log.error(IDLOG, err1.stack);
-              compUtil.net.sendHttp500(IDLOG, res, err1.toString());
-            }
-          });
-
+          if (req.method.toLowerCase() === 'get') {
+            speeddialsGet(req, res, next);
+          } else if (req.method.toLowerCase() === 'delete') {
+            speeddialsDelete(req, res, next);
+          } else {
+            logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
+          }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -1185,3 +1198,68 @@ function setCompUtil(comp) {
     logger.log.error(IDLOG, err.stack);
   }
 })();
+
+/**
+ * Returns all the speeddial contacts of the user. The contacts are in the _NethCTI_ phonebook.
+ * It returns all database entries that have the field _type_ equal to "speeddial".
+ *
+ *     speeddialsGet
+ *
+ * @method speeddials
+ * @param {object} req The client request
+ * @param {object} res The client response
+ * @param {function} next Function to run the next handler in the chain
+ */
+function speeddialsGet(req, res, next) {
+  try {
+    var username = req.headers.authorization_user;
+    compPhonebook.getPbSpeeddialContacts(username, function(err, results) {
+      try {
+        if (err) {
+          throw err;
+        } else {
+          logger.log.info(IDLOG, 'send to user "' + username + '" all his #' + results.length + ' speeddial contacts');
+          res.send(200, results);
+        }
+      } catch (err1) {
+        logger.log.error(IDLOG, err1.stack);
+        compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+  }
+}
+
+/**
+ * Delete all speeddial contacts of the user. The contacts are in the _NethCTI_ phonebook.
+ *
+ *     speeddialsDelete
+ *
+ * @method speeddialsDelete
+ * @param {object} req The client request
+ * @param {object} res The client response
+ * @param {function} next Function to run the next handler in the chain
+ */
+function speeddialsDelete(req, res, next) {
+  try {
+    var username = req.headers.authorization_user;
+    compPhonebook.deleteAllUserSpeeddials(username, function(err, results) {
+      try {
+        if (err) {
+          throw err;
+        } else {
+          logger.log.info(IDLOG, 'deleted all speed dials of user "' + username + '"');
+          res.send(200, results);
+        }
+      } catch (err1) {
+        logger.log.error(IDLOG, err1.stack);
+        compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+  }
+}

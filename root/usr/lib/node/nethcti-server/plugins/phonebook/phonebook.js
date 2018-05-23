@@ -265,6 +265,38 @@ function getPbSpeeddialContacts(username, cb) {
 }
 
 /**
+ * Deletes all speed dials of the user.
+ *
+ * @method deleteAllUserSpeeddials
+ * @param {string} username The username
+ * @param {function} cb The callback function
+ */
+function deleteAllUserSpeeddials(username, cb) {
+  try {
+    if (typeof username !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.info(IDLOG, 'delete all speed dials of user "' + username + '"');
+    dbconn.deleteAllUserSpeeddials(username, function(err, result) {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, err);
+          cb(err);
+          return;
+        }
+        cb(null, { num: result });
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err.toString());
+  }
+}
+
+/**
  * Deletes the cti phonebook contact.
  *
  * @method deleteCtiPbContact
@@ -582,3 +614,4 @@ exports.getPbSpeeddialContacts = getPbSpeeddialContacts;
 exports.getPbContactsStartsWith = getPbContactsStartsWith;
 exports.getPbContactsStartsWithDigit = getPbContactsStartsWithDigit;
 exports.importCsvSpeedDial = importCsvSpeedDial;
+exports.deleteAllUserSpeeddials = deleteAllUserSpeeddials;
