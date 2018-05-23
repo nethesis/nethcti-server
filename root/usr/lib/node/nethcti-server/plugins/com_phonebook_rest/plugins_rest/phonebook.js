@@ -489,6 +489,7 @@ function setCompUtil(comp) {
         * 1. [`phonebook/create`](#createpost)
         * 1. [`phonebook/delete_cticontact`](#delete_cticontactpost)
         * 1. [`phonebook/modify_cticontact`](#modify_cticontactpost)
+        * 1. [`phonebook/import_csv_speeddial`](#import_csv_speeddialpost)
         *
         * ---
         *
@@ -585,6 +586,28 @@ function setCompUtil(comp) {
         *
         * The NethCTI phonebook is the _nethcti.cti\_phonebook_ database table.
         *
+        * ---
+        *
+        * ### <a id="import_csv_speeddialpost">**`phonebook/import_csv_speeddial`**</a>
+        *
+        * Import Speed Dial contacts from a csv file into the NethCTI phonebook. The request must contains
+        * the following parameters:
+        *
+        * * `file64: the csv file content base64 encoded`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "file64": "data:text/csv;base64,aWQsb3duZXJfa..." }
+        *
+        * The csv file format must be like this:
+        *
+        *     id,owner_id,type,homeemail,workemail,homephone,workphone,cellphone,fax,title,company,notes,name,homestreet,homepob,homecity,homeprovince,homepostalcode,homecountry,workstreet,workpob,workcity,workprovince,workpostalcode,workcountry,url,extension,speeddial_num
+        *
+        * The field "speeddial_num" is the number to be called when click the contact from cti client app: it can be equal to
+        * extension or workphone or homephone or cellphone.
+        *
+        * The NethCTI phonebook is the _nethcti.cti\_phonebook_ database table.
+        *
         * @class plugin_rest_phonebook
         * @static
         */
@@ -625,11 +648,13 @@ function setCompUtil(comp) {
          *   @param {string} create            Creates a contact in the NethCTI phonebook
          *   @param {string} delete_cticontact Deletes a contact from the NethCTI phonebook
          *   @param {string} modify_cticontact Modify a contact in the NethCTI phonebook
+         *   @param {string} import_csv_speeddial Import speed dial contacts from a csv file into the NethCTI phonebook
          */
         'post': [
           'create',
           'delete_cticontact',
-          'modify_cticontact'
+          'modify_cticontact',
+          'import_csv_speeddial'
         ],
         'head': [],
         'del': []
@@ -1097,6 +1122,47 @@ function setCompUtil(comp) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
+      },
+
+      /**
+       * Import speed dial contacts from a csv file into the NethCTI phonebook.
+       *
+       *     import_csv_speeddial
+       *
+       * @method import_csv_speeddial
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      import_csv_speeddial: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          var data = req.params;
+          if (typeof data !== 'object' || typeof data.file64 !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+          if (compAuthorization.authorizePhonebookUser(username) === false) {
+            logger.log.warn(IDLOG, 'importing speed dial frmo csv file: user "' + username + '" does not have permission');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          compPhonebook.importCsvSpeedDial(data.file64, username, function(err1, result) {
+            try {
+              if (err1) {
+                throw err1;
+              }
+              logger.log.info(IDLOG, 'imported #' + result.num + ' speed dial from csv file by user "' + username + '"');
+              res.send(200, result);
+            } catch (err2) {
+              logger.log.error(IDLOG, err2.stack);
+              compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+            }
+          });
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
       }
     };
     exports.api = phonebook.api;
@@ -1111,6 +1177,7 @@ function setCompUtil(comp) {
     exports.setCompPhonebook = setCompPhonebook;
     exports.delete_cticontact = phonebook.delete_cticontact;
     exports.modify_cticontact = phonebook.modify_cticontact;
+    exports.import_csv_speeddial = phonebook.import_csv_speeddial;
     exports.setCompAuthorization = setCompAuthorization;
     exports.searchstartswith_digit = phonebook.searchstartswith_digit;
 
