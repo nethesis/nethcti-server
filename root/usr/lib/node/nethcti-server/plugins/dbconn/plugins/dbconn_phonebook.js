@@ -266,6 +266,35 @@ function getPbContactsByNum(number, cb) {
 }
 
 /**
+ * Delete the specified phonebook contact from the _cti\_phonebook_ database table.
+ *
+ * @method deleteAllUserSpeeddials
+ * @param {string} username The username
+ * @param {function} cb The callback function
+ */
+function deleteAllUserSpeeddials(username, cb) {
+  try {
+    if (typeof username !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].destroy({
+      where: ['owner_id=? AND type=?', username, 'speeddial']
+    }).then(function(num) {
+      logger.log.info(IDLOG, ' deleted all speed dial (#' + num + ') of user "' + username + '"');
+      cb(null, num);
+    }, function(err) {
+      logger.log.error(IDLOG, 'searching cti phonebook speeddial contacts of the user "' + username + '": ' + err.toString());
+      cb(err.toString());
+    });
+    compDbconnMain.incNumExecQueries();
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Deletes the specified phonebook contact from the _cti\_phonebook_ database table.
  *
  * @method deleteCtiPbContact
@@ -673,7 +702,6 @@ function getCtiPbSpeeddialContacts(username, cb) {
     if (typeof username !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
     compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAll({
       where: [
         'owner_id=? AND type="speeddial"',
@@ -1122,6 +1150,7 @@ apiList.getAllContactsStartsWith = getAllContactsStartsWith;
 apiList.getPbContactsStartsWithDigit = getPbContactsStartsWithDigit;
 apiList.getCtiPbContactsStartsWithDigit = getCtiPbContactsStartsWithDigit;
 apiList.getAllContactsStartsWithDigit = getAllContactsStartsWithDigit;
+apiList.deleteAllUserSpeeddials = deleteAllUserSpeeddials;
 
 // public interface
 exports.apiList = apiList;

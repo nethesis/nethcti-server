@@ -265,6 +265,38 @@ function getPbSpeeddialContacts(username, cb) {
 }
 
 /**
+ * Deletes all speed dials of the user.
+ *
+ * @method deleteAllUserSpeeddials
+ * @param {string} username The username
+ * @param {function} cb The callback function
+ */
+function deleteAllUserSpeeddials(username, cb) {
+  try {
+    if (typeof username !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.info(IDLOG, 'delete all speed dials of user "' + username + '"');
+    dbconn.deleteAllUserSpeeddials(username, function(err, result) {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, err);
+          cb(err);
+          return;
+        }
+        cb(null, { num: result });
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err.toString());
+  }
+}
+
+/**
  * Deletes the cti phonebook contact.
  *
  * @method deleteCtiPbContact
@@ -452,7 +484,7 @@ function setDbconn(dbconnMod) {
   try {
     // check parameter
     if (typeof dbconnMod !== 'object') {
-      throw new Error('wrong dbconn object');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     dbconn = dbconnMod;
     logger.log.info(IDLOG, 'set dbconn module');
@@ -503,7 +535,7 @@ function saveCtiPbContact(data, cb) {
         data.creator === ''         || typeof data.name    !== 'string' ||
         (data.type   !== 'private'  && data.type           !== 'public' && data.type !== 'speeddial')) {
 
-      throw new Error('wrong parameter');
+          throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // adapt data to the database
@@ -513,6 +545,55 @@ function saveCtiPbContact(data, cb) {
     logger.log.info(IDLOG, 'save cti phonebook contact by means dbconn module');
     dbconn.saveCtiPbContact(data, cb);
 
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err.toString());
+  }
+}
+
+/**
+ * Save the contact in the NethCTI phonebook database using dbconn module.
+ *
+ * @method importCsvSpeedDial
+ * @param {string} file64 The csv file content base64 encoded
+ * @param {string} username The user who imports
+ * @param {function} cb The callback function
+ */
+function importCsvSpeedDial(file64, username, cb) {
+  try {
+    if (typeof file64 !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var str = new Buffer(file64.split(',')[1], 'base64').toString();
+    var arr = str.split('\r\n');
+    var headers = arr[0].split(',');
+    arr.shift();
+    arr.splice(-1, 1);
+    var sparr, i;
+    var functs = arr.map(function (spstr) {
+      sparr = spstr.split(',');
+      var data = {};
+      for (i = 0; i < headers.length; i++) {
+        data[headers[i]] = sparr[i];
+      }
+      data.type = 'speeddial';
+      data.creator = username;
+      delete data.owner_id;
+      return function(callback) {
+        saveCtiPbContact(data, function (err) {
+          callback();
+        });
+      }
+    });
+    async.parallel(functs,
+      function (err) {
+        if (err) {
+          logger.log.error(IDLOG, err);
+        }
+        cb(null, { num: functs.length });
+        logger.log.info(IDLOG, 'imported # ' + functs.length + ' speed dial from csv by user "' + username + '"');
+      }
+    );
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err.toString());
@@ -532,3 +613,5 @@ exports.getPbContactsContains = getPbContactsContains;
 exports.getPbSpeeddialContacts = getPbSpeeddialContacts;
 exports.getPbContactsStartsWith = getPbContactsStartsWith;
 exports.getPbContactsStartsWithDigit = getPbContactsStartsWithDigit;
+exports.importCsvSpeedDial = importCsvSpeedDial;
+exports.deleteAllUserSpeeddials = deleteAllUserSpeeddials;
