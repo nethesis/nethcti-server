@@ -1321,6 +1321,7 @@ function meetmeConfChanged(conf) {
   try {
     logger.log.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_CHANGED + '" for conf id ' + conf.getId());
     logger.log.info(IDLOG, 'emit event "' + EVT_MEETME_CONF_UPDATE + '" for conf id ' + conf.getId() + ' to websockets');
+    sendEvtToUserWithExtenId(EVT_MEETME_CONF_UPDATE, conf.toJSON(), conf.getId());
     var extens = Object.keys(conf.getAllUsers());
     for (var i = 0; i < extens.length; i++) {
       sendEvtToUserWithExtenId(EVT_MEETME_CONF_UPDATE, conf.toJSON(), extens[i]);
@@ -1343,6 +1344,7 @@ function meetmeConfEnd(confId) {
   try {
     logger.log.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_END + '" for conf id ' + confId);
     logger.log.info(IDLOG, 'emit event "' + EVT_MEETME_CONF_END + '" for conf id ' + confId + ' to websockets');
+    sendEvtToUserWithExtenId(EVT_MEETME_CONF_END, { id: confId }, confId);
     var extens = Object.keys(conf.getAllUsers());
     for (var i = 0; i < extens.length; i++) {
       sendEvtToUserWithExtenId(EVT_MEETME_CONF_END, { id: confId }, extens[i]);
