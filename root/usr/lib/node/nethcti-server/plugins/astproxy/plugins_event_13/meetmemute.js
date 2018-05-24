@@ -56,7 +56,7 @@ var astProxy;
         try {
           if (data.status &&
             data.meetme &&
-            data.usernum &&
+            data.user &&
             data.event === 'MeetmeMute') {
 
             logger.log.info(IDLOG, 'received event ' + data.event);
@@ -66,7 +66,7 @@ var astProxy;
             astProxy.proxyLogic.evtMeetmeUserConfMute({
               mute: data.status === 'on' ? true : false,
               confId: extOwnerId,
-              userId: data.usernum
+              userId: data.user
             });
 
           } else {
