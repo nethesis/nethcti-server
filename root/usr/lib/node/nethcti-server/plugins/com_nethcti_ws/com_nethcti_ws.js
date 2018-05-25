@@ -1345,10 +1345,6 @@ function meetmeConfEnd(confId) {
     logger.log.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_END + '" for conf id ' + confId);
     logger.log.info(IDLOG, 'emit event "' + EVT_MEETME_CONF_END + '" for conf id ' + confId + ' to websockets');
     sendEvtToUserWithExtenId(EVT_MEETME_CONF_END, { id: confId }, confId);
-    var extens = Object.keys(conf.getAllUsers());
-    for (var i = 0; i < extens.length; i++) {
-      sendEvtToUserWithExtenId(EVT_MEETME_CONF_END, { id: confId }, extens[i]);
-    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -1585,12 +1581,17 @@ function sendAllCompReloaded() {
  * @param {object} data
  *   @param {string} data.dialingExten   The identifier of the ringing extension
  *   @param {object} data.callerIdentity The identity data of the caller
+ *   @param {boolean} data.callerHasConf True if the caller has an active conference
  * @private
  */
 function extenDialing(data) {
   try {
     // check parameters
-    if (typeof data !== 'object' || typeof data.dialingExten !== 'string' || typeof data.callerIdentity !== 'object') {
+    if (typeof data !== 'object' ||
+      typeof data.dialingExten !== 'string' ||
+      typeof data.callerHasConf !== 'boolean' ||
+      typeof data.callerIdentity !== 'object') {
+
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     logger.log.info(IDLOG, 'received event extenDialing for extension ' + data.dialingExten + ' with the caller identity');
@@ -1608,6 +1609,7 @@ function extenDialing(data) {
       if (user === username) {
 
         filteredCallerIdentity = getFilteredCallerIndentity(username, data.callerIdentity);
+        filteredCallerIdentity.callerHasConf = data.callerHasConf;
 
         // emits the event with the caller identity data
         logger.log.info(IDLOG, 'emit event extenRinging for extension ' + data.dialingExten + ' to user "' + username + '" with the caller identity');

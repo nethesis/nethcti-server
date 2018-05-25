@@ -5510,12 +5510,18 @@ function evtConversationDialing(data) {
       obj.callerNum = data.callerNum;
       obj.callerName = data.callerName;
 
+      var callerHasConf = false;
+      if (conferences[obj.callerNum]) {
+        callerHasConf = true;
+      }
+
       // emit the event
       logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_DIALING + ' for extension ' + dialingExten + ' with caller identity');
       astProxy.emit(EVT_EXTEN_DIALING, {
         dialingExten: dialingExten,
         callerIdentity: obj,
-        channel: data.chDest
+        channel: data.chDest,
+        callerHasConf: callerHasConf
       });
     }
 
