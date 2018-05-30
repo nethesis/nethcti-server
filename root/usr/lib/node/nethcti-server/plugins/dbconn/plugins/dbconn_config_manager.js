@@ -91,6 +91,40 @@ function setLogger(log) {
 }
 
 /**
+ * Gets the parameterized URL for the profile id. The settings are
+ * stored in mysql table _user\_settings_.
+ *
+ * @method getParamUrl
+ * @param {string} profileId The profile identifier
+ * @param {function} cb The callback function
+ */
+function getParamUrl(profileId, cb) {
+  try {
+    if (typeof profileId !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.REST_CTI_PROFILES_PARAMURL].find({
+      where: ['profile_id=?', profileId]
+    }).then(function(result) {
+      if (result && result.dataValues) {
+        logger.log.info(IDLOG, 'result getting param url for profile "' + profileId + '": ' + result.dataValues);
+        cb(null, result.dataValues);
+      } else {
+        logger.log.info(IDLOG, 'result getting param url for profile "' + profileId + '": ' + {});
+        cb(null, {});
+      }
+    }, function(err) {
+      logger.log.error(IDLOG, 'getting param URL of profile "' + profileId + '": ' + err.toString());
+      cb(err.toString());
+    });
+    compDbconnMain.incNumExecQueries();
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Gets the settings of the user. The settings are
  * stored in mysql table _user\_settings_.
  *
@@ -613,6 +647,7 @@ function getAllUsersSettings(cb) {
   }
 }
 
+apiList.getParamUrl = getParamUrl;
 apiList.getUserSettings = getUserSettings;
 apiList.getAllUsersSettings = getAllUsersSettings;
 apiList.saveUserSettings = saveUserSettings;

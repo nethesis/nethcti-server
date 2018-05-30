@@ -40,6 +40,7 @@ module.exports = function(options, imports, register) {
       setPresence: controllerUser.setPresence,
       getPresence: controllerUser.getPresence,
       getQueueIds: controllerUser.getQueueIds,
+      getParamUrl: controllerUser.getParamUrl,
       EVT_RELOADED: controllerUser.EVT_RELOADED,
       saveSettings: controllerUser.saveSettings,
       getUsernames: controllerUser.getUsernames,
