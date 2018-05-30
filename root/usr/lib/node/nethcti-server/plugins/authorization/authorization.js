@@ -1941,3 +1941,4 @@ exports.getAllowedStreamingSources = getAllowedStreamingSources;
 exports.verifyOffhourUserAnnouncement = verifyOffhourUserAnnouncement;
 exports.verifyOffhourListenAnnouncement = verifyOffhourListenAnnouncement;
 exports.getAuthorizedRemoteOperatorGroups = getAuthorizedRemoteOperatorGroups;
+exports.getUserProfileId = getUserProfileId;

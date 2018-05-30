@@ -2354,6 +2354,26 @@ function getUsernames() {
 }
 
 /**
+ * Return the parameterized URL for the use profile.
+ *
+ * @method getParamUrl
+ * @param {string} username The username
+ * @param {string} profileId The id of the user profile
+ * @param {function} cb The callback
+ */
+function getParamUrl(username, profileId, cb) {
+  try {
+    if (typeof username !== 'string' || typeof profileId !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    compDbconn.getParamUrl(profileId, cb);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return [];
+  }
+}
+
+/**
  * Checks if the user exists. To be present, it must be configured.
  *
  * @method isUserPresent
@@ -2887,3 +2907,4 @@ exports.getUsersUsingEndpointVoicemail = getUsersUsingEndpointVoicemail;
 exports.getPresenceOnBusyCallforwardTo = getPresenceOnBusyCallforwardTo;
 exports.EVT_USER_PROFILE_AVATAR_CHANGED = EVT_USER_PROFILE_AVATAR_CHANGED;
 exports.getPresenceOnUnavailableCallforwardTo = getPresenceOnUnavailableCallforwardTo;
+exports.getParamUrl = getParamUrl;

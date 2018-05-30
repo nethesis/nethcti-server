@@ -134,7 +134,8 @@ var logSequelize = false;
     OFFHOUR_FILES: "offhour_files",
     CTI_PHONEBOOK: "cti_phonebook",
     USER_SETTINGS: "user_settings",
-    USERMAN_USERS: "userman_users"
+    USERMAN_USERS: "userman_users",
+    REST_CTI_PROFILES_PARAMURL: "rest_cti_profiles_paramurl"
 }
 */
 var JSON_KEYS = {
@@ -155,7 +156,8 @@ var JSON_KEYS = {
   CTI_PHONEBOOK: 'cti_phonebook',
   USER_SETTINGS: 'user_settings',
   CUSTOMER_CARD: 'customer_card',
-  USERMAN_USERS: 'userman_users'
+  USERMAN_USERS: 'userman_users',
+  REST_CTI_PROFILES_PARAMURL: 'rest_cti_profiles_paramurl'
 };
 
 /**

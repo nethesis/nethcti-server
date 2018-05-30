@@ -160,6 +160,7 @@ function setCompUtil(comp) {
      * 1. [`user/presence_onunavailable`](#presence_onunavailableget)
      * 1. [`user/me`](#meget)
      * 1. [`user/endpoints/all`](#userendpointsallget)
+     * 1. [`user/paramurl`](#paramurlget)
      *
      * ---
      *
@@ -422,6 +423,18 @@ function setCompUtil(comp) {
         ...
       }
      *
+     * ---
+     *
+     * ### <a id="paramurlget">**`user/paramurl`**</a>
+     *
+     * Returns the parameterized URL allowed for the user profile.
+     *
+     * Example JSON response:
+     *
+     *      {
+        "id": 84, "profile_id": 3, "url": "https://mycrm.it/script.php?caller=$CALLER_NAME..."}
+      }
+     *
      *
      * <br>
      *
@@ -559,6 +572,7 @@ function setCompUtil(comp) {
          * @type {array}
          *
          *   @param {string} me To get the user information
+         *   @param {string} paramurl To get the parameterized URL for the user profile
          *   @param {string} presence To get the user presence status
          *   @param {string} presence_onbusy To get the conditional user presence status on busy
          *   @param {string} presence_onunavailable To get the conditional user presence status on unavailable
@@ -569,6 +583,7 @@ function setCompUtil(comp) {
          */
         'get': [
           'me',
+          'paramurl',
           'presence',
           'all_avatars',
           'presencelist',
@@ -689,6 +704,35 @@ function setCompUtil(comp) {
             logger.log.error(IDLOG, strerr);
             compUtil.net.sendHttp500(IDLOG, res, strerr);
           }
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * Get the parameterized URL fot he user profile by the following REST API:
+       *
+       *     paramurl
+       *
+       * @method paramurl
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      paramurl: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          var profileId = compAuthorization.getUserProfileId(username);
+          compUser.getParamUrl(username, profileId, function(err, result) {
+            if (err) {
+              logger.log.error(IDLOG, 'getting parameterized URL for user "' + username + '": ' + err.toString());
+              compUtil.net.sendHttp500(IDLOG, res, err.toString());
+              return;
+            }
+            logger.log.info(IDLOG, 'send parameterized URL for user "' + username + '": ' + result);
+            res.send(200, result);
+          });
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -1072,6 +1116,7 @@ function setCompUtil(comp) {
     exports.api = user.api;
     exports.mobile = user.mobile;
     exports.setting = user.setting;
+    exports.paramurl = user.paramurl;
     exports.presence = user.presence;
     exports.settings = user.settings;
     exports.setLogger = setLogger;
