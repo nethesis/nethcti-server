@@ -78,6 +78,21 @@ exports.MeetmeConference = function (extOwner) {
   }
 
   /**
+   * Returns the extension id of the user.
+   *
+   * @method getExtenId
+   * @param {string} userId The user identifier
+   * @return {string} The extension id of the user.
+   */
+  function getExtenId(userId) {
+    for (var exten in users) {
+      if (users[exten].getId() === userId) {
+        return users[exten].getExtenId();
+      }
+    }
+  }
+
+  /**
    * Returns all the users of the conference.
    *
    * @method getAllUsers
@@ -146,6 +161,7 @@ exports.MeetmeConference = function (extOwner) {
     getUser: getUser,
     hasExten: hasExten,
     toString: toString,
+    getExtenId: getExtenId,
     getAllUsers: getAllUsers,
     getUsersCount: getUsersCount
   };

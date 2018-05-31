@@ -3559,10 +3559,13 @@ var compConfigManager;
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
+          var extenId = compAstProxy.getUserExtenIdFromConf(req.params.confId, req.params.userId);
 
-          // check if the conference belongs to the user
-          if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
-
+          // check if the user to be muted is the applicant or if the conference belongs to the user
+          if (extenId && compAuthorization.verifyUserEndpointExten(username, extenId) === true) {
+            logger.log.info(IDLOG, 'muting user "' + req.params.userId + '" (exten: ' + extenId + ') of meetme conf "' + req.params.confId + '": ' +
+              'exten ' + extenId + ' is owned by "' + username + '"');
+          } else if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
             logger.log.warn(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
               'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
@@ -3621,10 +3624,13 @@ var compConfigManager;
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
+          var extenId = compAstProxy.getUserExtenIdFromConf(req.params.confId, req.params.userId);
 
-          // check if the conference belongs to the user
-          if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
-
+          // check if the user to be unmuted is the applicant or if the conference belongs to the user
+          if (extenId && compAuthorization.verifyUserEndpointExten(username, extenId) === true) {
+            logger.log.info(IDLOG, 'unmuting user "' + req.params.userId + '" (exten: ' + extenId + ') of meetme conf "' + req.params.confId + '": ' +
+              'exten ' + extenId + ' is owned by "' + username + '"');
+          } else if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
             logger.log.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
               'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);

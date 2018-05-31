@@ -3953,6 +3953,33 @@ function getConference(extenId) {
 }
 
 /**
+ * Returns the extension identifier for the user of the conference.
+ *
+ * @method getUserExtenIdFromConf
+ * @param {string} confId The conference identifier
+ * @param {string} userId The user identifier
+ * @return {string} The extension identifier.
+ */
+function getUserExtenIdFromConf(confId, userId) {
+  try {
+    if (typeof confId !== 'string' || typeof userId !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (conferences[confId]) {
+      var extenId = conferences[confId].getExtenId(userId);
+      if (extenId) {
+        return extenId;
+      }
+      logger.log.warn(IDLOG, 'getting extenId of userId "' + userId + '" of confId "' + confId + '": extenId "' + extenId + '" does not exist');
+    } else {
+      logger.log.warn(IDLOG, 'getting extenId of userId "' + userId + '" of confId "' + confId + '": conf does not exist');
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Updates the extension status and any other information except
  * the channel list. To update the channel list it request all channels
  * to analize through "listChannels" command plugin.
@@ -9312,6 +9339,7 @@ exports.evtNewVoicemailMessage = evtNewVoicemailMessage;
 exports.stopRecordConversation = stopRecordConversation;
 exports.evtConversationDialing = evtConversationDialing;
 exports.muteRecordConversation = muteRecordConversation;
+exports.getUserExtenIdFromConf = getUserExtenIdFromConf;
 exports.evtRemoveMeetmeUserConf = evtRemoveMeetmeUserConf;
 exports.forceHangupConversation = forceHangupConversation;
 exports.evtSpyStartConversation = evtSpyStartConversation;
