@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.13
+Version: 3.0.14
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,12 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Jun 06 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.14-1
+- Add import/export of speed dial contacts - nethesis/dev#5411
+- Add automatic queue login/logout and DND - nethesis/dev#5410
+- New service for Call Audio Conference - nethesis/dev#5408
+- Add parameterized url to invoke on incoming call - nethesis/dev#5412
+
 * Thu May 17 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.13-1
 - NethVoice14: agi fails with FreePBX framework 14.0.3.2 - Bug nethesis/dev#5406
 
