@@ -3760,7 +3760,7 @@ var compConfigManager;
 
           logger.log.warn(IDLOG, 'starting join exten "' + req.params.endpointId + '" to its meetme conf ' +
             'by user "' + username + '"');
-          req.params.number = compAstProxy.getMeetmeConfCode() + req.params.endpointId;
+          req.params.number = compAstProxy.getMeetmeConfCode();
           req.params.endpointType = 'extension';
           call(username, req, res);
 
