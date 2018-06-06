@@ -3215,7 +3215,7 @@ var compConfigManager;
                   // case 2a
                   // the owner is busy with extension to be added. Both enter into the conference
                   if (newUser) {
-                    req.params.number = compAstProxy.getMeetmeConfCode() + req.params.ownerEndpointId;
+                    req.params.number = compAstProxy.getMeetmeConfCode();
                   }
                   // case 2b
                   // the owner is busy with another extension different from that to be added.
