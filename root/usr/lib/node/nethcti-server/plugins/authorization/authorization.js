@@ -488,6 +488,29 @@ function authorizeAdminPostitUser(username) {
 }
 
 /**
+ * Returns true if the specified user has the queue manager authorization.
+ *
+ * @method authorizeQManagerUser
+ * @param {string} username The username
+ * @return {boolean} True if the user has the queue manager authorization.
+ */
+function authorizeQManagerUser(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var profid = getUserProfileId(username);
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.qmanager.value === true
+    );
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
  * Returns true if the specified user has the administration queues authorization.
  *
  * @method authorizeAdminQueuesUser
@@ -1443,6 +1466,39 @@ function getAllowedStreamingSources(username) {
 }
 
 /**
+ * Return the list of allowed qmanager queues.
+ *
+ * @method getAllowedQManagerQueues
+ * @param {string} username The username
+ * @return {array} The list of allowed qmanager queues.
+ */
+function getAllowedQManagerQueues(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var permissionId;
+    var arr = [];
+    var profid = getUserProfileId(username);
+
+    if (profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.qmanager.value === true) {
+
+      for (permissionId in profiles[profid].macro_permissions.qmanager.permissions) {
+        if (profiles[profid].macro_permissions.qmanager.permissions[permissionId].value === true) {
+          arr.push(profiles[profid].macro_permissions.qmanager.permissions[permissionId].name);
+        }
+      }
+    }
+    return arr;
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return [];
+  }
+}
+
+/**
  * Return true if the specified user has the authorization for the specified
  * streaming source.
  *
@@ -1928,6 +1984,7 @@ exports.authorizeStreamingSourceUser = authorizeStreamingSourceUser;
 exports.authorizeAdminParkingsUser = authorizeAdminParkingsUser;
 exports.authorizeAdminTransferUser = authorizeAdminTransferUser;
 exports.authorizeAdminQueuesUser = authorizeAdminQueuesUser;
+exports.authorizeQManagerUser = authorizeQManagerUser;
 exports.authorizePhoneRedirectUser = authorizePhoneRedirectUser;
 exports.authorizeAdminPhonebookUser = authorizeAdminPhonebookUser;
 exports.verifyUserEndpointVoicemail = verifyUserEndpointVoicemail;
@@ -1938,6 +1995,7 @@ exports.authorizeOperatorGroupsUser = authorizeOperatorGroupsUser;
 exports.verifyUserEndpointCellphone = verifyUserEndpointCellphone;
 exports.authorizeAdminCallerNoteUser = authorizeAdminCallerNoteUser;
 exports.getAllowedStreamingSources = getAllowedStreamingSources;
+exports.getAllowedQManagerQueues = getAllowedQManagerQueues;
 exports.verifyOffhourUserAnnouncement = verifyOffhourUserAnnouncement;
 exports.verifyOffhourListenAnnouncement = verifyOffhourListenAnnouncement;
 exports.getAuthorizedRemoteOperatorGroups = getAuthorizedRemoteOperatorGroups;

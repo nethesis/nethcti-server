@@ -9,7 +9,7 @@ var fs = require('fs');
 var childProcess = require('child_process');
 
 /**
- * Provides the mail functionalities.
+ * Provides the profiling functionalities.
  *
  * @class profiling
  * @static
