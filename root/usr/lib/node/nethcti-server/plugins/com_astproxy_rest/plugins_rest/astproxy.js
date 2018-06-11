@@ -139,6 +139,7 @@ var compConfigManager;
         * 1. [`astproxy/queue_recall/:hours/:qids`](#queue_recallget)
         * 1. [`astproxy/qrecall_info/:hours/:cid/:qid`](#qrecall_infoget)
         * 1. [`astproxy/qrecall_check/:num`](#qrecall_checkget)
+        * 1. [`astproxy/qmanager_queues`](#qmanager_queuesget)
         *
         * ---
         *
@@ -384,6 +385,43 @@ var compConfigManager;
         *
         *     {
          inConversation: true
+     }
+        *
+        * ---
+        *
+        * ### <a id="qmanager_queuesget">**`astproxy/qmanager_queues`**</a>
+        *
+        * Get all the queues for the queue supervisor.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "501": {
+               "name": "hold501",
+               "queue": "501",
+               "members": {
+                  "609": {
+                      "type": "dynamic",
+                      "name": "",
+                      "queue": "501",
+                      "member": "609",
+                      "paused": false,
+                      "loggedIn": false,
+                      "callsTakenCount": 0,
+                      "lastCallTimestamp": 0,
+                      "lastPausedInReason": "",
+                      "lastPausedInTimestamp": 0,
+                      "lastPausedOutTimestamp": 0
+                  }
+               },
+               "avgHoldTime": "0",
+               "avgTalkTime": "0",
+               "waitingCallers": {},
+               "completedCallsCount": "0",
+               "abandonedCallsCount": "0",
+               "serviceLevelTimePeriod": "60",
+               "serviceLevelPercentage": "0.0"
+           }
      }
         *
         *
@@ -920,6 +958,7 @@ var compConfigManager;
          *   @param {string} cfvm/:type/:endpoint           Gets the call forward status to voicemail of the endpoint of the user
          *   @param {string} cfcall/:type/:endpoint         Gets the call forward status to a destination number of the endpoint of the user
          *   @param {string} unauthe_call/:endpoint/:number Calls the number from the specified endpoint without authentication
+         *   @param {string} qmanager_queues                Gets all the queues of the queue supervisor
          */
         'get': [
           'queues',
@@ -945,7 +984,8 @@ var compConfigManager;
           'dnd/:endpoint',
           'cfvm/:type/:endpoint',
           'cfcall/:type/:endpoint',
-          'unauthe_call/:endpoint/:number'
+          'unauthe_call/:endpoint/:number',
+          'qmanager_queues'
         ],
 
         /**
@@ -1243,6 +1283,41 @@ var compConfigManager;
 
           logger.log.info(IDLOG, 'sent all parkings in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, parkings);
+
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      qmanager_queues: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          var queues;
+
+          if (compAuthorization.authorizeQManagerUser(username) === true) {
+            logger.log.info(IDLOG, 'requesting qmanager queues: user "' + username + '" has the "qmanager" authorization');
+          } else {
+            logger.log.warn(IDLOG, 'requesting qmanager queues: authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          var qids = compAuthorization.getAllowedQManagerQueues(username);
+
+          // check if the user has the privacy enabled
+          if (compAuthorization.isPrivacyEnabled(username) === true) {
+            queues = compAstProxy.getJSONQueues(privacyStrReplace);
+          } else {
+            queues = compAstProxy.getJSONQueues();
+          }
+          var qid;
+          for (qid in queues) {
+            if (qids.indexOf(qid) === -1) {
+              delete queues[qid];
+            }
+          }
+          logger.log.info(IDLOG, 'sent all qmanager queues in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+          res.send(200, queues);
 
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
@@ -4628,6 +4703,7 @@ var compConfigManager;
     exports.answer_webrtc = astproxy.answer_webrtc;
     exports.hangup_channel = astproxy.hangup_channel;
     exports.pickup_parking = astproxy.pickup_parking;
+    exports.qmanager_queues = astproxy.qmanager_queues;
     exports.remote_opgroups = astproxy.remote_opgroups;
     exports.unmute_userconf = astproxy.unmute_userconf;
     exports.hangup_userconf = astproxy.hangup_userconf;
