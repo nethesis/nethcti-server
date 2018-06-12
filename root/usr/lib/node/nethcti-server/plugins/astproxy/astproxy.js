@@ -159,6 +159,7 @@ function config(path) {
     var json = JSON.parse(fs.readFileSync(AST_CONF_FILEPATH, 'utf8'));
     if (typeof json.user !== 'string' ||
       typeof json.auto_c2c !== 'string' ||
+      typeof json.null_call_period !== 'string' ||
       typeof json.pass !== 'string' || typeof json.prefix !== 'string' ||
       typeof json.host !== 'string' || typeof json.port !== 'string') {
 
@@ -174,6 +175,7 @@ function config(path) {
     };
     proxyLogic.setPrefix(json.prefix);
     proxyLogic.setAutoC2CStatus(json.auto_c2c);
+    proxyLogic.setNullCallPeriod(parseInt(json.null_call_period));
 
     logger.log.info(IDLOG, 'configuration done by ' + AST_CONF_FILEPATH);
 

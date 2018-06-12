@@ -505,6 +505,16 @@ var prefix = '';
 var autoC2CEnabled = true;
 
 /**
+ * The period of time to consider a call as null.
+ *
+ * @property nullCallPeriod
+ * @type number
+ * @default 5
+ * @private
+ */
+var nullCallPeriod = 5;
+
+/**
  * The remote sites phone prefixes.
  *
  * @property remoteSitesPrefixes
@@ -742,6 +752,26 @@ function setAutoC2CStatus(status) {
     }
     autoC2CEnabled = status === 'enabled' ? true : false;
     logger.log.info(IDLOG, 'auto c2c has been set to "' + status + '"');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the period of time to consider a call as null. All calls with
+ * waiting time less than this period is considered null.
+ *
+ * @method setNullCallPeriod
+ * @param {number} period The period of time.
+ * @static
+ */
+function setNullCallPeriod(period) {
+  try {
+    if (typeof period !== 'number') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    nullCallPeriod = period;
+    logger.log.info(IDLOG, 'nullCallPeriod has been set to "' + nullCallPeriod + '"');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2056,6 +2086,41 @@ function updateQueueMemberLastPauseData(memberName, memberId, queueId) {
     });
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
+  }
+}
+
+/**
+ * Return the JSON representation of queue statistics.
+ *
+ * @method getJSONQueueStats
+ * @param {string} qid The queue identifier
+ * @param {function} cb The callback function
+ * @return {object} The JSON representation of extended queue statistics.
+ */
+function getJSONQueueStats(qid, cb) {
+  try {
+    if (typeof qid !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (!queues[qid]) {
+      var msg = 'getting JSON stats of queue "' + qid + '": queue does not exist';
+      logger.log.warn(IDLOG, msg);
+      cb(msg);
+      return;
+    }
+
+    if (!staticDataQueues[qid] || !staticDataQueues[qid].sla) {
+      var msg = 'getting JSON stats of queue "' + qid + '": no static data about the queue';
+      logger.log.warn(IDLOG, msg);
+      cb(msg);
+      return;
+    }
+    compDbconn.getQueueStats(qid, nullCallPeriod, staticDataQueues[qid].sla, function (err1, result) {
+      cb(err1, result);
+    });
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+    cb(error);
   }
 }
 
@@ -9277,6 +9342,7 @@ exports.muteConversation = muteConversation;
 exports.sendDTMFSequence = sendDTMFSequence;
 exports.parkConversation = parkConversation;
 exports.setAutoC2CStatus = setAutoC2CStatus;
+exports.setNullCallPeriod = setNullCallPeriod;
 exports.isAutoC2CEnabled = isAutoC2CEnabled;
 exports.setCompPhonebook = setCompPhonebook;
 exports.getJSONExtension = getJSONExtension;
@@ -9299,6 +9365,7 @@ exports.EVT_EXTEN_DIALING = EVT_EXTEN_DIALING;
 exports.EVT_QUEUE_CHANGED = EVT_QUEUE_CHANGED;
 exports.getQueueIdsOfExten = getQueueIdsOfExten;
 exports.getJSONQueuesStats = getJSONQueuesStats;
+exports.getJSONQueueStats = getJSONQueueStats;
 exports.getJSONAgentsStats = getJSONAgentsStats;
 exports.unmuteConversation = unmuteConversation;
 exports.setUnconditionalCf = setUnconditionalCf;

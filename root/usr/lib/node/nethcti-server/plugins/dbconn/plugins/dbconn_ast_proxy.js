@@ -107,10 +107,10 @@ function getFpbxAdminSha1Pwd(cb) {
     }
     var user = 'admin';
     compDbconnMain.models[compDbconnMain.JSON_KEYS.AMPUSERS].find({
-      where: ['username=?', user ],
+      where: ['username=?', user],
       attributes: ['password_sha1']
 
-    }).then(function(result) {
+    }).then(function (result) {
       // extract result to return in the callback function
       if (result) {
         logger.log.info(IDLOG, 'found sha1 password of freepbx admin user');
@@ -121,7 +121,7 @@ function getFpbxAdminSha1Pwd(cb) {
         cb(null, false);
       }
 
-    }, function(error) { // manage the error
+    }, function (error) { // manage the error
       logger.log.error(IDLOG, 'getting sha1 password of freepbx admin user');
       cb(error.toString());
     });
@@ -176,7 +176,7 @@ function getCallInfo(uniqueid, privacyStr, cb) {
       ],
       attributes: attributes
 
-    }).success(function(results) {
+    }).success(function (results) {
 
       // extract results to return in the callback function
       var i;
@@ -187,7 +187,7 @@ function getCallInfo(uniqueid, privacyStr, cb) {
       logger.log.info(IDLOG, results.length + ' results searching CEL on uniqueid "' + uniqueid + '"');
       cb(null, results);
 
-    }).error(function(err) { // manage the error
+    }).error(function (err) { // manage the error
 
       logger.log.error(IDLOG, 'searching CEL on uniqueid "' + uniqueid + '"');
       cb(err.toString());
@@ -217,7 +217,7 @@ function getQueuesQOS(day, cb) {
     }
 
     async.parallel({
-      stats: function(callback) {
+      stats: function (callback) {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
           where: ['event in ("COMPLETEAGENT","COMPLETECALLER")' + ' AND DATE_FORMAT(time,"%Y%m%d") = \'' + day + '\''],
           attributes: [
@@ -231,7 +231,7 @@ function getQueuesQOS(day, cb) {
           group: ['agent', 'queuename'],
           order: ['agent', 'queuename']
 
-        }).success(function(results) {
+        }).success(function (results) {
           if (results) {
             logger.log.info(IDLOG, 'get queues answered qos has been successful');
             callback(null, results);
@@ -240,12 +240,12 @@ function getQueuesQOS(day, cb) {
             callback(null, {});
           }
 
-        }).error(function(err1) { // manage the error
+        }).error(function (err1) { // manage the error
           logger.log.error(IDLOG, 'get queues answered qos: ' + err1.toString());
           callback(err1, {});
         });
       },
-      noanswer: function(callback) {
+      noanswer: function (callback) {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
           where: ['event = "RINGNOANSWER"' + ' AND DATE_FORMAT(time,"%Y%m%d") = \'' + day + '\''],
           attributes: [
@@ -254,7 +254,7 @@ function getQueuesQOS(day, cb) {
           ],
           group: ['agent', 'queuename'],
           order: ['agent', 'queuename']
-        }).success(function(results) {
+        }).success(function (results) {
           if (results) {
             logger.log.info(IDLOG, 'get ring no answered queues qos has been successful');
             var res = {};
@@ -271,12 +271,12 @@ function getQueuesQOS(day, cb) {
             logger.log.info(IDLOG, 'get ring no answered queues qos: not found');
             callback(null, {});
           }
-        }).error(function(err1) { // manage the error
+        }).error(function (err1) { // manage the error
           logger.log.error(IDLOG, 'get ring no answered queues qos: ' + err1.toString());
           callback(err1, {});
         });
       },
-      last_call: function(callback) {
+      last_call: function (callback) {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
           where: ['event = "CONNECT"'],
           attributes: [
@@ -287,7 +287,7 @@ function getQueuesQOS(day, cb) {
           ],
           group: ['agent', 'queuename'],
           order: ['agent', 'queuename']
-        }).success(function(results) {
+        }).success(function (results) {
           if (results) {
             logger.log.info(IDLOG, 'get last call time queues qos has been successful');
             var res = {};
@@ -304,12 +304,12 @@ function getQueuesQOS(day, cb) {
             logger.log.error(IDLOG, 'get last call time queues qos: not found');
             callback(null, {});
           }
-        }).error(function(err1) { // manage the error
+        }).error(function (err1) { // manage the error
           logger.log.info(IDLOG, 'get last call time queues qos: ' + err1.toString());
           callback(err1, {});
         });
       }
-    }, function(err, results) {
+    }, function (err, results) {
 
       var i, z, values;
       var res = [];
@@ -383,10 +383,10 @@ function getQueueRecallInfo(data, cb) {
       'ORDER BY time ASC'
     ].join('');
 
-    compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function(results) {
+    compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
       logger.log.info(IDLOG, results.length + ' results searching details about queue recall on cid "' + data.cid + '"');
       cb(null, results[0]);
-    }, function(err1) {
+    }, function (err1) {
       logger.log.error(IDLOG, 'searching details about queue recall on cid "' + data.cid + '"');
       cb(err.toString(), {});
     });
@@ -548,12 +548,12 @@ function getQueueRecall(data, cb) {
       'ORDER BY time DESC;'
     ].join('');
 
-    compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function(results) {
+    compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
       logger.log.info(IDLOG, 'get queues ' + data.queues + ' recall of last ' + data.hours +
         ' hours has been successful: ' + results.length + ' results');
       cb(null, results[0]);
 
-    }, function(err1) {
+    }, function (err1) {
       logger.log.error(IDLOG, 'get queues ' + data.queues + ' recall of last ' + data.hours + ' hours: ' + err1.toString());
       cb(err1, {});
     });
@@ -608,7 +608,7 @@ function getCallTrace(linkedid, privacyStr, cb) {
       ],
       attributes: attributes
 
-    }).success(function(results) {
+    }).success(function (results) {
 
       // extract results to return in the callback function
       var i;
@@ -619,7 +619,7 @@ function getCallTrace(linkedid, privacyStr, cb) {
       logger.log.info(IDLOG, results.length + ' results searching CEL on linkedid "' + linkedid + '"');
       cb(null, results);
 
-    }).error(function(err) { // manage the error
+    }).error(function (err) { // manage the error
 
       logger.log.error(IDLOG, 'searching CEL on linkedid "' + linkedid + '"');
       cb(err.toString());
@@ -649,13 +649,16 @@ function getQueuesStats(day, cb) {
     }
 
     async.parallel({
-      general: function(callback) {
+      general: function (callback) {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
           where: [
-            'event in ("ABANDON","EXITWITHTIMEOUT","COMPLETEAGENT","COMPLETECALLER")' + ' AND DATE_FORMAT(time,"%Y%m%d") = \'' + day + '\'' + ' GROUP BY queuename, action, hold'
+            'event in ("ABANDON","EXITWITHTIMEOUT","COMPLETEAGENT","COMPLETECALLER")' +
+            ' AND DATE_FORMAT(time,"%Y%m%d") = \'' + day + '\'' + ' GROUP BY queuename, action, hold'
           ],
           attributes: [
-            'id', 'queuename', ['IF(event = "COMPLETEAGENT", "ANSWER",' + ' IF(event = "COMPLETECALLER", "ANSWER",' + ' IF(event = "EXITWITHTIMEOUT", "TIMEOUT", event)))',
+            'id', 'queuename', ['IF(event = "COMPLETEAGENT", "ANSWER",' +
+              ' IF(event = "COMPLETECALLER", "ANSWER",' +
+              ' IF(event = "EXITWITHTIMEOUT", "TIMEOUT", event)))',
               'action'
             ],
             ['IF(event = "ABANDON", IF(cast(data3 as unsigned) <= 50, "nulled", "failed"), cast(data1 as unsigned))', 'hold'],
@@ -663,7 +666,7 @@ function getQueuesStats(day, cb) {
           ],
           order: ['queuename', 'action', 'hold']
 
-        }).success(function(results) {
+        }).success(function (results) {
 
           if (results) {
             logger.log.info(IDLOG, 'get extended queues statistics has been successful');
@@ -695,7 +698,7 @@ function getQueuesStats(day, cb) {
           }
         });
       },
-      answer: function(callback) {
+      answer: function (callback) {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
           where: [
             'event in ("COMPLETEAGENT","COMPLETECALLER")' + ' AND DATE_FORMAT(time,"%Y%m%d") = \'' + day + '\'' + ' GROUP BY queuename'
@@ -711,7 +714,7 @@ function getQueuesStats(day, cb) {
           ],
           order: ['queuename']
 
-        }).success(function(results) {
+        }).success(function (results) {
 
           if (results) {
             logger.log.info(IDLOG, 'get extended queues statistics has been successful');
@@ -732,10 +735,92 @@ function getQueuesStats(day, cb) {
           }
         });
       }
-    }, function(err, results) {
+    }, function (err, results) {
       cb(null, results);
     });
 
+    compDbconnMain.incNumExecQueries();
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Gets statistic about the queue.
+ *
+ * @method getQueueStats
+ * @param {string} qid The queue identifier
+ * @param {string} sla The service level of the queue
+ * @param {number} nullCallPeriod The period of time to consider a call as null
+ * @param {function} cb The callback function
+ */
+function getQueueStats(qid, nullCallPeriod, sla, cb) {
+  try {
+    if (typeof cb !== 'function' ||
+      typeof qid !== 'string' ||
+      typeof sla !== 'string' ||
+      typeof nullCallPeriod !== 'number') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].find({
+      where: [
+        'event IN ("DID","ENTERQUEUE","COMPLETEAGENT","COMPLETECALLER","ABANDON","EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT") ' +
+        'AND queuename=?',
+        qid
+      ],
+      attributes: [
+        ['IFNULL(queuename, ' + qid + ')', 'queueman'],
+        ['COUNT(IF(event="DID", 1, NULL))', 'tot'],
+        ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER"), 1, NULL))', 'tot_processed'],
+        ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER") AND data2<' + sla + ', 1, NULL))', 'processed_less_sla'],
+        ['COUNT(IF(event="ABANDON" AND data3<' + nullCallPeriod + ', 1, NULL))', 'tot_null'],
+        ['COUNT(IF((event IN ("EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT")) OR (event="ABANDON" AND data3>=' + nullCallPeriod + '), 1, NULL))', 'tot_failed_inqueue'],
+        ['COUNT(IF(event="EXITEMPTY", 1, NULL))', 'failed_inqueue_noagents'],
+        ['COUNT(IF(event="EXITWITHKEY", 1, NULL))', 'failed_inqueue_withkey'],
+        ['COUNT(IF(event="EXITWITHTIMEOUT", 1, NULL))', 'failed_inqueue_timeout'],
+        ['COUNT(IF((event="ABANDON" AND data3>=' + nullCallPeriod + '), 1, NULL))', 'failed_inqueue_abandon'],
+        ['IFNULL(MIN(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0)', 'min_duration'],
+        ['IFNULL(MAX(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0)', 'max_duration'],
+        ['IFNULL(ROUND(AVG(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0), 0)', 'avg_duration'],
+        ['IFNULL(MIN(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED), ' +
+          'IF(event="ABANDON" AND data3>=' + nullCallPeriod + ', CAST(data3 AS UNSIGNED), ' +
+          'IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL))' +
+          ')), 0)',
+          'min_wait'
+        ],
+        ['IFNULL(MAX(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED), ' +
+          'IF(event="ABANDON" AND data3>=' + nullCallPeriod + ', CAST(data3 AS UNSIGNED), ' +
+          'IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL))' +
+          ')), 0)',
+          'max_wait'
+        ],
+        ['IFNULL(ROUND(AVG(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED), ' +
+          'IF(event="ABANDON" AND data3>=' + nullCallPeriod + ', CAST(data3 AS UNSIGNED), ' +
+          'IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL))' +
+          ')), 0), 0)',
+          'avg_wait'
+        ]
+      ]
+    }).then(function (results) {
+      try {
+        if (results && results.dataValues) {
+          logger.log.info(IDLOG, 'get stats of queue "' + qid + '" has been successful');
+          results.dataValues.failed_before_queue = results.dataValues.tot - results.dataValues.tot_processed - results.dataValues.tot_null - results.dataValues.tot_failed_inqueue;
+          cb(null, results.dataValues);
+        } else {
+          logger.log.info(IDLOG, 'get stats of queue "' + qid + '": not found');
+          cb(null, {});
+        }
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
+    }, function (err) {
+      logger.log.error(IDLOG, 'get stats of queue "' + qid + '": ' + err.toString());
+      cb(err.toString());
+    });
     compDbconnMain.incNumExecQueries();
 
   } catch (err) {
@@ -760,7 +845,7 @@ function getAgentsStats(day, cb) {
     var query = 'SELECT' + ' a.agent AS agent' + ', a.queuename AS queue' + ', DATE_FORMAT(a.time, "%k:%i:%s") AS time_in' + ', DATE_FORMAT(MIN(b.time), "%k:%i:%s") AS time_out' + ', UNIX_TIMESTAMP(MIN(b.time))-UNIX_TIMESTAMP(a.time) AS secs' + ', a.data1 AS reason' + ' FROM asteriskcdrdb.queue_log a' + ' LEFT JOIN asteriskcdrdb.queue_log b' + ' ON b.agent = a.agent' + ' AND b.queuename = a.queuename' + ' AND b.time > a.time' + ' AND $JOINS' + ' WHERE $BINDS' + ' AND DATE_FORMAT(a.time,"%Y%m%d") = \'' + day + '\'' + ' GROUP BY agent, queue, a.time';
 
     // Group results by agent
-    var __group = function(rows) {
+    var __group = function (rows) {
       var rows_grouped = {};
 
       for (var i in rows) {
@@ -786,35 +871,35 @@ function getAgentsStats(day, cb) {
 
     // Launch agents queries
     async.parallel({
-      pause_unpause: function(callback) {
+      pause_unpause: function (callback) {
         var binds = "a.event = 'PAUSE' AND a.callid = 'QUEUE_REPORT'";
         var joins = "b.event = 'UNPAUSE' AND b.callid = 'QUEUE_REPORT'";
         compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query.replace(/\$BINDS/g, binds)
             .replace(/\$JOINS/g, joins))
-          .success(function(rows) {
+          .success(function (rows) {
             callback(null, __group(rows));
           });
       },
-      join_leave_queue: function(callback) {
+      join_leave_queue: function (callback) {
         var binds = "a.event = 'ADDMEMBER' AND a.callid = 'QUEUE_REPORT'";
         var joins = "b.event = 'REMOVEMEMBER' AND b.callid = 'QUEUE_REPORT'";
         compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query.replace(/\$BINDS/g, binds)
             .replace(/\$JOINS/g, joins))
-          .success(function(rows) {
+          .success(function (rows) {
             callback(null, __group(rows));
           });
       },
-      logon_logoff: function(callback) {
+      logon_logoff: function (callback) {
         var binds = "a.event = 'AGENTLOGIN'";
         var joins = "b.event = 'AGENTLOGOFF'";
         compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query.replace(/\$BINDS/g, binds)
             .replace(/\$JOINS/g, joins))
-          .success(function(rows) {
+          .success(function (rows) {
             callback(null, __group(rows));
           });
 
       }
-    }, function(err, results) {
+    }, function (err, results) {
       var inqueue_outqueue = results.join_leave_queue;
 
       for (var i in results.logon_logoff) {
@@ -856,7 +941,7 @@ function deleteCallRecording(uniqueid, cb) {
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].find({
       where: ['uniqueid=?', uniqueid]
 
-    }).then(function(task) {
+    }).then(function (task) {
       try {
 
         if (task) {
@@ -864,7 +949,7 @@ function deleteCallRecording(uniqueid, cb) {
           // empty the content of the "recordingfile" field
           task.updateAttributes({
             recordingfile: ''
-          }, ['recordingfile']).then(function() {
+          }, ['recordingfile']).then(function () {
 
             logger.log.info(IDLOG, '"recordingfile" field of the call with uniqueid "' + uniqueid + '" has been emptied successfully from asteriskcdrdb.cdr table');
             cb();
@@ -881,7 +966,7 @@ function deleteCallRecording(uniqueid, cb) {
         cb(error);
       }
 
-    }, function(err) { // manage the error
+    }, function (err) { // manage the error
 
       logger.log.error(IDLOG, 'emptying "recordingfile" of the call with uniqueid "' + uniqueid + '" from asteriskcdrdb.cdr table: not found: ' + err.toString());
       cb(err.toString());
@@ -922,7 +1007,7 @@ function getCallRecordingFileData(uniqueid, cb) {
         ['recordingfile', 'filename']
       ]
 
-    }).then(function(result) {
+    }).then(function (result) {
       // extract result to return in the callback function
       if (result) {
         logger.log.info(IDLOG, 'found data information about recording call with uniqueid ' + uniqueid);
@@ -932,7 +1017,7 @@ function getCallRecordingFileData(uniqueid, cb) {
         logger.log.info(IDLOG, 'no data information about recording call with uniqueid ' + uniqueid);
         cb(null, false);
       }
-    }, function(err) { // manage the error
+    }, function (err) { // manage the error
       logger.log.error(IDLOG, 'getting data information about recording call with uniqueid ' + uniqueid);
       cb(err.toString());
     });
@@ -978,7 +1063,7 @@ function getQueueMemberLastPausedInData(memberName, queueId, memberId, cb) {
         ['data1', 'reason']
       ]
 
-    }).then(function(result) {
+    }).then(function (result) {
 
       if (result && result.selectedValues) {
 
@@ -1000,7 +1085,7 @@ function getQueueMemberLastPausedInData(memberName, queueId, memberId, cb) {
         cb(null, {});
       }
 
-    }, function(err1) { // manage the error
+    }, function (err1) { // manage the error
 
       logger.log.error(IDLOG, 'get last "paused in" data of member "' + memberName + '" of the queue "' + queueId + '" failed: ' + err1.toString());
       cb(err1);
@@ -1046,7 +1131,7 @@ function getQueueMemberLastPausedOutData(memberName, queueId, memberId, cb) {
         ['time', 'timestamp']
       ]
 
-    }).then(function(result) {
+    }).then(function (result) {
 
       if (result && result.selectedValues) {
 
@@ -1068,7 +1153,7 @@ function getQueueMemberLastPausedOutData(memberName, queueId, memberId, cb) {
         cb(null, {});
       }
 
-    }, function(err1) { // manage the error
+    }, function (err1) { // manage the error
 
       logger.log.error(IDLOG, 'get last "paused out" data of member "' + memberName + '" of the queue "' + queueId + '" failed: ' + err1.toString());
       cb(err1);
@@ -1086,6 +1171,7 @@ apiList.getCallInfo = getCallInfo;
 apiList.getQueuesQOS = getQueuesQOS;
 apiList.getCallTrace = getCallTrace;
 apiList.getQueuesStats = getQueuesStats;
+apiList.getQueueStats = getQueueStats;
 apiList.getAgentsStats = getAgentsStats;
 apiList.getQueueRecall = getQueueRecall;
 apiList.getQueueRecallInfo = getQueueRecallInfo;

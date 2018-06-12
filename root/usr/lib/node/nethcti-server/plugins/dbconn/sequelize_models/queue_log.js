@@ -5,23 +5,15 @@ module.exports = function(sequelize, DataTypes) {
       autoIncrement: true,
       primaryKey: true
     },
-    time: DataTypes.DATE,
-    callid: DataTypes.INTEGER,
     queuename: DataTypes.STRING,
-    agent: DataTypes.STRING,
-    event: DataTypes.STRING,
-    action: DataTypes.STRING,
-    data1: DataTypes.INTEGER,
-    data2: DataTypes.INTEGER,
-    period: DataTypes.DATE,
-    hold: DataTypes.STRING,
-    calls: DataTypes.INTEGER,
-    max_hold: DataTypes.FLOAT,
-    min_hold: DataTypes.FLOAT,
-    avg_hold: DataTypes.FLOAT,
-    tot_duration: DataTypes.FLOAT,
-    max_duration: DataTypes.FLOAT,
-    min_duration: DataTypes.FLOAT,
-    avg_duration: DataTypes.FLOAT
+    tot: DataTypes.INTEGER,
+    tot_processed: DataTypes.INTEGER,
+    processed_less_sla: DataTypes.INTEGER,
+    tot_null: DataTypes.INTEGER,
+    tot_failed_inqueue: DataTypes.INTEGER,
+    failed_inqueue_noagents: DataTypes.INTEGER,
+    failed_inqueue_withkey: DataTypes.INTEGER,
+    failed_inqueue_timeout: DataTypes.INTEGER,
+    failed_inqueue_abandon: DataTypes.INTEGER
   });
 };
