@@ -1486,7 +1486,7 @@ function getAllowedQManagerQueues(username) {
 
       for (permissionId in profiles[profid].macro_permissions.qmanager.permissions) {
         if (profiles[profid].macro_permissions.qmanager.permissions[permissionId].value === true) {
-          arr.push(profiles[profid].macro_permissions.qmanager.permissions[permissionId].name);
+          arr.push(profiles[profid].macro_permissions.qmanager.permissions[permissionId].name.split('qmanager_')[1]);
         }
       }
     }
