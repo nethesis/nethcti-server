@@ -392,6 +392,27 @@ exports.Extension = function(ext, chType) {
   }
 
   /**
+   * Return the number of connected conversation through the specified queue.
+   *
+   * @method getCCCounterByQueue
+   * @param {string} qid The queue identifier
+   * @return {number} The number of conversation through the queue.
+   */
+  function getCCCounterByQueue(qid) {
+    var c;
+    var count = 0;
+    for (c in conversations) {
+      if (conversations[c].isThroughQueue() === true &&
+        conversations[c].isConnected() === true &&
+        conversations[c].getQueueId() === qid) {
+
+        count += 1;
+      }
+    }
+    return count;
+  }
+
+  /**
    * Return the conversation list.
    *
    * @method getAllConversations
@@ -730,6 +751,7 @@ exports.Extension = function(ext, chType) {
     conversationCount: conversationCount,
     removeConversation: removeConversation,
     getAllConversations: getAllConversations,
+    getCCCounterByQueue: getCCCounterByQueue,
     removeAllConversations: removeAllConversations
   };
 };

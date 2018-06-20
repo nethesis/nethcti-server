@@ -752,8 +752,8 @@ function getQueuesStats(day, cb) {
  *
  * @method getQueueStats
  * @param {string} qid The queue identifier
- * @param {string} sla The service level of the queue
  * @param {number} nullCallPeriod The period of time to consider a call as null
+ * @param {string} sla The service level of the queue
  * @param {function} cb The callback function
  */
 function getQueueStats(qid, nullCallPeriod, sla, cb) {
@@ -766,7 +766,7 @@ function getQueueStats(qid, nullCallPeriod, sla, cb) {
     }
     compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].find({
       where: [
-        'event IN ("DID","ENTERQUEUE","COMPLETEAGENT","COMPLETECALLER","ABANDON","EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT") ' +
+        'event IN ("DID","ENTERQUEUE","COMPLETEAGENT","COMPLETECALLER","ABANDON","EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL") ' +
         'AND queuename=?',
         qid
       ],
@@ -775,12 +775,15 @@ function getQueueStats(qid, nullCallPeriod, sla, cb) {
         ['COUNT(IF(event="DID", 1, NULL))', 'tot'],
         ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER"), 1, NULL))', 'tot_processed'],
         ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER") AND data2<' + sla + ', 1, NULL))', 'processed_less_sla'],
+        ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER") AND data2>=' + sla + ', 1, NULL))', 'processed_greater_sla'],
         ['COUNT(IF(event="ABANDON" AND data3<' + nullCallPeriod + ', 1, NULL))', 'tot_null'],
-        ['COUNT(IF((event IN ("EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT")) OR (event="ABANDON" AND data3>=' + nullCallPeriod + '), 1, NULL))', 'tot_failed_inqueue'],
+        ['COUNT(IF((event IN ("EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL")) OR (event="ABANDON" AND data3>=' + nullCallPeriod + '), 1, NULL))', 'tot_failed'],
         ['COUNT(IF(event="EXITEMPTY", 1, NULL))', 'failed_inqueue_noagents'],
-        ['COUNT(IF(event="EXITWITHKEY", 1, NULL))', 'failed_inqueue_withkey'],
-        ['COUNT(IF(event="EXITWITHTIMEOUT", 1, NULL))', 'failed_inqueue_timeout'],
-        ['COUNT(IF((event="ABANDON" AND data3>=' + nullCallPeriod + '), 1, NULL))', 'failed_inqueue_abandon'],
+        ['COUNT(IF(event="EXITWITHKEY", 1, NULL))', 'failed_withkey'],
+        ['COUNT(IF(event="EXITWITHTIMEOUT", 1, NULL))', 'failed_timeout'],
+        ['COUNT(IF((event="ABANDON" AND data3>=' + nullCallPeriod + '), 1, NULL))', 'failed_abandon'],
+        ['COUNT(IF(event="FULL", 1, NULL))', 'failed_full'],
+        ['COUNT(IF(event IN ("JOINEMPTY","JOINUNAVAIL"), 1, NULL))', 'failed_outqueue_noagents'],
         ['IFNULL(MIN(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0)', 'min_duration'],
         ['IFNULL(MAX(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0)', 'max_duration'],
         ['IFNULL(ROUND(AVG(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0), 0)', 'avg_duration'],
@@ -807,7 +810,8 @@ function getQueueStats(qid, nullCallPeriod, sla, cb) {
       try {
         if (results && results.dataValues) {
           logger.log.info(IDLOG, 'get stats of queue "' + qid + '" has been successful');
-          results.dataValues.failed_before_queue = results.dataValues.tot - results.dataValues.tot_processed - results.dataValues.tot_null - results.dataValues.tot_failed_inqueue;
+          results.dataValues.sla = parseInt(sla);
+          results.dataValues.nullCallPeriod = parseInt(nullCallPeriod);
           cb(null, results.dataValues);
         } else {
           logger.log.info(IDLOG, 'get stats of queue "' + qid + '": not found');
