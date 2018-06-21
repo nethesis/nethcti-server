@@ -1,6 +1,7 @@
 {
     my $prefix = ${'nethcti-server'}{'Prefix'} || "";
     my $autoc2c = ${'nethcti-server'}{'AutoC2C'} || "enabled";
+    my $nullCallPeriod = ${'nethcti-server'}{'NullCallPeriod'} || "5";
 
     if (defined ${'nethcti-server'}{'Prefix'} && ${'nethcti-server'}{'Prefix'} eq "0") {
         $prefix = "0";
@@ -15,6 +16,7 @@
     "host": "localhost",
     "port": "5038",
     "prefix": "' . $prefix . '",
-    "auto_c2c": "' . $autoc2c . '"
+    "auto_c2c": "' . $autoc2c . '",
+    "null_call_period": "'. $nullCallPeriod . '"
 }';
 }

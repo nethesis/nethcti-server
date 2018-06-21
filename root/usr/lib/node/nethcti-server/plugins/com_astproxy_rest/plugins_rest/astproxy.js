@@ -140,6 +140,7 @@ var compConfigManager;
         * 1. [`astproxy/qrecall_info/:hours/:cid/:qid`](#qrecall_infoget)
         * 1. [`astproxy/qrecall_check/:num`](#qrecall_checkget)
         * 1. [`astproxy/qmanager_queues`](#qmanager_queuesget)
+        * 1. [`astproxy/qmanager_qstats/:qid`](#qmanager_qstatsget)
         *
         * ---
         *
@@ -422,6 +423,36 @@ var compConfigManager;
                "serviceLevelTimePeriod": "60",
                "serviceLevelPercentage": "0.0"
            }
+     }
+        *
+        * ---
+        *
+        * ### <a id="qmanager_qstatsget">**`astproxy/qmanager_qstats/:qid`**</a>
+        *
+        * Gets statistics about the queue.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "queueman": "401",
+         "tot": 5,
+         "tot_processed": 2,
+         "processed_less_sla": 2,
+         "tot_null": 2,
+         "tot_failed": 1,
+         "failed_inqueue_noagents": 0, // enter into the queue and fail for agents disappearance
+         "failed_withkey": 0,
+         "failed_timeout": 0,
+         "failed_abandon": 1,
+         "failed_full": 0,
+         "failed_outqueue_noagents": 0, // failed outside the queue for agents lack
+         "min_duration": 3,
+         "max_duration": 4,
+         "avg_duration": 4,
+         "min_wait": 1,
+         "max_wait": 11,
+         "avg_wait": 4,
+         "sla": 60
      }
         *
         *
@@ -948,6 +979,8 @@ var compConfigManager;
          *   @param {string} sip_webrtc                     Gets all the configuration about the sip WebRTC
          *   @param {string} remote_extensions              Gets all the extensions with all their status information of all remote sites
          *   @param {string} queues_stats/:day              Gets extended statistics about queues
+         *   @param {string} qmanager_qstats/:qid           Gets statistics about the queue
+         *   @param {string} qmanager_qstats                Gets statistics about all the queues
          *   @param {string} queue_recall/:hours/:qids      Gets the recall data about the queues
          *   @param {string} qrecall_info/:hours/:cid/:qid  Gets the details about the queue recall
          *   @param {string} qrecall_check/:num             Checks if the number is in conversation
@@ -975,6 +1008,8 @@ var compConfigManager;
           'remote_prefixes',
           'remote_extensions',
           'queues_stats/:day',
+          'qmanager_qstats',
+          'qmanager_qstats/:qid',
           'queue_recall/:hours/:qids',
           'qrecall_info/:hours/:cid/:qid',
           'qrecall_check/:num',
@@ -1708,6 +1743,61 @@ var compConfigManager;
             }
           });
 
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      },
+
+      /**
+       *  Gets statistics about the queue with the following REST API:
+       *
+       *     GET  qmanager_qstats
+       *
+       * @method qmanager_qstats
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      qmanager_qstats: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          var qid = req.params.qid;
+          if (compAuthorization.authorizeQManagerUser(username) === true) {
+            logger.log.info(IDLOG, 'getting statistics about queue "' + qid + '": user "' + username + '" has the "qmanager" authorization');
+          } else {
+            logger.log.warn(IDLOG, 'getting statistics about queue "' + qid + '": authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          if (qid === undefined) {
+            var queuesList = compAuthorization.getAllowedQManagerQueues(username);
+            compAstProxy.getJSONAllQueuesStats(queuesList, function (err1, stats) {
+              try {
+                if (err1) {
+                  throw err1;
+                }
+                logger.log.info(IDLOG, 'sent JSON stats of all queues to user "' + username + '" ' + res.connection.remoteAddress);
+                res.send(200, stats);
+              } catch (err) {
+                logger.log.error(IDLOG, err.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+              }
+            });
+          } else {
+            compAstProxy.getJSONQueueStats(qid, function (err1, stats) {
+              try {
+                if (err1) {
+                  throw err1;
+                }
+                logger.log.info(IDLOG, 'sent JSON stats of queue "' + qid + '" to user "' + username + '" ' + res.connection.remoteAddress);
+                res.send(200, stats);
+              } catch (err) {
+                logger.log.error(IDLOG, err.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+              }
+            });
+          }
         } catch (error) {
           logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -4694,6 +4784,7 @@ var compConfigManager;
     exports.qrecall_info = astproxy.qrecall_info;
     exports.qrecall_check = astproxy.qrecall_check;
     exports.queues_stats = astproxy.queues_stats;
+    exports.qmanager_qstats = astproxy.qmanager_qstats;
     exports.start_record = astproxy.start_record;
     exports.unauthe_call = astproxy.unauthe_call;
     exports.force_hangup = astproxy.force_hangup;

@@ -89,6 +89,8 @@ module.exports = function(options, imports, register) {
       getJSONExtensions: astProxy.proxyLogic.getJSONExtensions,
       getJSONQueues: astProxy.proxyLogic.getJSONQueues,
       getJSONQueuesStats: astProxy.proxyLogic.getJSONQueuesStats,
+      getJSONAllQueuesStats: astProxy.proxyLogic.getJSONAllQueuesStats,
+      getJSONQueueStats: astProxy.proxyLogic.getJSONQueueStats,
       getJSONQueuesQOS: astProxy.proxyLogic.getJSONQueuesQOS,
       getJSONAgentsStats: astProxy.proxyLogic.getJSONAgentsStats,
       getJSONTrunks: astProxy.proxyLogic.getJSONTrunks,

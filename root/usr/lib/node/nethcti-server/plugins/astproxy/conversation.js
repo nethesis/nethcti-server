@@ -320,6 +320,26 @@ exports.Conversation = function(ownerId, sourceChan, destChan, queue) {
   }
 
   /**
+   * Returns true if the conversation is connected.
+   *
+   * @method isConnected
+   * @return {boolean} True if the conversation is connected.
+   */
+  function isConnected() {
+    return connected;
+  }
+
+  /**
+   * Returns true if the conversation is through a queue.
+   *
+   * @method isThroughQueue
+   * @return {boolean} True if the conversation is through a queue.
+   */
+  function isThroughQueue() {
+    return throughQueue;
+  }
+
+  /**
    * Return the duration of the conversation.
    *
    * @method getDuration
@@ -412,8 +432,10 @@ exports.Conversation = function(ownerId, sourceChan, destChan, queue) {
     isIncoming: isIncoming,
     getDuration: getDuration,
     isRecording: isRecording,
+    isConnected: isConnected,
     setRecording: setRecording,
     isInConference: isInConference,
+    isThroughQueue: isThroughQueue,
     setRecordingMute: setRecordingMute,
     getSourceChannel: getSourceChannel,
     getCounterpartNum: getCounterpartNum,

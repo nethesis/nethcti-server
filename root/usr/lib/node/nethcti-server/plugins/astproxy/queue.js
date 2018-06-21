@@ -150,6 +150,16 @@ exports.Queue = function(queueNum) {
   }
 
   /**
+   * Return the number of waiting calls.
+   *
+   * @method getWaitingCounter
+   * @return {number} The number of waiting calls.
+   */
+  function getWaitingCounter() {
+    return Object.keys(waitingCallers).length;
+  }
+
+  /**
    * Returns true if the waiting caller exists.
    *
    * @method waitingCallerExists
@@ -458,6 +468,7 @@ exports.Queue = function(queueNum) {
     setAvgTalkTime: setAvgTalkTime,
     addWaitingCaller: addWaitingCaller,
     getWaitingCaller: getWaitingCaller,
+    getWaitingCounter: getWaitingCounter,
     removeWaitingCaller: removeWaitingCaller,
     waitingCallerExists: waitingCallerExists,
     getAllWaitingCallers: getAllWaitingCallers,
