@@ -21,10 +21,16 @@
     "socket.io": "1.7.2",
     "winston": "2.3.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "nodemon": "^1.17.5"
+  },
   "repository": {
     "type": "git",
     "url": "ssh://git@code.nethesis.it:22022/Nethesis/nethcti-server.git"
+  },
+  "scripts": {
+    "start": "node nethcti.js",
+    "dev": "nodemon nethcti.js"
   },
   "engines": {
     "node": ">=6.9.1"
