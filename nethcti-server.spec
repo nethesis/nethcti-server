@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.7.12
+Version: 2.7.13
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -57,6 +57,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Jun 27 2018 Stefano Fancello <stefano.fancello@nethesis.it> - 2.7.13-1
+- Use systemd instead of upstart for restarting after logrotate nethesis/dev#5419
+
 * Tue Jan 09 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.12-1
 - login fail after migration - nethesis/dev#5277
 - fix sms send date - nethesis/dev#5249
