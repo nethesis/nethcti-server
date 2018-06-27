@@ -3134,8 +3134,22 @@ var compConfigManager;
             return;
           }
 
+          // check if the user has the qmanager authorization: in this case the specified endpointId
+          // to spy, must be an agent of a queue for which the user has the qmanager permission
+          var hasQManagerPermission = false;
+          var qids = compAstProxy.getQueueIdsOfExten(req.params.endpointId);
+          var allowedQids = compAuthorization.getAllowedQManagerQueues(username);
+          for (var q in qids) {
+            if (allowedQids.indexOf(q) !== -1) {
+              hasQManagerPermission = true;
+              break;
+            }
+          }
+          if (hasQManagerPermission === true) {
+            logger.log.info(IDLOG, 'spy listen endpoint ' + req.params.endpointId + ': user "' + username + '" has the "qmanager" permission');
+          }
           // check if the user has the authorization to spy
-          if (compAuthorization.authorizeSpyUser(username) !== true) {
+          else if (compAuthorization.authorizeSpyUser(username) !== true) {
             logger.log.warn(IDLOG, 'spy convid ' + req.params.convid + ': authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
@@ -4695,25 +4709,34 @@ var compConfigManager;
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
-
-          // check if the user has the authorization to spy
-          if (compAuthorization.authorizeIntrudeUser(username) !== true) {
-
-            logger.log.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ': authorization failed for user "' + username + '"');
+          // check if the user has the qmanager authorization: in this case the specified endpointId
+          // to spy, must be an agent of a queue for which the user has the qmanager permission
+          var hasQManagerPermission = false;
+          var qids = compAstProxy.getQueueIdsOfExten(req.params.endpointId);
+          var allowedQids = compAuthorization.getAllowedQManagerQueues(username);
+          for (var q in qids) {
+            if (allowedQids.indexOf(q) !== -1) {
+              hasQManagerPermission = true;
+              break;
+            }
+          }
+          if (hasQManagerPermission === true) {
+            logger.log.info(IDLOG, 'intrude into endpoint ' + req.params.endpointId + ': user "' + username + '" has the "qmanager" permission');
+          }
+          // check if the user has the authorization to intrude
+          else if (compAuthorization.authorizeIntrudeUser(username) !== true) {
+            logger.log.warn(IDLOG, 'intruding convid ' + req.params.convid + ': authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
-
           // check if the destination endpoint is owned by the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
-
-            logger.log.warn(IDLOG, 'start spy & speak convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+            logger.log.warn(IDLOG, 'intruding into convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
               ' the destination "' + req.params.destId + '" is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
-
           } else {
-            logger.log.info(IDLOG, 'start spy & speak the destination extension ' + req.params.destId + ' is owned by "' + username + '"');
+            logger.log.info(IDLOG, 'intruding: the destination extension ' + req.params.destId + ' is owned by "' + username + '"');
           }
 
           compAstProxy.startSpySpeakConversation(req.params.endpointId, req.params.convid, req.params.destId, function (err) {
