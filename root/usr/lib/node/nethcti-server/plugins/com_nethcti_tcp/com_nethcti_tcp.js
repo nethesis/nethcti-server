@@ -67,14 +67,13 @@ var emitter = new EventEmitter();
  * @event extenHangup
  * @param {object} data The data about the event
  *
- */
-/**
- * The name of the extension hangup event.
- *
  * Example:
  *
  *     { "extenHangup": "223" }
  *
+ */
+/**
+ * The name of the extension hangup event.
  *
  * @property EVT_EXTEN_HANGUP
  * @type string
@@ -88,13 +87,13 @@ var EVT_EXTEN_HANGUP = 'extenHangup';
  * @event userPresenceChanged
  * @param {object} data The data about the event
  *
- */
-/**
- * The name of the extension presence changed event.
- *
  * Example:
  *
  *     { presence: { username: 'andrea', status: 'dnd' } }
+ *
+ */
+/**
+ * The name of the extension presence changed event.
  *
  * @property EVT_USER_PRESENCE_CHANGED
  * @type string
@@ -187,13 +186,13 @@ var EVT_PING = 'ping';
  * @event extenConnected
  * @param {object} data The data about the event
  *
- */
-/**
- * The name of the extension connected event.
- *
  * Example:
  *
  *     { "extenConnected": "223" }
+ *
+ */
+/**
+ * The name of the extension connected event.
  *
  * @property EVT_EXTEN_CONNECTED
  * @type string
