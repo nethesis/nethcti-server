@@ -50,6 +50,26 @@ var EventEmitter = require('events').EventEmitter;
 var EVT_EXTEN_UPDATE = 'extenUpdate';
 
 /**
+ * Emitted to the extension involved in a connected conversation.
+ *
+ * Example:
+ *
+ *     { "extenConnected": "223" }
+ *
+ * @event extenConnected
+ * @param {object} data The data about the event
+ *
+ */
+/**
+ * The name of the extension connected event.
+ *
+ * @property EVT_EXTEN_CONNECTED
+ * @type string
+ * @default "extenConnected"
+ */
+var EVT_EXTEN_CONNECTED = 'extenConnected';
+
+/**
  * Emitted to a websocket client connection on trunk update.
  *
  * Example:
@@ -801,6 +821,7 @@ function setAstProxyListeners() {
     astProxy.on(astProxy.EVT_EXTEN_DIALING, extenDialing); // an extension ringing
     astProxy.on(astProxy.EVT_TRUNK_CHANGED, trunkChanged); // a trunk has changed
     astProxy.on(astProxy.EVT_QUEUE_CHANGED, queueChanged); // a queue has changed
+    astProxy.on(astProxy.EVT_EXTEN_CONNECTED, extenConnected); // an extension has a connected conversation
     astProxy.on(astProxy.EVT_PARKING_CHANGED, parkingChanged); // a parking has changed
     astProxy.on(astProxy.EVT_MEETME_CONF_END, meetmeConfEnd); // a meetme conference has been ended
     astProxy.on(astProxy.EVT_MEETME_CONF_CHANGED, meetmeConfChanged); // a meetme conference has changed
@@ -1617,6 +1638,43 @@ function extenDialing(data) {
         if (wsServer.sockets.sockets[socketId]) {
           wsServer.sockets.sockets[socketId].emit('extenRinging', filteredCallerIdentity);
         }
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Handler for the _extenConnected_ event emitted by _astproxy_ component.
+ * The event indicates two extensions, but it emits the event for only data.num1,
+ * because another event _extenConnected_ will signal the same for other extension.
+ *
+ * @method extenConnected
+ * @param {object} data
+ *   @param {string} data.num1 The identy of a part of the conversation
+ *   @param {object} data.num2 The identy of other part of the conversation
+ * @private
+ */
+function extenConnected(data) {
+  try {
+    if (typeof data !== 'object' || typeof data.num1 !== 'string' || typeof data.num2 !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.info(IDLOG, 'received event extenConnected between num1=' + data.num1 + ' and num2=' + data.num2);
+    var user = compUser.getUserUsingEndpointExtension(data.num1);
+    // emit the notification event for each logged in user associated
+    // with the connected extension data.num1
+    var socketId, username;
+    for (socketId in wsid) {
+      username = wsid[socketId].username;
+      // the user is associated with the connected data.num1 extension and is logged in, so send to notification event
+      if (user === username && wsServer.sockets.sockets[socketId]) {
+        logger.log.info(IDLOG, 'emit event "' + EVT_EXTEN_CONNECTED + '" between "' + data.num1 + '" and ' +
+          '"' + data.num2 + '" to "' + wsServer.sockets.sockets[socketId].nethcti.username + '" with socket.id ' + wsServer.sockets.sockets[socketId].id);
+        var o = {};
+        o[EVT_EXTEN_CONNECTED] = data.num1;
+        wsServer.sockets.sockets[socketId].emit(EVT_EXTEN_CONNECTED, o);
       }
     }
   } catch (err) {
