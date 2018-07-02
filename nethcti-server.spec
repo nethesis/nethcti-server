@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.0.14
+Version: 3.1.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,10 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Jul 02 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.1.0-1
+- Add support for new service "QManager" - nethesis/dev#5416
+- WebSocket emit new event "extenConnected" - nethesis/dev#5421
+
 * Wed Jun 06 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.0.14-1
 - Add import/export of speed dial contacts - nethesis/dev#5411
 - Add automatic queue login/logout and DND - nethesis/dev#5410
