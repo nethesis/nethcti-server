@@ -3077,7 +3077,7 @@ var compConfigManager;
                   return;
                 }
                 logger.log.info(IDLOG, 'waiting caller ' + req.params.waitingCallerId + ' has been blind transfered successfully ' +
-                  'by user "' + username + '" ("' + defext + '") from queue ' + req.params.queue + ' to ' + req.params.to);
+                  'by user "' + username + '" ("' + extForCtx + '") from queue ' + req.params.queue + ' to ' + req.params.to);
                 compUtil.net.sendHttp200(IDLOG, res);
               } catch (error) {
                 logger.log.error(IDLOG, error.stack);
