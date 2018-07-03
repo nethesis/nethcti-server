@@ -141,6 +141,7 @@ var compConfigManager;
         * 1. [`astproxy/qrecall_check/:num`](#qrecall_checkget)
         * 1. [`astproxy/qmanager_queues`](#qmanager_queuesget)
         * 1. [`astproxy/qmanager_qstats/:qid`](#qmanager_qstatsget)
+        * 1. [`astproxy/qmanager_qstats`](#qmanager_qstats2get)
         *
         * ---
         *
@@ -453,6 +454,39 @@ var compConfigManager;
          "max_wait": 11,
          "avg_wait": 4,
          "sla": 60
+     }
+        *
+        * ---
+        *
+        * ### <a id="qmanager_qstats2get">**`astproxy/qmanager_qstats`**</a>
+        *
+        * Gets statistics about all the queues.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "401": {
+             "queueman": "401",
+             "tot": 5,
+             "tot_processed": 2,
+             "processed_less_sla": 2,
+             "tot_null": 2,
+             "tot_failed": 1,
+             "failed_inqueue_noagents": 0, // enter into the queue and fail for agents disappearance
+             "failed_withkey": 0,
+             "failed_timeout": 0,
+             "failed_abandon": 1,
+             "failed_full": 0,
+             "failed_outqueue_noagents": 0, // failed outside the queue for agents lack
+             "min_duration": 3,
+             "max_duration": 4,
+             "avg_duration": 4,
+             "min_wait": 1,
+             "max_wait": 11,
+             "avg_wait": 4,
+             "sla": 60
+         },
+         ...
      }
         *
         *
