@@ -7243,26 +7243,20 @@ function forceHangupConversation(endpointType, endpointId, convid, extForCtx, cb
  */
 function redirectWaitingCaller(waitingCallerId, queue, to, extForCtx, cb) {
   try {
-    // check parameters
     if (typeof cb !== 'function' ||
       typeof waitingCallerId !== 'string' || typeof queue !== 'string' ||
       typeof extForCtx !== 'string' || typeof to !== 'string') {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    // check the queue existence
     if (queues[queue]) {
-
       if (!extensions[extForCtx]) {
         throw new Error('no extension to get context for redirect waiting caller (extForCtx="' + extForCtx + '")');
       }
-
       var ctx = extensions[extForCtx].getContext();
       var ch = queues[queue].getAllWaitingCallers()[waitingCallerId].getChannel();
 
       if (ch !== undefined) {
-
         logger.log.info(IDLOG, 'redirect channel ' + ch + ' of waitingCaller ' + waitingCallerId + ' from queue ' + queue + ' to ' + to);
         astProxy.doCmd({
           command: 'redirectChannel',
@@ -7273,13 +7267,11 @@ function redirectWaitingCaller(waitingCallerId, queue, to, extForCtx, cb) {
           cb(err);
           redirectConvCb(err);
         });
-
       } else {
         var str = 'redirecting waiting caller ' + waitingCallerId + ' from queue ' + queue + ' to ' + to + ': no channel found';
         logger.log.error(IDLOG, str);
         cb(str);
       }
-
     } else {
       var msg = 'redirecting waiting caller ' + waitingCallerId + ' from queue ' + queue + ' to ' + to + ': non existent queue ' + queue;
       logger.log.warn(IDLOG, msg);

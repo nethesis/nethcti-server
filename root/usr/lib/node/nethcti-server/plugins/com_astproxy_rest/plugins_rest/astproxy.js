@@ -141,6 +141,7 @@ var compConfigManager;
         * 1. [`astproxy/qrecall_check/:num`](#qrecall_checkget)
         * 1. [`astproxy/qmanager_queues`](#qmanager_queuesget)
         * 1. [`astproxy/qmanager_qstats/:qid`](#qmanager_qstatsget)
+        * 1. [`astproxy/qmanager_qstats`](#qmanager_qstats2get)
         *
         * ---
         *
@@ -455,6 +456,39 @@ var compConfigManager;
          "sla": 60
      }
         *
+        * ---
+        *
+        * ### <a id="qmanager_qstats2get">**`astproxy/qmanager_qstats`**</a>
+        *
+        * Gets statistics about all the queues.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "401": {
+             "queueman": "401",
+             "tot": 5,
+             "tot_processed": 2,
+             "processed_less_sla": 2,
+             "tot_null": 2,
+             "tot_failed": 1,
+             "failed_inqueue_noagents": 0, // enter into the queue and fail for agents disappearance
+             "failed_withkey": 0,
+             "failed_timeout": 0,
+             "failed_abandon": 1,
+             "failed_full": 0,
+             "failed_outqueue_noagents": 0, // failed outside the queue for agents lack
+             "min_duration": 3,
+             "max_duration": 4,
+             "avg_duration": 4,
+             "min_wait": 1,
+             "max_wait": 11,
+             "avg_wait": 4,
+             "sla": 60
+         },
+         ...
+     }
+        *
         *
         * <br>
         *
@@ -491,6 +525,7 @@ var compConfigManager;
         * 1. [`astproxy/mute_userconf`](#mute_userconfpost)
         * 1. [`astproxy/hangup_userconf`](#hangup_userconfpost)
         * 1. [`astproxy/unmute_userconf`](#unmute_userconfpost)
+        * 1. [`astproxy/blindtransfer_queue`](#blindtransfer_queuepost)
         *
         * ---
         *
@@ -926,6 +961,21 @@ var compConfigManager;
         * Example JSON request parameters:
         *
         *     { "confId": "202", "extenId": "201" }
+        *
+        * ---
+        *
+        * ### <a id="blindtransfer_queuepost">**`astproxy/blindtransfer_queue`**</a>
+        *
+        * Transfer the waiting caller from a queue to the specified destination using the blind type.
+        * The request must contains the following parameters:
+        *
+        * * `to: the destination number`
+        * * `queue: the queue identifier`
+        * * `waitingCallerId: the identifier of the waiting caller`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "queue": "401", "waitingCallerId": "SIP/209-00000060", "to": "209" }
         *
         *
         * <br>
@@ -3012,9 +3062,7 @@ var compConfigManager;
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
-
           var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
-
           compAstProxy.redirectWaitingCaller(
             req.params.waitingCallerId,
             req.params.queue,
@@ -3025,15 +3073,12 @@ var compConfigManager;
                 if (err) {
                   logger.log.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' +
                     req.params.queue + ' to ' + req.params.to + ' by user "' + username + '" has been failed');
-
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-
                 logger.log.info(IDLOG, 'waiting caller ' + req.params.waitingCallerId + ' has been blind transfered successfully ' +
-                  'by user "' + username + '" ("' + defext + '") from queue ' + req.params.queue + ' to ' + req.params.to);
+                  'by user "' + username + '" ("' + extForCtx + '") from queue ' + req.params.queue + ' to ' + req.params.to);
                 compUtil.net.sendHttp200(IDLOG, res);
-
               } catch (error) {
                 logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
