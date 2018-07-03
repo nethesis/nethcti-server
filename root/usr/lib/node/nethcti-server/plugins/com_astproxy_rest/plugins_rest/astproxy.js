@@ -491,6 +491,7 @@ var compConfigManager;
         * 1. [`astproxy/mute_userconf`](#mute_userconfpost)
         * 1. [`astproxy/hangup_userconf`](#hangup_userconfpost)
         * 1. [`astproxy/unmute_userconf`](#unmute_userconfpost)
+        * 1. [`astproxy/blindtransfer_queue`](#blindtransfer_queuepost)
         *
         * ---
         *
@@ -926,6 +927,21 @@ var compConfigManager;
         * Example JSON request parameters:
         *
         *     { "confId": "202", "extenId": "201" }
+        *
+        * ---
+        *
+        * ### <a id="blindtransfer_queuepost">**`astproxy/blindtransfer_queue`**</a>
+        *
+        * Transfer the waiting caller from a queue to the specified destination using the blind type.
+        * The request must contains the following parameters:
+        *
+        * * `to: the destination number`
+        * * `queue: the queue identifier`
+        * * `waitingCallerId: the identifier of the waiting caller`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "queue": "401", "waitingCallerId": "SIP/209-00000060", "to": "209" }
         *
         *
         * <br>
@@ -3012,9 +3028,7 @@ var compConfigManager;
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
-
           var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
-
           compAstProxy.redirectWaitingCaller(
             req.params.waitingCallerId,
             req.params.queue,
@@ -3025,15 +3039,12 @@ var compConfigManager;
                 if (err) {
                   logger.log.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' +
                     req.params.queue + ' to ' + req.params.to + ' by user "' + username + '" has been failed');
-
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-
                 logger.log.info(IDLOG, 'waiting caller ' + req.params.waitingCallerId + ' has been blind transfered successfully ' +
                   'by user "' + username + '" ("' + defext + '") from queue ' + req.params.queue + ' to ' + req.params.to);
                 compUtil.net.sendHttp200(IDLOG, res);
-
               } catch (error) {
                 logger.log.error(IDLOG, error.stack);
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
