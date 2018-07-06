@@ -5330,38 +5330,36 @@ function ajaxPhoneCall(username, req, res) {
         // other phones
         httpReq.get(url, function (httpResp) {
           try {
-            if (httpResp.statusCode === 200 || httpResp.statusCode === 204) {
+            if (httpResp.statusCode === 200 || httpResp.statusCode === 204 ||
+              (extenAgent.toLowerCase().indexOf('snom') !== -1 && httpResp.statusCode === 302) ) {
 
               logger.log.info(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
-                ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+                ' UA "' + extenAgent.toLowerCase() + '" by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
               logger.log.info(IDLOG, url);
               res.send(httpResp.statusCode, {
                 phoneRespStatusCode: httpResp.statusCode
               });
-
             } else {
-              logger.log.info(IDLOG, 'failed call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
-                ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-              logger.log.info(IDLOG, 'failed url: ' + url);
+              logger.log.warn(IDLOG, 'failed call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+                ' UA "' + extenAgent.toLowerCase() + '" by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+              logger.log.warn(IDLOG, 'failed url: ' + url);
+              logger.log.warn(IDLOG, 'fallback to asterisk call');
               fallbackAjaxPhoneCall(username, req, res);
             }
           } catch (err) {
             logger.log.error(IDLOG, err.stack);
             fallbackAjaxPhoneCall(username, req, res);
           }
-
         }).on('error', function (err1) {
           logger.log.error(IDLOG, err1.message);
           fallbackAjaxPhoneCall(username, req, res);
         });
       }
-
     } else {
       logger.log.warn(IDLOG, 'failed call to ' + to + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
         ' by the user "' + username + '": ' + extenAgent + ' is not supported');
       fallbackAjaxPhoneCall(username, req, res);
     }
-
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
     fallbackAjaxPhoneCall(username, req, res);
