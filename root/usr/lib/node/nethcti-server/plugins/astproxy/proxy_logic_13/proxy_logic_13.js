@@ -2124,6 +2124,40 @@ function getJSONQueueStats(qid, cb) {
 }
 
 /**
+ * Return the JSON representation of agents statistics.
+ *
+ * @method getJSONAllAgentsStats
+ * @param {array} qlist The queue identifiers
+ * @param {function} cb The callback function
+ * @return {object} The JSON representation of queue agents statistics.
+ */
+function getJSONAllAgentsStats(qlist, cb) {
+  try {
+    if (Array.isArray(qlist) === false || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var temp;
+    var agents = {};
+    for (var q in queues) {
+      if (queues[q] === undefined) {
+        continue;
+      }
+      temp = queues[q].getAllMembers();
+      for (var m in temp) {
+        agents[temp[m].getName()] = '';
+      }
+    }
+    agents = Object.keys(agents);
+    compDbconn.getAgentsStatsByList(agents, function (err1, result) {
+      cb(err1, result);
+    });
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+    cb(error);
+  }
+}
+
+/**
  * Return the number of connected calls through the specified queue.
  *
  * @method getCCCounterByQueue
@@ -2179,16 +2213,13 @@ function getJSONAllQueuesStats(queuesList, cb) {
     if (Array.isArray(queuesList) === false || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    var result = {
-      calls: {},
-      agents: {}
-    };
+    var result = {};
     for (var i = 0; i < queuesList.length; i++) {
-      result.calls[queuesList[i]] = {
+      result[queuesList[i]] = {
         cc_counter: getCCCounterByQueue(queuesList[i]),
         waiting_counter: getWaitingCounterByQueue(queuesList[i])
       };
-      result.calls[queuesList[i]].tot = result.calls[queuesList[i]].cc_counter + result.calls[queuesList[i]].waiting_counter;
+      result[queuesList[i]].tot = result[queuesList[i]].cc_counter + result[queuesList[i]].waiting_counter;
     }
     cb(null, result);
   } catch (error) {
@@ -9432,6 +9463,7 @@ exports.getQueueIdsOfExten = getQueueIdsOfExten;
 exports.getJSONQueuesStats = getJSONQueuesStats;
 exports.getJSONQueueStats = getJSONQueueStats;
 exports.getJSONAllQueuesStats = getJSONAllQueuesStats;
+exports.getJSONAllAgentsStats = getJSONAllAgentsStats;
 exports.getJSONAgentsStats = getJSONAgentsStats;
 exports.unmuteConversation = unmuteConversation;
 exports.setUnconditionalCf = setUnconditionalCf;
