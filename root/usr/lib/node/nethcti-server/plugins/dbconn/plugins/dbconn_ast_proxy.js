@@ -1068,21 +1068,20 @@ function getQueueMemberLastPausedInData(memberName, queueId, memberId, cb) {
       ]
 
     }).then(function (result) {
-
-      if (result && result.selectedValues) {
+      if (result && result.dataValues) {
 
         logger.log.info(IDLOG, 'get last "paused in" data of member "' + memberName + '" of the queue "' + queueId + '" has been successful');
 
         // if the queue member has never started a pause, the timestamp isn't present in the database. So check its presence
-        if (result.selectedValues.timestamp) {
-          result.selectedValues.timestamp = new Date(result.selectedValues.timestamp).getTime();
+        if (result.dataValues.timestamp) {
+          result.dataValues.timestamp = new Date(result.dataValues.timestamp).getTime();
         }
 
         // add received parameters used by the callback
-        result.selectedValues.queueId = queueId;
-        result.selectedValues.memberId = memberId;
+        result.dataValues.queueId = queueId;
+        result.dataValues.memberId = memberId;
 
-        cb(null, result.selectedValues);
+        cb(null, result.dataValues);
 
       } else {
         logger.log.info(IDLOG, 'get last "paused in" data of member "' + memberName + '" of the queue "' + queueId + '": not found');
@@ -1122,7 +1121,6 @@ function getQueueMemberLastPausedOutData(memberName, queueId, memberId, cb) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
     compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].find({
       where: [
         'agent=? ' +
@@ -1136,21 +1134,20 @@ function getQueueMemberLastPausedOutData(memberName, queueId, memberId, cb) {
       ]
 
     }).then(function (result) {
-
-      if (result && result.selectedValues) {
+      if (result && result.dataValues) {
 
         logger.log.info(IDLOG, 'get last "paused out" data of member "' + memberName + '" of the queue "' + queueId + '" has been successful');
 
         // if the queue member has never ended a pause, the timestamp isn't present in the database. So check its presence
-        if (result.selectedValues.timestamp) {
-          result.selectedValues.timestamp = new Date(result.selectedValues.timestamp).getTime();
+        if (result.dataValues.timestamp) {
+          result.dataValues.timestamp = new Date(result.dataValues.timestamp).getTime();
         }
 
         // add received parameters used by the callback
-        result.selectedValues.queueId = queueId;
-        result.selectedValues.memberId = memberId;
+        result.dataValues.queueId = queueId;
+        result.dataValues.memberId = memberId;
 
-        cb(null, result.selectedValues);
+        cb(null, result.dataValues);
 
       } else {
         logger.log.info(IDLOG, 'get last "paused out" data of member "' + memberName + '" of the queue "' + queueId + '": not found');
