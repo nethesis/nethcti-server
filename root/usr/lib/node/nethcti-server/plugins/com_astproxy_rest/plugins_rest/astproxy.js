@@ -3055,8 +3055,11 @@ var compConfigManager;
           }
 
           // check if the user has the authorization to blind transfer the waiting callers from all queues
-          if (compAuthorization.authorizeAdminTransferUser(username) === true) {
-            logger.log.info(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue + ' to ' + req.params.to + ': "admin_transfer" authorization successful for user "' + username + '"');
+          var allowedQs = compAuthorization.getAllowedQManagerQueues(username);
+          if (compAuthorization.authorizeAdminTransferUser(username) === true ||
+            (compAuthorization.authorizeQManagerUser(username)) && allowedQs.indexOf(req.params.queue) !== -1) {
+
+            logger.log.info(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue + ' to exten ' + req.params.to + ': authorization successful for user "' + username + '"');
           } else {
             logger.log.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue + ' to ' + req.params.to + ': "admin_transfer" authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
