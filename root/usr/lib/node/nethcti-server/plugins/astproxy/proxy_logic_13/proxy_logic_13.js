@@ -3662,7 +3662,6 @@ function updateExtenConversations(err, resp, exten) {
           addConversationToExten(ext, resp, chid);
         }
       }
-
       // emit the event
       logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
       astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
@@ -3797,6 +3796,7 @@ function addConversationToExten(exten, resp, chid) {
 
     // add "bridgedChannel" information to the response
     for (ch in resp) {
+      resp[ch].bridgedChannel = '';
       for (ch2 in resp) {
         if (resp[ch2].bridgeid === resp[ch].bridgeid &&
           resp[ch2].channel !== resp[ch].channel) {
@@ -3808,8 +3808,7 @@ function addConversationToExten(exten, resp, chid) {
         }
       }
     }
-
-    if (extensions[exten] && resp[chid].bridgedChannel) {
+    if (extensions[exten] && resp[chid].bridgedChannel !== undefined) {
       // creates the source and destination channels
       ch = new Channel(resp[chid]);
       if (ch.isSource()) {
@@ -4155,6 +4154,7 @@ function evtExtenStatusChanged(exten, status) {
           exten: exten
         }, updateExtIaxDetails);
       }
+      updateConversationsOfNum(exten);
 
     } else if (parkings[exten]) { // the exten is a parking
 
@@ -4170,6 +4170,41 @@ function evtExtenStatusChanged(exten, status) {
       });
     }
 
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Updates the extension status and any other information except
+ * the channel list. To update the channel list it request all channels
+ * to analize through "listChannels" command plugin.
+ *
+ * @method evtDeviceStatusChanged
+ * @param {string} exten The extension number
+ * @private
+ */
+function evtDeviceStatusChanged(exten) {
+  try {
+    if (typeof exten !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (extensions[exten]) {
+      if (extensions[exten].getChanType() === 'pjsip') {
+        astProxy.doCmd({
+          command: 'pjsipDetails',
+          exten: exten
+        }, updateExtPjsipDetails);
+      } else if (extensions[exten].getChanType() === 'iax') {
+        extensions[exten].setStatus(status);
+        logger.log.info(IDLOG, 'set status ' + status + ' for extension ' + exten);
+        astProxy.doCmd({
+          command: 'iaxDetails',
+          exten: exten
+        }, updateExtIaxDetails);
+      }
+      updateConversationsOfNum(exten);
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -9465,6 +9500,7 @@ exports.redirectWaitingCaller = redirectWaitingCaller;
 exports.evtHangupConversation = evtHangupConversation;
 exports.startMeetmeConference = startMeetmeConference;
 exports.evtExtenStatusChanged = evtExtenStatusChanged;
+exports.evtDeviceStatusChanged = evtDeviceStatusChanged;
 exports.setRemoteSitesPrefixes = setRemoteSitesPrefixes;
 exports.sendDtmfToConversation = sendDtmfToConversation;
 exports.getEchoCallDestination = getEchoCallDestination;
