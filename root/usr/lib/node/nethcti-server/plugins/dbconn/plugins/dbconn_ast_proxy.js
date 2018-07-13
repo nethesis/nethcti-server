@@ -834,6 +834,271 @@ function getQueueStats(qid, nullCallPeriod, sla, cb) {
 }
 
 /**
+ * Return function to have pause, unpause stats of queue agents.
+ *
+ * @method getAgentsStatsPauseUnpause
+ * @param {array} agents The list of the agents
+ * @return {function} The function to be executed
+ */
+function getAgentsStatsPauseUnpause(agents) {
+  try {
+    if (Array.isArray(agents) !== true) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    return function (callback) {
+      try {
+        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
+          where: [
+            'event IN ("PAUSE","UNPAUSE") AND agent IN ("' + agents.join('","') + '") AND callid="NONE" GROUP BY queuename, agent, event ORDER BY time'
+          ],
+          attributes: [
+            ['UNIX_TIMESTAMP(MAX(time))', 'last_time'],
+            'id', 'callid', 'queuename', 'agent', 'event'
+          ]
+        }).then(function (results) {
+          try {
+            if (results) {
+              logger.log.info(IDLOG, 'get pause/unpause stats of queue agents "' + agents + '" has been successful');
+              var values = {};
+              var i;
+              for (i = 0; i < results.length; i++) {
+                if (!values[results[i].dataValues.agent]) {
+                  values[results[i].dataValues.agent] = {};
+                }
+                if (!values[results[i].dataValues.agent][results[i].dataValues.queuename]) {
+                  values[results[i].dataValues.agent][results[i].dataValues.queuename] = {};
+                }
+                if (results[i].dataValues.event === 'PAUSE') {
+                  values[results[i].dataValues.agent][results[i].dataValues.queuename].last_paused_time = Math.floor(results[i].dataValues.last_time);
+                } else if (results[i].dataValues.event === 'UNPAUSE') {
+                  values[results[i].dataValues.agent][results[i].dataValues.queuename].last_unpaused_time = Math.floor(results[i].dataValues.last_time);
+                }
+              }
+              callback(null, values);
+            } else {
+              logger.log.info(IDLOG, 'get pause/unpause stats of agents "' + agents + '": not found');
+              callback(null, {});
+            }
+          } catch (error) {
+            logger.log.error(IDLOG, error.stack);
+            callback(error);
+          }
+        }, function (err) {
+          logger.log.error(IDLOG, 'get pause/unpause stats of agents "' + agents + '": ' + err.toString());
+          callback(err.toString());
+        });
+        compDbconnMain.incNumExecQueries();
+      } catch (err) {
+        logger.log.error(IDLOG, err.stack);
+        callback(err);
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Return function to have calls taken counter of queue agents and their
+ * time of last call.
+ *
+ * @method getAgentsStatsCalls
+ * @param {array} agents The list of the agents
+ * @return {function} The function to be executed
+ */
+function getAgentsStatsCalls(agents) {
+  try {
+    if (Array.isArray(agents) !== true) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    return function (callback) {
+      try {
+        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
+          where: [
+            'event IN ("COMPLETEAGENT","COMPLETECALLER") AND agent IN ("' + agents.join('","') + '") GROUP BY agent, queuename'
+          ],
+          attributes: [
+            ['UNIX_TIMESTAMP(MAX(time))', 'last_call_time'],
+            ['COUNT(queuename)', 'calls_taken'],
+            'queuename', 'agent'
+          ]
+        }).then(function (results) {
+          try {
+            if (results) {
+              logger.log.info(IDLOG, 'get calls taken count stats of queue agents "' + agents + '" has been successful');
+              var values = {};
+              var i;
+              for (i = 0; i < results.length; i++) {
+                if (!values[results[i].dataValues.agent]) {
+                  values[results[i].dataValues.agent] = {};
+                }
+                if (!values[results[i].dataValues.agent][results[i].dataValues.queuename]) {
+                  values[results[i].dataValues.agent][results[i].dataValues.queuename] = {};
+                }
+                values[results[i].dataValues.agent][results[i].dataValues.queuename].calls_taken = results[i].dataValues.calls_taken;
+                values[results[i].dataValues.agent][results[i].dataValues.queuename].last_call_time = Math.floor(results[i].dataValues.last_call_time);
+              }
+              callback(null, values);
+            } else {
+              logger.log.info(IDLOG, 'get pause/unpause stats of agents "' + agents + '": not found');
+              callback(null, {});
+            }
+          } catch (error) {
+            logger.log.error(IDLOG, error.stack);
+            callback(error);
+          }
+        }, function (err) {
+          logger.log.error(IDLOG, 'get pause/unpause stats of agents "' + agents + '": ' + err.toString());
+          callback(err.toString());
+        });
+        compDbconnMain.incNumExecQueries();
+      } catch (err) {
+        logger.log.error(IDLOG, err.stack);
+        callback(err);
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Return function to have logint, logout stats of queue agents.
+ *
+ * @method getAgentsStatsLoginLogout
+ * @param {array} agents The list of the agents
+ * @return {function} The function to be executed
+ */
+function getAgentsStatsLoginLogout(agents) {
+  try {
+    if (Array.isArray(agents) !== true) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    return function (callback) {
+      try {
+        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
+          where: [
+            'event IN ("REMOVEMEMBER","ADDMEMBER") AND ( (agent IN ("' + agents.join('","') + '") AND callid="QUEUE_REPORT" AND data1="") || (agent IN ("' + agents.join('","') + '") AND callid="MANAGER" AND data1!="") ) GROUP BY queuename, agent, event ORDER BY time'
+          ],
+          attributes: [
+            ['UNIX_TIMESTAMP(MAX(time))', 'last_time'],
+            'id', 'callid', 'queuename', 'agent', 'event'
+          ]
+        }).then(function (results) {
+          try {
+            if (results) {
+              logger.log.info(IDLOG, 'get login/logout stats of queue agents "' + agents + '" has been successful');
+              var values = {};
+              var i;
+              for (i = 0; i < results.length; i++) {
+                if (!values[results[i].dataValues.agent]) {
+                  values[results[i].dataValues.agent] = {};
+                }
+                if (!values[results[i].dataValues.agent][results[i].dataValues.queuename]) {
+                  values[results[i].dataValues.agent][results[i].dataValues.queuename] = {};
+                }
+                if (results[i].dataValues.event === 'ADDMEMBER') {
+                  values[results[i].dataValues.agent][results[i].dataValues.queuename].last_login_time = Math.floor(results[i].dataValues.last_time);
+                } else if (results[i].dataValues.event === 'REMOVEMEMBER') {
+                  values[results[i].dataValues.agent][results[i].dataValues.queuename].last_logout_time = Math.floor(results[i].dataValues.last_time);
+                }
+              }
+              callback(null, values);
+            } else {
+              logger.log.info(IDLOG, 'get login/logout stats of agents "' + agents + '": not found');
+              callback(null, {});
+            }
+          } catch (error) {
+            logger.log.error(IDLOG, error.stack);
+            callback(error);
+          }
+        }, function (err) {
+          logger.log.error(IDLOG, 'get login/logout stats of agents "' + agents + '": ' + err.toString());
+          callback(err.toString());
+        });
+        compDbconnMain.incNumExecQueries();
+      } catch (err) {
+        logger.log.error(IDLOG, err.stack);
+        callback(err);
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Get agents statistics.
+ *
+ * @method getAgentsStatsByList
+ * @param {array} agents The list of the agents
+ * @param {function} cb The callback function
+ */
+function getAgentsStatsByList(agents, cb) {
+  try {
+    if (typeof cb !== 'function' || Array.isArray(agents) !== true) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var functs = {
+      calls_stats: getAgentsStatsCalls(agents),
+      pause_unpause: getAgentsStatsPauseUnpause(agents),
+      login_logout: getAgentsStatsLoginLogout(agents)
+    };
+    async.parallel(functs, function (err, data) {
+      if (err) {
+        logger.log.error(IDLOG, 'getting stats about qmanager agents:', err);
+        cb(err);
+      } else {
+        var ret = {};
+        for (var u in data.calls_stats) {
+          if (!ret[u]) {
+            ret[u] = {};
+          }
+          for (var q in data.calls_stats[u]) {
+            if (!ret[u][q]) {
+              ret[u][q] = {};
+            }
+            ret[u][q].calls_taken = data.calls_stats[u][q].calls_taken;
+            ret[u][q].last_call_time = data.calls_stats[u][q].last_call_time;
+          }
+        }
+        for (var u in data.pause_unpause) {
+          if (!ret[u]) {
+            ret[u] = {};
+          }
+          for (var q in data.pause_unpause[u]) {
+            if (!ret[u][q]) {
+              ret[u][q] = {};
+            }
+            ret[u][q].last_paused_time = data.pause_unpause[u][q].last_paused_time;
+            ret[u][q].last_unpaused_time = data.pause_unpause[u][q].last_unpaused_time;
+          }
+        }
+        for (var u in data.login_logout) {
+          if (!ret[u]) {
+            ret[u] = {};
+          }
+          for (var q in data.login_logout[u]) {
+            if (!ret[u][q]) {
+              ret[u][q] = {};
+            }
+            ret[u][q].last_login_time = data.login_logout[u][q].last_login_time;
+            ret[u][q].last_logout_time = data.login_logout[u][q].last_logout_time;
+          }
+        }
+        cb(null, ret);
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Get agent statistics about work times
  *
  * @method getAgentsStats
@@ -1178,6 +1443,7 @@ apiList.getQueueRecall = getQueueRecall;
 apiList.getQueueRecallInfo = getQueueRecallInfo;
 apiList.getFpbxAdminSha1Pwd = getFpbxAdminSha1Pwd;
 apiList.deleteCallRecording = deleteCallRecording;
+apiList.getAgentsStatsByList = getAgentsStatsByList;
 apiList.getCallRecordingFileData = getCallRecordingFileData;
 apiList.getQueueMemberLastPausedInData = getQueueMemberLastPausedInData;
 apiList.getQueueMemberLastPausedOutData = getQueueMemberLastPausedOutData;
