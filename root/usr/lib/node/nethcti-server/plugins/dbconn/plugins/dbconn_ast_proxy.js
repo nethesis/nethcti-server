@@ -900,13 +900,14 @@ function getAgentsStatsPauseUnpause(agents) {
 }
 
 /**
- * Return function to have calls taken counter of queue agents.
+ * Return function to have calls taken counter of queue agents and their
+ * time of last call.
  *
- * @method getAgentsStatsCallsTaken
+ * @method getAgentsStatsCalls
  * @param {array} agents The list of the agents
  * @return {function} The function to be executed
  */
-function getAgentsStatsCallsTaken(agents) {
+function getAgentsStatsCalls(agents) {
   try {
     if (Array.isArray(agents) !== true) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -918,6 +919,7 @@ function getAgentsStatsCallsTaken(agents) {
             'event IN ("COMPLETEAGENT","COMPLETECALLER") AND agent IN ("' + agents.join('","') + '") GROUP BY agent, queuename'
           ],
           attributes: [
+            ['UNIX_TIMESTAMP(MAX(time))', 'last_call_time'],
             ['COUNT(queuename)', 'calls_taken'],
             'queuename', 'agent'
           ]
@@ -935,6 +937,7 @@ function getAgentsStatsCallsTaken(agents) {
                   values[results[i].dataValues.agent][results[i].dataValues.queuename] = {};
                 }
                 values[results[i].dataValues.agent][results[i].dataValues.queuename].calls_taken = results[i].dataValues.calls_taken;
+                values[results[i].dataValues.agent][results[i].dataValues.queuename].last_call_time = Math.floor(results[i].dataValues.last_call_time);
               }
               callback(null, values);
             } else {
@@ -1040,7 +1043,7 @@ function getAgentsStatsByList(agents, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var functs = {
-      calls_taken: getAgentsStatsCallsTaken(agents),
+      calls_stats: getAgentsStatsCalls(agents),
       pause_unpause: getAgentsStatsPauseUnpause(agents),
       login_logout: getAgentsStatsLoginLogout(agents)
     };
@@ -1050,15 +1053,16 @@ function getAgentsStatsByList(agents, cb) {
         cb(err);
       } else {
         var ret = {};
-        for (var u in data.calls_taken) {
+        for (var u in data.calls_stats) {
           if (!ret[u]) {
             ret[u] = {};
           }
-          for (var q in data.calls_taken[u]) {
+          for (var q in data.calls_stats[u]) {
             if (!ret[u][q]) {
               ret[u][q] = {};
             }
-            ret[u][q].calls_taken = data.calls_taken[u][q].calls_taken;
+            ret[u][q].calls_taken = data.calls_stats[u][q].calls_taken;
+            ret[u][q].last_call_time = data.calls_stats[u][q].last_call_time;
           }
         }
         for (var u in data.pause_unpause) {
