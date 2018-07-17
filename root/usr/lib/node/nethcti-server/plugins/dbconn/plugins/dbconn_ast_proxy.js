@@ -5,6 +5,7 @@
  * @submodule plugins
  */
 var async = require('async');
+var moment = require('moment');
 
 /**
  * The module identifier used by the logger.
@@ -852,7 +853,7 @@ function getAgentsStatsPauseUnpause(agents) {
             'event IN ("PAUSE","UNPAUSE") AND agent IN ("' + agents.join('","') + '") AND callid="NONE" GROUP BY queuename, agent, event ORDER BY time'
           ],
           attributes: [
-            ['UNIX_TIMESTAMP(MAX(time))', 'last_time'],
+            ['MAX(time)', 'last_time'],
             'id', 'callid', 'queuename', 'agent', 'event'
           ]
         }).then(function (results) {
@@ -862,6 +863,7 @@ function getAgentsStatsPauseUnpause(agents) {
               var values = {};
               var i;
               for (i = 0; i < results.length; i++) {
+                results[i].dataValues.last_time = Math.round(new Date(results[i].dataValues.last_time).getTime()/1000);
                 if (!values[results[i].dataValues.agent]) {
                   values[results[i].dataValues.agent] = {};
                 }
@@ -919,7 +921,7 @@ function getAgentsStatsCalls(agents) {
             'event IN ("COMPLETEAGENT","COMPLETECALLER") AND agent IN ("' + agents.join('","') + '") GROUP BY agent, queuename'
           ],
           attributes: [
-            ['UNIX_TIMESTAMP(MAX(time))', 'last_call_time'],
+            ['MAX(time)', 'last_call_time'],
             ['COUNT(queuename)', 'calls_taken'],
             'queuename', 'agent'
           ]
@@ -930,6 +932,7 @@ function getAgentsStatsCalls(agents) {
               var values = {};
               var i;
               for (i = 0; i < results.length; i++) {
+                results[i].dataValues.last_call_time = Math.round(new Date(results[i].dataValues.last_call_time).getTime()/1000);
                 if (!values[results[i].dataValues.agent]) {
                   values[results[i].dataValues.agent] = {};
                 }
@@ -983,7 +986,7 @@ function getAgentsStatsLoginLogout(agents) {
             'event IN ("REMOVEMEMBER","ADDMEMBER") AND ( (agent IN ("' + agents.join('","') + '") AND callid="QUEUE_REPORT" AND data1="") || (agent IN ("' + agents.join('","') + '") AND callid="MANAGER" AND data1!="") ) GROUP BY queuename, agent, event ORDER BY time'
           ],
           attributes: [
-            ['UNIX_TIMESTAMP(MAX(time))', 'last_time'],
+            ['MAX(time)', 'last_time'],
             'id', 'callid', 'queuename', 'agent', 'event'
           ]
         }).then(function (results) {
@@ -993,6 +996,7 @@ function getAgentsStatsLoginLogout(agents) {
               var values = {};
               var i;
               for (i = 0; i < results.length; i++) {
+                results[i].dataValues.last_time = Math.round(new Date(results[i].dataValues.last_time).getTime()/1000);
                 if (!values[results[i].dataValues.agent]) {
                   values[results[i].dataValues.agent] = {};
                 }
