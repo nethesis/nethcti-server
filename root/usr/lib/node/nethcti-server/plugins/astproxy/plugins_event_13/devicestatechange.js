@@ -54,7 +54,12 @@ var astProxy;
        */
       data: function(data) {
         try {
-          if (data.device && data.event === 'DeviceStateChange') {
+          if (data.device &&
+            data.device.indexOf('/') !== -1 &&
+            data.device.split('/').length === 2 &&
+            data.device.split('/')[0].toLowerCase() === 'pjsip' &&
+            data.event === 'DeviceStateChange') {
+
             logger.log.info(IDLOG, 'received event ' + data.event);
             astProxy.proxyLogic.evtDeviceStatusChanged(data.device.split('/')[1]);
           } else {
