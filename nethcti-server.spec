@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.1.0
+Version: 3.2.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,13 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Tue Jul 24 2018 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.2.0-1
+- Fix queue agent auto pause reason is lost - Bug nethesis/dev#5436
+- Fix no call management box on voicemail - Bug nethesis/dev#5432
+- QManager "queues" tab: add drag&drop feature and fixes - nethesis/dev#5429
+- QManager: create new "Realtime tab" - nethesis/dev#5428
+- Fix to support HTTP response code 302 with Snom D725 - Bug nethesis/dev#5435
+
 * Mon Jul 02 2018 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.1.0-1
 - Add support for new service "QManager" - nethesis/dev#5416
 - WebSocket emit new event "extenConnected" - nethesis/dev#5421
