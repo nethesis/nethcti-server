@@ -863,7 +863,7 @@ function getAgentsStatsPauseUnpause(agents) {
               var values = {};
               var i;
               for (i = 0; i < results.length; i++) {
-                results[i].dataValues.last_time = Math.round(new Date(results[i].dataValues.last_time).getTime()/1000);
+                results[i].dataValues.last_time = Math.round(new Date(results[i].dataValues.last_time).getTime() / 1000);
                 if (!values[results[i].dataValues.agent]) {
                   values[results[i].dataValues.agent] = {};
                 }
@@ -932,7 +932,7 @@ function getAgentsStatsCalls(agents) {
               var values = {};
               var i;
               for (i = 0; i < results.length; i++) {
-                results[i].dataValues.last_call_time = Math.round(new Date(results[i].dataValues.last_call_time).getTime()/1000);
+                results[i].dataValues.last_call_time = Math.round(new Date(results[i].dataValues.last_call_time).getTime() / 1000);
                 if (!values[results[i].dataValues.agent]) {
                   values[results[i].dataValues.agent] = {};
                 }
@@ -953,6 +953,71 @@ function getAgentsStatsCalls(agents) {
           }
         }, function (err) {
           logger.log.error(IDLOG, 'get pause/unpause stats of agents "' + agents + '": ' + err.toString());
+          callback(err.toString());
+        });
+        compDbconnMain.incNumExecQueries();
+      } catch (err) {
+        logger.log.error(IDLOG, err.stack);
+        callback(err);
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+
+/**
+ * Return function to have missed calls counter of queue agents.
+ *
+ * @method getAgentsMissedCalls
+ * @param {array} agents The list of the agents
+ * @return {function} The function to be executed
+ */
+function getAgentsMissedCalls(agents) {
+  try {
+    if (Array.isArray(agents) !== true) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    return function (callback) {
+      try {
+        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
+          where: [
+            'event IN ("RINGNOANSWER","CONNECT") AND agent IN ("' + agents.join('","') + '") GROUP BY agent, event, callid, queuename ORDER BY callid, event DESC'
+          ],
+          attributes: [
+            'event', 'callid', 'queuename', 'agent'
+          ]
+        }).then(function (results) {
+          try {
+            if (results) {
+              logger.log.info(IDLOG, 'get missed calls count of queue agents "' + agents + '" has been successful');
+              var values = {};
+              for (var i = 0; i < results.length; i++) {
+                if (!values[results[i].dataValues.agent]) {
+                  values[results[i].dataValues.agent] = {};
+                }
+                if (!values[results[i].dataValues.agent].noanswercalls) {
+                  values[results[i].dataValues.agent].noanswercalls = 0;
+                }
+                if (results[i].dataValues.event == 'RINGNOANSWER') {
+                  values[results[i].dataValues.agent].noanswercalls += 1;
+                } else if (results[i].dataValues.event == 'CONNECT' && values[results[i].dataValues.agent].noanswercalls > 0) {
+                  values[results[i].dataValues.agent].noanswercalls -= 1;
+                }
+              }
+              callback(null, values);
+            } else {
+              logger.log.info(IDLOG, 'get missed calls of agents "' + agents + '": not found');
+              callback(null, {});
+            }
+          } catch (error) {
+            logger.log.error(IDLOG, error.stack);
+            callback(error);
+          }
+        }, function (err) {
+          logger.log.error(IDLOG, 'get missed calls of agents "' + agents + '": ' + err.toString());
           callback(err.toString());
         });
         compDbconnMain.incNumExecQueries();
@@ -996,7 +1061,7 @@ function getAgentsStatsLoginLogout(agents) {
               var values = {};
               var i;
               for (i = 0; i < results.length; i++) {
-                results[i].dataValues.last_time = Math.round(new Date(results[i].dataValues.last_time).getTime()/1000);
+                results[i].dataValues.last_time = Math.round(new Date(results[i].dataValues.last_time).getTime() / 1000);
                 if (!values[results[i].dataValues.agent]) {
                   values[results[i].dataValues.agent] = {};
                 }
@@ -1049,7 +1114,8 @@ function getAgentsStatsByList(agents, cb) {
     var functs = {
       calls_stats: getAgentsStatsCalls(agents),
       pause_unpause: getAgentsStatsPauseUnpause(agents),
-      login_logout: getAgentsStatsLoginLogout(agents)
+      login_logout: getAgentsStatsLoginLogout(agents),
+      calls_missed: getAgentsMissedCalls(agents)
     };
     async.parallel(functs, function (err, data) {
       if (err) {
@@ -1092,6 +1158,12 @@ function getAgentsStatsByList(agents, cb) {
             ret[u][q].last_login_time = data.login_logout[u][q].last_login_time;
             ret[u][q].last_logout_time = data.login_logout[u][q].last_logout_time;
           }
+        }
+        for (var u in data.calls_missed) {
+          if (!ret[u]) {
+            ret[u] = {};
+          }
+          ret[u].no_answer_calls = data.calls_missed[u].noanswercalls;
         }
         cb(null, ret);
       }
@@ -1456,3 +1528,4 @@ apiList.getQueueMemberLastPausedOutData = getQueueMemberLastPausedOutData;
 exports.apiList = apiList;
 exports.setLogger = setLogger;
 exports.setCompDbconnMain = setCompDbconnMain;
+
