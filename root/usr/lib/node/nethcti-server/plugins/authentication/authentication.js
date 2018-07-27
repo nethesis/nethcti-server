@@ -893,7 +893,7 @@ function removeToken(username, token) {
     // check the grant presence
     var key;
     for (key in grants) {
-      if (key.toLowerCase() === username) {
+      if (key === username) {
         delete grants[key][token];
         logger.log.info(IDLOG, 'removed token "' + token + '" for username ' + key);
       }
