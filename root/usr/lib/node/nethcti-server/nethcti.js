@@ -93,7 +93,7 @@ try {
 
           app.on('ready', function(uno, due) {
             try {
-              logger.ctilog.log.warn(IDLOG, 'STARTED ' + process.argv[1]);
+              logger.ctilog.log.warn(IDLOG, 'STARTED ' + process.argv[1] + ' [' + process.pid + ']');
               var sub = Object.keys(app.services).filter(function(k) {
                 return (typeof app.services[k].on === 'function' && app.services[k].EVT_RELOADED);
               });
