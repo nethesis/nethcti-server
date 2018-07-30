@@ -314,6 +314,10 @@ function start() {
             }
             req.headers.authorization_token = arr[1];
 
+            // username is converted to lower case because of system authentication method.
+            // So the login becomes case-insensitive
+            req.headers.authorization_user = req.headers.authorization_user.toLowerCase();
+
           } else { // authentication failed
             compUtil.net.sendHttp401(IDLOG, res);
             return;

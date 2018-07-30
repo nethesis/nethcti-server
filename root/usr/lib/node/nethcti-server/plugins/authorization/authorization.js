@@ -178,6 +178,14 @@ function config(obj) {
       delete mapUserProfile[u].name;
       delete mapUserProfile[u].endpoints;
     }
+    // lower case all usernames used as keys
+    var tmp, userid;
+    for (userid in mapUserProfile) {
+      tmp = mapUserProfile[userid];
+      delete mapUserProfile[userid];
+      mapUserProfile[userid.toLowerCase()] = tmp;
+    }
+
     // initialize profiles. The keys are the profile "id" and the value the profile object itself
     profiles = JSON.parse(fs.readFileSync(PROFILES_CONF_FILEPATH, 'utf8'));
     // fix the permission keys to be an object instead of an array
