@@ -259,7 +259,7 @@ function setCompUser(comp) {
           var clUser = username.indexOf('@') !== -1 ? username.substring(0, username.lastIndexOf('@')) : username;
 
           if (!compUser.isUserPresent(clUser)) {
-            var errmsg = 'user ' + username + ' is not configured';
+            var errmsg = 'user ' + clUser + ' is not configured';
             compUtil.net.sendHttp401(IDLOG, res, errmsg);
             return;
           }
