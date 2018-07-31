@@ -229,9 +229,15 @@ function config(path) {
 
     // read JSON file with the user/endpoint associations
     var json = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
-
+    // lower case all usernames used as keys
+    var tmp, userid;
+    for (userid in json) {
+      tmp = json[userid];
+      delete json[userid];
+      json[userid.toLowerCase()] = tmp;
+    }
     // initialize user objects
-    var userid, newuser;
+    var newuser;
     for (userid in json) { // cycle users
       // add new user in memory
       newuser = new User(userid, json[userid].name);
@@ -2375,6 +2381,7 @@ function getParamUrl(username, profileId, cb) {
 
 /**
  * Checks if the user exists. To be present, it must be configured.
+ * It is case-insensitive.
  *
  * @method isUserPresent
  * @param  {string}  username  The name of the user to be checked.
@@ -2386,7 +2393,7 @@ function isUserPresent(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    if (users[username]) {
+    if (users[username.toLowerCase()]) {
       return true;
     }
     return false;
