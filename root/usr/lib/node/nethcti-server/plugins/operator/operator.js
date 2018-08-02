@@ -133,7 +133,7 @@ function config(path) {
       newgroup = new Group(g);
 
       // json[g] is an array as readed from the JSON file
-      newgroup.addUsers(json[g]);
+      newgroup.addUsers(json[g].toString().toLowerCase().split(','));
       groups[g] = newgroup;
     }
     logger.log.info(IDLOG, 'ended configuration by JSON file ' + CONFIG_FILEPATH);
