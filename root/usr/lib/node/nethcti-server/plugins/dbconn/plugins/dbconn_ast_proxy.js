@@ -923,6 +923,7 @@ function getAgentsStatsCalls(agents) {
           attributes: [
             ['MAX(time)', 'last_call_time'],
             ['COUNT(queuename)', 'calls_taken'],
+            ['SUM(data2)', 'duration_incoming'],
             'queuename', 'agent'
           ]
         }).then(function (results) {
@@ -939,12 +940,13 @@ function getAgentsStatsCalls(agents) {
                 if (!values[results[i].dataValues.agent][results[i].dataValues.queuename]) {
                   values[results[i].dataValues.agent][results[i].dataValues.queuename] = {};
                 }
+                values[results[i].dataValues.agent][results[i].dataValues.queuename].duration_incoming = results[i].dataValues.duration_incoming;
                 values[results[i].dataValues.agent][results[i].dataValues.queuename].calls_taken = results[i].dataValues.calls_taken;
                 values[results[i].dataValues.agent][results[i].dataValues.queuename].last_call_time = Math.floor(results[i].dataValues.last_call_time);
               }
               callback(null, values);
             } else {
-              logger.log.info(IDLOG, 'get pause/unpause stats of agents "' + agents + '": not found');
+              logger.log.info(IDLOG, 'get calls taken count stats of agents "' + agents + '": not found');
               callback(null, {});
             }
           } catch (error) {
@@ -952,7 +954,7 @@ function getAgentsStatsCalls(agents) {
             callback(error);
           }
         }, function (err) {
-          logger.log.error(IDLOG, 'get pause/unpause stats of agents "' + agents + '": ' + err.toString());
+          logger.log.error(IDLOG, 'get calls taken count stats of agents "' + agents + '": ' + err.toString());
           callback(err.toString());
         });
         compDbconnMain.incNumExecQueries();
@@ -966,7 +968,6 @@ function getAgentsStatsCalls(agents) {
     cb(err);
   }
 }
-
 
 /**
  * Return function to have missed calls counter of queue agents.
@@ -1008,6 +1009,65 @@ function getAgentsMissedCalls(agents) {
           }
         }, function (err) {
           logger.log.error(IDLOG, 'get missed calls of agents "' + agents + '": ' + err.toString());
+          callback(err.toString());
+        });
+        compDbconnMain.incNumExecQueries();
+      } catch (err) {
+        logger.log.error(IDLOG, err.stack);
+        callback(err);
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Return function to have outgoing calls counter of queue agents.
+ *
+ * @method getAgentsOutgoingCalls
+ * @param {array} agents The list of the agents
+ * @return {function} The function to be executed
+ */
+function getAgentsOutgoingCalls(agents) {
+  try {
+    if (Array.isArray(agents) !== true) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    return function (callback) {
+      try {
+        compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
+          where: [
+            'disposition="ANSWERED" AND cnam IN ("' + agents.join('","') + '") GROUP BY cnam'
+          ],
+          attributes: [
+            ['SUM(duration)', 'tot_duration_outgoing'],
+            ['COUNT(cnam)', 'outgoing_calls'],
+            ['cnam', 'agent']
+          ]
+        }).then(function (results) {
+          try {
+            if (results) {
+              logger.log.info(IDLOG, 'get outgoing calls of queue agents "' + agents + '" has been successful');
+              var values = {};
+              for (var i = 0; i < results.length; i++) {
+                values[results[i].dataValues.agent] = {
+                  outgoing_calls: results[i].dataValues.outgoing_calls,
+                  tot_duration_outgoing: results[i].dataValues.tot_duration_outgoing
+                }
+              }
+              callback(null, values);
+            } else {
+              logger.log.info(IDLOG, 'get outgoing calls of queue agents "' + agents + '": not found');
+              callback(null, {});
+            }
+          } catch (error) {
+            logger.log.error(IDLOG, error.stack);
+            callback(error);
+          }
+        }, function (err) {
+          logger.log.error(IDLOG, 'get outgoing calls of queue agents "' + agents + '": ' + err.toString());
           callback(err.toString());
         });
         compDbconnMain.incNumExecQueries();
@@ -1105,7 +1165,8 @@ function getAgentsStatsByList(agents, cb) {
       calls_stats: getAgentsStatsCalls(agents),
       pause_unpause: getAgentsStatsPauseUnpause(agents),
       login_logout: getAgentsStatsLoginLogout(agents),
-      calls_missed: getAgentsMissedCalls(agents)
+      calls_missed: getAgentsMissedCalls(agents),
+      calls_outgoing: getAgentsOutgoingCalls(agents)
     };
     async.parallel(functs, function (err, data) {
       if (err) {
@@ -1116,7 +1177,11 @@ function getAgentsStatsByList(agents, cb) {
         var ret = {};
         for (u in data.calls_stats) {
           if (!ret[u]) {
-            ret[u] = {};
+            ret[u] = {
+              incomingCalls: {
+                tot_duration_incoming: 0
+              }
+            };
           }
           for (q in data.calls_stats[u]) {
             if (!ret[u][q]) {
@@ -1124,6 +1189,8 @@ function getAgentsStatsByList(agents, cb) {
             }
             ret[u][q].calls_taken = data.calls_stats[u][q].calls_taken;
             ret[u][q].last_call_time = data.calls_stats[u][q].last_call_time;
+            ret[u][q].duration_incoming = data.calls_stats[u][q].duration_incoming;
+            ret[u].incomingCalls.tot_duration_incoming += data.calls_stats[u][q].duration_incoming;
           }
         }
         for (u in data.pause_unpause) {
@@ -1155,6 +1222,12 @@ function getAgentsStatsByList(agents, cb) {
             ret[u] = {};
           }
           ret[u].no_answer_calls = data.calls_missed[u];
+        }
+        for (u in data.calls_outgoing) {
+          if (!ret[u]) {
+            ret[u] = {};
+          }
+          ret[u].outgoingCalls = data.calls_outgoing[u];
         }
         cb(null, ret);
       }
