@@ -984,10 +984,10 @@ function getAgentsMissedCalls(agents) {
       try {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
           where: [
-            'event IN ("RINGNOANSWER","CONNECT") AND agent IN ("' + agents.join('","') + '") GROUP BY agent, event, callid, queuename ORDER BY callid, event DESC'
+            'event="RINGNOANSWER" AND agent IN ("' + agents.join('","') + '") GROUP BY agent'
           ],
           attributes: [
-            'event', 'callid', 'queuename', 'agent'
+            ['COUNT(event)', 'noanswercalls'], 'agent'
           ]
         }).then(function (results) {
           try {
@@ -995,17 +995,7 @@ function getAgentsMissedCalls(agents) {
               logger.log.info(IDLOG, 'get missed calls count of queue agents "' + agents + '" has been successful');
               var values = {};
               for (var i = 0; i < results.length; i++) {
-                if (!values[results[i].dataValues.agent]) {
-                  values[results[i].dataValues.agent] = {};
-                }
-                if (!values[results[i].dataValues.agent].noanswercalls) {
-                  values[results[i].dataValues.agent].noanswercalls = 0;
-                }
-                if (results[i].dataValues.event == 'RINGNOANSWER') {
-                  values[results[i].dataValues.agent].noanswercalls += 1;
-                } else if (results[i].dataValues.event == 'CONNECT' && values[results[i].dataValues.agent].noanswercalls > 0) {
-                  values[results[i].dataValues.agent].noanswercalls -= 1;
-                }
+                values[results[i].dataValues.agent] = results[i].dataValues.noanswercalls;
               }
               callback(null, values);
             } else {
@@ -1122,12 +1112,13 @@ function getAgentsStatsByList(agents, cb) {
         logger.log.error(IDLOG, 'getting stats about qmanager agents:', err);
         cb(err);
       } else {
+        var u, q;
         var ret = {};
-        for (var u in data.calls_stats) {
+        for (u in data.calls_stats) {
           if (!ret[u]) {
             ret[u] = {};
           }
-          for (var q in data.calls_stats[u]) {
+          for (q in data.calls_stats[u]) {
             if (!ret[u][q]) {
               ret[u][q] = {};
             }
@@ -1135,11 +1126,11 @@ function getAgentsStatsByList(agents, cb) {
             ret[u][q].last_call_time = data.calls_stats[u][q].last_call_time;
           }
         }
-        for (var u in data.pause_unpause) {
+        for (u in data.pause_unpause) {
           if (!ret[u]) {
             ret[u] = {};
           }
-          for (var q in data.pause_unpause[u]) {
+          for (q in data.pause_unpause[u]) {
             if (!ret[u][q]) {
               ret[u][q] = {};
             }
@@ -1147,11 +1138,11 @@ function getAgentsStatsByList(agents, cb) {
             ret[u][q].last_unpaused_time = data.pause_unpause[u][q].last_unpaused_time;
           }
         }
-        for (var u in data.login_logout) {
+        for (u in data.login_logout) {
           if (!ret[u]) {
             ret[u] = {};
           }
-          for (var q in data.login_logout[u]) {
+          for (q in data.login_logout[u]) {
             if (!ret[u][q]) {
               ret[u][q] = {};
             }
@@ -1159,11 +1150,11 @@ function getAgentsStatsByList(agents, cb) {
             ret[u][q].last_logout_time = data.login_logout[u][q].last_logout_time;
           }
         }
-        for (var u in data.calls_missed) {
+        for (u in data.calls_missed) {
           if (!ret[u]) {
             ret[u] = {};
           }
-          ret[u].no_answer_calls = data.calls_missed[u].noanswercalls;
+          ret[u].no_answer_calls = data.calls_missed[u];
         }
         cb(null, ret);
       }
