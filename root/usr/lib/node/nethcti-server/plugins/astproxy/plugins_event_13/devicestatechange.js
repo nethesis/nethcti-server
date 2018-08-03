@@ -62,8 +62,6 @@ var astProxy;
 
             logger.log.info(IDLOG, 'received event ' + data.event);
             astProxy.proxyLogic.evtDeviceStatusChanged(data.device.split('/')[1]);
-          } else {
-            logger.log.warn(IDLOG, 'DeviceStatusChanged event not recognized');
           }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
