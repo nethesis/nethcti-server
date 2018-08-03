@@ -924,6 +924,9 @@ function getAgentsStatsCalls(agents) {
             ['MAX(time)', 'last_call_time'],
             ['COUNT(queuename)', 'calls_taken'],
             ['SUM(data2)', 'duration_incoming'],
+            ['MAX(data2)', 'max_duration_incoming'],
+            ['MIN(data2)', 'min_duration_incoming'],
+            ['AVG(data2)', 'avg_duration_incoming'],
             'queuename', 'agent'
           ]
         }).then(function (results) {
@@ -943,6 +946,9 @@ function getAgentsStatsCalls(agents) {
                 values[results[i].dataValues.agent][results[i].dataValues.queuename].duration_incoming = results[i].dataValues.duration_incoming;
                 values[results[i].dataValues.agent][results[i].dataValues.queuename].calls_taken = results[i].dataValues.calls_taken;
                 values[results[i].dataValues.agent][results[i].dataValues.queuename].last_call_time = Math.floor(results[i].dataValues.last_call_time);
+                values[results[i].dataValues.agent][results[i].dataValues.queuename].max_duration_incoming = parseInt(results[i].dataValues.max_duration_incoming);
+                values[results[i].dataValues.agent][results[i].dataValues.queuename].min_duration_incoming = parseInt(results[i].dataValues.min_duration_incoming);
+                values[results[i].dataValues.agent][results[i].dataValues.queuename].avg_duration_incoming = Math.floor(results[i].dataValues.avg_duration_incoming);
               }
               callback(null, values);
             } else {
@@ -1042,6 +1048,9 @@ function getAgentsOutgoingCalls(agents) {
             'disposition="ANSWERED" AND cnam IN ("' + agents.join('","') + '") GROUP BY cnam'
           ],
           attributes: [
+            ['MAX(duration)', 'max_duration_outgoing'],
+            ['MIN(duration)', 'min_duration_outgoing'],
+            ['AVG(duration)', 'avg_duration_outgoing'],
             ['SUM(duration)', 'tot_duration_outgoing'],
             ['COUNT(cnam)', 'outgoing_calls'],
             ['cnam', 'agent']
@@ -1054,7 +1063,10 @@ function getAgentsOutgoingCalls(agents) {
               for (var i = 0; i < results.length; i++) {
                 values[results[i].dataValues.agent] = {
                   outgoing_calls: results[i].dataValues.outgoing_calls,
-                  tot_duration_outgoing: results[i].dataValues.tot_duration_outgoing
+                  duration_outgoing: results[i].dataValues.tot_duration_outgoing,
+                  max_duration_outgoing: results[i].dataValues.max_duration_outgoing,
+                  min_duration_outgoing: results[i].dataValues.min_duration_outgoing,
+                  avg_duration_outgoing: Math.floor(results[i].dataValues.avg_duration_outgoing)
                 }
               }
               callback(null, values);
@@ -1179,7 +1191,10 @@ function getAgentsStatsByList(agents, cb) {
           if (!ret[u]) {
             ret[u] = {
               incomingCalls: {
-                tot_duration_incoming: 0
+                duration_incoming: 0,
+                avg_duration_incoming: 0,
+                min_duration_incoming: 99999,
+                max_duration_incoming: 0
               }
             };
           }
@@ -1190,8 +1205,15 @@ function getAgentsStatsByList(agents, cb) {
             ret[u][q].calls_taken = data.calls_stats[u][q].calls_taken;
             ret[u][q].last_call_time = data.calls_stats[u][q].last_call_time;
             ret[u][q].duration_incoming = data.calls_stats[u][q].duration_incoming;
-            ret[u].incomingCalls.tot_duration_incoming += data.calls_stats[u][q].duration_incoming;
+            ret[u][q].max_duration_incoming = data.calls_stats[u][q].max_duration_incoming;
+            ret[u][q].min_duration_incoming = data.calls_stats[u][q].min_duration_incoming;
+            ret[u][q].avg_duration_incoming = data.calls_stats[u][q].avg_duration_incoming;
+            ret[u].incomingCalls.duration_incoming += data.calls_stats[u][q].duration_incoming;
+            ret[u].incomingCalls.avg_duration_incoming += data.calls_stats[u][q].avg_duration_incoming;
+            ret[u].incomingCalls.min_duration_incoming = data.calls_stats[u][q].min_duration_incoming < ret[u].incomingCalls.min_duration_incoming ? data.calls_stats[u][q].min_duration_incoming : ret[u].incomingCalls.min_duration_incoming;
+            ret[u].incomingCalls.max_duration_incoming = data.calls_stats[u][q].max_duration_incoming > ret[u].incomingCalls.max_duration_incoming ? data.calls_stats[u][q].max_duration_incoming : ret[u].incomingCalls.max_duration_incoming;
           }
+          ret[u].incomingCalls.avg_duration_incoming = Math.floor(ret[u].incomingCalls.avg_duration_incoming / Object.keys(data.calls_stats[u]).length);
         }
         for (u in data.pause_unpause) {
           if (!ret[u]) {
@@ -1223,11 +1245,40 @@ function getAgentsStatsByList(agents, cb) {
           }
           ret[u].no_answer_calls = data.calls_missed[u];
         }
+        // outgoing calls
         for (u in data.calls_outgoing) {
           if (!ret[u]) {
             ret[u] = {};
           }
           ret[u].outgoingCalls = data.calls_outgoing[u];
+        }
+        // all calls: incoming & outgoing
+        for (u in ret) {
+          ret[u].allCalls = {};
+          // total avg duration
+          if (ret[u].incomingCalls && ret[u].incomingCalls.avg_duration_incoming && ret[u].outgoingCalls && ret[u].outgoingCalls.avg_duration_outgoing) {
+            ret[u].allCalls.avg_duration = Math.floor((ret[u].incomingCalls.avg_duration_incoming + ret[u].outgoingCalls.avg_duration_outgoing) / 2);
+          } else if (ret[u].incomingCalls && ret[u].incomingCalls.avg_duration_incoming) {
+            ret[u].allCalls.avg_duration = ret[u].incomingCalls.avg_duration_incoming;
+          } else if (ret[u].outgoingCalls && ret[u].outgoingCalls.avg_duration_outgoing) {
+            ret[u].allCalls.avg_duration = ret[u].outgoingCalls.avg_duration_outgoing;
+          }
+          // total min duration
+          if (ret[u].incomingCalls && ret[u].incomingCalls.min_duration_incoming && ret[u].outgoingCalls && ret[u].outgoingCalls.min_duration_outgoing) {
+            ret[u].allCalls.min_duration = ret[u].incomingCalls.min_duration_incoming < ret[u].outgoingCalls.min_duration_outgoing ? ret[u].incomingCalls.min_duration_incoming : ret[u].outgoingCalls.min_duration_outgoing;
+          } else if (ret[u].incomingCalls && ret[u].incomingCalls.min_duration_incoming) {
+            ret[u].allCalls.min_duration = ret[u].incomingCalls.min_duration_incoming;
+          } else if (ret[u].outgoingCalls && ret[u].outgoingCalls.min_duration_outgoing) {
+            ret[u].allCalls.min_duration = ret[u].outgoingCalls.min_duration_outgoing;
+          }
+          // total max duration
+          if (ret[u].incomingCalls && ret[u].incomingCalls.max_duration_incoming && ret[u].outgoingCalls && ret[u].outgoingCalls.max_duration_outgoing) {
+            ret[u].allCalls.max_duration = ret[u].incomingCalls.max_duration_incoming > ret[u].outgoingCalls.max_duration_outgoing ? ret[u].incomingCalls.max_duration_incoming : ret[u].outgoingCalls.max_duration_outgoing;
+          } else if (ret[u].incomingCalls && ret[u].incomingCalls.max_duration_incoming) {
+            ret[u].allCalls.max_duration = ret[u].incomingCalls.max_duration_incoming;
+          } else if (ret[u].outgoingCalls && ret[u].outgoingCalls.max_duration_outgoing) {
+            ret[u].allCalls.max_duration = ret[u].outgoingCalls.max_duration_outgoing;
+          }
         }
         cb(null, ret);
       }
