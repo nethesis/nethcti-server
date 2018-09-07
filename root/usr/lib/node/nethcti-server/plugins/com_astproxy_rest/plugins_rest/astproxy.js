@@ -494,8 +494,9 @@ var compConfigManager;
                  "last_unpaused_time": 1530873681,
                  "last_login_time": 1530873679,
                  "last_logout_time": 1530873677,
-                 "time_in_pause": 26, // time spent in queue pause status
-                 "time_in_logon": 1 // time spent in queue logon status
+                 "time_in_pause": 3, // time spent in queue pause status
+                 "time_in_logon": 9 // time spent in queue logon status
+                 "pause_percent": 33 // pause percentage with respect to the logon time
              }
          },
          ....

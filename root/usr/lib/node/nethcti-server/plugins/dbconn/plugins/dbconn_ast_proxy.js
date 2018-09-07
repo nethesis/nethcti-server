@@ -1438,6 +1438,10 @@ function getAgentsStatsByList(agents, cb) {
               ret[u][q] = {};
             }
             ret[u][q].time_in_logon = data.logon_durations[u][q];
+            // pause percentage of logon time
+            if (ret[u][q].time_in_pause && ret[u][q].time_in_logon) {
+              ret[u][q].pause_percent = Math.round((ret[u][q].time_in_pause * 100) / ret[u][q].time_in_logon);
+            }
           }
         }
         // all calls: incoming & outgoing
