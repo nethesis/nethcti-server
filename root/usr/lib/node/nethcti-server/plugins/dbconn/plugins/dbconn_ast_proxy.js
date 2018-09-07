@@ -1201,7 +1201,7 @@ function getAgentsOutgoingCalls(agents) {
       try {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
           where: [
-            'disposition="ANSWERED" AND cnam IN ("' + agents.join('","') + '") GROUP BY cnam'
+            'disposition="ANSWERED" AND cnam IN ("' + agents.join('","') + '") AND calldate LIKE "' + moment().format('YYYY-MM-DD') + '%" GROUP BY cnam'
           ],
           attributes: [
             ['MAX(duration)', 'max_duration_outgoing'],
@@ -1326,14 +1326,15 @@ function getAgentsStatsLoginLogout(agents) {
  * Get agents statistics.
  *
  * @method getAgentsStatsByList
- * @param {array} agents The list of the agents
+ * @param {object} members The list of the agents with logged-in and pause status
  * @param {function} cb The callback function
  */
-function getAgentsStatsByList(agents, cb) {
+function getAgentsStatsByList(members, cb) {
   try {
-    if (typeof cb !== 'function' || Array.isArray(agents) !== true) {
+    if (typeof cb !== 'function' || typeof members !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+    var agents = Object.keys(members);
     var functs = {
       calls_stats: getAgentsStatsCalls(agents),
       pause_unpause: getAgentsStatsPauseUnpause(agents),
@@ -1417,6 +1418,7 @@ function getAgentsStatsByList(agents, cb) {
           ret[u].outgoingCalls = data.calls_outgoing[u];
         }
         // pause durations
+        var nowtime = Math.round(new Date().getTime() / 1000);
         for (u in data.pause_durations) {
           if (!ret[u]) {
             ret[u] = {};
@@ -1426,6 +1428,11 @@ function getAgentsStatsByList(agents, cb) {
               ret[u][q] = {};
             }
             ret[u][q].time_in_pause = data.pause_durations[u][q];
+            // check if the agent is currently in pause: in this case add
+            // current time passed from the last pause
+            if (members[u][q].isInPause === true) {
+              ret[u][q].time_in_pause += nowtime - data.pause_unpause[u][q].last_paused_time;
+            }
           }
         }
         // logon durations
@@ -1438,9 +1445,20 @@ function getAgentsStatsByList(agents, cb) {
               ret[u][q] = {};
             }
             ret[u][q].time_in_logon = data.logon_durations[u][q];
+            // check if the agent is currently logged-in: in this case add
+            // current time passed from the last logon
+            if (members[u][q].isLoggedIn === true) {
+              ret[u][q].time_in_logon += nowtime - data.login_logout[u][q].last_login_time;
+            }
             // pause percentage of logon time
             if (ret[u][q].time_in_pause && ret[u][q].time_in_logon) {
-              ret[u][q].pause_percent = Math.round((ret[u][q].time_in_pause * 100) / ret[u][q].time_in_logon);
+              var cp = (ret[u][q].time_in_pause * 100) / ret[u][q].time_in_logon;
+              ret[u][q].pause_percent = Math.round(cp) > 0 ? Math.round(cp) : cp.toFixed(2);
+            }
+            // in conversation percentage of logon time
+            if (ret[u][q].duration_incoming && ret[u][q].time_in_logon && ret[u][q].time_in_logon > ret[u][q].duration_incoming) {
+              var cp = (ret[u][q].duration_incoming * 100) / ret[u][q].time_in_logon;
+              ret[u][q].conversation_percent = Math.round(cp) > 0 ? Math.round(cp) : cp.toFixed(2);
             }
           }
         }

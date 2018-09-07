@@ -490,13 +490,18 @@ var compConfigManager;
         *     {
          "John": {
              "402": {
-                 "last_paused_time": 1530873680,
-                 "last_unpaused_time": 1530873681,
-                 "last_login_time": 1530873679,
-                 "last_logout_time": 1530873677,
+                 "calls_taken": 1,
+                 "last_call_time": 1536330567,
+                 "duration_incoming": 7,
+                 "max_duration_incoming": 7,
+                 "min_duration_incoming": 7,
+                 "avg_duration_incoming": 7,
+                 "last_login_time": 1536331524,
+                 "last_logout_time": 1536331558,
                  "time_in_pause": 3, // time spent in queue pause status
-                 "time_in_logon": 9 // time spent in queue logon status
-                 "pause_percent": 33 // pause percentage with respect to the logon time
+                 "time_in_logon": 36, // time spent in queue logon status
+                 "pause_percent": 33 // pause percentage with respect to the logon time,
+                 "conversation_percent": 19 // conversations percentage with respect to the logon time,
              }
          },
          ....

@@ -2144,10 +2144,15 @@ function getJSONAllAgentsStats(qlist, cb) {
       }
       temp = queues[q].getAllMembers();
       for (var m in temp) {
-        agents[temp[m].getName()] = '';
+        if (!agents[temp[m].getName()]) {
+          agents[temp[m].getName()] = {};
+        }
+        agents[temp[m].getName()][q] = {
+          isInPause: temp[m].isInPause(),
+          isLoggedIn: temp[m].isLoggedIn()
+        };
       }
     }
-    agents = Object.keys(agents);
     compDbconn.getAgentsStatsByList(agents, function (err1, result) {
       cb(err1, result);
     });
