@@ -488,12 +488,13 @@ var compConfigManager;
         * Example JSON response:
         *
         *     {
-         "Username": {
+         "John": {
              "402": {
                  "last_paused_time": 1530873680,
                  "last_unpaused_time": 1530873681,
                  "last_login_time": 1530873679,
-                 "last_logout_time": 1530873677
+                 "last_logout_time": 1530873677,
+                 "time_in_pause": 26
              }
          },
          ....
