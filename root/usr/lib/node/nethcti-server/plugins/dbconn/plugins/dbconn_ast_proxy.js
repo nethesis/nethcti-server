@@ -835,6 +835,85 @@ function getQueueStats(qid, nullCallPeriod, sla, cb) {
 }
 
 /**
+ * Return function to have the time spent into pause queues.
+ *
+ * @method getAgentsPauseDurations
+ * @param {array} agents The list of the agents
+ * @return {function} The function to be executed
+ */
+function getAgentsPauseDurations(agents) {
+  try {
+    if (Array.isArray(agents) !== true) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    return function (callback) {
+      try {
+        var query = [
+          'SELECT a.agent AS agent,',
+            'a.queuename AS queue,',
+            'UNIX_TIMESTAMP(MIN(b.time))-UNIX_TIMESTAMP(a.time) AS secs',
+          'FROM asteriskcdrdb.queue_log a',
+          'LEFT JOIN asteriskcdrdb.queue_log b',
+            'ON b.agent = a.agent',
+            'AND b.queuename = a.queuename',
+            'AND b.time > a.time',
+            'AND b.event = "UNPAUSE"',
+            'AND b.callid = "NONE"',
+          'WHERE a.event = "PAUSE"',
+            'AND a.callid = "NONE"',
+            'AND a.agent IN ("' + agents.join('","') + '")',
+          'GROUP BY agent, queue, a.time'
+        ].join(' ');
+        compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
+          try {
+            if (results && results[0]) {
+
+              logger.log.info(IDLOG, 'get pause duration of queue agents "' + agents + '" has been successful');
+              results = results[0];
+              var i, u, q;
+              var resdata = {};
+              for (i = 0; i < results.length; i++) {
+                if (!resdata[results[i].agent]) {
+                  resdata[results[i].agent] = {};
+                }
+                if (!resdata[results[i].agent][results[i].queue]) {
+                  resdata[results[i].agent][results[i].queue] = results[i].secs;
+                } else {
+                  resdata[results[i].agent][results[i].queue] += results[i].secs;
+                }
+              }
+              for (u in resdata) {
+                for (q in resdata[u]) {
+                  resdata[u][q] = Math.round(resdata[u][q]);
+                }
+              }
+              callback(null, resdata);
+
+            } else {
+              logger.log.info(IDLOG, 'get pause duration of agents "' + agents + '": not found');
+              callback(null, {});
+            }
+          } catch (error) {
+            logger.log.error(IDLOG, error.stack);
+            callback(error);
+          }
+        }, function (err) {
+          logger.log.error(IDLOG, 'get pause duration of agents "' + agents + '": ' + err.toString());
+          callback(err.toString());
+        });
+        compDbconnMain.incNumExecQueries();
+      } catch (err) {
+        logger.log.error(IDLOG, err.stack);
+        callback(err);
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Return function to have pause, unpause stats of queue agents.
  *
  * @method getAgentsStatsPauseUnpause
@@ -1178,7 +1257,8 @@ function getAgentsStatsByList(agents, cb) {
       pause_unpause: getAgentsStatsPauseUnpause(agents),
       login_logout: getAgentsStatsLoginLogout(agents),
       calls_missed: getAgentsMissedCalls(agents),
-      calls_outgoing: getAgentsOutgoingCalls(agents)
+      calls_outgoing: getAgentsOutgoingCalls(agents),
+      pause_durations: getAgentsPauseDurations(agents)
     };
     async.parallel(functs, function (err, data) {
       if (err) {
@@ -1239,6 +1319,7 @@ function getAgentsStatsByList(agents, cb) {
             ret[u][q].last_logout_time = data.login_logout[u][q].last_logout_time;
           }
         }
+        // missed calls
         for (u in data.calls_missed) {
           if (!ret[u]) {
             ret[u] = {};
@@ -1251,6 +1332,18 @@ function getAgentsStatsByList(agents, cb) {
             ret[u] = {};
           }
           ret[u].outgoingCalls = data.calls_outgoing[u];
+        }
+        // pause durations
+        for (u in data.pause_durations) {
+          if (!ret[u]) {
+            ret[u] = {};
+          }
+          for (q in data.pause_durations[u]){
+            if (!ret[u][q]) {
+              ret[u][q] = {};
+            }
+            ret[u][q].time_in_pause = data.pause_durations[u][q];
+          }
         }
         // all calls: incoming & outgoing
         for (u in ret) {
