@@ -483,7 +483,7 @@ var compConfigManager;
         *
         * ### <a id="qmanager_astatsget">**`astproxy/qmanager_astats`**</a>
         *
-        * Gets statistics about all the agents.
+        * Gets statistics about all the agents: the results is cached and updated every 25 seconds.
         *
         * Example JSON response:
         *

@@ -47,6 +47,33 @@ var apiList = {};
 var compDbconnMain;
 
 /**
+ * Cache period time for some data.
+ *
+ * @property CACHE_TIMEOUT
+ * @type number
+ * @private
+ */
+var CACHE_TIMEOUT = 25000;
+
+/**
+ * The data cache.
+ *
+ * @property cache
+ * @type object
+ * @private
+ */
+var cache = {};
+
+/**
+ * The data cache timestamps.
+ *
+ * @property cacheTimestamps
+ * @type object
+ * @private
+ */
+var cacheTimestamps = {};
+
+/**
  * Set the main dbconn architect component.
  *
  * @method setCompDbconnMain
@@ -1062,7 +1089,6 @@ function getAgentsStatsPauseUnpause(agents) {
  * time of last call.
  *
  * @method getAgentsStatsCalls
- * @param {array} agents The list of the agents
  * @return {function} The function to be executed
  */
 function getAgentsStatsCalls(agents) {
@@ -1326,7 +1352,7 @@ function getAgentsStatsLoginLogout(agents) {
  * Get agents statistics.
  *
  * @method getAgentsStatsByList
- * @param {object} members The list of the agents with logged-in and pause status
+ * @param {object} members The list of all agents of all queues with logged-in and pause status
  * @param {function} cb The callback function
  */
 function getAgentsStatsByList(members, cb) {
@@ -1334,6 +1360,14 @@ function getAgentsStatsByList(members, cb) {
     if (typeof cb !== 'function' || typeof members !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+    // check if the result is into the cache
+    if (cache.getAgentsStatsByList &&
+      (new Date().getTime() - cacheTimestamps.getAgentsStatsByList) < CACHE_TIMEOUT) {
+
+      cb(null, cache.getAgentsStatsByList);
+      return;
+    }
+
     var agents = Object.keys(members);
     var functs = {
       calls_stats: getAgentsStatsCalls(agents),
@@ -1490,6 +1524,8 @@ function getAgentsStatsByList(members, cb) {
             ret[u].allCalls.max_duration = ret[u].outgoingCalls.max_duration_outgoing;
           }
         }
+        cache.getAgentsStatsByList = ret;
+        cacheTimestamps.getAgentsStatsByList = new Date().getTime();
         cb(null, ret);
       }
     });
