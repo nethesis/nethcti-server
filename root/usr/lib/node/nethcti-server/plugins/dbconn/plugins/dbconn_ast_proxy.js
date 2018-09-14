@@ -47,6 +47,15 @@ var apiList = {};
 var compDbconnMain;
 
 /**
+ * Enable/disable cache.
+ *
+ * @property CACHE_ENABLED
+ * @type boolean
+ * @private
+ */
+var CACHE_ENABLED = false;
+
+/**
  * Cache period time for some data.
  *
  * @property CACHE_TIMEOUT
@@ -1360,8 +1369,9 @@ function getAgentsStatsByList(members, cb) {
     if (typeof cb !== 'function' || typeof members !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    // check if the result is into the cache
-    if (cache.getAgentsStatsByList &&
+    // check if the cache is enabled and result is into the cache
+    if (CACHE_ENABLED &&
+      cache.getAgentsStatsByList &&
       (new Date().getTime() - cacheTimestamps.getAgentsStatsByList) < CACHE_TIMEOUT) {
 
       cb(null, cache.getAgentsStatsByList);
@@ -1524,8 +1534,10 @@ function getAgentsStatsByList(members, cb) {
             ret[u].allCalls.max_duration = ret[u].outgoingCalls.max_duration_outgoing;
           }
         }
-        cache.getAgentsStatsByList = ret;
-        cacheTimestamps.getAgentsStatsByList = new Date().getTime();
+        if (CACHE_ENABLED) {
+          cache.getAgentsStatsByList = ret;
+          cacheTimestamps.getAgentsStatsByList = new Date().getTime();
+        }
         cb(null, ret);
       }
     });
