@@ -2124,6 +2124,29 @@ function getJSONQueueStats(qid, cb) {
 }
 
 /**
+ * Return the list of all agents of all queues.
+ *
+ * @method getAllQueuesAgents
+ * @return {array} The list of all agents of all queues.
+ * @private
+ */
+function getAllQueuesAgents() {
+  try {
+    var q, m;
+    var ret = {};
+    for (q in queues) {
+      var membs = queues[q].getAllMembers();
+      for (m in membs) {
+        ret[membs[m].getName()] = undefined;
+      }
+    }
+    return Object.keys(ret);
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
+
+/**
  * Return the JSON representation of agents statistics.
  *
  * @method getJSONAllAgentsStats
@@ -2136,19 +2159,42 @@ function getJSONAllAgentsStats(qlist, cb) {
     if (Array.isArray(qlist) === false || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+    var q, i, m;
     var temp;
-    var agents = {};
-    for (var q in queues) {
+    var allAgents = {};
+    for (q in queues) {
       if (queues[q] === undefined) {
         continue;
       }
       temp = queues[q].getAllMembers();
-      for (var m in temp) {
-        agents[temp[m].getName()] = '';
+      for (m in temp) {
+        if (!allAgents[temp[m].getName()]) {
+          allAgents[temp[m].getName()] = {};
+        }
+        allAgents[temp[m].getName()][q] = {
+          isInPause: temp[m].isInPause(),
+          isLoggedIn: temp[m].isLoggedIn()
+        };
       }
     }
-    agents = Object.keys(agents);
-    compDbconn.getAgentsStatsByList(agents, function (err1, result) {
+    var permittedAgents = {};
+    for (i = 0; i < qlist.length; i++) {
+      if (queues[qlist[i]] === undefined) {
+        continue;
+      }
+      temp = queues[qlist[i]].getAllMembers();
+      for (var m in temp) {
+        if (!permittedAgents[temp[m].getName()]) {
+          permittedAgents[temp[m].getName()] = true;
+        }
+      }
+    }
+    compDbconn.getAgentsStatsByList(allAgents, function (err1, result) {
+      for (var u in result) {
+        if (!permittedAgents[u]) {
+          delete result[u];
+        }
+      }
       cb(err1, result);
     });
   } catch (error) {

@@ -286,6 +286,16 @@ exports.QueueMember = function(memberNum, queueId, pausedValue, loggedInValue) {
   }
 
   /**
+   * Checks the pause status of the member.
+   *
+   * @method isInPause
+   * @return {boolean} True if the member is in pause into the queue
+   */
+  function isInPause() {
+    return paused;
+  }
+
+  /**
    * Return the type of the member.
    *
    * @method getType
@@ -403,6 +413,7 @@ exports.QueueMember = function(memberNum, queueId, pausedValue, loggedInValue) {
     setType: setType,
     getQueue: getQueue,
     toString: toString,
+    isInPause: isInPause,
     isDynamic: isDynamic,
     setPaused: setPaused,
     getMember: getMember,
