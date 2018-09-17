@@ -949,10 +949,12 @@ var compConfigManager;
         *
         * * `confId: the conference identifier`
         * * `userId: the user identifier to be muted`
+        * * `[direction]: ("out"|"all") direction to be muted. If it is "out" the conference user cannot speak, but he can listen`
+        *                 If it is "all" the user cannot listen nor speak.
         *
         * Example JSON request parameters:
         *
-        *     { "confId": "202", "userId": "2" }
+        *     { "confId": "202", "userId": "2", "direction": "all" }
         *
         * ---
         *
@@ -3864,7 +3866,8 @@ var compConfigManager;
           // check parameters
           if (typeof req.params !== 'object' ||
             typeof req.params.confId !== 'string' ||
-            typeof req.params.userId !== 'string') {
+            typeof req.params.userId !== 'string' ||
+            (req.params.direction && req.params.direction !== 'out' && req.params.direction !== 'all')) {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -3884,10 +3887,12 @@ var compConfigManager;
             logger.log.info(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '": ' +
               req.params.confId + ' is owned by "' + username + '"');
           }
-
+          var direction = req.params.direction ? req.params.direction : 'out';
           compAstProxy.muteUserMeetmeConf(
             req.params.confId,
             req.params.userId,
+            extenId,
+            direction,
             function (err) {
               try {
                 if (err) {
@@ -3953,6 +3958,7 @@ var compConfigManager;
           compAstProxy.unmuteUserMeetmeConf(
             req.params.confId,
             req.params.userId,
+            extenId,
             function (err) {
               try {
                 if (err) {
