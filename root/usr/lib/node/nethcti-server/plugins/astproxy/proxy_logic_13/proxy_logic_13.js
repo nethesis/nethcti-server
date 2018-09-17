@@ -8058,7 +8058,8 @@ function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
             command: 'queueLog',
             queue: queueId,
             event: 'ADDMEMBER',
-            interface: name
+            interface: name,
+            message: 'Local/' + endpointId + '@from-queue/n'
           };
 
           logger.log.info(IDLOG, 'add new entry in queue_log asterisk db: interface "' + name + '", queue "' + queueId + '" and event "ADDMEMBER"');
@@ -8167,7 +8168,8 @@ function queueMemberRemove(endpointId, queueId, cb) {
             command: 'queueLog',
             queue: queueId,
             event: 'REMOVEMEMBER',
-            interface: name
+            interface: name,
+            message: 'Local/' + endpointId + '@from-queue/n'
           };
 
           logger.log.info(IDLOG, 'add new entry in queue_log asterisk db: interface "' + name + '", queue "' + queueId + '" and event "REMOVEMEMBER"');
