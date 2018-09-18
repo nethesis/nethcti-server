@@ -6218,32 +6218,35 @@ function unmuteConversation(extension, convid, cb) {
  * Mute a user of a meetme conference.
  *
  * @method muteUserMeetmeConf
- * @param {string}   confId The meetme conference identifier
- * @param {string}   userId The user indentifier into the conference
- * @param {function} cb     The callback function
+ * @param {string} confId The meetme conference identifier
+ * @param {string} userId The user indentifier into the conference
+ * @param {string} extenId The extension indentifier of the user
+ * @param {string} direction The direction to be muted
+ * @param {function} cb The callback function
  */
-function muteUserMeetmeConf(confId, userId, cb) {
+function muteUserMeetmeConf(confId, userId, extenId, direction, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' ||
       typeof confId !== 'string' ||
+      typeof extenId !== 'string' ||
       typeof userId !== 'string') {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    logger.log.info(IDLOG, 'execute mute of user "' + userId + '" of meetme conf "' + confId + '"');
+    var allconvs = extensions[extenId].getAllConversations();
+    var conv = allconvs[Object.keys(allconvs)[0]];
+    var ch = (conv.getSourceChannel()).getChannel();
+    logger.log.info(IDLOG, 'execute mute of user "' + userId + '" of meetme conf "' + confId + '" on direction "' + direction + '"');
     astProxy.doCmd({
-        command: 'meetmeConfUserMute',
-        confId: confId,
-        usernum: userId,
-        meetmeConfCode: getMeetmeConfCode()
+        command: 'mute',
+        channel: ch,
+        direction: direction
       },
       function (error) {
         cb(error);
         muteUserMeetmeConfCb(error);
       });
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -6254,32 +6257,33 @@ function muteUserMeetmeConf(confId, userId, cb) {
  * Unmute a user of a meetme conference.
  *
  * @method unmuteUserMeetmeConf
- * @param {string}   confId The meetme conference identifier
- * @param {string}   userId The user indentifier into the conference
- * @param {function} cb     The callback function
+ * @param {string} confId The meetme conference identifier
+ * @param {string} userId The user indentifier into the conference
+ * @param {string} extenId The extension indentifier of the user
+ * @param {function} cb The callback function
  */
-function unmuteUserMeetmeConf(confId, userId, cb) {
+function unmuteUserMeetmeConf(confId, userId, extenId, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' ||
       typeof confId !== 'string' ||
+      typeof extenId !== 'string' ||
       typeof userId !== 'string') {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
     logger.log.info(IDLOG, 'execute unmute of user "' + userId + '" of meetme conf "' + confId + '"');
+    var allconvs = extensions[extenId].getAllConversations();
+    var conv = allconvs[Object.keys(allconvs)[0]];
+    var ch = (conv.getSourceChannel()).getChannel();
     astProxy.doCmd({
-        command: 'meetmeConfUserUnmute',
-        confId: confId,
-        usernum: userId,
-        meetmeConfCode: getMeetmeConfCode()
+        command: 'unmute',
+        channel: ch
       },
       function (error) {
         cb(error);
         unmuteUserMeetmeConfCb(error);
       });
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);

@@ -39,11 +39,13 @@ var IDLOG = '[mute]';
     var map = {};
 
     /**
-     * Command plugin to mute a call in one direction only. The specified channel is able to listen.
+     * Command plugin to mute a call. You can pass a "direction" parameter to mute
+     * a specific direction of the audio: it can be "in", "out" and "all". If it has not been
+     * specified, the channel is able to listen.
      *
      * Use it with _astproxy_ module as follow:
      *
-     *     ast_proxy.doCmd({ command: 'mute', channel: 'SIP/214-00000' }, function (res) {
+     *     ast_proxy.doCmd({ command: 'mute', channel: 'SIP/214-00000', direction: 'all' }, function (res) {
      *         // some code
      *     });
      *
@@ -67,7 +69,7 @@ var IDLOG = '[mute]';
           var act = {
             Action: 'MuteAudio',
             Channel: args.channel,
-            Direction: 'in',
+            Direction: args.direction ? args.direction : 'in',
             State: 'on'
           };
 
