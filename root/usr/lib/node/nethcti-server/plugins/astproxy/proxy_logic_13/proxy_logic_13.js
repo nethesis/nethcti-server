@@ -2300,56 +2300,6 @@ function getJSONQueuesStats(day, callback) {
 }
 
 /**
- * Return the JSON representation of queues QOS.
- *
- * @method getJSONQueuesQOS
- * @param  {string}   day      The day expressed in YYYYMMDD format
- * @param  {function} callback The callback function
- * @return {object}   The JSON representation of queues QOS.
- */
-function getJSONQueuesQOS(day, callback) {
-  try {
-    // check parameters
-    if (typeof day !== 'string' || typeof callback !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    compDbconn.getQueuesQOS(day, function (err1, result) {
-      callback(err1, result);
-    });
-
-  } catch (error) {
-    logger.log.error(IDLOG, error.stack);
-    callback(error);
-  }
-}
-
-/**
- * Return the JSON representation of agent stats.
- *
- * @method getJSONAgentsStats
- * @param  {string}   day      The day expressed in YYYYMMDD format
- * @param  {function} callback The callback function
- * @return {object}   The JSON representation of agent stats.
- */
-function getJSONAgentsStats(day, callback) {
-  try {
-    // check parameters
-    if (typeof day !== 'string' || typeof callback !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    compDbconn.getAgentsStats(day, function (err1, result) {
-      callback(err1, result);
-    });
-
-  } catch (error) {
-    logger.log.error(IDLOG, error.stack);
-    callback(error);
-  }
-}
-
-/**
  * Returns the JSON representation of all queues.
  *
  * @method getJSONQueues
@@ -8058,7 +8008,8 @@ function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
             command: 'queueLog',
             queue: queueId,
             event: 'ADDMEMBER',
-            interface: name
+            interface: name,
+            message: 'Local/' + endpointId + '@from-queue/n'
           };
 
           logger.log.info(IDLOG, 'add new entry in queue_log asterisk db: interface "' + name + '", queue "' + queueId + '" and event "ADDMEMBER"');
@@ -8167,7 +8118,8 @@ function queueMemberRemove(endpointId, queueId, cb) {
             command: 'queueLog',
             queue: queueId,
             event: 'REMOVEMEMBER',
-            interface: name
+            interface: name,
+            message: 'Local/' + endpointId + '@from-queue/n'
           };
 
           logger.log.info(IDLOG, 'add new entry in queue_log asterisk db: interface "' + name + '", queue "' + queueId + '" and event "REMOVEMEMBER"');
@@ -9514,7 +9466,6 @@ exports.setFeatureCodes = setFeatureCodes;
 exports.getExtenCfbValue = getExtenCfbValue;
 exports.getExtenCfuValue = getExtenCfuValue;
 exports.EVT_EXTEN_HANGUP = EVT_EXTEN_HANGUP;
-exports.getJSONQueuesQOS = getJSONQueuesQOS;
 exports.muteConversation = muteConversation;
 exports.sendDTMFSequence = sendDTMFSequence;
 exports.parkConversation = parkConversation;
@@ -9545,7 +9496,6 @@ exports.getJSONQueuesStats = getJSONQueuesStats;
 exports.getJSONQueueStats = getJSONQueueStats;
 exports.getJSONAllQueuesStats = getJSONAllQueuesStats;
 exports.getJSONAllAgentsStats = getJSONAllAgentsStats;
-exports.getJSONAgentsStats = getJSONAgentsStats;
 exports.unmuteConversation = unmuteConversation;
 exports.setUnconditionalCf = setUnconditionalCf;
 exports.hangupConversation = hangupConversation;
