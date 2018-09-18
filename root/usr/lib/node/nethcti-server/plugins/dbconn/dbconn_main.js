@@ -566,7 +566,6 @@ function initCustCardData(cb) {
           dbConfigCustCardData[results.dbConnection[i].id] = results.dbConnection[i];
         }
       }
-
       if (results.customerCard) {
         for (i = 0; i < results.customerCard.length; i++) {
           custCardTemplatesData[results.customerCard[i].permission_id] = results.customerCard[i];
@@ -598,7 +597,6 @@ function readCustomerCard(cb) {
     models[JSON_KEYS.CUSTOMER_CARD].findAll().then(function(results) {
       try {
         incNumExecQueries();
-
         // extract results
         var i;
         for (i = 0; i < results.length; i++) {
@@ -976,6 +974,20 @@ function incNumExecQueries() {
 }
 
 /**
+ * Return the customer card templates.
+ *
+ * @method getCustCardTemplatesData
+ * @return {object} The customer card templates.
+ */
+function getCustCardTemplatesData() {
+  try {
+    return custCardTemplatesData;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Reset the component.
  *
  * @method reset
@@ -1065,6 +1077,6 @@ exports.testConnection = testConnection;
 exports.configDbStatic = configDbStatic;
 exports.readCustomerCard = readCustomerCard;
 exports.incNumExecQueries = incNumExecQueries;
-exports.custCardTemplatesData = custCardTemplatesData;
+exports.getCustCardTemplatesData = getCustCardTemplatesData;
 exports.setReady = setReady
 exports.getDbConfigCustCardData = getDbConfigCustCardData;

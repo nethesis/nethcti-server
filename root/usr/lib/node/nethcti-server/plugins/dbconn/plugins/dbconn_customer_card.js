@@ -113,10 +113,9 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
     var query;
     // get the db connection relative to customer card specified
-    var dbConnId = compDbconnMain.custCardTemplatesData[permissionId].dbconn_id;
+    var dbConnId = compDbconnMain.getCustCardTemplatesData()[permissionId].dbconn_id;
 
     // check the connection presence
     if (compDbconnMain.dbConnCustCard[dbConnId] === undefined) {
@@ -134,7 +133,7 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
       num = num.substring(1, num.length - 1); // remove external quote e.g. num = 123456
 
       // replace the key of the query with parameter
-      query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$NUMBER/g, num);
+      query = compDbconnMain.getCustCardTemplatesData()[permissionId].query.replace(/\$NUMBER/g, num);
 
       compDbconnMain.dbConnCustCard[dbConnId].query(query).then(function(results) {
 
@@ -151,7 +150,7 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
 
     } else if ((compDbconnMain.getDbConfigCustCardData())[dbConnId].type === 'postgres') {
 
-      query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$NUMBER/g, num);
+      query = compDbconnMain.getCustCardTemplatesData()[permissionId].query.replace(/\$NUMBER/g, num);
       compDbconnMain.dbConnCustCard[dbConnId].query(query, function(err2, results) {
         if (err2) {
           logger.log.error(IDLOG, 'searching cust card "' + ccName + '" (permission_id: ' + permissionId + ') by num ' +
@@ -168,7 +167,7 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
     } else if (compDbconnMain.isMssqlType((compDbconnMain.getDbConfigCustCardData())[dbConnId].type)) {
 
       var request = new mssql.Request(compDbconnMain.dbConnCustCard[dbConnId]);
-      query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$NUMBER/g, num);
+      query = compDbconnMain.getCustCardTemplatesData()[permissionId].query.replace(/\$NUMBER/g, num);
       request.query(query, function(err2, recordset) {
         try {
           if (err2) {
@@ -235,7 +234,7 @@ function checkDbconnCustCard(permissionId) {
       throw new Error('wrong parameter: ' + JSON.stringify(arguments));
     }
 
-    var connid = compDbconnMain.custCardTemplatesData[permissionId] ? compDbconnMain.custCardTemplatesData[permissionId].dbconn_id : null;
+    var connid = compDbconnMain.getCustCardTemplatesData()[permissionId] ? compDbconnMain.getCustCardTemplatesData()[permissionId].dbconn_id : null;
     if (compDbconnMain.dbConnCustCard[connid]) {
       return true;
     }
@@ -282,8 +281,8 @@ function getCustCardTemplateName(permissionId) {
     if (typeof permissionId !== 'string') {
       throw new Error('wrong parameter: ' + JSON.stringify(arguments));
     }
-    if (compDbconnMain.custCardTemplatesData[permissionId]) {
-      return compDbconnMain.custCardTemplatesData[permissionId].template;
+    if (compDbconnMain.getCustCardTemplatesData()[permissionId]) {
+      return compDbconnMain.getCustCardTemplatesData()[permissionId].template;
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -302,8 +301,8 @@ function getCustCardNameDescr(permissionId) {
     if (typeof permissionId !== 'string') {
       throw new Error('wrong parameter: ' + JSON.stringify(arguments));
     }
-    if (compDbconnMain.custCardTemplatesData[permissionId]) {
-      return compDbconnMain.custCardTemplatesData[permissionId].name;
+    if (compDbconnMain.getCustCardTemplatesData()[permissionId]) {
+      return compDbconnMain.getCustCardTemplatesData()[permissionId].name;
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
