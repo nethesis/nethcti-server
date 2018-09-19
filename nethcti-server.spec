@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.2.0
+Version: 3.3.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,14 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Sep 19 2018 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.3.0-1
+- QM: functions for queue summary tab. nethesis/dev#5437
+- Update node-postgres to pg@6.1.6. nethesis/dev#5450
+- remove useless output log
+- Fix to show operator panel users with upper case letters. nethesis/dev#5439
+- Fix small output log for authentication
+- nethcti.js: add process pid on boot into the log
+
 * Tue Jul 24 2018 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.2.0-1
 - Fix queue agent auto pause reason is lost - Bug nethesis/dev#5436
 - Fix no call management box on voicemail - Bug nethesis/dev#5432
