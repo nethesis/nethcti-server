@@ -6260,9 +6260,10 @@ function muteUserMeetmeConf(confId, userId, extenId, direction, cb) {
  * @param {string} confId The meetme conference identifier
  * @param {string} userId The user indentifier into the conference
  * @param {string} extenId The extension indentifier of the user
+ * @param {boolean} onlyListen If the mute operation has to be made only on the listening
  * @param {function} cb The callback function
  */
-function unmuteUserMeetmeConf(confId, userId, extenId, cb) {
+function unmuteUserMeetmeConf(confId, userId, extenId, onlyListen, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' ||
@@ -6276,9 +6277,11 @@ function unmuteUserMeetmeConf(confId, userId, extenId, cb) {
     var allconvs = extensions[extenId].getAllConversations();
     var conv = allconvs[Object.keys(allconvs)[0]];
     var ch = (conv.getSourceChannel()).getChannel();
+    var direction = onlyListen === true ? 'out' : 'all';
     astProxy.doCmd({
         command: 'unmute',
-        channel: ch
+        channel: ch,
+        direction: direction
       },
       function (error) {
         cb(error);

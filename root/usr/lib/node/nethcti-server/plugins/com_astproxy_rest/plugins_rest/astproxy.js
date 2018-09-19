@@ -963,11 +963,12 @@ var compConfigManager;
         * Unmute a user of a meetme conference. The request must contains the following parameters:
         *
         * * `confId: the conference identifier`
-        * * `userId: the user identifier to be muted`
+        * * `userId: the user identifier to be unmuted`
+        * * `onlyListen: if the user has to be unmuted only on listening`
         *
         * Example JSON request parameters:
         *
-        *     { "confId": "202", "userId": "2" }
+        *     { "confId": "202", "userId": "2", "onlyListen": "true" }
         *
         * ---
         *
@@ -3781,7 +3782,7 @@ var compConfigManager;
             logger.log.info(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '": ' +
               req.params.confId + ' is owned by "' + username + '"');
           }
-          var direction = req.params.direction ? req.params.direction : 'out';
+          var direction = req.params.direction ? req.params.direction : 'in';
           compAstProxy.muteUserMeetmeConf(
             req.params.confId,
             req.params.userId,
@@ -3828,7 +3829,8 @@ var compConfigManager;
           // check parameters
           if (typeof req.params !== 'object' ||
             typeof req.params.confId !== 'string' ||
-            typeof req.params.userId !== 'string') {
+            typeof req.params.userId !== 'string' ||
+            (req.params.onlyListen && typeof req.params.onlyListen !== 'boolean')) {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -3848,11 +3850,12 @@ var compConfigManager;
             logger.log.info(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '": ' +
               req.params.confId + ' is owned by "' + username + '"');
           }
-
+          var onlyListen = req.params.onlyListen ? req.params.onlyListen : false;
           compAstProxy.unmuteUserMeetmeConf(
             req.params.confId,
             req.params.userId,
             extenId,
+            onlyListen,
             function (err) {
               try {
                 if (err) {
