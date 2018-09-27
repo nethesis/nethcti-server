@@ -6234,19 +6234,34 @@ function muteUserMeetmeConf(confId, userId, extenId, direction, cb) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    var allconvs = extensions[extenId].getAllConversations();
-    var conv = allconvs[Object.keys(allconvs)[0]];
-    var ch = (conv.getSourceChannel()).getChannel();
-    logger.log.info(IDLOG, 'execute mute of user "' + userId + '" of meetme conf "' + confId + '" on direction "' + direction + '"');
     astProxy.doCmd({
-        command: 'mute',
-        channel: ch,
-        direction: direction
-      },
-      function (error) {
+      command: 'meetmeList',
+      confId: confId,
+      meetmeConfCode: getMeetmeConfCode()
+    },
+    function (error, resp) {
+      if (error) {
+        logger.log.error(IDLOG, error.stack);
         cb(error);
-        muteUserMeetmeConfCb(error);
-      });
+        return;
+      }
+      if (resp[userId] && resp[userId].channel) {
+        logger.log.info(IDLOG, 'execute mute of user "' + userId + '" (ch: ' + resp[userId].channel + ') of meetme conf "' + confId + '" on direction "' + direction + '"');
+        astProxy.doCmd({
+            command: 'mute',
+            channel: resp[userId].channel,
+            direction: direction
+          },
+          function (error) {
+            cb(error);
+            muteUserMeetmeConfCb(error);
+          });
+      } else {
+        var str = 'meetme channel to mute not found for userId "' + userId + '" (exten: ' + extenId + ') for confId "' + confId + '"';
+        logger.log.error(IDLOG, str);
+        cb(str);
+      }
+    });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -6273,20 +6288,35 @@ function unmuteUserMeetmeConf(confId, userId, extenId, onlyListen, cb) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.log.info(IDLOG, 'execute unmute of user "' + userId + '" of meetme conf "' + confId + '"');
-    var allconvs = extensions[extenId].getAllConversations();
-    var conv = allconvs[Object.keys(allconvs)[0]];
-    var ch = (conv.getSourceChannel()).getChannel();
-    var direction = onlyListen === true ? 'out' : 'all';
     astProxy.doCmd({
-        command: 'unmute',
-        channel: ch,
-        direction: direction
-      },
-      function (error) {
+      command: 'meetmeList',
+      confId: confId,
+      meetmeConfCode: getMeetmeConfCode()
+    },
+    function (error, resp) {
+      if (error) {
+        logger.log.error(IDLOG, error.stack);
         cb(error);
-        unmuteUserMeetmeConfCb(error);
-      });
+        return;
+      }
+      var direction = onlyListen === true ? 'out' : 'all';
+      if (resp[userId] && resp[userId].channel) {
+        logger.log.info(IDLOG, 'execute unmute of user "' + userId + '" (ch: ' + resp[userId].channel + ') of meetme conf "' + confId + '" on direction "' + direction + '"');
+        astProxy.doCmd({
+            command: 'unmute',
+            channel: resp[userId].channel,
+            direction: direction
+          },
+          function (error) {
+            cb(error);
+            muteUserMeetmeConfCb(error);
+          });
+      } else {
+        var str = 'meetme channel to unmute not found for userId "' + userId + '" (exten: ' + extenId + ') for confId "' + confId + '"';
+        logger.log.error(IDLOG, str);
+        cb(str);
+      }
+    });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -7068,7 +7098,6 @@ function muteUserMeetmeConfCb(error) {
     } else {
       logger.log.info(IDLOG, 'mute user of meetme conf succesfully');
     }
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
