@@ -176,7 +176,9 @@ function config(path) {
     proxyLogic.setPrefix(json.prefix);
     proxyLogic.setAutoC2CStatus(json.auto_c2c);
     proxyLogic.setNullCallPeriod(parseInt(json.null_call_period));
-
+    if (json.trunks_events === 'disabled') {
+      proxyLogic.disableTrunksEvents();
+    }
     logger.log.info(IDLOG, 'configuration done by ' + AST_CONF_FILEPATH);
 
   } catch (err) {
