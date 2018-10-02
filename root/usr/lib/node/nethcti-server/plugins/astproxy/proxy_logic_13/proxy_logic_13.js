@@ -505,6 +505,16 @@ var prefix = '';
 var autoC2CEnabled = true;
 
 /**
+ * If the trunks events has to be managed.
+ *
+ * @property trunksEventsEnabled
+ * @type boolean
+ * @default true
+ * @private
+ */
+var trunksEventsEnabled = true;
+
+/**
  * The period of time to consider a call as null.
  *
  * @property nullCallPeriod
@@ -2965,17 +2975,54 @@ function initializeSipTrunk(err, results) {
         if (err) {
           logger.log.error(IDLOG, err);
         }
-        // request all channels
-        logger.log.info(IDLOG, 'requests the channel list to initialize sip trunks');
-        astProxy.doCmd({
-          command: 'listChannels'
-        }, updateConversationsForAllTrunk);
+        getListChannelsForTrunks();
       }
     );
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
 }
+
+/**
+ * Get all the channels to update conversations of all trunks.
+ *
+ * @method getListChannelsForTrunks
+ * @private
+ */
+function getListChannelsForTrunks() {
+  try {
+    if (trunksEventsEnabled) {
+      astProxy.doCmd({
+        command: 'listChannels'
+      }, updateConversationsForAllTrunk);
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Get all the channels to update conversations of a single trunk.
+ *
+ * @method getListChannelsForSingleTrunk
+ * @param {string} num The trunk identifier
+ * @private
+ */
+function getListChannelsForSingleTrunk(num) {
+  try {
+    if (trunksEventsEnabled) {
+      astProxy.doCmd({
+        command: 'listChannels'
+      }, function (err, resp) {
+        updateTrunkConversations(err, resp, num);
+      });
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+
 
 /**
  * Initialize all pjsip trunks as _Trunk_ object into the _trunks_ property.
@@ -3014,11 +3061,7 @@ function initializePjsipTrunk(err, results) {
         if (err) {
           logger.log.error(IDLOG, err);
         }
-        // request all channels
-        logger.log.info(IDLOG, 'requests the channel list to initialize pjsip trunks');
-        astProxy.doCmd({
-          command: 'listChannels'
-        }, updateConversationsForAllTrunk);
+        getListChannelsForTrunks();
       }
     );
   } catch (err) {
@@ -3060,13 +3103,7 @@ function initializeIaxTrunk(err, results) {
       trunks[trunk.getExten()].setUserContext(staticDataTrunks[results[i].exten].usercontext);
       logger.log.info(IDLOG, 'set iax details for trunk ' + results[i].exten);
     }
-
-    // request all channels
-    logger.log.info(IDLOG, 'requests the channel list to initialize iax trunks');
-    astProxy.doCmd({
-      command: 'listChannels'
-    }, updateConversationsForAllTrunk);
-
+    getListChannelsForTrunks();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -4389,13 +4426,7 @@ function evtRename() {
     astProxy.doCmd({
       command: 'listChannels'
     }, updateConversationsForAllExten);
-
-    // request all channels to update the conversations of all trunks
-    logger.log.info(IDLOG, 'requests the channel list to update the conversations of all trunks');
-    astProxy.doCmd({
-      command: 'listChannels'
-    }, updateConversationsForAllTrunk);
-
+    getListChannelsForTrunks();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -5649,23 +5680,15 @@ function evtNewQueueWaitingCaller(data) {
     if (typeof data !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
     // create new waiting caller and add it to relative queue
     var wCaller = new QueueWaitingCaller(data);
     var q = wCaller.getQueue();
     queues[q].addWaitingCaller(wCaller);
     logger.log.info(IDLOG, 'added new queue waiting caller ' + wCaller.getNumber() + ' to queue ' + q);
-
-    // request all channels
-    logger.log.info(IDLOG, 'update conversations of all trunks');
-    astProxy.doCmd({
-      command: 'listChannels'
-    }, updateConversationsForAllTrunk);
-
+    getListChannelsForTrunks();
     // emit the event
     logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
     astProxy.emit(EVT_QUEUE_CHANGED, queues[q]);
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -5766,10 +5789,11 @@ function evtConversationDialing(data) {
         if (extensions[data.chDestExten]) {
           updateExtenConversations(err, resp, data.chDestExten);
         }
-        // update conversations of all trunks
-        logger.log.info(IDLOG, 'update conversations of all trunks');
-        updateConversationsForAllTrunk(err, resp);
-
+        if (trunksEventsEnabled) {
+          // update conversations of all trunks
+          logger.log.info(IDLOG, 'update conversations of all trunks');
+          updateConversationsForAllTrunk(err, resp);
+        }
       } catch (err1) {
         logger.log.error(IDLOG, err1.stack);
       }
@@ -5801,13 +5825,7 @@ function evtConversationConnected(num1, num2) {
       num1: num1,
       num2: num2
     });
-
-    // request all channels to update the conversations of all trunks
-    logger.log.info(IDLOG, 'requests the channel list to update the conversations of all trunks');
-    astProxy.doCmd({
-      command: 'listChannels'
-    }, updateConversationsForAllTrunk);
-
+    getListChannelsForTrunks();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -5834,12 +5852,7 @@ function updateConversationsOfNum(num) {
       });
     }
     if (trunks[num]) {
-      logger.log.info(IDLOG, 'requests the channel list to update the trunk ' + num);
-      astProxy.doCmd({
-        command: 'listChannels'
-      }, function (err, resp) {
-        updateTrunkConversations(err, resp, num);
-      });
+      getListChannelsForSingleTrunk(num);
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -6611,15 +6624,7 @@ function evtHangupConversation(data) {
 
     // check the trunk existence
     if (isTrunk(data.channelExten)) {
-
-      // request all channel list and update channels of trunk
-      astProxy.doCmd({
-        command: 'listChannels'
-      }, function (err, resp) {
-
-        // update the conversations of the trunk
-        updateTrunkConversations(err, resp, data.channelExten);
-      });
+      getListChannelsForSingleTrunk(data.channelExten);
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -9420,6 +9425,19 @@ function deleteAlarm(filename, cb) {
   }
 }
 
+/**
+ * Disable the events trunks management.
+ *
+ * @method disableTrunksEvents
+ */
+function disableTrunksEvents() {
+  try {
+    trunksEventsEnabled = false;
+  } catch (e) {
+    logger.log.error(IDLOG, e.stack);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.call = call;
@@ -9487,6 +9505,7 @@ exports.getJSONExtensions = getJSONExtensions;
 exports.setCompCallerNote = setCompCallerNote;
 exports.queueMemberRemove = queueMemberRemove;
 exports.EVT_EXTEN_CHANGED = EVT_EXTEN_CHANGED;
+exports.disableTrunksEvents = disableTrunksEvents;
 exports.setBlindTransferContext = setBlindTransferContext;
 exports.EVT_EXTEN_CF_CHANGED = EVT_EXTEN_CF_CHANGED;
 exports.EVT_EXTEN_CFB_CHANGED = EVT_EXTEN_CFB_CHANGED;

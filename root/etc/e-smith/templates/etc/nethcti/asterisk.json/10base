@@ -1,6 +1,7 @@
 {
     my $prefix = ${'nethcti-server'}{'Prefix'} || "";
     my $autoc2c = ${'nethcti-server'}{'AutoC2C'} || "enabled";
+    my $trunksEvents = ${'nethcti-server'}{'TrunksEvents'} || "enabled";
     my $nullCallPeriod = ${'nethcti-server'}{'NullCallPeriod'} || "5";
 
     if (defined ${'nethcti-server'}{'Prefix'} && ${'nethcti-server'}{'Prefix'} eq "0") {
@@ -17,6 +18,7 @@
     "port": "5038",
     "prefix": "' . $prefix . '",
     "auto_c2c": "' . $autoc2c . '",
+    "trunks_events": "' . $trunksEvents . '",
     "null_call_period": "'. $nullCallPeriod . '"
 }';
 }
