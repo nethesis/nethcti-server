@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.3.0
+Version: 3.3.1
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,11 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Oct 05 2018 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 3.3.1-1
+- NethCTI 3: high cpu usage during huge traffic on trunks - Bug nethesis/dev#5453
+- NethCTI 3: no automatic reload on customer card creation - Bug nethesis/dev#5441
+- NethCTI 3: add mute both speak and listen on audio conference - nethesis/dev#5446
+
 * Wed Sep 19 2018 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.3.0-1
 - QM: functions for queue summary tab. nethesis/dev#5437
 - Update node-postgres to pg@6.1.6. nethesis/dev#5450
