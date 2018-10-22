@@ -564,10 +564,6 @@ function config(path) {
       return;
     }
     serverHostname = json.hostname;
-
-    // set the listener for the websocket communication module
-    setComNethctiWsListeners();
-
     logger.log.info(IDLOG, 'configuration done by ' + CONFIG_FILEPATH);
 
   } catch (err) {
@@ -579,7 +575,6 @@ function config(path) {
  * Sets the event listeners for the websocket communication component.
  *
  * @method setComNethctiWsListeners
- * @private
  */
 function setComNethctiWsListeners() {
   try {
@@ -587,12 +582,10 @@ function setComNethctiWsListeners() {
     if (!compComNethctiWs || typeof compComNethctiWs.on !== 'function') {
       throw new Error('wrong websocket communication object');
     }
-
     compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_LOGGEDIN, checkQueueAutoLogin);
     compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_LOGGEDIN, checkAutoDndOffLogin);
     compComNethctiWs.on(compComNethctiWs.EVT_ALL_WS_CLIENT_DISCONNECTION, checkQueueAutoLogout);
     compComNethctiWs.on(compComNethctiWs.EVT_ALL_WS_CLIENT_DISCONNECTION, checkAutoDndOnLogout);
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -1264,10 +1257,9 @@ function getDefaultUserExtensionConf(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    return userSettings[username][USER_CONFIG_KEYS.default_extension] ?
+    return userSettings[username] && userSettings[username][USER_CONFIG_KEYS.default_extension] ?
       userSettings[username][USER_CONFIG_KEYS.default_extension] :
       compUser.getEndpointMainExtension(username).getId();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     return '';
@@ -1827,7 +1819,7 @@ function getPostitNotificationSmsTo(username) {
 }
 
 /**
- * Reload the component.
+ * Reset the component.
  *
  * @method reset
  * @private
@@ -1940,3 +1932,4 @@ exports.verifySendPostitNotificationByEmail = verifySendPostitNotificationByEmai
 exports.verifySendVoicemailNotificationBySms = verifySendVoicemailNotificationBySms;
 exports.verifySendVoicemailNotificationByEmail = verifySendVoicemailNotificationByEmail;
 exports.loadAllUsersSettings = loadAllUsersSettings;
+exports.setComNethctiWsListeners = setComNethctiWsListeners;

@@ -41,6 +41,7 @@ module.exports = function(options, imports, register) {
       configManager.configUser();
       configManager.configChat('/etc/nethcti/chat.json');
       configManager.configPhoneUrls('/etc/nethcti/phone_urls.json');
+      configManager.setComNethctiWsListeners();
     });
 
     imports.dbconn.on(imports.dbconn.EVT_READY, function() {
