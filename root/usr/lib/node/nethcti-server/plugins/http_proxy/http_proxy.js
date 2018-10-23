@@ -279,14 +279,18 @@ function start() {
           req.url.indexOf('/profiling') !== 0 &&
           req.url !== '/authentication/remotelogin' &&
           req.url !== '/static' &&
-          (req.url === '/astproxy/unauthe_call' && compAuthentication.isUnautheCallEnabled() === false) &&
-          req.headers.authorization === undefined) { // no authentication token present
+          req.url !== '/astproxy/unauthe_call' &&
+          req.headers.authorization === undefined) {
 
-            compUtil.net.sendHttp401(IDLOG, res);
-            return;
-          }
+          compUtil.net.sendHttp401(IDLOG, res);
+          return;
+        }
+        if (req.url === '/astproxy/unauthe_call' && compAuthentication.isUnautheCallEnabled() === false) {
+          compUtil.net.sendHttp401(IDLOG, res);
+          return;
+        }
 
-          if ((req.headers.authorization !== undefined && typeof req.headers.authorization !== 'string') ||
+        if ((req.headers.authorization !== undefined && typeof req.headers.authorization !== 'string') ||
             (req.headers.authorization !== undefined && (req.headers.authorization.split(':')).length !== 2)) {
 
           compUtil.net.sendHttp401(IDLOG, res);
