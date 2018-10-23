@@ -2791,12 +2791,6 @@ function initializePjsipExten(err, results) {
           logger.log.info(IDLOG, 'emit "' + EVT_RELOADED + '" event');
           astProxy.emit(EVT_RELOADED);
         }
-        results.forEach(function (obj) {
-          if (extensions[obj.ext]) {
-            logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for pjsip extension ' + obj.ext);
-            astProxy.emit(EVT_EXTEN_CHANGED, extensions[obj.ext]);
-          }
-        });
       }
     );
   } catch (error) {
