@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.3.1
+Version: 3.3.2
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Tue Oct 23 2018 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.3.2-1
+- NethCTI 3: phonebook and history tech debt - Bug nethesis/dev#5485
+
 * Fri Oct 05 2018 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 3.3.1-1
 - NethCTI 3: high cpu usage during huge traffic on trunks - Bug nethesis/dev#5453
 - NethCTI 3: no automatic reload on customer card creation - Bug nethesis/dev#5441
