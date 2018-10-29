@@ -611,34 +611,36 @@ function checkQueueAutoLogin(username) {
       return;
     }
 
-    // get the prefence of the user: automatic login into dynamic queues when login to cti
-    var queueAutoLoginEnabled = userSettings[username][USER_CONFIG_KEYS.queue_auto_login];
-    if (queueAutoLoginEnabled) {
-      var e = compUser.getEndpointMainExtension(username).getId();
-      // login main extension of the user into the belonging queue
-      // get all queues to which the extension belongs
-      var q, queueIds;
-      queueIds = compAstProxy.getQueueIdsOfExten(e);
+    if (userSettings[username]) {
+      // get the prefence of the user: automatic login into dynamic queues when login to cti
+      var queueAutoLoginEnabled = userSettings[username][USER_CONFIG_KEYS.queue_auto_login];
+      if (queueAutoLoginEnabled) {
+        var e = compUser.getEndpointMainExtension(username).getId();
+        // login main extension of the user into the belonging queue
+        // get all queues to which the extension belongs
+        var q, queueIds;
+        queueIds = compAstProxy.getQueueIdsOfExten(e);
 
-      // do the login of the member into the queue only if it is a dynamic member
-      for (q in queueIds) {
+        // do the login of the member into the queue only if it is a dynamic member
+        for (q in queueIds) {
 
-        if (compAstProxy.isExtenDynMemberQueue(e, q) && // check if the member is of dynamic type
-          !compAstProxy.isDynMemberLoggedInQueue(e, q)) { // check if the member is logged out from queue
+          if (compAstProxy.isExtenDynMemberQueue(e, q) && // check if the member is of dynamic type
+            !compAstProxy.isDynMemberLoggedInQueue(e, q)) { // check if the member is logged out from queue
 
-          // login dynamic queue member into the relative queue
-          logger.log.info(IDLOG, 'login queue member "' + e + '" into the queue "' + q + '" due to automatic login setting');
-          compAstProxy.queueMemberAdd(e, q, undefined, undefined, function(err, resp) {
-            try {
-              if (err) {
-                logger.log.warn(IDLOG, err);
-              } else {
-                logger.log.info(IDLOG, 'dynamic extension "' + e + '" has been added to queue "' + q + '" due to "queue auto login" setting of user "' + username + '"');
+            // login dynamic queue member into the relative queue
+            logger.log.info(IDLOG, 'login queue member "' + e + '" into the queue "' + q + '" due to automatic login setting');
+            compAstProxy.queueMemberAdd(e, q, undefined, undefined, function(err, resp) {
+              try {
+                if (err) {
+                  logger.log.warn(IDLOG, err);
+                } else {
+                  logger.log.info(IDLOG, 'dynamic extension "' + e + '" has been added to queue "' + q + '" due to "queue auto login" setting of user "' + username + '"');
+                }
+              } catch (err1) {
+                logger.log.error(IDLOG, err1.stack);
               }
-            } catch (err1) {
-              logger.log.error(IDLOG, err1.stack);
-            }
-          });
+            });
+          }
         }
       }
     }
@@ -668,24 +670,26 @@ function checkAutoDndOffLogin(username) {
       return;
     }
 
-    // get the prefence of the user: automatic dnd off when login to cti
-    var autoDndOffLoginEnabled = userSettings[username][USER_CONFIG_KEYS.auto_dndoff_login];
-    if (autoDndOffLoginEnabled) {
+    if (userSettings[username]) {
+      // get the prefence of the user: automatic dnd off when login to cti
+      var autoDndOffLoginEnabled = userSettings[username][USER_CONFIG_KEYS.auto_dndoff_login];
+      if (autoDndOffLoginEnabled) {
 
-      var e = compUser.getEndpointMainExtension(username).getId();
+        var e = compUser.getEndpointMainExtension(username).getId();
 
-      logger.log.info(IDLOG, 'set DND OFF for exten "' + e + '" due to automatic DND OFF on login setting');
-      compAstProxy.setDnd(e, false, function(err, resp) {
-        try {
-          if (err) {
-            logger.log.warn(IDLOG, err);
-          } else {
-            logger.log.info(IDLOG, 'DND OFF has been set for exten "' + e + '" due to "auto dnd off login" setting of user "' + username + '"');
+        logger.log.info(IDLOG, 'set DND OFF for exten "' + e + '" due to automatic DND OFF on login setting');
+        compAstProxy.setDnd(e, false, function(err, resp) {
+          try {
+            if (err) {
+              logger.log.warn(IDLOG, err);
+            } else {
+              logger.log.info(IDLOG, 'DND OFF has been set for exten "' + e + '" due to "auto dnd off login" setting of user "' + username + '"');
+            }
+          } catch (err1) {
+            logger.log.error(IDLOG, err1.stack);
           }
-        } catch (err1) {
-          logger.log.error(IDLOG, err1.stack);
-        }
-      });
+        });
+      }
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -712,34 +716,36 @@ function checkQueueAutoLogout(username) {
       return;
     }
 
-    // get the prefence of the user: automatic logout from dynamic queues when logout from cti
-    var queueAutoLogoutEnabled = userSettings[username][USER_CONFIG_KEYS.queue_auto_logout];
-    if (queueAutoLogoutEnabled) {
+    if (userSettings[username]) {
+      // get the prefence of the user: automatic logout from dynamic queues when logout from cti
+      var queueAutoLogoutEnabled = userSettings[username][USER_CONFIG_KEYS.queue_auto_logout];
+      if (queueAutoLogoutEnabled) {
 
-      var e = compUser.getEndpointMainExtension(username).getId();
-      var q, queueIds;
-      // get all queues to which the extension belongs
-      queueIds = compAstProxy.getQueueIdsOfExten(e);
+        var e = compUser.getEndpointMainExtension(username).getId();
+        var q, queueIds;
+        // get all queues to which the extension belongs
+        queueIds = compAstProxy.getQueueIdsOfExten(e);
 
-      // do the logout of the member from the queue only if it is a dynamic member
-      for (q in queueIds) {
+        // do the logout of the member from the queue only if it is a dynamic member
+        for (q in queueIds) {
 
-        if (compAstProxy.isExtenDynMemberQueue(e, q) && // check if the member is of dynamic type
-          compAstProxy.isDynMemberLoggedInQueue(e, q)) { // check if the member is logged into the queue
+          if (compAstProxy.isExtenDynMemberQueue(e, q) && // check if the member is of dynamic type
+            compAstProxy.isDynMemberLoggedInQueue(e, q)) { // check if the member is logged into the queue
 
-          // remove dynamic queue member from the relative queue
-          logger.log.info(IDLOG, 'remove queue member "' + e + '" from queue "' + q + '" due to automatic logout setting');
-          compAstProxy.queueMemberRemove(e, q, function(err, resp) {
-            try {
-              if (err) {
-                logger.log.warn(IDLOG, err);
-              } else {
-                logger.log.info(IDLOG, 'removed dynamic extension "' + e + '" from queue "' + q + '" due to "queue auto logout" setting of user "' + username + '"');
+            // remove dynamic queue member from the relative queue
+            logger.log.info(IDLOG, 'remove queue member "' + e + '" from queue "' + q + '" due to automatic logout setting');
+            compAstProxy.queueMemberRemove(e, q, function(err, resp) {
+              try {
+                if (err) {
+                  logger.log.warn(IDLOG, err);
+                } else {
+                  logger.log.info(IDLOG, 'removed dynamic extension "' + e + '" from queue "' + q + '" due to "queue auto logout" setting of user "' + username + '"');
+                }
+              } catch (err1) {
+                logger.log.error(IDLOG, err1.stack);
               }
-            } catch (err1) {
-              logger.log.error(IDLOG, err1.stack);
-            }
-          });
+            });
+          }
         }
       }
     }
@@ -769,24 +775,26 @@ function checkAutoDndOnLogout(username) {
       return;
     }
 
-    // get the prefence of the user: automatic dnd on when logout from cti
-    var autoDndOnLogoutEnabled = userSettings[username][USER_CONFIG_KEYS.auto_dndon_logout];
-    if (autoDndOnLogoutEnabled) {
+    if (userSettings[username]) {
+      // get the prefence of the user: automatic dnd on when logout from cti
+      var autoDndOnLogoutEnabled = userSettings[username][USER_CONFIG_KEYS.auto_dndon_logout];
+      if (autoDndOnLogoutEnabled) {
 
-      var e = compUser.getEndpointMainExtension(username).getId();
+        var e = compUser.getEndpointMainExtension(username).getId();
 
-      logger.log.info(IDLOG, 'set DND ON for exten "' + e + '" due to automatic DND ON on logout setting');
-      compAstProxy.setDnd(e, true, function(err, resp) {
-        try {
-          if (err) {
-            logger.log.warn(IDLOG, err);
-          } else {
-            logger.log.info(IDLOG, 'DND ON has been set for exten "' + e + '" due to "auto dnd on logout" setting of user "' + username + '"');
+        logger.log.info(IDLOG, 'set DND ON for exten "' + e + '" due to automatic DND ON on logout setting');
+        compAstProxy.setDnd(e, true, function(err, resp) {
+          try {
+            if (err) {
+              logger.log.warn(IDLOG, err);
+            } else {
+              logger.log.info(IDLOG, 'DND ON has been set for exten "' + e + '" due to "auto dnd on logout" setting of user "' + username + '"');
+            }
+          } catch (err1) {
+            logger.log.error(IDLOG, err1.stack);
           }
-        } catch (err1) {
-          logger.log.error(IDLOG, err1.stack);
-        }
-      });
+        });
+      }
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
