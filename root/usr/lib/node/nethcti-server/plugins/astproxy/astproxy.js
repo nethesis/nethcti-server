@@ -377,6 +377,7 @@ function start() {
  */
 function reload() {
   try {
+    proxyLogic.setReloading(true);
     reset();
     config(AST_CONF_FILEPATH);
     configAstObjects(AST_OBJECTS_FILEPATH);
