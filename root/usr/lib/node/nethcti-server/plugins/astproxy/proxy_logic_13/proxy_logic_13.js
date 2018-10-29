@@ -419,6 +419,16 @@ var AST_ALARMS_DIRPATH = '/var/spool/asterisk/outgoing/';
 var ready = false;
 
 /**
+ * True during component reloading.
+ *
+ * @property reloading
+ * @type boolean
+ * @private
+ * @default false
+ */
+var reloading = false;
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -1203,10 +1213,20 @@ function reset() {
     staticDataQueues = {};
     featureCodes = {};
     blindTransferContext = undefined;
+
+    for (k in initializationStatus) {
+      initializationStatus[k] = false;
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
 }
+
+var initializationStatus = {
+  pjsipExtens: false,
+  queues: false,
+  parkings: false
+};
 
 /**
  * It is called when the asterisk connection is fully booted.
@@ -1605,10 +1625,14 @@ function updateParkedCallerForAllParkings(err, resp) {
         logger.log.info(IDLOG, 'added parked call ' + pCall.getNumber() + ' to parking ' + p);
       }
     }
-    Object.keys(parkings).forEach(function (p) {
-      logger.log.info(IDLOG, 'emit event ' + EVT_PARKING_CHANGED + ' for parking ' + p);
-      astProxy.emit(EVT_PARKING_CHANGED, parkings[p]);
-    });
+    if (!reloading) {
+      Object.keys(parkings).forEach(function (p) {
+        logger.log.info(IDLOG, 'emit event ' + EVT_PARKING_CHANGED + ' for parking ' + p);
+        astProxy.emit(EVT_PARKING_CHANGED, parkings[p]);
+      });
+    }
+    initializationStatus.parkings = true;
+    checkInitializationStatus();
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
   }
@@ -1662,10 +1686,14 @@ function initializeQueues(err, results) {
         if (err) {
           logger.log.error(IDLOG, err);
         }
-        results.forEach(function (o) {
-          logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + o.queue);
-          astProxy.emit(EVT_QUEUE_CHANGED, queues[o.queue]);
-        });
+        if (!reloading) {
+          results.forEach(function (o) {
+            logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + o.queue);
+            astProxy.emit(EVT_QUEUE_CHANGED, queues[o.queue]);
+          });
+        }
+        initializationStatus.queues = true;
+        checkInitializationStatus();
       }
     );
     logger.log.info(IDLOG, 'start the interval period to update the details of all the queues each ' + INTERVAL_UPDATE_QUEUE_DETAILS + ' msec');
@@ -2777,22 +2805,46 @@ function initializePjsipExten(err, results) {
       arr.push(getPjsipDetailExten(exten.getExten()));
       arr.push(getListChannels());
     }
-    async.parallel(arr,
-      function (err) {
-        if (err) {
-          logger.log.error(IDLOG, err);
-        }
-        if (!ready) {
-          logger.log.info(IDLOG, 'emit "' + EVT_READY + '" event');
-          astProxy.emit(EVT_READY);
-          ready = true;
-        } else {
-          logger.log.warn(IDLOG, 'reloaded');
-          logger.log.info(IDLOG, 'emit "' + EVT_RELOADED + '" event');
-          astProxy.emit(EVT_RELOADED);
-        }
+    async.parallel(arr, function (err) {
+      if (err) {
+        logger.log.error(IDLOG, err);
       }
-    );
+      initializationStatus.pjsipExtens = true;
+      checkInitializationStatus();
+    });
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
+
+/**
+ * Check the initialization status of all parts: if all parts has
+ * been initialized, it emits the relative event for the client.
+ *
+ * @method checkInitializationStatus
+ * @private
+ */
+function checkInitializationStatus() {
+  try {
+    var k;
+    for (k in initializationStatus) {
+      if (initializationStatus[k] === false) {
+        return;
+      }
+    }
+    if (!ready) {
+      logger.log.info(IDLOG, 'emit "' + EVT_READY + '" event');
+      astProxy.emit(EVT_READY);
+      ready = true;
+    } else {
+      logger.log.warn(IDLOG, 'reloaded');
+      logger.log.info(IDLOG, 'emit "' + EVT_RELOADED + '" event');
+      astProxy.emit(EVT_RELOADED);
+      setReloading(false);
+    }
+    for (k in initializationStatus) {
+      initializationStatus[k] = false;
+    }
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
   }
@@ -3620,8 +3672,10 @@ function updateConversationsForAllExten(err, resp) {
         addConversationToExten(ext, resp, chid);
 
         // emit the event
-        logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + ext);
-        astProxy.emit(EVT_EXTEN_CHANGED, extensions[ext]);
+        if (!reloading) {
+          logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + ext);
+          astProxy.emit(EVT_EXTEN_CHANGED, extensions[ext]);
+        }
       }
     }
   } catch (error) {
@@ -9461,6 +9515,20 @@ function disableTrunksEvents() {
   }
 }
 
+/**
+ * Set reloading property.
+ *
+ * @method setReloading
+ * @param {boolean} value The reloading value
+ */
+function setReloading(value) {
+  try {
+    reloading = value;
+  } catch (e) {
+    logger.log.error(IDLOG, e.stack);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.call = call;
@@ -9490,6 +9558,7 @@ exports.isExtenCfVm = isExtenCfVm;
 exports.EVT_NEW_CDR = EVT_NEW_CDR;
 exports.createAlarm = createAlarm;
 exports.deleteAlarm = deleteAlarm;
+exports.setReloading = setReloading;
 exports.EVT_RELOADED = EVT_RELOADED;
 exports.isExtenCfbVm = isExtenCfbVm;
 exports.isExtenCfuVm = isExtenCfuVm;

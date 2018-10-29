@@ -107,6 +107,16 @@ var EVT_USER_PRESENCE_CHANGED = 'userPresenceChanged';
 var ready = false;
 
 /**
+ * True during component reloading.
+ *
+ * @property reloading
+ * @type boolean
+ * @private
+ * @default false
+ */
+var reloading = false;
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -261,6 +271,7 @@ function config(path) {
     } else {
       logger.log.info(IDLOG, 'emit event "' + EVT_RELOADED + '"');
       emitter.emit(EVT_RELOADED);
+      reloading = false;
     }
     logger.log.info(IDLOG, 'configuration done by ' + USERS_CONF_FILEPATH);
 
@@ -295,6 +306,7 @@ function reset() {
  */
 function reload() {
   try {
+    reloading = true;
     reset();
     logger.log.warn(IDLOG, 'reloaded');
     config(USERS_CONF_FILEPATH);
@@ -1886,15 +1898,16 @@ function updateUserPresence(username) {
       users[username].setPresence(userPresence.STATUS.online);
     }
 
-    // emit the event for tell to other modules that the user presence has changed
-    logger.log.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_CHANGED + '"');
-    emitter.emit(EVT_USER_PRESENCE_CHANGED, {
-      presence: {
-        username: username,
-        status: users[username].getPresence(),
-        to: (cf && cfval !== cellphone) ? cfval : undefined
-      }
-    });
+    if (!reloading) {
+      logger.log.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_CHANGED + '"');
+      emitter.emit(EVT_USER_PRESENCE_CHANGED, {
+        presence: {
+          username: username,
+          status: users[username].getPresence(),
+          to: (cf && cfval !== cellphone) ? cfval : undefined
+        }
+      });
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -1961,15 +1974,16 @@ function updateUserPresenceOnUnavailable(username) {
       users[username].setPresenceOnUnavailable(userPresence.STATUS_ONUNAVAILABLE.online);
     }
 
-    // emit the event for tell to other modules that the user presence has changed
-    logger.log.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_CHANGED + '"');
-    emitter.emit(EVT_USER_PRESENCE_CHANGED, {
-      presence_onunavailable: {
-        username: username,
-        status: users[username].getPresenceOnUnavailable(),
-        to: (cfu && cfuval !== cellphone) ? cfuval : undefined
-      }
-    });
+    if (!reloading) {
+      logger.log.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_CHANGED + '"');
+      emitter.emit(EVT_USER_PRESENCE_CHANGED, {
+        presence_onunavailable: {
+          username: username,
+          status: users[username].getPresenceOnUnavailable(),
+          to: (cfu && cfuval !== cellphone) ? cfuval : undefined
+        }
+      });
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2017,15 +2031,16 @@ function updateUserPresenceOnBusy(username) {
       users[username].setPresenceOnBusy(userPresence.STATUS_ONBUSY.online);
     }
 
-    // emit the event for tell to other modules that the user presence has changed
-    logger.log.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_CHANGED + '"');
-    emitter.emit(EVT_USER_PRESENCE_CHANGED, {
-      presence_onbusy: {
-        username: username,
-        status: users[username].getPresenceOnBusy(),
-        to: (cfb && cfbval !== cellphone) ? cfbval : undefined
-      }
-    });
+    if (!reloading) {
+      logger.log.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_CHANGED + '"');
+      emitter.emit(EVT_USER_PRESENCE_CHANGED, {
+        presence_onbusy: {
+          username: username,
+          status: users[username].getPresenceOnBusy(),
+          to: (cfb && cfbval !== cellphone) ? cfbval : undefined
+        }
+      });
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
