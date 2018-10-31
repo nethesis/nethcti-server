@@ -261,46 +261,34 @@ function start() {
               compUtil.net.sendHttp403(IDLOG, res);
               return;
             }
-
           } else { // authentication failed
             compUtil.net.sendHttp401(IDLOG, res);
             return;
           }
         }
-
         // #2. Check CTI user
         //
-        // bypass the token verification if the request is:
-        // 1. an authentication nonce request
-        // 2. a static file request
-        // 3. unauthenticated call enabled
-        // 4. an remote authentication nonce request
-        if (req.url !== '/authentication/login' &&
-          req.url.indexOf('/profiling') !== 0 &&
-          req.url !== '/authentication/remotelogin' &&
-          req.url !== '/static' &&
-          req.url !== '/astproxy/unauthe_call' &&
-          req.headers.authorization === undefined) {
+        // bypass the token verification
+        if (req.url.indexOf('/authentication/login') === 0 ||
+          req.url.indexOf('/static') === 0 ||
+          req.url.indexOf('/profiling') === 0 ||
+          (req.url.indexOf('/astproxy/unauthe_call') === 0 && compAuthentication.isUnautheCallEnabled() === true)) {
 
+          var target = proxyRules.match(req);
+          if (target) {
+            return proxy.web(req, res, {
+              target: target
+            });
+          }
+          compUtil.net.sendHttp404(IDLOG, res);
+          return;
+        }
+        else if (req.url.indexOf('/astproxy/unauthe_call') === 0 && compAuthentication.isUnautheCallEnabled() === false) {
           compUtil.net.sendHttp401(IDLOG, res);
           return;
         }
-        if (req.url === '/astproxy/unauthe_call' && compAuthentication.isUnautheCallEnabled() === false) {
-          compUtil.net.sendHttp401(IDLOG, res);
-          return;
-        }
-
-        if ((req.headers.authorization !== undefined && typeof req.headers.authorization !== 'string') ||
-            (req.headers.authorization !== undefined && (req.headers.authorization.split(':')).length !== 2)) {
-
-          compUtil.net.sendHttp401(IDLOG, res);
-          return;
-        }
-
         // check authentication
-        // arr[0] is the username or the extension number
-        // arr[1] is the token
-        if (req.headers.authorization) {
+        else if (req.headers.authorization) {
 
           var arr = req.headers.authorization.split(':');
           if (compAuthentication.verifyToken(arr[0], arr[1]) === true) {
@@ -309,10 +297,12 @@ function start() {
             if (compAstProxy.isExten(arr[0]) && req.url !== '/authentication/logout') {
               // this is to support login with extension number
               req.headers.authorization_user = compUser.getUserUsingEndpointExtension(arr[0]);
-            } else if (req.url !== '/authentication/logout') {
+            }
+            else if (req.url !== '/authentication/logout') {
               // remove "@domain" from username if it is present
               req.headers.authorization_user = arr[0].indexOf('@') !== -1 ? arr[0].substring(0, arr[0].lastIndexOf('@')) : arr[0];
-            } else {
+            }
+            else {
               // because login and logout are done with user or user@domain as passed by the client
               req.headers.authorization_user = arr[0];
             }
@@ -322,20 +312,24 @@ function start() {
             // So the login becomes case-insensitive
             req.headers.authorization_user = req.headers.authorization_user.toLowerCase();
 
-          } else { // authentication failed
+            // proxy the request
+            var target = proxyRules.match(req);
+            if (target) {
+              return proxy.web(req, res, {
+                target: target
+              });
+            }
+            compUtil.net.sendHttp404(IDLOG, res);
+            return;
+          } else {
             compUtil.net.sendHttp401(IDLOG, res);
             return;
           }
         }
-
-        var target = proxyRules.match(req);
-        if (target) {
-          return proxy.web(req, res, {
-            target: target
-          });
+        else {
+          compUtil.net.sendHttp401(IDLOG, res);
+          return;
         }
-        compUtil.net.sendHttp404(IDLOG, res);
-
       } catch (err) {
         logger.log.error(IDLOG, err.stack);
       }
