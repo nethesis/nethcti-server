@@ -544,6 +544,7 @@ var compConfigManager;
         * 1. [`astproxy/hangup_userconf`](#hangup_userconfpost)
         * 1. [`astproxy/unmute_userconf`](#unmute_userconfpost)
         * 1. [`astproxy/blindtransfer_queue`](#blindtransfer_queuepost)
+        * 1. [`astproxy/unauthe_call`](#unauthe_callpost)
         *
         * ---
         *
@@ -998,6 +999,20 @@ var compConfigManager;
         *
         *     { "queue": "401", "waitingCallerId": "SIP/209-00000060", "to": "209" }
         *
+        * ---
+        *
+        * ### <a id="unauthe_callpost">**`astproxy/unauthe_call`**</a>
+        *
+        * It does an unauthenticated call from any extension to any destination number. It is disabled by default
+        * and it have to be explicitly enabled by the administrator. The request must contains the following parameters:
+        *
+        * * `endpointId: the extension identifier`
+        * * `number: the destination phone number to call`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointId": "200", "number": "0123456789" }
+        *
         *
         * <br>
         *
@@ -1060,7 +1075,6 @@ var compConfigManager;
          *   @param {string} dnd/:endpoint                  Gets the don't disturb status of the endpoint of the user
          *   @param {string} cfvm/:type/:endpoint           Gets the call forward status to voicemail of the endpoint of the user
          *   @param {string} cfcall/:type/:endpoint         Gets the call forward status to a destination number of the endpoint of the user
-         *   @param {string} unauthe_call/:endpoint/:number Calls the number from the specified endpoint without authentication
          *   @param {string} qmanager_queues                Gets all the queues of the queue supervisor
          */
         'get': [
@@ -1088,7 +1102,6 @@ var compConfigManager;
           'dnd/:endpoint',
           'cfvm/:type/:endpoint',
           'cfcall/:type/:endpoint',
-          'unauthe_call/:endpoint/:number',
           'qmanager_queues'
         ],
 
@@ -1124,6 +1137,7 @@ var compConfigManager;
          *   @param {string} mute_record           Mute the recording of a conversation
          *   @param {string} start_record          Start the recording of a conversation
          *   @param {string} force_hangup          Force hangup of a conversation
+         *   @param {string} unauthe_call          Unauthenticated call from any extension to any destination number
          *   @param {string} mute_userconf         Mute a user of a meetme conference
          *   @param {string} answer_webrtc         Answer a conversation from the webrtc extension sending the command to the client
          *   @param {string} blindtransfer         Transfer a conversation with blind type
@@ -1170,6 +1184,7 @@ var compConfigManager;
           'mute_record',
           'start_record',
           'force_hangup',
+          'unauthe_call',
           'mute_userconf',
           'answer_webrtc',
           'blindtransfer',
@@ -2202,6 +2217,34 @@ var compConfigManager;
       },
 
       /**
+       * Makes a new call to the destination number from any extension with the following REST API:
+       *
+       *     POST  unauthe_call
+       *
+       * @method unauthe_call
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      unauthe_call: function (req, res, next) {
+        try {
+          if (typeof req.params !== 'object' ||
+            typeof req.params.endpointId !== 'string' ||
+            typeof req.params.number !== 'string') {
+
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+          req.params.number = req.params.number.replace(/^[+]/, '00').replace(/[^\d*#]/g, '');
+          req.params.endpointType = 'extension';
+          asteriskCall('unauthe_call rest api', req, res);
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
        * Makes a new call with the following REST API:
        *
        *     POST call
@@ -2353,36 +2396,6 @@ var compConfigManager;
             req.params.endpointType = 'extension';
             call(username, req, res);
           }
-        } catch (err) {
-          logger.log.error(IDLOG, err.stack);
-          compUtil.net.sendHttp500(IDLOG, res, err.toString());
-        }
-      },
-
-      /**
-       * Makes a new call to the destination number from the endpoint of the user with the following REST API:
-       *
-       *     GET  unauthe_call/:endpoint/:number
-       *
-       * @method unauthe_call
-       * @param {object}   req  The client request
-       * @param {object}   res  The client response
-       * @param {function} next Function to run the next handler in the chain
-       */
-      unauthe_call: function (req, res, next) {
-        try {
-          // check parameters
-          if (typeof req.params !== 'object' || typeof req.params.number !== 'string' || typeof req.params.endpoint !== 'string') {
-
-            compUtil.net.sendHttp400(IDLOG, res);
-            return;
-          }
-
-          // make a new call by asterisk
-          req.params.endpointId = req.params.endpoint;
-          req.params.endpointType = 'extension';
-          asteriskCall('unauthe_call rest api', req, res);
-
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
