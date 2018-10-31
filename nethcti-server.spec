@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.3.2
+Version: 3.3.3
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,11 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Oct 31 2018 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.3.3-1
+- NethCTI 3: cti client freeze during reload of the server with many users - Bug nethesis/dev#5504
+- NethCTI 3: extensions api is reachable without authentication - Bug nethesis/dev#5501
+- NethCTI 3: error logs on auto queue loging/logout after reload - Bug nethesis/dev#5495
+
 * Tue Oct 23 2018 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.3.2-1
 - NethCTI 3: phonebook and history tech debt - Bug nethesis/dev#5485
 
