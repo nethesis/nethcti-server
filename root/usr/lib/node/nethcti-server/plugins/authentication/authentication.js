@@ -16,6 +16,7 @@ var path = require('path');
 var crypto = require('crypto');
 var EventEmitter = require('events').EventEmitter;
 var childProcess = require('child_process');
+var Netmask = require('netmask').Netmask;
 
 /**
  * True if the component has been started. Used to emit EVT_RELOADED
@@ -156,6 +157,16 @@ var fpbxAdminSecretKey;
  * @default "disabled"
  */
 var unauthenticatedCall = 'disabled';
+
+/**
+ * The list of enabled ips that can use the unauthenticated call.
+ *
+ * @property unauthenticatedCallAddress
+ * @type array
+ * @private
+ * @default []
+ */
+var unauthenticatedCallAddress = [];
 
 /**
  * The type of authentication chosen. It can be one of the
@@ -341,10 +352,17 @@ function config(path) {
     logger.log.info(IDLOG, 'configure authentication with pam');
   }
 
-  if (json.unauthe_call !== 'disabled' && json.unauthe_call !== 'enabled') {
-    logger.log.warn(IDLOG, 'wrong "' + path + '": bad "unauthe_call" key: use default value "' + unauthenticatedCall + '"');
+  if (typeof json.unauthe_call !== 'object' ||
+    (json.unauthe_call.status !== 'disabled' && json.unauthe_call.status !== 'enabled') ||
+    typeof json.unauthe_call.allowed_ip !== 'string') {
+
+      logger.log.warn(IDLOG, 'wrong "' + path + '": bad "unauthe_call" key: use default value "' + unauthenticatedCall + '"');
   } else {
-    unauthenticatedCall = json.unauthe_call;
+    unauthenticatedCall = json.unauthe_call.status;
+    var temp = json.unauthe_call.allowed_ip.split(' ');
+    temp.forEach(function (addr) {
+      unauthenticatedCallAddress.push(new Netmask(addr));
+    });
   }
 
   startIntervalRemoveExpiredTokens();
@@ -458,6 +476,28 @@ function isUnautheCallEnabled() {
   try {
     if (unauthenticatedCall === 'enabled') {
       return true;
+    }
+    return false;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
+ * Checks if the source ip address is enabled for unauthenticated asterisk call.
+ *
+ * @method isUnautheCallIPEnabled
+ * @param {string} sourceIp The source ip address to be tested
+ * @return {boolean} True if the ip address is enabled for unauthenticated asterisk call.
+ */
+function isUnautheCallIPEnabled(sourceIp) {
+  try {
+    var i;
+    for (i = 0; i < unauthenticatedCallAddress.length; i++) {
+      if (unauthenticatedCallAddress[i].contains(sourceIp) === true) {
+        return true;
+      }
     }
     return false;
   } catch (err) {
@@ -1062,6 +1102,7 @@ exports.calculateToken = calculateToken;
 exports.getRemoteSiteName = getRemoteSiteName;
 exports.updateTokenExpires = updateTokenExpires;
 exports.isUnautheCallEnabled = isUnautheCallEnabled;
+exports.isUnautheCallIPEnabled = isUnautheCallIPEnabled;
 exports.authenticateRemoteSite = authenticateRemoteSite;
 exports.isAutoUpdateTokenExpires = isAutoUpdateTokenExpires;
 exports.authenticateFreepbxAdmin = authenticateFreepbxAdmin;

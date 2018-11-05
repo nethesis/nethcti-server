@@ -5,7 +5,6 @@ use esmith::Build::CreateLinks qw(:all);
 #
 # nethcti-server3-update
 #
-
 event_templates('nethcti-server3-update', qw(
                 /etc/nethcti/asterisk.json
                 /etc/nethcti/authentication.json
@@ -41,4 +40,15 @@ event_templates('hostname-modify', qw(
 
 event_services('hostname-modify', qw(
                nethcti-server restart
+));
+
+#
+# trusted-networks-modify
+#
+event_templates('trusted-networks-modify', qw(
+                /etc/nethcti/authentication.json
+));
+
+event_services('trusted-networks-modify', qw(
+               nethcti-server reload
 ));

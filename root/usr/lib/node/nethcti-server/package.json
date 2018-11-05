@@ -14,6 +14,7 @@
     "mssql": "3.3.0",
     "mysql": "2.13.0",
     "node-static": "0.7.10",
+    "netmask": "1.0.6",
     "pg": "6.1.6",
     "request": "2.81.0",
     "restify": "4.3.0",
