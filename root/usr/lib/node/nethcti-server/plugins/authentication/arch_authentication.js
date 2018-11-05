@@ -42,6 +42,7 @@ module.exports = function(options, imports, register) {
       getRemoteSiteName: authentication.getRemoteSiteName,
       updateTokenExpires: authentication.updateTokenExpires,
       isUnautheCallEnabled: authentication.isUnautheCallEnabled,
+      isUnautheCallIPEnabled: authentication.isUnautheCallIPEnabled,
       authenticateRemoteSite: authentication.authenticateRemoteSite,
       isAutoUpdateTokenExpires: authentication.isAutoUpdateTokenExpires,
       authenticateFreepbxAdmin: authentication.authenticateFreepbxAdmin,

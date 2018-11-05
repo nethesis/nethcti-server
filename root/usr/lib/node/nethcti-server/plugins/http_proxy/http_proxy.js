@@ -272,7 +272,10 @@ function start() {
         if (req.url.indexOf('/authentication/login') === 0 ||
           req.url.indexOf('/static') === 0 ||
           req.url.indexOf('/profiling') === 0 ||
-          (req.url.indexOf('/astproxy/unauthe_call') === 0 && compAuthentication.isUnautheCallEnabled() === true)) {
+          (req.url.indexOf('/astproxy/unauthe_call') === 0 &&
+           compAuthentication.isUnautheCallEnabled() === true &&
+           compAuthentication.isUnautheCallIPEnabled(req.headers['x-forwarded-for']) === true
+          )) {
 
           var target = proxyRules.match(req);
           if (target) {
@@ -284,6 +287,12 @@ function start() {
           return;
         }
         else if (req.url.indexOf('/astproxy/unauthe_call') === 0 && compAuthentication.isUnautheCallEnabled() === false) {
+          logger.log.warn(IDLOG, 'ATTENTION: attempt to use unauthenticated call from "' + req.headers['x-forwarded-for'] + '" (the function is disabled)');
+          compUtil.net.sendHttp401(IDLOG, res);
+          return;
+        }
+        else if (req.url.indexOf('/astproxy/unauthe_call') === 0 && compAuthentication.isUnautheCallIPEnabled(req.headers['x-forwarded-for']) === false) {
+          logger.log.warn(IDLOG, 'ATTENTION: attempt to use unauthenticated call from "' + req.headers['x-forwarded-for'] + '" (ip not allowed)');
           compUtil.net.sendHttp401(IDLOG, res);
           return;
         }
