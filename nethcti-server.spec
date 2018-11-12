@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.3.3
+Version: 3.4.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Nov 12 2018 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.4.0-1
+- NethCTI 3: new rest api "astproxy/unauthe_call" - nethesis/dev#5507
+
 * Wed Oct 31 2018 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.3.3-1
 - NethCTI 3: cti client freeze during reload of the server with many users - Bug nethesis/dev#5504
 - NethCTI 3: extensions api is reachable without authentication - Bug nethesis/dev#5501
