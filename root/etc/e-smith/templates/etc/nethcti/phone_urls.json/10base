@@ -39,6 +39,14 @@
             "hold_unhold": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/Phone_ActionURL&key=F_HOLD"
         }
     },
+    "^fanvil.*": {
+        "urls": {
+            "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=F_HEADSET;$NUMBER;ENTER",
+            "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=OK",
+            "hold_unhold": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=F_HOLD",
+            "dtmf": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=$TONE"
+        }
+    },
     "^alcatel\\\s.*1G": {
         "urls": {
             "call": "http://user:nethvoice@$PHONE_IP/activeuri.kl1?number=$NUMBER&account=$ACCOUNT",
