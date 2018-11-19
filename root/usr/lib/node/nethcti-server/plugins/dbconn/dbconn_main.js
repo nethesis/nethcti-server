@@ -468,12 +468,11 @@ function initCustCardConnections() {
           },
           dialect: dbConfigCustCardData[ccName].type
         };
-
-        // default sequelize log is console.log
         if (!logSequelize) {
           config.logging = false;
+        } else {
+          config.logging = logger.log.info;
         }
-
         sequelize = new Sequelize(dbConfigCustCardData[ccName].name, dbConfigCustCardData[ccName].user, dbConfigCustCardData[ccName].pass, config);
         sequelize.db_type = 'mysql';
         dbConnCustCard[dbConfigCustCardData[ccName].id] = sequelize;
@@ -643,10 +642,10 @@ function initConnections() {
           },
           dialect: dbConfig[k].dbtype
         };
-
-        // default sequelize log is console.log
         if (!logSequelize) {
           config.logging = false;
+        } else {
+          config.logging = logger.log.info;
         }
         sequelize = new Sequelize(dbConfig[k].dbname, dbConfig[k].dbuser, dbConfig[k].dbpassword, config);
         sequelize.db_type = 'mysql';
