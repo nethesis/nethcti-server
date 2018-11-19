@@ -1708,31 +1708,24 @@ function initializeQueues(err, results) {
  * Updates the data about all queues each interval of time.
  *
  * @method startIntervalUpdateQueuesDetails
- * @param {number} interval The interval time to update the details of all the queues.
+ * @param {number} interval The interval time to update the details of all the queues
  * @private
  */
 function startIntervalUpdateQueuesDetails(interval) {
   try {
-    // check the parameter
     if (typeof interval !== 'number') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
     intervalUpdateQueuesDetails = setInterval(function () {
-
       var q;
       for (q in queues) {
-
-        // request details for the current queue
         logger.log.info(IDLOG, 'update details of queue ' + q);
         astProxy.doCmd({
           command: 'queueDetails',
           queue: q
         }, queueDetailsUpdate);
       }
-
     }, interval);
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2028,100 +2021,13 @@ function addQueueMemberLoggedIn(data, queueId) {
       member.setType(data.type);
       member.setCallsTakenCount(data.callsTakenCount);
       member.setLastCallTimestamp(data.lastCallTimestamp);
-
       // add the member to the queue
       queues[queueId].addMember(member);
       logger.log.info(IDLOG, 'added member ' + member.getMember() + ' to the queue ' + queueId);
 
-      // set the last pause data to the member
-      updateQueueMemberLastPauseData(member.getName(), data.member, queueId);
+      logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_MEMBER_CHANGED + ' for member ' + data.member + ' of queue ' + queueId);
+      astProxy.emit(EVT_QUEUE_MEMBER_CHANGED, queues[queueId].getMember(data.member));
     }
-  } catch (error) {
-    logger.log.error(IDLOG, error.stack);
-  }
-}
-
-/**
- * Sets the "last started pause" and the "last ended pause" data to the member.
- *
- * @method updateQueueMemberLastPauseData
- * @param {string} memberName The queue member name
- * @param {string} memberId   The queue member identifier
- * @param {string} queueId    The queue identifier
- * @private
- */
-function updateQueueMemberLastPauseData(memberName, memberId, queueId) {
-  try {
-    // check parameters
-    if (typeof memberName !== 'string' ||
-      typeof memberId !== 'string' || typeof queueId !== 'string') {
-
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    if (!queues[queueId]) {
-      logger.log.warn(IDLOG, 'try to update "last pause" data for the queue member "' + memberId + '" to a not existent queue "' + queueId + '"');
-      return;
-    }
-
-    async.parallel([
-
-      function (callback) {
-
-        // set the last started pause data of the member
-        compDbconn.getQueueMemberLastPausedInData(memberName, queueId, memberId, function (err1, result) {
-          try {
-            if (err1) {
-              throw err1;
-            }
-
-            // if the queue member has never paused, the timestamp is null
-            if (result.queueId && result.memberId && result.timestamp) {
-              queues[result.queueId].getMember(result.memberId).setLastPausedInData(result.timestamp, result.reason);
-            }
-            callback();
-
-          } catch (err2) {
-            logger.log.error(IDLOG, err2.stack);
-            callback(err2);
-          }
-        });
-      },
-      function (callback) {
-
-        // set the last ended pause data of the member
-        compDbconn.getQueueMemberLastPausedOutData(memberName, queueId, memberId, function (err3, result3) {
-          try {
-            if (err3) {
-              throw err3;
-            }
-
-            // if the queue member has never paused, the timestamp is null
-            if (result3.queueId && result3.memberId && result3.timestamp) {
-              queues[result3.queueId].getMember(result3.memberId).setLastPausedOutData(result3.timestamp);
-            }
-            callback();
-
-          } catch (err4) {
-            logger.log.error(IDLOG, err4.stack);
-            callback(err4);
-          }
-        });
-      }
-
-    ], function (err) {
-
-      if (err) {
-        logger.log.error(IDLOG, err);
-      } else {
-
-        logger.log.info(IDLOG, 'set "last paused in" and "last paused out" data of the member "' + memberId + '" of queue "' + queueId + '"');
-
-        // emit the event
-        logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_MEMBER_CHANGED + ' for member ' + memberId + ' of queue ' + queueId);
-        astProxy.emit(EVT_QUEUE_MEMBER_CHANGED, queues[queueId].getMember(memberId));
-      }
-    });
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
   }
@@ -4372,18 +4278,17 @@ function evtQueueMemberPausedChanged(queueId, memberId, paused, reason) {
  *
  * @method evtQueueMemberStatus
  * @param {object} data
- *   @param {string}  data.type              The membership type (static or dynamic)
- *   @param {string}  data.name              The name of the member
- *   @param {string}  data.queueId           The queue identifier
- *   @param {string}  data.member            The queue member identifier
- *   @param {boolean} data.paused            True if the extension has been paused from the queue
- *   @param {number}  data.lastCallTimestamp The timestamp of the last call received by the member
- *   @param {number}  data.callsTakenCount   The number of the taken calls
+ *   @param {string} data.type The membership type (static or dynamic)
+ *   @param {string} data.name The name of the member
+ *   @param {string} data.queueId The queue identifier
+ *   @param {string} data.member The queue member identifier
+ *   @param {boolean} data.paused True if the extension has been paused from the queue
+ *   @param {number} data.lastCallTimestamp The timestamp of the last call received by the member
+ *   @param {number} data.callsTakenCount The number of the taken calls
  * @private
  */
 function evtQueueMemberStatus(data) {
   try {
-    // check parameters
     if (typeof data !== 'object' || typeof data.type !== 'string' ||
       typeof data.queueId !== 'string' || typeof data.lastCallTimestamp !== 'number' ||
       typeof data.member !== 'string' || typeof data.callsTakenCount !== 'number' ||
@@ -4391,12 +4296,18 @@ function evtQueueMemberStatus(data) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+    // skip if there are no changes
+    var oldAgent = (queues[data.queueId].getMember(data.member)).toJSON();
+    if (oldAgent.paused === data.paused &&
+      oldAgent.callsTakenCount === data.callsTakenCount &&
+      oldAgent.lastCallTimestamp === data.lastCallTimestamp) {
 
+      return;
+    }
     if (!queues[data.queueId]) {
       logger.log.warn(IDLOG, 'received event queue member status (' + data.member + ') for not existent queue "' + data.queueId + '"');
       return;
     }
-
     // the update of the data is done by two steps:
     // 1. removing the current member
     // 2. creating a new one
@@ -6296,33 +6207,33 @@ function muteUserMeetmeConf(confId, userId, extenId, direction, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     astProxy.doCmd({
-      command: 'meetmeList',
-      confId: confId,
-      meetmeConfCode: getMeetmeConfCode()
-    },
-    function (error, resp) {
-      if (error) {
-        logger.log.error(IDLOG, error.stack);
-        cb(error);
-        return;
-      }
-      if (resp[userId] && resp[userId].channel) {
-        logger.log.info(IDLOG, 'execute mute of user "' + userId + '" (ch: ' + resp[userId].channel + ') of meetme conf "' + confId + '" on direction "' + direction + '"');
-        astProxy.doCmd({
-            command: 'mute',
-            channel: resp[userId].channel,
-            direction: direction
-          },
-          function (error) {
-            cb(error);
-            muteUserMeetmeConfCb(error);
-          });
-      } else {
-        var str = 'meetme channel to mute not found for userId "' + userId + '" (exten: ' + extenId + ') for confId "' + confId + '"';
-        logger.log.error(IDLOG, str);
-        cb(str);
-      }
-    });
+        command: 'meetmeList',
+        confId: confId,
+        meetmeConfCode: getMeetmeConfCode()
+      },
+      function (error, resp) {
+        if (error) {
+          logger.log.error(IDLOG, error.stack);
+          cb(error);
+          return;
+        }
+        if (resp[userId] && resp[userId].channel) {
+          logger.log.info(IDLOG, 'execute mute of user "' + userId + '" (ch: ' + resp[userId].channel + ') of meetme conf "' + confId + '" on direction "' + direction + '"');
+          astProxy.doCmd({
+              command: 'mute',
+              channel: resp[userId].channel,
+              direction: direction
+            },
+            function (error) {
+              cb(error);
+              muteUserMeetmeConfCb(error);
+            });
+        } else {
+          var str = 'meetme channel to mute not found for userId "' + userId + '" (exten: ' + extenId + ') for confId "' + confId + '"';
+          logger.log.error(IDLOG, str);
+          cb(str);
+        }
+      });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -6350,34 +6261,34 @@ function unmuteUserMeetmeConf(confId, userId, extenId, onlyListen, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     astProxy.doCmd({
-      command: 'meetmeList',
-      confId: confId,
-      meetmeConfCode: getMeetmeConfCode()
-    },
-    function (error, resp) {
-      if (error) {
-        logger.log.error(IDLOG, error.stack);
-        cb(error);
-        return;
-      }
-      var direction = onlyListen === true ? 'out' : 'all';
-      if (resp[userId] && resp[userId].channel) {
-        logger.log.info(IDLOG, 'execute unmute of user "' + userId + '" (ch: ' + resp[userId].channel + ') of meetme conf "' + confId + '" on direction "' + direction + '"');
-        astProxy.doCmd({
-            command: 'unmute',
-            channel: resp[userId].channel,
-            direction: direction
-          },
-          function (error) {
-            cb(error);
-            muteUserMeetmeConfCb(error);
-          });
-      } else {
-        var str = 'meetme channel to unmute not found for userId "' + userId + '" (exten: ' + extenId + ') for confId "' + confId + '"';
-        logger.log.error(IDLOG, str);
-        cb(str);
-      }
-    });
+        command: 'meetmeList',
+        confId: confId,
+        meetmeConfCode: getMeetmeConfCode()
+      },
+      function (error, resp) {
+        if (error) {
+          logger.log.error(IDLOG, error.stack);
+          cb(error);
+          return;
+        }
+        var direction = onlyListen === true ? 'out' : 'all';
+        if (resp[userId] && resp[userId].channel) {
+          logger.log.info(IDLOG, 'execute unmute of user "' + userId + '" (ch: ' + resp[userId].channel + ') of meetme conf "' + confId + '" on direction "' + direction + '"');
+          astProxy.doCmd({
+              command: 'unmute',
+              channel: resp[userId].channel,
+              direction: direction
+            },
+            function (error) {
+              cb(error);
+              muteUserMeetmeConfCb(error);
+            });
+        } else {
+          var str = 'meetme channel to unmute not found for userId "' + userId + '" (exten: ' + extenId + ') for confId "' + confId + '"';
+          logger.log.error(IDLOG, str);
+          cb(str);
+        }
+      });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
