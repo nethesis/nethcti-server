@@ -286,6 +286,16 @@ exports.QueueMember = function(memberNum, queueId, pausedValue, loggedInValue) {
   }
 
   /**
+   * Get the pause reason.
+   *
+   * @method getPauseReason
+   * @param {string} reason The reason of the pause
+   */
+  function getPauseReason() {
+    return lastPausedInReason;
+  }
+
+  /**
    * Checks the pause status of the member.
    *
    * @method isInPause
@@ -419,6 +429,7 @@ exports.QueueMember = function(memberNum, queueId, pausedValue, loggedInValue) {
     getMember: getMember,
     isLoggedIn: isLoggedIn,
     setLoggedIn: setLoggedIn,
+    getPauseReason: getPauseReason,
     setCallsTakenCount: setCallsTakenCount,
     getCallsTakenCount: getCallsTakenCount,
     setLastPausedInData: setLastPausedInData,
