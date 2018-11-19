@@ -4538,32 +4538,29 @@ function evtExtenDndChanged(exten, enabled) {
  * Updates the extension unconditional call forward status.
  *
  * @method evtExtenUnconditionalCfChanged
- * @param {string}  exten   The extension number
+ * @param {string} exten The extension number
  * @param {boolean} enabled True if the call forward is enabled
- * @param {string}  [to]    The destination number of the call forward
+ * @param {string} [to] The destination number of the call forward
  * @private
  */
 function evtExtenUnconditionalCfChanged(exten, enabled, to) {
   try {
-    // check parameters
     if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    if (extensions[exten]) { // the exten is an extension
-
+    if (extensions[exten]) {
+      if (enabled === (extensions[exten].getCf() !== '') && extensions[exten].getCf() === to) {
+        return;
+      }
       if (enabled) {
         logger.log.info(IDLOG, 'set cf status to ' + enabled + ' for extension ' + exten + ' to ' + to);
         extensions[exten].setCf(to);
-
         // disable the call forward to voicemail because the call forward set the same property in the database
         evtExtenUnconditionalCfVmChanged(exten, false);
-
       } else {
         logger.log.info(IDLOG, 'set cf status to ' + enabled + ' for extension ' + exten);
         extensions[exten].disableCf();
       }
-
       // emit the event
       logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
       astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
@@ -4677,32 +4674,29 @@ function evtExtenCfuChanged(exten, enabled, to) {
  * Updates the extension unconditional call forward to voicemail status.
  *
  * @method evtExtenUnconditionalCfVmChanged
- * @param {string}  exten   The extension number
+ * @param {string} exten The extension number
  * @param {boolean} enabled True if the call forward to voicemail is enabled
- * @param {string}  [vm]    The destination voicemail number of the call forward
+ * @param {string} [vm] The destination voicemail number of the call forward
  * @private
  */
 function evtExtenUnconditionalCfVmChanged(exten, enabled, vm) {
   try {
-    // check parameters
     if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    if (extensions[exten]) { // the exten is an extension
-
+    if (extensions[exten]) {
+      if (enabled === (extensions[exten].getCfVm() !== '') && extensions[exten].getCfVm() === vm) {
+        return;
+      }
       if (enabled) {
         logger.log.info(IDLOG, 'set cfvm status to ' + enabled + ' for extension ' + exten + ' to voicemail ' + vm);
         extensions[exten].setCfVm(vm);
-
         // disable the call forward because the call forward to voicemail set the same property in the database
         evtExtenUnconditionalCfChanged(exten, false);
-
       } else {
         logger.log.info(IDLOG, 'set cfvm status to ' + enabled + ' for extension ' + exten);
         extensions[exten].disableCfVm();
       }
-
       // emit the events
       logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
       astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
@@ -4712,7 +4706,6 @@ function evtExtenUnconditionalCfVmChanged(exten, enabled, vm) {
         enabled: enabled,
         vm: vm
       });
-
     } else {
       logger.log.warn(IDLOG, 'try to set call forward to voicemail status of non existent extension ' + exten);
     }
