@@ -526,120 +526,6 @@ function getCallTrace(linkedid, privacyStr, cb) {
 }
 
 /**
- * Gets statistics about queues.
- *
- * @method getQueuesStats
- * @param {string}   day The query date (YYYYMMDD)
- * @param {function} cb  The callback function
- */
-function getQueuesStats(day, cb) {
-  try {
-    // check parameters
-    if (typeof cb !== 'function' || typeof day !== 'string' || (typeof day === 'string' && day.match(/\d{8}/) === null)) {
-
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    async.parallel({
-      general: function (callback) {
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
-          where: [
-            'event in ("ABANDON","EXITWITHTIMEOUT","COMPLETEAGENT","COMPLETECALLER")' +
-            ' AND DATE_FORMAT(time,"%Y%m%d") = \'' + day + '\'' + ' GROUP BY queuename, action, hold'
-          ],
-          attributes: [
-            'id', 'queuename', ['IF(event = "COMPLETEAGENT", "ANSWER",' +
-              ' IF(event = "COMPLETECALLER", "ANSWER",' +
-              ' IF(event = "EXITWITHTIMEOUT", "TIMEOUT", event)))',
-              'action'
-            ],
-            ['IF(event = "ABANDON", IF(cast(data3 as unsigned) <= 50, "nulled", "failed"), cast(data1 as unsigned))', 'hold'],
-            ['count(id)', 'calls']
-          ],
-          order: ['queuename', 'action', 'hold']
-
-        }).success(function (results) {
-
-          if (results) {
-            logger.log.info(IDLOG, 'get extended queues statistics has been successful');
-
-            var stats = {};
-
-            for (var i in results) {
-              if (!(results[i].queuename in stats)) {
-                stats[results[i].queuename] = {
-                  'ANSWER': {},
-                  'ABANDON': {},
-                  'TIMEOUT': 0
-                };
-              }
-
-              switch (results[i].action) {
-                case 'ANSWER':
-                case 'ABANDON':
-                  stats[results[i].queuename][results[i].action]
-                    [results[i].hold] = results[i].calls;
-                  break;
-                default:
-                  stats[results[i].queuename][results[i].action] = results[i].calls;
-              }
-
-            }
-
-            callback(null, stats);
-          }
-        });
-      },
-      answer: function (callback) {
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
-          where: [
-            'event in ("COMPLETEAGENT","COMPLETECALLER")' + ' AND DATE_FORMAT(time,"%Y%m%d") = \'' + day + '\'' + ' GROUP BY queuename'
-          ],
-          attributes: [
-            'queuename', ['count(id)', 'calls'],
-            ['max(cast(data1 as unsigned))', 'max_hold'],
-            ['min(cast(data1 as unsigned))', 'min_hold'],
-            ['avg(cast(data1 as unsigned))', 'avg_hold'],
-            ['max(cast(data2 as unsigned))', 'max_duration'],
-            ['min(cast(data2 as unsigned))', 'min_duration'],
-            ['avg(cast(data2 as unsigned))', 'avg_duration']
-          ],
-          order: ['queuename']
-
-        }).success(function (results) {
-
-          if (results) {
-            logger.log.info(IDLOG, 'get extended queues statistics has been successful');
-
-            var stats = {};
-
-            for (var i in results) {
-              if (!(results[i].queuename in stats)) {
-                stats[results[i].queuename] = results[i];
-              }
-            }
-
-            callback(null, stats);
-
-          } else {
-            logger.log.info(IDLOG, 'get extended queues statistics: not found');
-            cb(null, {});
-          }
-        });
-      }
-    }, function (err, results) {
-      cb(null, results);
-    });
-
-    compDbconnMain.incNumExecQueries();
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Gets statistic about the queue.
  *
  * @method getQueueStats
@@ -1509,7 +1395,6 @@ function getCallRecordingFileData(uniqueid, cb) {
 }
 apiList.getCallInfo = getCallInfo;
 apiList.getCallTrace = getCallTrace;
-apiList.getQueuesStats = getQueuesStats;
 apiList.getQueueStats = getQueueStats;
 apiList.getQueueRecall = getQueueRecall;
 apiList.getQueueRecallInfo = getQueueRecallInfo;

@@ -2219,31 +2219,6 @@ function getJSONAllQueuesStats(queuesList, cb) {
 }
 
 /**
- * Return the JSON representation of extended queue statistics.
- *
- * @method getJSONQueuesStats
- * @param  {string}   day      The day expressed in YYYYMMDD format
- * @param  {function} callback The callback function
- * @return {object}   The JSON representation of extended queue statistics.
- */
-function getJSONQueuesStats(day, callback) {
-  try {
-    // check parameters
-    if (typeof day !== 'string' || typeof callback !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    compDbconn.getQueuesStats(day, function (err1, result) {
-      callback(err1, result);
-    });
-
-  } catch (error) {
-    logger.log.error(IDLOG, error.stack);
-    callback(error);
-  }
-}
-
-/**
  * Returns the JSON representation of all queues.
  *
  * @method getJSONQueues
@@ -9514,7 +9489,6 @@ exports.EVT_TRUNK_CHANGED = EVT_TRUNK_CHANGED;
 exports.EVT_EXTEN_DIALING = EVT_EXTEN_DIALING;
 exports.EVT_QUEUE_CHANGED = EVT_QUEUE_CHANGED;
 exports.getQueueIdsOfExten = getQueueIdsOfExten;
-exports.getJSONQueuesStats = getJSONQueuesStats;
 exports.getJSONQueueStats = getJSONQueueStats;
 exports.getJSONAllQueuesStats = getJSONAllQueuesStats;
 exports.getJSONAllAgentsStats = getJSONAllAgentsStats;
