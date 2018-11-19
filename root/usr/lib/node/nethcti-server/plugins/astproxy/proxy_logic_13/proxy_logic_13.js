@@ -4241,30 +4241,29 @@ function evtDeviceStatusChanged(exten) {
  */
 function evtQueueMemberPausedChanged(queueId, memberId, paused, reason) {
   try {
-    // check parameters
     if (typeof queueId !== 'string' || typeof reason !== 'string' ||
       typeof memberId !== 'string' || typeof paused !== 'boolean') {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
     if (!queues[queueId]) {
       logger.log.warn(IDLOG, 'received event queue member paused changed for not existent queue "' + queueId + '"');
       return;
     }
-
     // get the queue member object and set its "paused" status
     var member = queues[queueId].getMember(memberId);
-
     if (member) {
-
+      if ((paused === true &&
+        paused === member.isInPause() &&
+        reason === member.getPauseReason()) ||
+        (paused === false && paused === member.isInPause())) {
+        return;
+      }
       member.setPaused(paused, reason);
       logger.log.info(IDLOG, 'paused status of queue member "' + memberId + '" of queue "' + queueId + '" has been changed to "' + paused + '"');
-
       // emit the event
       logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_MEMBER_CHANGED + ' for queue member ' + memberId + ' of queue ' + queueId);
       astProxy.emit(EVT_QUEUE_MEMBER_CHANGED, member);
-
     } else {
       logger.log.warn(IDLOG, 'received event queue member paused changed for non existent member "' + memberId + '"');
     }
