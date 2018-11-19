@@ -104,15 +104,6 @@ var compAstProxy;
 var compUtil;
 
 /**
- * The remote sites communication architect component.
- *
- * @property compComNethctiRemotes
- * @type object
- * @private
- */
-var compComNethctiRemotes;
-
-/**
  * The configuration manager architect component used for configuration functions.
  *
  * @property compConfigManager
@@ -1055,16 +1046,12 @@ var compConfigManager;
          *   @param {string} trunks                         Gets all the trunks of the operator panel of the user
          *   @param {string} prefix                         Gets the prefix number used with outgoing external calls
          *   @param {string} wakeup                         Gets the list of all alarms wakeup
-         *   @param {string} remote_prefixes                Gets prefix number of all remote sites used with outgoing external calls
          *   @param {string} opgroups                       Gets all the user groups of the operator panel
-         *   @param {string} remote_opgroups                Gets all the user groups of all remote sites
          *   @param {string} conference/:endpoint           Gets data about the meetme conference of the extension
          *   @param {string} parkings                       Gets all the parkings with all their status information
          *   @param {string} extension/:id                  Gets the extension with all their status information
          *   @param {string} extensions                     Gets all the extensions with all their status information
          *   @param {string} sip_webrtc                     Gets all the configuration about the sip WebRTC
-         *   @param {string} remote_extensions              Gets all the extensions with all their status information of all remote sites
-         *   @param {string} queues_stats/:day              Gets extended statistics about queues
          *   @param {string} qmanager_qstats/:qid           Gets statistics about the queue
          *   @param {string} qmanager_qcalls                Gets statistics about all the queues
          *   @param {string} qmanager_astats                Gets statistics about all the agents
@@ -1087,11 +1074,7 @@ var compConfigManager;
           'extension/:id',
           'extensions',
           'sip_webrtc',
-          'remote_opgroups',
           'conference/:endpoint',
-          'remote_prefixes',
-          'remote_extensions',
-          'queues_stats/:day',
           'qmanager_astats',
           'qmanager_qcalls',
           'qmanager_qstats/:qid',
@@ -1177,7 +1160,6 @@ var compConfigManager;
           'txfer_tovm',
           'start_conf',
           'toggle_hold',
-          'remote_call',
           'pickup_conv',
           'stop_record',
           'join_myconf',
@@ -1267,51 +1249,6 @@ var compConfigManager;
             username + '" ' + res.connection.remoteAddress);
           res.send(200, list);
 
-        } catch (err) {
-          logger.log.error(IDLOG, err.stack);
-          compUtil.net.sendHttp500(IDLOG, res, err.toString());
-        }
-      },
-
-      /**
-       * It serves only the local clients: the remote sites can not ask for it.
-       * Gets the operator panel user groups of all remote sites with the following REST API:
-       *
-       *     GET  remote_opgroups
-       *
-       * @method remote_opgroups
-       * @param {object}   req  The client request
-       * @param {object}   res  The client response
-       * @param {function} next Function to run the next handler in the chain
-       */
-      remote_opgroups: function (req, res, next) {
-        try {
-          var username = req.headers.authorization_user;
-          var token = req.headers.authorization_token;
-
-          // check if the request coming from a remote site
-          if (compComNethctiRemotes.isClientRemote(username, token)) {
-
-            var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
-            logger.log.warn(IDLOG, 'requesting all remote sites op groups by remote site "' + remoteSiteName + '": ' +
-              'authorization failed for user "' + username + '"');
-            compUtil.net.sendHttp403(IDLOG, res);
-            return;
-          } else {
-            // check if the user has the operator panel authorization
-            if (compAuthorization.authorizeRemoteSiteUser(username) !== true) {
-
-              logger.log.warn(IDLOG, 'requesting all remote sites operator groups: authorization failed for user "' + username + '"');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-            }
-
-            // get all operator panel groups of all remote sites
-            var allRemoteOpGroups = compComNethctiRemotes.getAllRemoteSitesOperatorGroups();
-            logger.log.info(IDLOG, 'sent all remote sites operator groups "' + Object.keys(allRemoteOpGroups) + '" ' +
-              'to user "' + username + '" ' + res.connection.remoteAddress);
-            res.send(200, allRemoteOpGroups);
-          }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -1529,56 +1466,6 @@ var compConfigManager;
       },
 
       /**
-       * Gets all the extensions with all their status information of all remote sites with the following REST API:
-       *
-       *     GET  remote_extensions
-       *
-       * @method remote_extensions
-       * @param {object}   req  The client request
-       * @param {object}   res  The client response
-       * @param {function} next Function to run the next handler in the chain
-       */
-      remote_extensions: function (req, res, next) {
-        try {
-          var username = req.headers.authorization_user;
-          var token = req.headers.authorization_token;
-
-          // check if the request coming from a remote site
-          if (compComNethctiRemotes.isClientRemote(username, token)) {
-
-            var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
-            logger.log.warn(IDLOG, 'requesting all remote sites extensions by remote site "' + remoteSiteName + '": ' +
-              'authorization failed for user "' + username + '"');
-            compUtil.net.sendHttp403(IDLOG, res);
-            return;
-          } else {
-            // check if the user has the operator panel and remote site authorizations
-            if (compAuthorization.authorizeRemoteSiteUser(username) !== true ||
-              compAuthorization.authorizePresencePanelUser(username) !== true) {
-
-              logger.log.warn(IDLOG, 'requesting all remote sites extensions: authorization failed for user "' + username + '"');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-            }
-
-            // get all extensions of all remote sites
-            var allRemoteOpExtensions;
-            if (compAuthorization.isPrivacyEnabled(username) === true) {
-              allRemoteOpExtensions = compComNethctiRemotes.getAllRemoteSitesOperatorExtensions(privacyStrReplace);
-            } else {
-              allRemoteOpExtensions = compComNethctiRemotes.getAllRemoteSitesOperatorExtensions();
-            }
-            logger.log.info(IDLOG, 'sent all remote sites extensions "' + Object.keys(allRemoteOpExtensions) + '" ' +
-              'to user "' + username + '" ' + res.connection.remoteAddress);
-            res.send(200, allRemoteOpExtensions);
-          }
-        } catch (err) {
-          logger.log.error(IDLOG, err.stack);
-          compUtil.net.sendHttp500(IDLOG, res, err.toString());
-        }
-      },
-
-      /**
        * Gets all the extensions with all their status information with the following REST API:
        *
        *     GET  extensions
@@ -1749,87 +1636,6 @@ var compConfigManager;
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
-        }
-      },
-
-      /**
-       * Gets the prefix number of all remote sites used with outgoing external calls with the following REST API:
-       *
-       *     GET  remote_prefixes
-       *
-       * @method remote_prefixes
-       * @param {object}   req  The client request
-       * @param {object}   res  The client response
-       * @param {function} next Function to run the next handler in the chain
-       */
-      remote_prefixes: function (req, res, next) {
-        try {
-          var username = req.headers.authorization_user;
-
-          if (compAuthorization.authorizeRemoteSiteUser(username) !== true) {
-            logger.log.warn(IDLOG, 'requesting prefixes of all remote sites: authorization failed for user "' + username + '"');
-            compUtil.net.sendHttp403(IDLOG, res);
-            return;
-          }
-          var prefixes = compComNethctiRemotes.getAllSitesPrefixCall();
-
-          logger.log.info(IDLOG, 'sent prefixes of all remote sites to user "' + username + '" ' + res.connection.remoteAddress);
-          res.send(200, prefixes);
-
-        } catch (err) {
-          logger.log.error(IDLOG, err.stack);
-          compUtil.net.sendHttp500(IDLOG, res, err.toString());
-        }
-      },
-
-      /**
-       *  Gets extended statistics about queues with the following REST API:
-       *
-       *     GET  queues_stats
-       *
-       * @method queues_stats
-       * @param {object}   req  The client request.
-       * @param {object}   res  The client response.
-       * @param {function} next Function to run the next handler in the chain.
-       */
-      queues_stats: function (req, res, next) {
-        try {
-          var username = req.headers.authorization_user;
-          var day = req.params.day;
-
-          // check if the user has the administration operator panel queues authorization
-          if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
-
-            logger.log.info(IDLOG, 'requesting queues statistics: user "' + username + '" has the "admin_queues" authorization');
-          }
-          // otherwise check if the user has the operator panel queues authorization
-          else if (compAuthorization.authorizeQueuesUser(username) !== true) {
-
-            logger.log.warn(IDLOG, 'requesting queues statistics: authorization failed for user "' + username + '"');
-            compUtil.net.sendHttp403(IDLOG, res);
-            return;
-          }
-
-          // check if the user has the privacy enabled
-
-          compAstProxy.getJSONQueuesStats(day, function (err1, stats) {
-            try {
-              if (err1) {
-                throw err1;
-              }
-
-              logger.log.info(IDLOG, 'sent all queues statistics of ' + day + ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
-              res.send(200, stats);
-
-            } catch (err) {
-              logger.log.error(IDLOG, err.stack);
-              compUtil.net.sendHttp500(IDLOG, res, err.toString());
-            }
-          });
-
-        } catch (error) {
-          logger.log.error(IDLOG, error.stack);
-          compUtil.net.sendHttp500(IDLOG, res, error.toString());
         }
       },
 
@@ -2318,84 +2124,6 @@ var compConfigManager;
             compUtil.net.sendHttp400(IDLOG, res);
           }
 
-        } catch (err) {
-          logger.log.error(IDLOG, err.stack);
-          compUtil.net.sendHttp500(IDLOG, res, err.toString());
-        }
-      },
-
-      /**
-       * Makes a new call to a remote extension of a remote site with the following REST API:
-       *
-       *     POST remote_call
-       *
-       * @method remot_call
-       * @param {object}   req  The client request
-       * @param {object}   res  The client response
-       * @param {function} next Function to run the next handler in the chain
-       */
-      remote_call: function (req, res, next) {
-        try {
-          var username = req.headers.authorization_user;
-          var token = req.headers.authorization_token;
-
-          // check parameters
-          if (typeof req.params !== 'object' ||
-            typeof req.params.site !== 'string' ||
-            typeof req.params.remoteExtenId !== 'string' ||
-            (req.params.fromExtenId && typeof req.params.fromExtenId !== 'string')) {
-
-            compUtil.net.sendHttp400(IDLOG, res);
-            return;
-          }
-
-          // check if the request coming from a remote site
-          if (compComNethctiRemotes.isClientRemote(username, token)) {
-
-            var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
-            logger.log.warn(IDLOG, 'calling remote exten "' + req.params.remoteExtenId + '" from remote site ' +
-              '"' + remoteSiteName + '" user "' + username + '": not allowed from remote');
-            compUtil.net.sendHttp403(IDLOG, res);
-            return;
-          } else {
-            if (typeof req.params.fromExtenId !== 'string') {
-              req.params.fromExtenId = compConfigManager.getDefaultUserExtensionConf(username);
-            }
-
-            // checks permissions and endpoint ownership
-            if (compAuthorization.authorizeAdminPhoneUser(username) === true &&
-              compAuthorization.authorizeRemoteSiteUser(username) === true) {
-
-              logger.log.info(IDLOG, 'make new call to remote exten "' + req.params.remoteExtenId + '" ' +
-                ' of remote site "' + req.params.site + '" from local exten "' + req.params.fromExtenId +
-                '" by user "' + username + '": he has the "admin_call" & "remote_site" permissions');
-            } else if (compAuthorization.verifyUserEndpointExten(username, req.params.fromExtenId) === false ||
-              compAuthorization.authorizeRemoteSiteUser(username) === false) {
-
-              logger.log.warn(IDLOG, 'calling remote exten "' + req.params.remoteExtenId + '" ' +
-                'of remote site "' + req.params.site + '" from local exten "' + req.params.fromExtenId +
-                '" by user "' + username + '" failed: local exten "' + req.params.fromExtenId +
-                '" is not owned by user "' + username + '"');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-            }
-
-            // check the remote site existence
-            if (!compComNethctiRemotes.remoteSiteExists(req.params.site)) {
-
-              logger.log.warn(IDLOG, 'calling remote exten "' + req.params.remoteExtenId + '" ' +
-                'of remote site "' + req.params.site + '" from local exten "' + req.params.fromExtenId +
-                '" by user "' + username + '" failed: non existent remote site "' + req.params.site + '"');
-              compUtil.net.sendHttp500(IDLOG, res, 'non existent remote site "' + req.params.site + '"');
-              return;
-            }
-
-            var sitePrefixCall = compComNethctiRemotes.getSitePrefixCall(req.params.site);
-            req.params.number = sitePrefixCall + req.params.remoteExtenId;
-            req.params.endpointId = req.params.fromExtenId;
-            req.params.endpointType = 'extension';
-            call(username, req, res);
-          }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -4844,14 +4572,12 @@ var compConfigManager;
     exports.join_myconf = astproxy.join_myconf;
     exports.toggle_hold = astproxy.toggle_hold;
     exports.pickup_conv = astproxy.pickup_conv;
-    exports.remote_call = astproxy.remote_call;
     exports.stop_record = astproxy.stop_record;
     exports.setCompUser = setCompUser;
     exports.mute_record = astproxy.mute_record;
     exports.queue_recall = astproxy.queue_recall;
     exports.qrecall_info = astproxy.qrecall_info;
     exports.qrecall_check = astproxy.qrecall_check;
-    exports.queues_stats = astproxy.queues_stats;
     exports.qmanager_qstats = astproxy.qmanager_qstats;
     exports.qmanager_qcalls = astproxy.qmanager_qcalls;
     exports.qmanager_astats = astproxy.qmanager_astats;
@@ -4865,16 +4591,13 @@ var compConfigManager;
     exports.hangup_channel = astproxy.hangup_channel;
     exports.pickup_parking = astproxy.pickup_parking;
     exports.qmanager_queues = astproxy.qmanager_queues;
-    exports.remote_opgroups = astproxy.remote_opgroups;
     exports.unmute_userconf = astproxy.unmute_userconf;
     exports.hangup_userconf = astproxy.hangup_userconf;
     exports.setCompOperator = setCompOperator;
     exports.setCompAstProxy = setCompAstProxy;
     exports.queuemember_add = astproxy.queuemember_add;
-    exports.remote_prefixes = astproxy.remote_prefixes;
     exports.hangup_mainexten = astproxy.hangup_mainexten;
     exports.inout_dyn_queues = astproxy.inout_dyn_queues;
-    exports.remote_extensions = astproxy.remote_extensions;
     exports.queuemember_pause = astproxy.queuemember_pause;
     exports.pickup_qwaitcaller = astproxy.pickup_qwaitcaller;
     exports.queuemember_remove = astproxy.queuemember_remove;
@@ -4884,8 +4607,6 @@ var compConfigManager;
     exports.setCompAuthorization = setCompAuthorization;
     exports.setCompConfigManager = setCompConfigManager;
     exports.blindtransfer_parking = astproxy.blindtransfer_parking;
-    exports.setCompComNethctiRemotes = setCompComNethctiRemotes;
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -5571,21 +5292,6 @@ function setPrivacy(str) {
   try {
     privacyStrReplace = str;
     logger.log.info(IDLOG, 'use privacy string "' + privacyStrReplace + '"');
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-  }
-}
-
-/**
- * Set remote sites communication architect component.
- *
- * @method setCompComNethctiRemotes
- * @param {object} comp The remote sites communication architect component.
- */
-function setCompComNethctiRemotes(comp) {
-  try {
-    compComNethctiRemotes = comp;
-    logger.log.info(IDLOG, 'set remote sites communication architect component');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
