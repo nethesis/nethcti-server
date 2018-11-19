@@ -211,10 +211,10 @@ function getHistoryCallInterval(data, cb) {
       whereClause = [
         '(cnum NOT IN (?) AND dst IN (?)) AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)',
         data.endpoints, data.endpoints,
         data.from, data.to,
-        data.filter, data.filter, data.filter
+        "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
       ];
 
     } else if (data.direction && data.direction === 'out') {
@@ -222,10 +222,10 @@ function getHistoryCallInterval(data, cb) {
       whereClause = [
         '(cnum IN (?) AND dst NOT IN (?)) AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)',
         data.endpoints, data.endpoints,
         data.from, data.to,
-        data.filter, data.filter, data.filter
+        "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
       ];
 
     } else {
@@ -233,10 +233,11 @@ function getHistoryCallInterval(data, cb) {
       whereClause = [
         '(cnum IN (?) OR dst IN (?)) AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR dst_cnam LIKE ? OR ccompany LIKE ? OR dst_ccompany LIKE ?)',
         data.endpoints, data.endpoints,
         data.from, data.to,
-        data.filter, data.filter, data.filter
+        "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
+        "%" + data.filter + "%", "%" + data.filter + "%"
       ];
     }
 
@@ -381,10 +382,10 @@ function getHistorySwitchCallInterval(data, cb) {
           // end include attended transfered calls
         ') AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)',
         data.trunks,
         data.from, data.to,
-        data.filter, data.filter, data.filter
+        "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
       ];
 
     } else if (data.type === 'out') {
@@ -392,10 +393,10 @@ function getHistorySwitchCallInterval(data, cb) {
       whereClause = [
         'dstchannel REGEXP ? AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)',
         data.trunks,
         data.from, data.to,
-        data.filter, data.filter, data.filter
+        "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
       ];
 
     } else if (data.type === 'internal') {
@@ -408,19 +409,21 @@ function getHistorySwitchCallInterval(data, cb) {
         'cnum IN ' + data.extens + ' AND ' +
         'dst IN ' + data.extens + ' AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)',
         data.trunks, data.trunks,
         data.from, data.to,
-        data.filter, data.filter, data.filter
+        "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
+        "%" + data.filter + "%", "%" + data.filter + "%"
       ];
 
     } else {
 
       whereClause = [
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)',
         data.from, data.to,
-        data.filter, data.filter, data.filter
+        "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
+        "%" + data.filter + "%", "%" + data.filter + "%"
       ];
     }
 
