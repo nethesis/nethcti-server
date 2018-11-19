@@ -4512,9 +4512,10 @@ function evtExtenDndChanged(exten, enabled) {
     if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    if (extensions[exten]) { // the exten is an extension
-
+    if (extensions[exten]) {
+      if (extensions[exten].getDnd() === enabled) {
+        return;
+      }
       extensions[exten].setDnd(enabled);
       logger.log.info(IDLOG, 'set dnd status to ' + enabled + ' for extension ' + exten);
       // emit the events
@@ -4525,7 +4526,6 @@ function evtExtenDndChanged(exten, enabled) {
         exten: exten,
         enabled: enabled
       });
-
     } else {
       logger.log.warn(IDLOG, 'try to set dnd status of non existent extension ' + exten);
     }
