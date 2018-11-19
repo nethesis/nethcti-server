@@ -4146,12 +4146,14 @@ function getUserExtenIdFromConf(confId, userId) {
  */
 function evtExtenStatusChanged(exten, status) {
   try {
-    // check parameters
     if (typeof exten !== 'string' || typeof status !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    if (extensions[exten]) { // the exten is an extension
+    if (extensions[exten]) {
+      // skip if there are no changes
+      if (extensions[exten].getStatus() === status) {
+        return;
+      }
       // update extension information. This is because when the extension becomes
       // offline/online ip, port and other information needs to be updated
       if (extensions[exten].getChanType() === 'pjsip') {
@@ -4174,7 +4176,7 @@ function evtExtenStatusChanged(exten, status) {
       }
       updateConversationsOfNum(exten);
 
-    } else if (parkings[exten]) { // the exten is a parking
+    } else if (parkings[exten]) {
 
       var parking = exten; // to better understand the code
 
@@ -4187,7 +4189,6 @@ function evtExtenStatusChanged(exten, status) {
         updateParkedChannelOfOneParking(err, resp, parking);
       });
     }
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
