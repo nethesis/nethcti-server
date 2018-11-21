@@ -487,21 +487,23 @@ function getAllContactsContains(term, username, view, offset, limit, cb) {
     term = '%' + term + '%';
 
     if (view === 'person') {
-      var sview = 'name';
+      var sview = 'name LIKE ? ';
+    } else if (view === 'company') {
+      var sview = 'company LIKE ? ';
     } else {
-      var sview = view;
+      var sview = 'name LIKE ? OR company LIKE ? ';
     }
 
     var ctiPbBounds = '(owner_id=? OR type="public") ' +
       'AND ' +
-      '(' + sview + ' LIKE ? ' +
+      '(' + sview +
       'OR workphone LIKE ? ' +
       'OR homephone LIKE ? ' +
       'OR cellphone LIKE ? ' +
       'OR extension LIKE ?' +
       ')';
 
-    var pbBounds = '(' + sview + ' LIKE ? ' +
+    var pbBounds = '(' + sview +
       'OR workphone LIKE ? ' +
       'OR homephone LIKE ? ' +
       'OR cellphone LIKE ?' +
@@ -609,12 +611,15 @@ function getAllContactsStartsWith(term, username, view, offset, limit, cb) {
     term = term + '%';
 
     if (view === 'person') {
-      var sview = 'name';
+      var sview = 'name LIKE ? ';
+    } else if (view === 'company') {
+      var sview = 'company LIKE ? ';
     } else {
-      var sview = view;
+      var sview = 'name LIKE ? OR company LIKE ? ';
     }
-    var ctiPbBounds = '(owner_id=? OR type="public") AND (' + sview + ' LIKE ?)';
-    var pbBounds = '(' + sview + ' LIKE ?) AND (type != "' + NETHCTI_CENTRAL_TYPE + '")';
+
+    var ctiPbBounds = '(owner_id=? OR type="public") AND (' + sview + ')';
+    var pbBounds = '(' + sview + ') AND (type != "' + NETHCTI_CENTRAL_TYPE + '")';
 
     getAllContacts(
       ctiPbBounds,
