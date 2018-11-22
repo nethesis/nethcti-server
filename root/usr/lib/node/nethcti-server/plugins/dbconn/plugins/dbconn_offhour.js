@@ -140,8 +140,6 @@ function getOffhours(cb) {
         ['message', 'announcement_filepath'],
         ['IF(tsbegin=0, NULL, FROM_UNIXTIME(tsbegin))', 'datebegin'],
         ['IF(tsend=0, NULL, FROM_UNIXTIME(tsend))', 'dateend'],
-        ['IF(tsbegin=0, NULL, FROM_UNIXTIME(tsbegin))', 'timebegin'],
-        ['IF(tsend=0, NULL, FROM_UNIXTIME(tsend))', 'timeend'],
         'action', 'param', 'enabled', 'didcidnum', 'didextension', 'tsbegin'
       ]
     }).then(function (results) {
@@ -150,20 +148,6 @@ function getOffhours(cb) {
       var i;
       for (i = 0; i < results.length; i++) {
         results[i] = results[i].dataValues;
-
-        // adjust times to local timezone
-        if (results[i].datebegin) {
-          results[i].datebegin = moment(results[i].datebegin).format('DD/MM/YYYY');
-          results[i].timebegin = moment(results[i].timebegin).format('HH:mm:ss');
-        }
-        if (results[i].dateend) {
-          results[i].dateend = moment(results[i].dateend).format('DD/MM/YYYY');
-          results[i].timeend = moment(results[i].timeend).format('HH:mm:ss');
-        }
-        if (results[i].date_lastmodified) {
-          results[i].date_lastmodified = moment(results[i].date_lastmodified).format('DD/MM/YYYY');
-          results[i].time_lastmodified = moment(results[i].time_lastmodified).format('HH:mm:ss');
-        }
       }
 
       logger.log.info(IDLOG, results.length + ' results by searching asterisk offhour services');
@@ -484,10 +468,8 @@ function getAnnouncement(id, cb) {
  * @param {object} data
  *   @param {string} data.enabled ("always" | "period" | "never") corresponding values into the db are:
  *                                "never": 0, "always": 1, "period": 2
- *   @param {string} [data.startDate] The start date of the period (YYYYMMDD)
- *   @param {string} [data.startTime] The start time of the period (HHmmss)
- *   @param {string} [data.endDate] The end date of the period (YYYYMMDD)
- *   @param {string} [data.endTime] The end time of the period (HHmmss)
+ *   @param {string} [data.startDate] The start date of the period (ISOString)
+ *   @param {string} [data.endDate] The end date of the period (ISOString)
  *   @param {string} data.calledIdNum The called number of the inbound route
  *   @param {string} data.callerIdNum The caller number of the inbound route
  *   @param {string} data.username The user who requested the operation
@@ -523,9 +505,6 @@ function setOffhour(data, cb) {
 
     }).then(function (task) {
       try {
-        var startDateTime = data.startDate + ' ' + data.startTime;
-        var endDateTime = data.endDate + ' ' + data.endTime;
-
         var obj = {
           enabled: data.enabled === 'always' ? 1 : (data.enabled === 'period' ? 2 : 0),
           didcidnum: data.callerIdNum,
@@ -533,8 +512,8 @@ function setOffhour(data, cb) {
           displayname: data.description ? data.description : ''
         };
         if (data.startDate && data.endDate) {
-          obj.tsbegin = Math.floor(moment(startDateTime, 'YYYYMMDD HHmmss').valueOf() / 1000);
-          obj.tsend = Math.floor(moment(endDateTime, 'YYYYMMDD HHmmss').valueOf() / 1000);
+          obj.tsbegin = Math.floor(moment(data.startDate).valueOf() / 1000);
+          obj.tsend = Math.floor(moment(data.endDate).valueOf() / 1000);
         } else if (data.enabled === 'always') {
           obj.tsbegin = 0;
           obj.tsend = 0;
