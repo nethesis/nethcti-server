@@ -338,12 +338,9 @@ function setCompAuthorization(comp) {
         * * `callerIdNum: caller number of the incoming route`
         * * `enabled: ("always" | "never" | "period") disable, enable always or enable for a period
         *                                             the offhour for the inbound route. If "period" is used
-        *                                             it is necessary to specify "start_date", "start_time",
-        *                                             "end_date" and "end_time"`
-        * * `[start_date]: used with "enabled=period" YYYYMMDD format`
-        * * `[start_time]: used with "enabled=period" HHmmss format`
-        * * `[end_date]: used with "enabled=period" YYYYMMDD format`
-        * * `[end_time]: used with "enabled=period" HHmmss format`
+        *                                             it is necessary to specify "start_date" and "end_date"
+        * * `[start_date]: used with "enabled=period" ISOString format`
+        * * `[end_date]: used with "enabled=period" ISOString format`
         * * `[action]: ("audiomsg" | "audiomsg_voicemail" | "redirect") the type of the offhour`
         * * `[announcement_id]: the identifier of the audo file announcement. It is required by action "audiomsg"`
         * * `[voicemail_id]: the identifier of the voicemail extension. It is required by action "audiomsg_voicemail"`
@@ -734,9 +731,7 @@ function setCompAuthorization(comp) {
               req.params.enabled === 'period' &&
               (
                 typeof req.params.start_date !== 'string' ||
-                typeof req.params.start_time !== 'string' ||
-                typeof req.params.end_date !== 'string' ||
-                typeof req.params.end_time !== 'string'
+                typeof req.params.end_date !== 'string'
               )
             ) ||
             (typeof req.params.action === 'string' &&
@@ -1263,9 +1258,7 @@ function setOffhour(params, username, res) {
     var data = {
       enabled: params.enabled,
       startDate: params.start_date,
-      startTime: params.start_time,
       endDate: params.end_date,
-      endTime: params.end_time,
       username: username,
       calledIdNum: params.calledIdNum,
       callerIdNum: params.callerIdNum,
