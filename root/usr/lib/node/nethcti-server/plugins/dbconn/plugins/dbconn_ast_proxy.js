@@ -1045,7 +1045,7 @@ function getAgentsStatsLoginLogout(agents) {
             'event IN ("REMOVEMEMBER","ADDMEMBER") ' +
             'AND ( (agent IN ("' + agents.join('","') + '") ' +
             'AND data1="") || ' +
-            '(agent IN ("' + agents.join('","') + '") AND callid="MANAGER" AND data1!="") ) '+
+            '(agent IN ("' + agents.join('","') + '") AND data1!="") ) '+
             'GROUP BY queuename, agent, event ORDER BY time'
           ],
           attributes: [
