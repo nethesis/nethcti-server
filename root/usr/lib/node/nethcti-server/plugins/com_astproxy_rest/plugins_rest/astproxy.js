@@ -3117,7 +3117,6 @@ var compConfigManager;
           // the owner of the conference is already into its conference. So hangup
           // its conversation and call the extension to be added
           if (compAstProxy.isExtenInMeetmeConf(req.params.ownerEndpointId)) {
-
             compAstProxy.hangupConversation(req.params.ownerEndpointId, req.params.convid, function (err) {
               try {
                 if (err) {
@@ -3126,7 +3125,6 @@ var compConfigManager;
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-
                 req.params.number = req.params.addEndpointId;
                 // add remote site prefix if it has been requested
                 // if (req.params.site) {
@@ -3135,7 +3133,6 @@ var compConfigManager;
                 req.params.endpointId = req.params.ownerEndpointId;
                 req.params.endpointType = 'extension';
                 call(username, req, res);
-
                 logger.log.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
                   'by user "' + username + '" adding exten "' + req.params.addEndpointId + '" ' +
                   (req.params.site ? ('of remote site ' + req.params.site) : ''));
@@ -3160,30 +3157,10 @@ var compConfigManager;
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                     return;
                   }
-                  // case 2a
-                  // the owner is busy with extension to be added. Both enter into the conference
-                  if (newUser) {
-                    req.params.number = compAstProxy.getMeetmeConfCode();
-                  }
-                  // case 2b
-                  // the owner is busy with another extension different from that to be added.
-                  // So call the extension to be added
-                  else {
-                    req.params.number = req.params.addEndpointId;
-                    // add remote site prefix if it has been requested
-                    // if (req.params.site) {
-                    //   req.params.number = compComNethctiRemotes.getSitePrefixCall(req.params.site) + req.params.number;
-                    // }
-                  }
-
-                  req.params.endpointId = req.params.ownerEndpointId;
-                  req.params.endpointType = 'extension';
-                  call(username, req, res);
-
                   logger.log.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
                     'by user "' + username + '" adding exten "' + req.params.addEndpointId + '" ' +
                     (req.params.site ? ('of remote site ' + req.params.site) : ''));
-
+                  compUtil.net.sendHttp200(IDLOG, res);
                 } catch (error) {
                   logger.log.error(IDLOG, error.stack);
                   compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -3711,13 +3688,11 @@ var compConfigManager;
             logger.log.info(IDLOG, 'joining meetme conf "' + req.params.endpointId + '": ' +
               req.params.endpointId + ' is owned by "' + username + '"');
           }
-
-          logger.log.warn(IDLOG, 'starting join exten "' + req.params.endpointId + '" to its meetme conf ' +
+          logger.log.info(IDLOG, 'starting join exten "' + req.params.endpointId + '" to its meetme conf ' +
             'by user "' + username + '"');
           req.params.number = compAstProxy.getMeetmeConfCode();
           req.params.endpointType = 'extension';
           call(username, req, res);
-
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -4790,7 +4765,6 @@ function ajaxPhoneDtmf(username, req, res) {
     } else if (tone === '#' && extenAgent.toLowerCase().indexOf('snom') > -1) {
       tone = '%23';
     }
-
     // get the url to call to originate the new call. If the url is an empty
     // string, the phone is not supported, so the call fails
     var url = compConfigManager.getDtmfUrlFromAgent(extenAgent);
@@ -4867,7 +4841,6 @@ function ajaxPhoneHoldUnhold(username, req, res) {
     var extenIp = compAstProxy.getExtensionIp(exten);
     var extenAgent = compAstProxy.getExtensionAgent(exten);
     var serverHostname = compConfigManager.getServerHostname();
-
     // get the url to call to originate the new call. If the url is an empty
     // string, the phone is not supported, so the call fails
     var url = compConfigManager.getHoldUnholdUrlFromAgent(extenAgent);
@@ -4962,13 +4935,11 @@ function ajaxPhoneCall(username, req, res) {
     if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
     var to = compAstProxy.addPrefix(req.params.number);
     var exten = req.params.endpointId;
     var extenIp = compAstProxy.getExtensionIp(exten);
     var extenAgent = compAstProxy.getExtensionAgent(exten);
     var serverHostname = compConfigManager.getServerHostname();
-
     // get the url to call to originate the new call. If the url is an empty
     // string, the phone is not supported, so the call fails
     var url = compConfigManager.getCallUrlFromAgent(extenAgent);
@@ -4992,7 +4963,6 @@ function ajaxPhoneCall(username, req, res) {
       // second request get 204 response
       // more details here: Nethesis/dev#5115
       if (extenAgent.toLowerCase().indexOf('alcatel') !== -1) {
-
         httpReq.get(url, function (httpResp) {
           try {
             if (httpResp.statusCode === 200 || httpResp.statusCode === 204) {
@@ -5256,7 +5226,6 @@ function asteriskCall(username, req, res) {
     if (req.params.endpointType === 'cellphone') {
       extenForContext = compConfigManager.getDefaultUserExtensionConf(username);
     }
-
     compAstProxy.call(req.params.endpointType, req.params.endpointId, req.params.number, extenForContext, function (err) {
       try {
         if (err) {

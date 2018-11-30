@@ -80,7 +80,10 @@ exports.Conversation = function(ownerId, sourceChan, destChan, queue) {
    * @type {boolean}
    * @private
    */
-  var inConference = chSource ? chSource.isInConference() : (chDest ? chDest.isInConference() : false);
+  var inConference = false;
+  if ((chSource && chSource.isInConference()) || (chDest && chDest.isInConference())) {
+    inConference = true;
+  }
 
   /**
    * The duration of the conversation in seconds.
