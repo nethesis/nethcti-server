@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.4.0
+Version: 3.5.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,14 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Dec 10 2018 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.5.0-1
+- Optimize the management of asterisk events, executed queries and websocket events - nethesis/dev#5513
+- QManager agents empty information - Bug nethesis/dev#5524
+- Log level "info" cause the writing on messages log file - Bug nethesis/dev#5508
+- Audio conference does not work properly when used from physical phones - Bug nethesis/dev#5520
+- Some technical debts on history, offhour, phonebook - Bug nethesis/dev#5517
+- Remove unused rest api - Bug nethesis/dev#5518
+
 * Mon Nov 12 2018 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.4.0-1
 - NethCTI 3: new rest api "astproxy/unauthe_call" - nethesis/dev#5507
 
