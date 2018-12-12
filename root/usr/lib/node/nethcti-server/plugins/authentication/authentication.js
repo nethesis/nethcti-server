@@ -88,6 +88,16 @@ var IDLOG = '[authentication]';
 var CONFIG_FILEPATH;
 
 /**
+ * The status of the authentication.
+ *
+ * @property enabled
+ * @type boolean
+ * @private
+ * @default true
+ */
+var enabled = true;
+
+/**
  * The event emitter.
  *
  * @property emitter
@@ -340,6 +350,15 @@ function config(path) {
   var json = JSON.parse(fs.readFileSync(CONFIG_FILEPATH, 'utf8'));
 
   logger.log.info(IDLOG, 'configuring authentication by ' + CONFIG_FILEPATH);
+
+  if (typeof json.enabled !== 'boolean') {
+    logger.log.warn(IDLOG, 'wrong "' + path + '": bad "enabled" key: use the default value "' + enabled + '"');
+  } else {
+    enabled = json.enabled;
+    if (enabled === false) {
+      logger.log.warn(IDLOG, 'ATTENTION: authentication is disabled !');
+    }
+  }
 
   // set the authentication type
   authenticationType = json.type;
@@ -815,7 +834,10 @@ function authenticateFreepbxAdmin(secretkey) {
  */
 function authenticate(username, password, cb) {
   try {
-    // check parameters
+    if (enabled === false) {
+      cb();
+      return;
+    }
     if (typeof cb !== 'function' ||
       typeof password !== 'string' ||
       typeof username !== 'string') {
@@ -1013,6 +1035,9 @@ function isAutoUpdateTokenExpires() {
  */
 function verifyToken(username, token, isRemote) {
   try {
+    if (enabled === false) {
+      return true;
+    }
     isRemote = false;
     // check parameters
     if (typeof username !== 'string' || typeof token !== 'string' || typeof isRemote !== 'boolean') {
