@@ -279,8 +279,10 @@ function start() {
 
           var target = proxyRules.match(req);
           if (target) {
-            return proxy.web(req, res, {
-              target: target
+            return proxy.web(req, res, { target: target }, function (err) {
+              if (err) {
+                logger.log.error(IDLOG, err.stack);
+              }
             });
           }
           compUtil.net.sendHttp404(IDLOG, res);
@@ -324,8 +326,10 @@ function start() {
             // proxy the request
             var target = proxyRules.match(req);
             if (target) {
-              return proxy.web(req, res, {
-                target: target
+              return proxy.web(req, res, { target: target }, function (err) {
+                if (err) {
+                  logger.log.error(IDLOG, err.stack);
+                }
               });
             }
             compUtil.net.sendHttp404(IDLOG, res);
