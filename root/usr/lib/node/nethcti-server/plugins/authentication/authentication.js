@@ -201,6 +201,17 @@ var authenticationType;
 var authRemoteSites = {};
 
 /**
+ * Map of username with the corresponding shibboleth cookie id used
+ * for authentication.
+ *
+ * @property mapShibbolethUser
+ * @type object
+ * @private
+ * @default {}
+ */
+var mapShibbolethUser = {};
+
+/**
  * The token expiration expressed in milliseconds. It can be customized
  * with the configuration file.
  *
@@ -1111,6 +1122,56 @@ function on(type, cb) {
   }
 }
 
+/**
+ * Add a map between shibboleth username and the corresponding
+ * cookie id used for authentication.
+ *
+ * @method addShibbolethMap
+ * @param {string} cookieId The cookie identifier
+ * @param {string} username The username
+ */
+function addShibbolethMap(cookieId, username) {
+  try {
+    mapShibbolethUser[cookieId] = username;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Return the username corresponding to a cookie identifier.
+ *
+ * @method getShibbolethUsername
+ * @param {string} cookieId The cookie identifier
+ * @return {string} The username.
+ */
+function getShibbolethUsername(cookieId) {
+  try {
+    return mapShibbolethUser[cookieId];
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Check if the provided username corresponding to a shibboleth user.
+ *
+ * @method isShibbolethUser
+ * @param {string} username The username
+ * @return {boolean} True if the username is a shibboleth user.
+ */
+function isShibbolethUser(username) {
+  try {
+    if (typeof mapShibbolethUser[username] === 'string' && mapShibbolethUser[username] !== '') {
+      return true;
+    }
+    return false;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
 // public interface
 exports.on = on;
 exports.config = config;
@@ -1124,9 +1185,12 @@ exports.EVT_RELOADED = EVT_RELOADED;
 exports.setCompDbconn = setCompDbconn;
 exports.EVT_COMP_READY = EVT_COMP_READY;
 exports.calculateToken = calculateToken;
+exports.addShibbolethMap = addShibbolethMap;
+exports.isShibbolethUser = isShibbolethUser;
 exports.getRemoteSiteName = getRemoteSiteName;
 exports.updateTokenExpires = updateTokenExpires;
 exports.isUnautheCallEnabled = isUnautheCallEnabled;
+exports.getShibbolethUsername = getShibbolethUsername;
 exports.isUnautheCallIPEnabled = isUnautheCallIPEnabled;
 exports.authenticateRemoteSite = authenticateRemoteSite;
 exports.isAutoUpdateTokenExpires = isAutoUpdateTokenExpires;

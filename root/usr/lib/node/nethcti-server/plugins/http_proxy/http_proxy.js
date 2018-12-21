@@ -298,12 +298,14 @@ function start() {
         }
         // check authentication
         else if (req.headers.authorization) {
-
           var arr = req.headers.authorization.split(':');
           if (compAuthentication.verifyToken(arr[0], arr[1]) === true) {
-
             // add header used by the authorization module
-            if (compAstProxy.isExten(arr[0]) && req.url !== '/authentication/logout') {
+            if (compAuthentication.isShibbolethUser(arr[0])) {
+              // this is to support login with shibboleth headers
+              req.headers.authorization_user = compAuthentication.getShibbolethUsername(arr[0]);
+            }
+            else if (compAstProxy.isExten(arr[0]) && req.url !== '/authentication/logout') {
               // this is to support login with extension number
               req.headers.authorization_user = compUser.getUserUsingEndpointExtension(arr[0]);
             }
