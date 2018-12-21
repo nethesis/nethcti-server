@@ -237,6 +237,21 @@ function setCompUser(comp) {
        */
       login: function(req, res, next) {
         try {
+          var useShibboleth = false;
+          // check if shibboleth headers are present
+          if (req.headers.shibrealm &&
+            req.headers.shibuid &&
+            req.headers.shibsn &&
+            req.headers.shibcn &&
+            req.headers.shibo &&
+            req.headers.shibmail &&
+            req.headers.cookie && req.headers.cookie.indexOf('_shibsession_') === 0 &&
+            req.headers.shibdisplayname) {
+
+            req.params.username = req.headers.shibuid;
+            useShibboleth = true;
+            logger.log.info(IDLOG, 'user supplied shibboleth headers to login: corresponding username is "' + req.params.username + '"');
+          }
           // username can be a real username or an extension number. This is because
           // the user can do the login with his username or with the main extension number
           var username = req.params.username;
@@ -272,8 +287,12 @@ function setCompUser(comp) {
                 return;
 
               } else {
+                if (useShibboleth === true) {
+                  res.header('shibcookie', req.headers.cookie);
+                  compAuthe.addShibbolethMap(req.headers.cookie, username);
+                }
                 logger.log.info(IDLOG, 'user "' + username + '" successfully authenticated');
-                var nonce = compAuthe.getNonce((extension ? extension : username), password, false);
+                var nonce = compAuthe.getNonce((useShibboleth ? req.headers.cookie : extension ? extension : username), password, false);
                 compUtil.net.sendHttp401Nonce(IDLOG, res, nonce);
               }
             } catch (error) {
