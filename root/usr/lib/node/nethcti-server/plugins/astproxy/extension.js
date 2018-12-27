@@ -45,6 +45,15 @@ exports.Extension = function(ext, chType) {
   var ip;
 
   /**
+   * The supported codecs.
+   *
+   * @property codecs
+   * @type {array}
+   * @private
+   */
+  var codecs = [];
+
+  /**
    * The extension context.
    *
    * @property context
@@ -236,6 +245,26 @@ exports.Extension = function(ext, chType) {
    */
   function setIp(ipAddr) {
     ip = ipAddr;
+  }
+
+  /**
+   * Get codecs.
+   *
+   * @method getCodecs
+   * @return {array} The codecs.
+   */
+  function getCodecs() {
+    return codecs;
+  }
+
+  /**
+   * Set codecs.
+   *
+   * @method setCodecs
+   * @param {array} c The codecs
+   */
+  function setCodecs(c) {
+    codecs = c;
   }
 
   /**
@@ -650,22 +679,23 @@ exports.Extension = function(ext, chType) {
    * Returns the JSON representation of the object.
    *
    *     {
-   *         ip:           "192.168.5.163",
-   *         cf:           "221",                          // the call forward status. If it's disabled, it is an empty string
-   *         cfb:          "221",                          // the call forward on busy status. If it's disabled, it is an empty string
-   *         cfu:          "221",                          // the call forward on unavailable status. If it's disabled, it is an empty string
-   *         dnd:          false,                          // it's true if the don't disturb is active
-   *         cfVm:         "",                             // the call forward to voicemail status. If it's disabled, it is an empty string
-   *         cfbVm:        "",                             // the call forward on busy to voicemail status. If it's disabled, it is an empty string
-   *         cfuVm:        "",                             // the call forward on unavailable to voicemail status. If it's disabled, it is an empty string
-   *         port:         "5062",
-   *         name:         "Alessandro",
-   *         exten:        "214",
-   *         status:       "online",                       // the status can be: "dnd", "busy", "online", "onhold", "offline", "ringing", "busy_ringing"
-   *         context:      "from-internal",                // the context
-   *         useWebsocket: false,                          // if the extension use websocket
-   *         sipuseragent: "Twinkle/1.4.2",
-   *         conversations: { Conversation.{{#crossLink "Conversation/toJSON"}}{{/crossLink}}() } // the keys is the conversation identifiers
+   *         "ip":           "192.168.5.163",
+   *         "cf":           "221",                          // the call forward status. If it's disabled, it is an empty string
+   *         "cfb":          "221",                          // the call forward on busy status. If it's disabled, it is an empty string
+   *         "cfu":          "221",                          // the call forward on unavailable status. If it's disabled, it is an empty string
+   *         "dnd":          false,                          // it's true if the don't disturb is active
+   *         "cfVm":         "",                             // the call forward to voicemail status. If it's disabled, it is an empty string
+   *         "cfbVm":        "",                             // the call forward on busy to voicemail status. If it's disabled, it is an empty string
+   *         "cfuVm":        "",                             // the call forward on unavailable to voicemail status. If it's disabled, it is an empty string
+   *         "codecs":       ["ulaw", "alaw"],
+   *         "port":         "5062",
+   *         "name":         "Alessandro",
+   *         "exten":        "214",
+   *         "status":       "online",                       // the status can be: "dnd", "busy", "online", "onhold", "offline", "ringing", "busy_ringing"
+   *         "context":      "from-internal",                // the context
+   *         "useWebsocket": false,                          // if the extension use websocket
+   *         "sipuseragent": "Twinkle/1.4.2",
+   *         "conversations": { Conversation.{{#crossLink "Conversation/toJSON"}}{{/crossLink}}() } // the keys is the conversation identifiers
    *     }
    *
    * @method toJSON
@@ -695,6 +725,7 @@ exports.Extension = function(ext, chType) {
       cfbVm: cfbVm,
       cfuVm: cfuVm,
       exten: exten,
+      codecs: codecs,
       status: status,
       context: context,
       chanType: chanType,
@@ -734,6 +765,8 @@ exports.Extension = function(ext, chType) {
     disableCf: disableCf,
     setStatus: setStatus,
     getStatus: getStatus,
+    getCodecs: getCodecs,
+    setCodecs: setCodecs,
     disableCfb: disableCfb,
     disableCfu: disableCfu,
     setContext: setContext,

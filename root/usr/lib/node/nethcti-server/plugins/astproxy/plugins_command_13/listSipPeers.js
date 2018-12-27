@@ -105,7 +105,9 @@ var IDLOG = '[listSipPeers]';
           // data.objectname is the extension number, e.g., 214
           if (data && data.event === 'PeerEntry' && data.objectname && data.channeltype) {
             list.push({
-              ext: data.objectname
+              ext: data.objectname,
+              ip: data.ipaddress === '-none-' ? '' : data.ipaddress,
+              port: data.ipport === '0' ? '' : data.ipport
             });
 
           } else if (map[data.actionid] && data && data.event === 'PeerlistComplete') {

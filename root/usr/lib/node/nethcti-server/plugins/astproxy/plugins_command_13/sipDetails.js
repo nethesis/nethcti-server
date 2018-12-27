@@ -120,6 +120,7 @@ var IDLOG = '[sipDetails]';
                 name: name,
                 port: port,
                 exten: data.objectname,
+                codecs: data.codecs ? data.codecs.replace(/[()]/g, '').split('|') : [],
                 context: data.context || '',
                 chantype: data.channeltype,
                 sipuseragent: data.sipuseragent

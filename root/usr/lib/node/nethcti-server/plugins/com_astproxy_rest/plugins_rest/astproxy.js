@@ -1443,7 +1443,7 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check if the user has the operator panel authorization
-          if (compAuthorization.authorizeOpTrunksUser(username) !== true) {
+          if (username !== 'admin' && compAuthorization.authorizeOpTrunksUser(username) !== true) {
             logger.log.warn(IDLOG, 'getting trunks: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
@@ -1555,13 +1555,11 @@ var compConfigManager;
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
-
           // get all extensions associated with the user
           var userExtensions = compUser.getAllEndpointsExtension(username);
           var extension;
-
           // check if the requested extension is owned by the user
-          if (userExtensions[req.params.id]) {
+          if (userExtensions[req.params.id] || username === 'admin') {
             extension = compAstProxy.getJSONExtension(req.params.id);
           }
           // checks if the user has the privacy enabled. In case the user has the "privacy" and

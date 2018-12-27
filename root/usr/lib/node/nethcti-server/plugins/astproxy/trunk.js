@@ -95,6 +95,15 @@ exports.Trunk = function(ext, chType, maxCh) {
   var status;
 
   /**
+   * The trunk supported codecs.
+   *
+   * @property codecs
+   * @type {array}
+   * @private
+   */
+  var codecs = [];
+
+  /**
    * Maximum number of channels supported by the trunk.
    *
    * @property maxChannels
@@ -175,6 +184,26 @@ exports.Trunk = function(ext, chType, maxCh) {
    */
   function getIp(ipAddr) {
     return ip;
+  }
+
+  /**
+   * Get trunk codecs.
+   *
+   * @method getCodecs
+   * @return {array} The codecs.
+   */
+  function getCodecs() {
+    return codecs;
+  }
+
+  /**
+   * Set trunk codecs.
+   *
+   * @method setCodecs
+   * @param {array} c The codecs
+   */
+  function setCodecs(c) {
+    codecs = c;
   }
 
   /**
@@ -352,6 +381,7 @@ exports.Trunk = function(ext, chType, maxCh) {
    *         "port":         "5062",
    *         "name":         "2001",
    *         "exten":        "200",
+   *         "codecs":       ["ulaw", "alaw"],
    *         "status":       "online",                       // the status can be: "busy", "online", "offline"
    *         "maxChannels":  4,                              // maximum number of channels supported by the trunk
    *         "sipuseragent": "Patton SN4638 5BIS",
@@ -377,6 +407,7 @@ exports.Trunk = function(ext, chType, maxCh) {
       port: port,
       name: name,
       exten: exten,
+      codecs: codecs,
       status: status,
       chanType: chanType,
       maxChannels: maxChannels,
@@ -399,6 +430,8 @@ exports.Trunk = function(ext, chType, maxCh) {
     toString: toString,
     setStatus: setStatus,
     getStatus: getStatus,
+    getCodecs: getCodecs,
+    setCodecs: setCodecs,
     getChanType: getChanType,
     getUserContext: getUserContext,
     setUserContext: setUserContext,
