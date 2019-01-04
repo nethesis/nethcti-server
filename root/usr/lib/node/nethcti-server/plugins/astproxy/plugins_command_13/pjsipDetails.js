@@ -133,6 +133,7 @@ var IDLOG = '[pjsipDetails]';
             list[data.actionid].name = data.endpointname;
 
           } else if (data.event === 'EndpointDetail') {
+            list[data.actionid].codecs = data.allow ? data.allow.replace(/[()]/g, '').split('|') : [];
             list[data.actionid].context = data.context;
             list[data.actionid].status = AST_EXTEN_PJSIP_STATUS_2_STR_ADAPTER[data.devicestate];
 

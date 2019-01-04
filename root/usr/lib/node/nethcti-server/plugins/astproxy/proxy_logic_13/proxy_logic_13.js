@@ -2632,6 +2632,26 @@ function getPjsipDetailExten(exten) {
 }
 
 /**
+ * Get pjsip trunk details.
+ *
+ * @method getPjsipDetailTrunk
+ * @param {string} trunk The trunk identifier
+ * @return {function} The function to be called by _initializePjsipTrunk_.
+ * @private
+ */
+function getPjsipDetailTrunk(trunk) {
+  return function (callback) {
+    astProxy.doCmd({
+      command: 'pjsipDetails',
+      exten: trunk
+    }, function (err, resp) {
+      trunkPjsipDetails(err, resp);
+      callback(null);
+    });
+  };
+}
+
+/**
  * Get the list of channels.
  *
  * @method getListChannels
@@ -2893,18 +2913,18 @@ function initializeSipTrunk(err, results) {
       trunks[trunk.getExten()] = trunk;
       trunks[trunk.getExten()].setName(staticDataTrunks[results[i].ext].name);
       trunks[trunk.getExten()].setUserContext(staticDataTrunks[results[i].ext].usercontext);
+      trunks[trunk.getExten()].setIp(results[i].ip);
+      trunks[trunk.getExten()].setPort(results[i].port);
 
       arr.push(getTrunkSipDetails(trunk.getExten()));
       arr.push(getSipTrunkStatus(trunk.getExten()));
     }
-    async.parallel(arr,
-      function (err) {
-        if (err) {
-          logger.log.error(IDLOG, err);
-        }
-        getListChannelsForTrunks();
+    async.parallel(arr, function (err) {
+      if (err) {
+        logger.log.error(IDLOG, err);
       }
-    );
+      getListChannelsForTrunks();
+    });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2982,6 +3002,7 @@ function initializePjsipTrunk(err, results) {
       trunks[trunk.getExten()] = trunk;
       trunks[trunk.getExten()].setName(staticDataTrunks[results[i].ext].name);
       trunks[trunk.getExten()].setUserContext(staticDataTrunks[results[i].ext].usercontext);
+      arr.push(getPjsipDetailTrunk(trunk.getExten()));
     }
     async.parallel(arr,
       function (err) {
@@ -3019,13 +3040,15 @@ function initializeIaxTrunk(err, results) {
       if (!staticDataTrunks[results[i].exten]) {
         continue;
       }
-
       trunk = new Trunk(
         results[i].exten,
         staticDataTrunks[results[i].exten].tech,
         staticDataTrunks[results[i].exten].maxchans
       );
       trunks[trunk.getExten()] = trunk;
+      trunks[trunk.getExten()].setIp(results[i].ip);
+      trunks[trunk.getExten()].setPort(results[i].port);
+      trunks[trunk.getExten()].setStatus(results[i].status);
       trunks[trunk.getExten()].setName(staticDataTrunks[results[i].exten].name);
       trunks[trunk.getExten()].setUserContext(staticDataTrunks[results[i].exten].usercontext);
       logger.log.info(IDLOG, 'set iax details for trunk ' + results[i].exten);
@@ -3363,6 +3386,7 @@ function extPjsipDetails(err, resp) {
       extensions[resp.exten].setPort(resp.port);
       extensions[resp.exten].setName(staticDataExtens.names[resp.exten]);
       extensions[resp.exten].setContext(resp.context);
+      extensions[resp.exten].setCodecs(resp.codecs);
       extensions[resp.exten].setSipUserAgent(resp.sipuseragent);
       extensions[resp.exten].setStatus(resp.status);
       logger.log.info(IDLOG, 'set pjsip details for ext "' + resp.exten + '"');
@@ -3372,6 +3396,33 @@ function extPjsipDetails(err, resp) {
   }
 }
 
+/**
+ * Sets the details for the pjsip trunk object.
+ *
+ * @method trunkPjsipDetails
+ * @param {object} err The error object
+ * @param {object} resp The trunk information object
+ * @private
+ */
+function trunkPjsipDetails(err, resp) {
+  try {
+    if (err) {
+      logger.log.error(IDLOG, 'setting pjsip trunk details: ' + err.toString());
+      return;
+    }
+    if (!resp) {
+      throw new Error('wrong parameter: ' + JSON.stringify(arguments));
+    }
+    if (trunks[resp.exten]) {
+      trunks[resp.exten].setIp(resp.ip);
+      trunks[resp.exten].setPort(resp.port);
+      trunks[resp.exten].setCodecs(resp.codecs);
+      trunks[resp.exten].setStatus(resp.status);
+    }
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
 
 /**
  * Sets the details for the sip trunk object.
@@ -3397,9 +3448,8 @@ function trunkSipDetails(err, resp) {
     var data = resp.exten;
 
     // set the extension information
-    trunks[data.exten].setIp(data.ip);
-    trunks[data.exten].setPort(data.port);
     trunks[data.exten].setSipUserAgent(data.sipuseragent);
+    trunks[data.exten].setCodecs(data.codecs);
     logger.log.info(IDLOG, 'set sip details for trunk ' + data.exten);
 
   } catch (error) {

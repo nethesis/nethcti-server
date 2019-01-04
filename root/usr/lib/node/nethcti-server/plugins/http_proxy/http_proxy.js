@@ -231,19 +231,20 @@ function start() {
           res.end();
           return;
         }
-
         // #1 Check FreePBX "admin" user
         //
         // freepbx admin user is managed in a special way. If the user supply the headers "User: admin" and
         // "Secretkey: 12345", the authentication is verified each time and he can use some rest api.
         // "admin" user is FreePBX admin user
         if (req.headers.user === 'admin' && req.headers.secretkey) {
-
           if (compAuthentication.authenticateFreepbxAdmin(req.headers.secretkey) === true) {
-
             // check if the url is one of the permitted urls for freepbx admin user
             if (req.url === '/dbconn/test' ||
-              req.url === '/custcard/preview') {
+              req.url === '/custcard/preview' ||
+              req.url.indexOf('/user/endpoints') === 0 ||
+              req.url.indexOf('/astproxy/trunk') === 0 ||
+              req.url.indexOf('/user/presence') === 0 ||
+              req.url.indexOf('/astproxy/extension') === 0) {
 
               // add header used by the authorization module
               req.headers.authorization_user = 'admin';
