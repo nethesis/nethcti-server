@@ -243,6 +243,7 @@ function start() {
               req.url === '/custcard/preview' ||
               req.url.indexOf('/user/endpoints') === 0 ||
               req.url.indexOf('/astproxy/trunk') === 0 ||
+              req.url.indexOf('/user/presence') === 0 ||
               req.url.indexOf('/astproxy/extension') === 0) {
 
               // add header used by the authorization module

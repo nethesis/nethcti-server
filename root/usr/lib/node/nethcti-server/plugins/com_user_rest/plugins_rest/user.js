@@ -1445,7 +1445,6 @@ function presenceSet(req, res, next) {
   try {
     var status = req.params.status;
     var username = req.headers.authorization_user;
-
     if (!compUser.isValidUserPresence(status) ||
       (status === compUser.USER_PRESENCE_STATUS.callforward && !req.params.to)) {
 
@@ -1470,6 +1469,12 @@ function presenceSet(req, res, next) {
       logger.log.warn(IDLOG, 'setting presence cf to user "' + username + '": permission denied');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
+    }
+
+    // the request has been received from freepbx admin wizard
+    if (username === 'admin') {
+      username = req.params.username;
+      logger.log.warn(IDLOG, 'set presence "' + status + '" to user "' + username + '" by user "admin"');
     }
 
     compUser.setPresence({
