@@ -134,6 +134,7 @@ var compConfigManager;
         * 1. [`astproxy/qmanager_qstats/:qid`](#qmanager_qstatsget)
         * 1. [`astproxy/qmanager_qcalls`](#qmanager_qcallsget)
         * 1. [`astproxy/qmanager_astats`](#qmanager_astatsget)
+        * 1. [`astproxy/opdata`](#opdataget)
         *
         * ---
         *
@@ -210,7 +211,7 @@ var compConfigManager;
                },
                "avgHoldTime": "0",
                "avgTalkTime": "0",
-               "waitingCallers": {},
+               "waitingCallers": { QueueWaitingCaller.{{#crossLink "QueueWaitingCaller/toJSON"}}{{/crossLink}}() },
                "completedCallsCount": "0",
                "abandonedCallsCount": "0",
                "serviceLevelTimePeriod": "60",
@@ -496,6 +497,21 @@ var compConfigManager;
              }
          },
          ....
+     }
+        *
+        * ---
+        *
+        * ### <a id="opdataget">**`astproxy/opdata`**</a>
+        *
+        * Gets all the data needed by the operator panel.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "inQueue": "500",
+         "waitingQueue": "501",
+         "500": { Queue.{{#crossLink "Queue/toJSON"}}{{/crossLink}}() }
+         "501": { Queue.{{#crossLink "Queue/toJSON"}}{{/crossLink}}() }
      }
         *
         *
@@ -1063,6 +1079,7 @@ var compConfigManager;
          *   @param {string} cfvm/:type/:endpoint           Gets the call forward status to voicemail of the endpoint of the user
          *   @param {string} cfcall/:type/:endpoint         Gets the call forward status to a destination number of the endpoint of the user
          *   @param {string} qmanager_queues                Gets all the queues of the queue supervisor
+         *   @param {string} opdata                         Gets all the data needed by the operator panel
          */
         'get': [
           'queues',
@@ -1085,7 +1102,8 @@ var compConfigManager;
           'dnd/:endpoint',
           'cfvm/:type/:endpoint',
           'cfcall/:type/:endpoint',
-          'qmanager_queues'
+          'qmanager_queues',
+          'opdata'
         ],
 
         /**
@@ -1749,6 +1767,38 @@ var compConfigManager;
               compUtil.net.sendHttp500(IDLOG, res, err.toString());
             }
           });
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      },
+
+      /**
+       *  Gets all the data needed by the operator panel with the following REST API:
+       *
+       *     GET  opdata
+       *
+       * @method opdata
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      opdata: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          if (compAuthorization.authorizeOperatorPanel(username) === true) {
+            logger.log.info(IDLOG, 'getting operator panel data: user "' + username + '" has the "operator_panel" authorization');
+          } else {
+            logger.log.warn(IDLOG, 'getting operator panel data: authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          var queues = compAuthorization.getOperatorPanelQueues(username);
+          var allQ = compAstProxy.getJSONQueues();
+          queues[queues.inQueue] = allQ[queues.inQueue];
+          queues[queues.waitingQueue] = allQ[queues.waitingQueue];
+          logger.log.info(IDLOG, 'sent operator panel data to user "' + username + '" ' + res.connection.remoteAddress);
+          res.send(200, queues);
         } catch (error) {
           logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -4527,6 +4577,7 @@ var compConfigManager;
     exports.hangup = astproxy.hangup;
     exports.atxfer = astproxy.atxfer;
     exports.answer = astproxy.answer;
+    exports.opdata = astproxy.opdata;
     exports.intrude = astproxy.intrude;
     exports.end_conf = astproxy.end_conf;
     exports.opgroups = astproxy.opgroups;
