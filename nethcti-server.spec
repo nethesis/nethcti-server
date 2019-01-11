@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.5.0
+Version: 3.6.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,14 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Jan 11 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.6.0-1
+- Phonebook on modify contact privacy is always set to public - Bug nethesis/dev#5535
+- Server does not work properly if some ports are busy during the boot - Bug nethesis/dev#5451
+- Phonebook fix modify contacts buttons and search input submit event - Bug nethesis/dev#5533
+- Add title and notes to phone book contacts - nethesis/dev#5536
+- Migration from NethVoice11 to NethVoice14 - nethesis/dev#5454
+- Add a dashboard to the wizard - nethesis/dev#5544
+
 * Mon Dec 10 2018 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.5.0-1
 - Optimize the management of asterisk events, executed queries and websocket events - nethesis/dev#5513
 - QManager agents empty information - Bug nethesis/dev#5524
