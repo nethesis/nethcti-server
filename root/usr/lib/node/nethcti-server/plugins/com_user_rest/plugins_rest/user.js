@@ -647,7 +647,8 @@ function setCompUtil(comp) {
           var username = req.headers.authorization_user;
           var result = compUser.getUserInfoJSON(username);
           result.profile = compAuthorization.getUserProfileJSON(username);
-
+          // remove remote_sites permissions: it is not used
+          delete result.profile.macro_permissions.remote_sites;
           if (typeof result === 'object') {
 
             var defExt = compConfigManager.getDefaultUserExtensionConf(username);
