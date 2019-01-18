@@ -1548,10 +1548,10 @@ function getOperatorPanelQueues(username) {
       profiles[profid].macro_permissions.operator_panel.value === true) {
 
       for (permissionId in profiles[profid].macro_permissions.operator_panel.permissions) {
-        if (permissionId.indexOf('in_queue_') === 0) {
+        if (permissionId.indexOf('in_queue_') === 0 && profiles[profid].macro_permissions.operator_panel.permissions[permissionId].value === true) {
           arr.inQueue = permissionId.split('_')[2];
         } else if (permissionId.indexOf('waiting_queue_') === 0) {
-          arr.waitingQueue = permissionId.split('_')[2];
+          arr.waitingQueue = 'ctiopqueue' + permissionId.split('_')[2];
         }
       }
     }
