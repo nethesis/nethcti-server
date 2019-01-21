@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.6.0
+Version: 3.7.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Jan 21 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.7.0-1
+- Log as warn when a user deletes an offhour audio message - nethesis/dev#5565
+
 * Fri Jan 11 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.6.0-1
 - Phonebook on modify contact privacy is always set to public - Bug nethesis/dev#5535
 - Server does not work properly if some ports are busy during the boot - Bug nethesis/dev#5451
