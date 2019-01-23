@@ -1,7 +1,6 @@
 /**
  * @submodule plugins_command_13
  */
-var async = require('async');
 var action = require('../action');
 
 /**
