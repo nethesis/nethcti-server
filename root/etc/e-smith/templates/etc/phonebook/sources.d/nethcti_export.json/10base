@@ -1,0 +1,45 @@
+{
+    use NethServer::Password;
+    our $password = NethServer::Password::store("CTIDBPasswd");
+    $OUT = '';
+}
+\{
+"nethcti": \{
+    "dbtype": "mysql",
+    "type" : "nethcti",
+    "host": "127.0.0.1",
+    "port": "/var/run/mysqld/mysqld.sock",
+    "user": "nethcti",
+    "password": "{$password}",
+    "dbname": "nethcti3",
+    "dbtable": "cti_phonebook",
+    "enabled" : true,
+    "readonly" : true,
+    "mapping": \{
+        "owner_id" : "owner_id",
+        "homeemail" : "homeemail",
+        "workemail" : "workemail",
+        "homephone" : "homephone",
+        "workphone" : "workphone",
+        "cellphone" : "cellphone",
+        "fax" : "fax",
+        "title" : "title",
+        "company" : "company",
+        "notes" : "notes",
+        "name" : "name",
+        "homestreet" : "homestreet",
+        "homepob" : "homepob",
+        "homecity" : "homecity",
+        "homeprovince" : "homeprovince",
+        "homepostalcode" : "homepostalcode",
+        "homecountry" : "homecountry",
+        "workstreet" : "workstreet",
+        "workpob" : "workpob",
+        "workcity" : "workcity",
+        "workprovince" : "workprovince",
+        "workpostalcode" : "workpostalcode",
+        "workcountry" : "workcountry",
+        "url" : "url"
+    \}
+\}
+\}

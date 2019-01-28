@@ -16,6 +16,7 @@ event_templates('nethcti-server3-update', qw(
                 /etc/nethcti/chat.json
                 /etc/nethcti/phone_urls.json
                 /etc/httpd/conf.d/nethcti-server.conf
+                /etc/phonebook/sources.d/nethcti_export.json
 ));
 
 event_actions('nethcti-server3-update', qw(
