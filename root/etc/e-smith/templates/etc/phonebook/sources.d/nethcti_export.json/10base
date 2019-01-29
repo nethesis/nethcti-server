@@ -11,7 +11,7 @@
     "port": "/var/run/mysqld/mysqld.sock",
     "user": "nethcti",
     "password": "{$password}",
-    "dbname": "nethcti2,
+    "dbname": "nethcti2",
     "dbtable": "cti_phonebook",
     "enabled" : true,
     "readonly" : true,
