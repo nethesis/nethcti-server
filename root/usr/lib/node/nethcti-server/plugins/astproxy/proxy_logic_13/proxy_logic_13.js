@@ -6472,6 +6472,56 @@ function pickupParking(parking, destId, extForCtx, cb) {
 }
 
 /**
+ * Put the conversation into the waiting queue of the operator panel.
+ *
+ * @method opWaitConv
+ * @param {string} opWaitQueue The destination waiting queue
+ * @param {string} convid The conversation identifier
+ * @param {string} extens The extensions in which the conversation has to be searched
+ * @param {function} cb The callback function
+ */
+function opWaitConv(opWaitQueue, convid, extens, cb) {
+  try {
+    if (typeof cb !== 'function' || typeof opWaitQueue !== 'string' || typeof convid !== 'string' || !Array.isArray(extens)) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var e, conv, found;
+    for (var i in extens) {
+      e = extens[i];
+      if (extensions[e]) {
+        var convs = extensions[e].getAllConversations();
+        conv = convs[convid];
+        if (conv !== undefined) {
+          found = true;
+          var ch;
+          if (conv.isIncoming()) {
+            ch = conv.getSourceChannel().getChannel();
+          } else {
+            ch = conv.getDestinationChannel().getChannel();
+          }
+          astProxy.doCmd({
+            command: 'redirectChannel',
+            context: 'ctiopqueue',
+            chToRedirect: ch,
+            to: opWaitQueue
+          }, function (err) {
+            cb(err);
+            redirectConvCb(err);
+          });
+        }
+        break;
+      }
+    }
+    if (found === undefined) {
+      logger.log.warn(IDLOG, 'conv "' + convid + '" to put in waiting for the operator panel not found in extens ' + extens);
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Pickup a conversation.
  *
  * @method pickupQueueWaitingCaller
@@ -9498,6 +9548,7 @@ exports.hangupChannel = hangupChannel;
 exports.pickupParking = pickupParking;
 exports.getJSONQueues = getJSONQueues;
 exports.endMeetmeConf = endMeetmeConf;
+exports.opWaitConv = opWaitConv;
 exports.getJSONTrunks = getJSONTrunks;
 exports.getTrunksList = getTrunksList;
 exports.getExtensList = getExtensList;
