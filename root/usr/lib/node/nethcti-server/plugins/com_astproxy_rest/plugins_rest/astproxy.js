@@ -134,6 +134,7 @@ var compConfigManager;
         * 1. [`astproxy/qmanager_qstats/:qid`](#qmanager_qstatsget)
         * 1. [`astproxy/qmanager_qcalls`](#qmanager_qcallsget)
         * 1. [`astproxy/qmanager_astats`](#qmanager_astatsget)
+        * 1. [`astproxy/opdata`](#opdataget)
         *
         * ---
         *
@@ -210,7 +211,7 @@ var compConfigManager;
                },
                "avgHoldTime": "0",
                "avgTalkTime": "0",
-               "waitingCallers": {},
+               "waitingCallers": { QueueWaitingCaller.{{#crossLink "QueueWaitingCaller/toJSON"}}{{/crossLink}}() },
                "completedCallsCount": "0",
                "abandonedCallsCount": "0",
                "serviceLevelTimePeriod": "60",
@@ -498,6 +499,21 @@ var compConfigManager;
          ....
      }
         *
+        * ---
+        *
+        * ### <a id="opdataget">**`astproxy/opdata`**</a>
+        *
+        * Gets all the data needed by the operator panel.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "inQueue": "500",
+         "waitingQueue": "501",
+         "500": { Queue.{{#crossLink "Queue/toJSON"}}{{/crossLink}}() }
+         "501": { Queue.{{#crossLink "Queue/toJSON"}}{{/crossLink}}() }
+     }
+        *
         *
         * <br>
         *
@@ -536,6 +552,7 @@ var compConfigManager;
         * 1. [`astproxy/unmute_userconf`](#unmute_userconfpost)
         * 1. [`astproxy/blindtransfer_queue`](#blindtransfer_queuepost)
         * 1. [`astproxy/unauthe_call`](#unauthe_callpost)
+        * 1. [`astproxy/op_wait_conv`](#op_wait_convpost)
         *
         * ---
         *
@@ -1004,6 +1021,19 @@ var compConfigManager;
         *
         *     { "endpointId": "200", "number": "0123456789" }
         *
+        * ---
+        *
+        * ### <a id="op_wait_convpost">**`astproxy/op_wait_conv`**</a>
+        *
+        * It puts the conversation waiting into the waiting queue associated to the user profile. It is used
+        * by the operator panel. The request must contains the following parameters:
+        *
+        * * `convid: the conversation identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "convid": "PJSIP/200-00000033>PJSIP/201-00000034" }
+        *
         *
         * <br>
         *
@@ -1063,6 +1093,7 @@ var compConfigManager;
          *   @param {string} cfvm/:type/:endpoint           Gets the call forward status to voicemail of the endpoint of the user
          *   @param {string} cfcall/:type/:endpoint         Gets the call forward status to a destination number of the endpoint of the user
          *   @param {string} qmanager_queues                Gets all the queues of the queue supervisor
+         *   @param {string} opdata                         Gets all the data needed by the operator panel
          */
         'get': [
           'queues',
@@ -1085,7 +1116,8 @@ var compConfigManager;
           'dnd/:endpoint',
           'cfvm/:type/:endpoint',
           'cfcall/:type/:endpoint',
-          'qmanager_queues'
+          'qmanager_queues',
+          'opdata'
         ],
 
         /**
@@ -1121,6 +1153,7 @@ var compConfigManager;
          *   @param {string} start_record          Start the recording of a conversation
          *   @param {string} force_hangup          Force hangup of a conversation
          *   @param {string} unauthe_call          Unauthenticated call from any extension to any destination number
+         *   @param {string} op_wait_conv          puts the conversation waiting into the waiting queue associated to the user profile
          *   @param {string} mute_userconf         Mute a user of a meetme conference
          *   @param {string} answer_webrtc         Answer a conversation from the webrtc extension sending the command to the client
          *   @param {string} blindtransfer         Transfer a conversation with blind type
@@ -1167,6 +1200,7 @@ var compConfigManager;
           'start_record',
           'force_hangup',
           'unauthe_call',
+          'op_wait_conv',
           'mute_userconf',
           'answer_webrtc',
           'blindtransfer',
@@ -1756,6 +1790,38 @@ var compConfigManager;
       },
 
       /**
+       *  Gets all the data needed by the operator panel with the following REST API:
+       *
+       *     GET  opdata
+       *
+       * @method opdata
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      opdata: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          if (compAuthorization.authorizeOperatorPanel(username) === true) {
+            logger.log.info(IDLOG, 'getting operator panel data: user "' + username + '" has the "operator_panel" authorization');
+          } else {
+            logger.log.warn(IDLOG, 'getting operator panel data: authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          var queues = compAuthorization.getOperatorPanelQueues(username);
+          var allQ = compAstProxy.getJSONQueues();
+          queues[queues.inQueue] = allQ[queues.inQueue];
+          queues[queues.waitingQueue] = allQ[queues.waitingQueue];
+          logger.log.info(IDLOG, 'sent operator panel data to user "' + username + '" ' + res.connection.remoteAddress);
+          res.send(200, queues);
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      },
+
+      /**
        *  Gets the recall data about the queue with the following REST API:
        *
        *     GET  queue_recall
@@ -2042,6 +2108,67 @@ var compConfigManager;
           req.params.number = req.params.number.replace(/^[+]/, '00').replace(/[^\d*#]/g, '');
           req.params.endpointType = 'extension';
           asteriskCall('unauthe_call rest api', req, res);
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * It puts the conversation waiting into the waiting queue associated to the user profile,
+       * with the following REST API:
+       *
+       *     POST  op_wait_conv
+       *
+       * @method op_wait_conv
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      op_wait_conv: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+          if (compAuthorization.authorizeOperatorPanel(username) === true) {
+            logger.log.info(IDLOG, 'put convid ' + req.params.convid + ' in waiting queue of oppanel: authorization successful for user "' + username + '"');
+          } else {
+            logger.log.warn(IDLOG, 'putting convid ' + req.params.convid + ' in waiting queue of oppanel by user "' + username + '" has been failed: ' +
+              ' user does not have the authorization');
+
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          var opWaitQueue = compAuthorization.getOperatorPanelQueues(username);
+          opWaitQueue = typeof opWaitQueue === 'object' && typeof opWaitQueue.waitingQueue === 'string' ? opWaitQueue.waitingQueue : undefined;
+          var userExtens = compUser.getAllUserExtensions(username);
+          if (userExtens.length === 0) {
+            logger.log.warn(IDLOG, 'putting convid ' + req.params.convid + ' in waiting queue of oppanel by user "' + username + '" has been failed: ' +
+              ' no extensions found associated with user');
+            compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            return;
+          }
+          compAstProxy.opWaitConv(
+            opWaitQueue,
+            req.params.convid,
+            userExtens,
+            function (err) {
+              try {
+                if (err) {
+                  logger.log.warn(IDLOG, 'putting convid ' + req.params.convid + ' in waiting queue "' + opWaitQueue + '" of oppanel by user "' + username + '" has been failed');
+                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                  return;
+                }
+                logger.log.info(IDLOG, 'convid ' + req.params.convid + ' has been put in waiting queue "' + opWaitQueue + '" of oppanel successfully by user "' + username + '"');
+                compUtil.net.sendHttp200(IDLOG, res);
+              } catch (error) {
+                logger.log.error(IDLOG, error.stack);
+                compUtil.net.sendHttp500(IDLOG, res, error.toString());
+              }
+            }
+          );
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -2699,7 +2826,6 @@ var compConfigManager;
       blindtransfer: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
-
           if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' ||
             typeof req.params.to !== 'string' || typeof req.params.endpointId !== 'string') {
 
@@ -4527,6 +4653,7 @@ var compConfigManager;
     exports.hangup = astproxy.hangup;
     exports.atxfer = astproxy.atxfer;
     exports.answer = astproxy.answer;
+    exports.opdata = astproxy.opdata;
     exports.intrude = astproxy.intrude;
     exports.end_conf = astproxy.end_conf;
     exports.opgroups = astproxy.opgroups;
@@ -4548,6 +4675,7 @@ var compConfigManager;
     exports.stop_record = astproxy.stop_record;
     exports.setCompUser = setCompUser;
     exports.mute_record = astproxy.mute_record;
+    exports.op_wait_conv = astproxy.op_wait_conv;
     exports.queue_recall = astproxy.queue_recall;
     exports.qrecall_info = astproxy.qrecall_info;
     exports.qrecall_check = astproxy.qrecall_check;
