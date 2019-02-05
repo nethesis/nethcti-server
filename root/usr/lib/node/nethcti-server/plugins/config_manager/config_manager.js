@@ -629,7 +629,7 @@ function checkQueueAutoLogin(username) {
 
             // login dynamic queue member into the relative queue
             logger.log.info(IDLOG, 'login queue member "' + e + '" into the queue "' + q + '" due to automatic login setting');
-            compAstProxy.queueMemberAdd(e, q, undefined, undefined, function(err, resp) {
+            compAstProxy.queueMemberAdd(e, q, undefined, function(err, resp) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, err);
