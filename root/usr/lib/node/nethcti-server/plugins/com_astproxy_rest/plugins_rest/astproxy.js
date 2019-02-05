@@ -838,13 +838,11 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier`
         * * `queueId: the queue identifier`
         * * `[paused]: the paused status`
-        * * `[penalty]: a penalty (number) to apply to the member. Asterisk will distribute calls to
-        *               members with higher penalties only after attempting to distribute calls to those with lower penalty`
         *
         * Example JSON request parameters:
         *
         *     { "endpointId": "209", "queueId": "401" }
-        *     { "endpointId": "209", "queueId": "401", "paused": true, "penalty": 1 }
+        *     { "endpointId": "209", "queueId": "401", "paused": true }
         *
         * ---
         *
@@ -4179,7 +4177,7 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          // the "paused" and "penalty" parameters are optional
+          // the "paused" parameter is optional
           if (typeof req.params !== 'object' ||
             typeof req.params.queueId !== 'string' ||
             typeof req.params.endpointId !== 'string') {
@@ -4187,6 +4185,12 @@ var compConfigManager;
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
+
+          var obj = {
+            endpointId: req.params.endpointId,
+            queueId: req.params.queueId,
+            paused: req.params.paused
+          };
 
           // check if the user has the administration operator panel queues authorization
           if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
@@ -4221,7 +4225,7 @@ var compConfigManager;
             }
           }
 
-          compAstProxy.queueMemberAdd(req.params.endpointId, req.params.queueId, req.params.paused, req.params.penalty, function (err) {
+          compAstProxy.queueMemberAdd(req.params.endpointId, req.params.queueId, req.params.paused, function (err) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
