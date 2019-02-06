@@ -8,7 +8,7 @@
     "dbtype": "mysql",
     "type" : "nethcti",
     "host": "127.0.0.1",
-    "port": "/var/run/mysqld/mysqld.sock",
+    "port": "/var/lib/mysql/mysql.sock",
     "user": "nethcti",
     "password": "{$password}",
     "dbname": "nethcti3",
