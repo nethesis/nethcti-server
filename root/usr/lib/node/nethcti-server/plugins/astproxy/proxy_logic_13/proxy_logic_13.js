@@ -1675,11 +1675,13 @@ function initializeQueues(err, results) {
     var arr = [];
     var k, q;
     for (k in results) {
-      q = new Queue(results[k].queue);
-      q.setName(staticDataQueues[results[k].queue].name);
-      // store the new queue object
-      queues[q.getQueue()] = q;
-      arr.push(getQueueDetails(q.getQueue()));
+      if (staticDataQueues[results[k].queue]) {
+        q = new Queue(results[k].queue);
+        q.setName(staticDataQueues[results[k].queue].name);
+        // store the new queue object
+        queues[q.getQueue()] = q;
+        arr.push(getQueueDetails(q.getQueue()));
+      }
     }
     async.parallel(arr,
       function (err) {
@@ -1688,8 +1690,10 @@ function initializeQueues(err, results) {
         }
         if (!reloading) {
           results.forEach(function (o) {
-            logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + o.queue);
-            astProxy.emit(EVT_QUEUE_CHANGED, queues[o.queue]);
+            if (staticDataQueues[results[k].queue]) {
+              logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + o.queue);
+              astProxy.emit(EVT_QUEUE_CHANGED, queues[o.queue]);
+            }
           });
         }
         initializationStatus.queues = true;
