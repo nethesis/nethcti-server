@@ -6508,8 +6508,8 @@ function opWaitConv(opWaitQueue, convid, extens, cb) {
             cb(err);
             redirectConvCb(err);
           });
+          break;
         }
-        break;
       }
     }
     if (found === undefined) {
