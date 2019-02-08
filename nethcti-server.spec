@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.7.0
+Version: 3.8.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,10 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Feb 08 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.8.0-1
+- Add new service "Operator Panel" - nethesis/dev#5549
+- Queue agent penalty is not supported - Bug nethesis/dev#5575
+
 * Mon Jan 21 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.7.0-1
 - Log as warn when a user deletes an offhour audio message - nethesis/dev#5565
 
