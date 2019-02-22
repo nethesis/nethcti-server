@@ -132,13 +132,13 @@ try {
       process.on('SIGTERM', function() {
         app.destroy();
         logger.ctilog.log.warn(IDLOG, 'process HALTED by SIGTERM');
-        process.exit(2);
+        process.exit(0);
       });
 
       process.on('SIGINT', function() {
         app.destroy();
         logger.ctilog.log.warn(IDLOG, 'process HALTED by SIGINT (Ctrl+C)');
-        process.exit(2);
+        process.exit(0);
       });
 
       process.on('exit', function(code) {
