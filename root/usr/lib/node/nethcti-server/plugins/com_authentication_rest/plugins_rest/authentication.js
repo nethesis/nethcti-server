@@ -260,7 +260,7 @@ function setCompUser(comp) {
 
           if (!compUser.isUserPresent(clUser)) {
             var errmsg = 'user ' + clUser + ' is not configured';
-            compUtil.net.sendHttp401(IDLOG, res, errmsg);
+            compUtil.net.sendHttp401(IDLOG, res, errmsg, '1');
             return;
           }
 
