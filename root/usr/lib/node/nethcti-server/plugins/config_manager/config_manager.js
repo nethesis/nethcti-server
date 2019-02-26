@@ -605,6 +605,9 @@ function checkQueueAutoLogin(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong username "' + username + '"');
     }
+    if (!compUser.isUserPresent(username) && compAstProxy.isExten(username)) {
+      username = compUser.getUserUsingEndpointExtension(username);
+    }
     logger.log.info(IDLOG, 'received "new logged in user by ws" event for username "' + username + '"');
     if (compAuthorization.authorizeQueuesUser(username) === false) {
       logger.log.info(IDLOG, 'no check for "queue auto login": user "' + username + '" does not have "queue" permission');
@@ -629,7 +632,7 @@ function checkQueueAutoLogin(username) {
 
             // login dynamic queue member into the relative queue
             logger.log.info(IDLOG, 'login queue member "' + e + '" into the queue "' + q + '" due to automatic login setting');
-            compAstProxy.queueMemberAdd(e, q, undefined, undefined, function(err, resp) {
+            compAstProxy.queueMemberAdd(e, q, undefined, function(err, resp) {
               try {
                 if (err) {
                   logger.log.warn(IDLOG, err);
@@ -709,6 +712,9 @@ function checkQueueAutoLogout(username) {
     // check the event data
     if (typeof username !== 'string') {
       throw new Error('wrong username "' + username + '"');
+    }
+    if (!compUser.isUserPresent(username) && compAstProxy.isExten(username)) {
+      username = compUser.getUserUsingEndpointExtension(username);
     }
     logger.log.info(IDLOG, 'received "new websocket disconnection" event for username "' + username + '"');
     if (compAuthorization.authorizeQueuesUser(username) === false) {

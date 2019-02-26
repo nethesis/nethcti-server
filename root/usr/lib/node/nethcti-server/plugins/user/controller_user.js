@@ -2930,3 +2930,4 @@ exports.getPresenceOnBusyCallforwardTo = getPresenceOnBusyCallforwardTo;
 exports.EVT_USER_PROFILE_AVATAR_CHANGED = EVT_USER_PROFILE_AVATAR_CHANGED;
 exports.getPresenceOnUnavailableCallforwardTo = getPresenceOnUnavailableCallforwardTo;
 exports.getParamUrl = getParamUrl;
+exports.getAllUserExtensions = getAllUserExtensions;

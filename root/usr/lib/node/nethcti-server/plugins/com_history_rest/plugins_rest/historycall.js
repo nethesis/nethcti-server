@@ -721,7 +721,7 @@ function setCompAuthorization(ca) {
 
           var extens;
           if (req.params.type === 'user') {
-            extens = Object.keys(compUser.getAllEndpointsExtension(username));
+            extens = Object.keys(compUser.getAllEndpointsExtension(req.params.target));
           } else {
             extens = [req.params.target];
           }

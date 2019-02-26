@@ -157,18 +157,19 @@ function sendHttp404(parentIdLog, resp) {
  * @param {string} parentIdLog The identifier of the component that uses the utility
  * @param {object} resp        The client response object
  * @param {string} [err]       An error message
+ * @param {string} [code]      The error code
  * @static
  */
-function sendHttp401(parentIdLog, resp, err) {
+function sendHttp401(parentIdLog, resp, err, code) {
   try {
-    if (!err) {
+    if (!err && !code) {
       resp.writeHead(401);
     } else {
-      resp.writeHead(401, {
-        'message': err
-      });
+      var data = {};
+      if (err)  { data.message = err;  }
+      if (code) { data.code    = code; }
+      resp.writeHead(401, data);
     }
-
     logger.log.warn(parentIdLog, 'send HTTP 401 response to ' + getRemoteClientIp(resp) +
       ':' + getRemoteClientPort(resp) + (err ? ' with message "' + err + '"' : ''));
     resp.end();

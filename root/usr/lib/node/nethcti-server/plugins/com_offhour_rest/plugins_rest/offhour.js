@@ -968,7 +968,7 @@ function setCompAuthorization(comp) {
                       return;
                     }
                     var strlog = 'deleted announcement "' + announcementId + '" by user "' + username + '"';
-                    logger.log.info(IDLOG, strlog);
+                    logger.log.warn(IDLOG, strlog);
                     compUtil.net.sendHttp200(IDLOG, res);
 
                   } catch (error) {

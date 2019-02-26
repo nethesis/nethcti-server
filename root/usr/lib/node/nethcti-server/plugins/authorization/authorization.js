@@ -519,6 +519,29 @@ function authorizeQManagerUser(username) {
 }
 
 /**
+ * Returns true if the specified user has the operator panel authorization.
+ *
+ * @method authorizeOperatorPanel
+ * @param {string} username The username
+ * @return {boolean} True if the user has the operator panel authorization.
+ */
+function authorizeOperatorPanel(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var profid = getUserProfileId(username);
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.operator_panel.value === true
+    );
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
  * Returns true if the specified user has the administration queues authorization.
  *
  * @method authorizeAdminQueuesUser
@@ -1507,6 +1530,39 @@ function getAllowedQManagerQueues(username) {
 }
 
 /**
+ * Return the queues identifiers of the operator panel.
+ *
+ * @method getOperatorPanelQueues
+ * @param {string} username The username
+ * @return {array} The list of allowed qmanager queues.
+ */
+function getOperatorPanelQueues(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var permissionId;
+    var arr = {};
+    var profid = getUserProfileId(username);
+    if (profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.operator_panel.value === true) {
+
+      for (permissionId in profiles[profid].macro_permissions.operator_panel.permissions) {
+        if (permissionId.indexOf('in_queue_') === 0 && profiles[profid].macro_permissions.operator_panel.permissions[permissionId].value === true) {
+          arr.inQueue = permissionId.split('_')[2];
+        } else if (permissionId.indexOf('waiting_queue_') === 0) {
+          arr.waitingQueue = 'ctiopqueue' + permissionId.split('_')[2];
+        }
+      }
+    }
+    return arr;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return [];
+  }
+}
+
+/**
  * Return true if the specified user has the authorization for the specified
  * streaming source.
  *
@@ -1993,6 +2049,7 @@ exports.authorizeAdminParkingsUser = authorizeAdminParkingsUser;
 exports.authorizeAdminTransferUser = authorizeAdminTransferUser;
 exports.authorizeAdminQueuesUser = authorizeAdminQueuesUser;
 exports.authorizeQManagerUser = authorizeQManagerUser;
+exports.authorizeOperatorPanel = authorizeOperatorPanel;
 exports.authorizePhoneRedirectUser = authorizePhoneRedirectUser;
 exports.authorizeAdminPhonebookUser = authorizeAdminPhonebookUser;
 exports.verifyUserEndpointVoicemail = verifyUserEndpointVoicemail;
@@ -2004,6 +2061,7 @@ exports.verifyUserEndpointCellphone = verifyUserEndpointCellphone;
 exports.authorizeAdminCallerNoteUser = authorizeAdminCallerNoteUser;
 exports.getAllowedStreamingSources = getAllowedStreamingSources;
 exports.getAllowedQManagerQueues = getAllowedQManagerQueues;
+exports.getOperatorPanelQueues = getOperatorPanelQueues;
 exports.verifyOffhourUserAnnouncement = verifyOffhourUserAnnouncement;
 exports.verifyOffhourListenAnnouncement = verifyOffhourListenAnnouncement;
 exports.getAuthorizedRemoteOperatorGroups = getAuthorizedRemoteOperatorGroups;

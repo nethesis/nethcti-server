@@ -1675,11 +1675,13 @@ function initializeQueues(err, results) {
     var arr = [];
     var k, q;
     for (k in results) {
-      q = new Queue(results[k].queue);
-      q.setName(staticDataQueues[results[k].queue].name);
-      // store the new queue object
-      queues[q.getQueue()] = q;
-      arr.push(getQueueDetails(q.getQueue()));
+      if (staticDataQueues[results[k].queue]) {
+        q = new Queue(results[k].queue);
+        q.setName(staticDataQueues[results[k].queue].name);
+        // store the new queue object
+        queues[q.getQueue()] = q;
+        arr.push(getQueueDetails(q.getQueue()));
+      }
     }
     async.parallel(arr,
       function (err) {
@@ -1688,8 +1690,10 @@ function initializeQueues(err, results) {
         }
         if (!reloading) {
           results.forEach(function (o) {
-            logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + o.queue);
-            astProxy.emit(EVT_QUEUE_CHANGED, queues[o.queue]);
+            if (staticDataQueues[results[k].queue]) {
+              logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + o.queue);
+              astProxy.emit(EVT_QUEUE_CHANGED, queues[o.queue]);
+            }
           });
         }
         initializationStatus.queues = true;
@@ -6472,6 +6476,56 @@ function pickupParking(parking, destId, extForCtx, cb) {
 }
 
 /**
+ * Put the conversation into the waiting queue of the operator panel.
+ *
+ * @method opWaitConv
+ * @param {string} opWaitQueue The destination waiting queue
+ * @param {string} convid The conversation identifier
+ * @param {string} extens The extensions in which the conversation has to be searched
+ * @param {function} cb The callback function
+ */
+function opWaitConv(opWaitQueue, convid, extens, cb) {
+  try {
+    if (typeof cb !== 'function' || typeof opWaitQueue !== 'string' || typeof convid !== 'string' || !Array.isArray(extens)) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var e, conv, found;
+    for (var i in extens) {
+      e = extens[i];
+      if (extensions[e]) {
+        var convs = extensions[e].getAllConversations();
+        conv = convs[convid];
+        if (conv !== undefined) {
+          found = true;
+          var ch;
+          if (conv.isIncoming()) {
+            ch = conv.getSourceChannel().getChannel();
+          } else {
+            ch = conv.getDestinationChannel().getChannel();
+          }
+          astProxy.doCmd({
+            command: 'redirectChannel',
+            context: 'ctiopqueue',
+            chToRedirect: ch,
+            to: opWaitQueue
+          }, function (err) {
+            cb(err);
+            redirectConvCb(err);
+          });
+          break;
+        }
+      }
+    }
+    if (found === undefined) {
+      logger.log.warn(IDLOG, 'conv "' + convid + '" to put in waiting for the operator panel not found in extens ' + extens);
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Pickup a conversation.
  *
  * @method pickupQueueWaitingCaller
@@ -7954,11 +8008,9 @@ function queueMemberPauseUnpause(endpointId, queueId, reason, paused, cb) {
  * @param {string} endpointId The endpoint identifier (e.g. the extension number)
  * @param {string} queueId The queue identifier
  * @param {string} [paused] To pause or not the member initially
- * @param {boolean} [penalty] A penalty (number) to apply to this member. Asterisk will distribute calls to members
- *                             with higher penalties only after attempting to distribute calls to those with lower penalty
  * @param {function} cb The callback function
  */
-function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
+function queueMemberAdd(endpointId, queueId, paused, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' ||
@@ -7971,8 +8023,6 @@ function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
     // check the endpoint existence
     if (extensions[endpointId]) {
 
-      var obj = {};
-
       // sequentially executes two operations:
       // 1. add the member to the queue
       // 2. add a new entry into the "asteriskcdrdb.queue_log" database with the name of the member
@@ -7983,36 +8033,48 @@ function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
         // add the member to the queue
         function (callback) {
 
-          obj = {
-            command: 'queueMemberAdd',
-            queue: queueId,
-            exten: endpointId,
-            memberName: extensions[endpointId].getName()
+          var obj1 = {
+            command: 'dbGet',
+            family: 'QPENALTY',
+            key: queueId + '/agents/' + endpointId
           };
-
-          // add optional parameters
-          if (paused) {
-            obj.paused = paused;
-          }
-          if (penalty) {
-            obj.penalty = penalty;
-          }
-
-          logger.log.info(IDLOG, 'execute queue member add of ' + endpointId + ' to queue ' + queueId);
-          astProxy.doCmd(obj, function (err1) {
+          logger.log.info(IDLOG, 'get agent penalty of exten "' + endpointId + '" of queue "' + queueId + '"');
+          astProxy.doCmd(obj1, function (err1, resp) {
             try {
-              if (err1) {
-                var str = 'queue member add of ' + endpointId + ' to queue ' + queueId + ' has been failed: ' + err1.toString();
+              if (err1 || typeof resp.val === undefined) {
+                var str = 'getting agent penalty of exten "' + endpointId + '" of queue "' + queueId + '" has been failed (resp.val=' + resp.val + '): ' + err1.toString();
                 callback(str);
-
               } else {
-                logger.log.info(IDLOG, 'queue member add of ' + endpointId + ' to queue ' + queueId + ' has been successful');
-                callback();
+                var obj2 = {
+                  command: 'queueMemberAdd',
+                  queue: queueId,
+                  exten: endpointId,
+                  penalty: resp.val,
+                  memberName: extensions[endpointId].getName()
+                };
+                // add optional parameters
+                if (paused) {
+                  obj2.paused = paused;
+                }
+                logger.log.info(IDLOG, 'execute queue member add of ' + endpointId + ' to queue ' + queueId);
+                astProxy.doCmd(obj2, function (err2) {
+                  try {
+                    if (err2) {
+                      var str = 'queue member add of ' + endpointId + ' to queue ' + queueId + ' has been failed: ' + err2.toString();
+                      callback(str);
+                    } else {
+                      logger.log.info(IDLOG, 'queue member add of ' + endpointId + ' to queue ' + queueId + ' has been successful');
+                      callback();
+                    }
+                  } catch (err3) {
+                    logger.log.error(IDLOG, err3.stack);
+                    callback(err3.stack);
+                  }
+                });
               }
-
-            } catch (err2) {
-              logger.log.error(IDLOG, err2.stack);
-              callback(err2.stack);
+            } catch (err4) {
+              logger.log.error(IDLOG, err4.stack);
+              callback(err4.stack);
             }
           });
         },
@@ -8022,7 +8084,7 @@ function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
 
           var name = extensions[endpointId].getName();
 
-          obj = {
+          var obj3 = {
             command: 'queueLog',
             queue: queueId,
             event: 'ADDMEMBER',
@@ -8031,10 +8093,10 @@ function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
           };
 
           logger.log.info(IDLOG, 'add new entry in queue_log asterisk db: interface "' + name + '", queue "' + queueId + '" and event "ADDMEMBER"');
-          astProxy.doCmd(obj, function (err3) {
+          astProxy.doCmd(obj3, function (err4) {
             try {
-              if (err3) {
-                var str = 'add new entry in "queue_log" asterisk db has been failed: interface "' + name + '", queue "' + queueId + '" and event "ADDMEMBER": ' + err3.toString();
+              if (err4) {
+                var str = 'add new entry in "queue_log" asterisk db has been failed: interface "' + name + '", queue "' + queueId + '" and event "ADDMEMBER": ' + err4.toString();
                 callback(str);
 
               } else {
@@ -8042,20 +8104,19 @@ function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
                 callback();
               }
 
-            } catch (err4) {
-              logger.log.error(IDLOG, err4.stack);
-              callback(err4.stack);
+            } catch (err5) {
+              logger.log.error(IDLOG, err5.stack);
+              callback(err5.stack);
             }
           });
         }
 
-      ], function (err5) {
+      ], function (err6) {
 
-        if (err5) {
-          logger.log.error(IDLOG, err5);
+        if (err6) {
+          logger.log.error(IDLOG, err6);
         }
-
-        cb(err5);
+        cb(err6);
       });
 
     } else {
@@ -9498,6 +9559,7 @@ exports.hangupChannel = hangupChannel;
 exports.pickupParking = pickupParking;
 exports.getJSONQueues = getJSONQueues;
 exports.endMeetmeConf = endMeetmeConf;
+exports.opWaitConv = opWaitConv;
 exports.getJSONTrunks = getJSONTrunks;
 exports.getTrunksList = getTrunksList;
 exports.getExtensList = getExtensList;

@@ -1,4 +1,5 @@
 /**
+ * @module astproxy
  * @submodule plugins_command_13
  */
 var action = require('../action');
@@ -11,9 +12,9 @@ var action = require('../action');
  * @private
  * @final
  * @readOnly
- * @default [setVariable]
+ * @default [dbGet]
  */
-var IDLOG = '[setVariable]';
+var IDLOG = '[dbGet]';
 
 (function() {
 
@@ -30,7 +31,7 @@ var IDLOG = '[setVariable]';
   try {
     /**
      * Map associations between ActionID and callback to execute at the end
-     * of the command.
+     * of the command
      *
      * @property map
      * @type {object}
@@ -39,42 +40,40 @@ var IDLOG = '[setVariable]';
     var map = {};
 
     /**
-     * Command plugin to set an asterisk variable.
+     * Command plugin to get DND status of an extension.
      *
      * Use it with _astproxy_ module as follow:
      *
-     *     ast_proxy.doCmd({ command: 'setVariable', name: 'MASTER_CHANNEL(CDR(recordingfile))', value: 'audio_file.wav' }, function (res) {
+     *     astproxy.doCmd({ command: 'dbGet', family: 'QPENALTY', key: '401/agents/200' }, function (res) {
      *         // some code
      *     });
      *
      *
-     * @class setVariable
+     * @class dbGet
      * @static
      */
-    var setVariable = {
+    var dbGet = {
 
       /**
-       * Execute asterisk action to set an asterisk variable.
+       * Execute asterisk action to get the DND status.
        *
        * @method execute
-       * @param {object}   am   Asterisk manager to send the action
-       * @param {object}   args The object contains optional parameters
-       *                        passed to _doCmd_ method of the ast_proxy component
-       * @param {function} cb   The callback function called at the end of the command
+       * @param {object} am Asterisk manager used to send the action
+       * @param {object} args The object containing optional parameters
+       * @param {function} cb The callback function
        * @static
        */
       execute: function(am, args, cb) {
         try {
-          // asterisk action
+          // action for asterisk
           var act = {
-            Action: 'Setvar',
-            Channel: args.channel,
-            Variable: args.name,
-            Value: args.value
+            Action: 'DBGet',
+            Family: args.family,
+            Key: args.key
           };
 
           // set the action identifier
-          act.ActionID = action.getActionId('setVariable');
+          act.ActionID = action.getActionId('dbGet');
 
           // add association ActionID-callback
           map[act.ActionID] = cb;
@@ -98,21 +97,18 @@ var IDLOG = '[setVariable]';
       data: function(data) {
         try {
           // check callback and info presence and execute it
-          if (map[data.actionid] &&
-            data.response === 'Success') {
+          if (map[data.actionid] && data.val && data.event === 'DBGetResponse' && data.key && data.family) {
+            map[data.actionid](null, {
+              family: data.family,
+              key: data.key,
+              val: data.val
+            });
+            delete map[data.actionid];
 
-            map[data.actionid](null);
-
-          } else if (map[data.actionid] &&
-            data.message &&
-            data.response === 'Error') {
-
-            map[data.actionid](new Error(data.message));
-
-          } else {
+          } else if (map[data.actionid] && data.response === 'Error') {
             map[data.actionid](new Error('error'));
+            delete map[data.actionid];
           }
-          delete map[data.actionid]; // remove association ActionID-callback
 
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
@@ -149,9 +145,9 @@ var IDLOG = '[setVariable]';
     };
 
     // public interface
-    exports.data = setVariable.data;
-    exports.execute = setVariable.execute;
-    exports.setLogger = setVariable.setLogger;
+    exports.data = dbGet.data;
+    exports.execute = dbGet.execute;
+    exports.setLogger = dbGet.setLogger;
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
