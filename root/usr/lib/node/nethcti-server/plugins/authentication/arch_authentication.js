@@ -43,6 +43,7 @@ module.exports = function(options, imports, register) {
       isShibbolethUser: authentication.isShibbolethUser,
       getRemoteSiteName: authentication.getRemoteSiteName,
       updateTokenExpires: authentication.updateTokenExpires,
+      removeShibbolethMap: authentication.removeShibbolethMap,
       isUnautheCallEnabled: authentication.isUnautheCallEnabled,
       getShibbolethUsername: authentication.getShibbolethUsername,
       isUnautheCallIPEnabled: authentication.isUnautheCallIPEnabled,

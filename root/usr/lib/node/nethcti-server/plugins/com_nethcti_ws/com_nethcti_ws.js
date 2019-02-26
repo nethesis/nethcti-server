@@ -2215,6 +2215,7 @@ function disconnHdlr(socket) {
         // all the websocket connections of the user has been closed.
         logger.log.info(IDLOG, 'emit event "' + EVT_ALL_WS_CLIENT_DISCONNECTION + '" for username ' + username);
         emitter.emit(EVT_ALL_WS_CLIENT_DISCONNECTION, username);
+        compAuthe.removeShibbolethMap(username);
       }
     }
     // remove trusted identifier of the websocket

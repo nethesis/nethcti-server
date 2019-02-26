@@ -1139,6 +1139,23 @@ function addShibbolethMap(cookieId, username) {
 }
 
 /**
+ * Remove a map between shibboleth username and the corresponding
+ * cookie id used for authentication.
+ *
+ * @method removeShibbolethMap
+ * @param {string} cookieId The cookie identifier
+ */
+function removeShibbolethMap(cookieId) {
+  try {
+    if (mapShibbolethUser[cookieId]) {
+      delete mapShibbolethUser[cookieId];
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Return the username corresponding to a cookie identifier.
  *
  * @method getShibbolethUsername
@@ -1189,6 +1206,7 @@ exports.addShibbolethMap = addShibbolethMap;
 exports.isShibbolethUser = isShibbolethUser;
 exports.getRemoteSiteName = getRemoteSiteName;
 exports.updateTokenExpires = updateTokenExpires;
+exports.removeShibbolethMap = removeShibbolethMap;
 exports.isUnautheCallEnabled = isUnautheCallEnabled;
 exports.getShibbolethUsername = getShibbolethUsername;
 exports.isUnautheCallIPEnabled = isUnautheCallIPEnabled;
