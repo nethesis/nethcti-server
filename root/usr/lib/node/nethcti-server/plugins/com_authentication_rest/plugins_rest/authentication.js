@@ -245,7 +245,7 @@ function setCompUser(comp) {
             req.headers.shibcn &&
             req.headers.shibo &&
             req.headers.shibmail &&
-            req.headers.cookie && req.headers.cookie.indexOf('_shibsession_') === 0 &&
+            req.headers.cookie && req.headers.cookie.indexOf('_shibsession_') !== -1 &&
             req.headers.shibdisplayname) {
 
             req.params.username = req.headers.shibuid;
