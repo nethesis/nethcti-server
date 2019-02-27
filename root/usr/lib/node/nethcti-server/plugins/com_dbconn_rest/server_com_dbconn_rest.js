@@ -14,6 +14,7 @@
 var fs = require('fs');
 var restify = require('restify');
 var plugins = require('jsplugs')().require('./plugins/com_dbconn_rest/plugins_rest');
+const corsMiddleware = require('restify-cors-middleware');
 
 /**
  * The module identifier used by the logger.
@@ -218,14 +219,15 @@ function start() {
     var server = restify.createServer();
 
     // set the middlewares to use
-    server.use(restify.acceptParser(server.acceptable));
-    server.use(restify.queryParser());
-    server.use(restify.bodyParser());
-    server.use(restify.CORS({
+    const cors = corsMiddleware({
       origins: ['*'],
-      credentials: false
-      // headers: ['WWW-Authenticate', 'Authorization']
-    }));
+      headers: ['WWW-Authenticate', 'Authorization']
+    });
+    server.use(restify.plugins.acceptParser(server.acceptable));
+    server.use(restify.plugins.queryParser());
+    server.use(restify.plugins.bodyParser({ mapParams: true }));
+    server.pre(cors.preflight);
+    server.use(cors.actual);
 
     // load plugins
     for (p in plugins) {
