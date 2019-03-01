@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * Main application that starts all architect modules.
  */

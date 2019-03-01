@@ -6,8 +6,8 @@ Group: Network
 License: GPLv2
 Source0: %{name}-%{version}.tar.gz
 BuildRequires: nethserver-devtools
-BuildRequires: nodejs >= 6.9.1
-Requires: nodejs >= 6.9.1
+BuildRequires: nodejs >= 6.16.0
+Requires: rh-nodejs10
 Requires: nethserver-nethvoice14
 Requires: nethserver-janus
 Requires: sox
