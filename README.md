@@ -29,13 +29,13 @@ install all npm packages:
 
 ```bash
 cd /usr/lib/node/nethcti-server
-npm install
+/usr/bin/scl enable rh-nodejs10 "npm install"
 ```
 
 then launch the daemon:
 
 ```bash
-npm start
+/usr/bin/scl enable rh-nodejs10 "npm start"
 ```
 
 You can easily enable _info_ logging level setting environment variable:

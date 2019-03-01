@@ -30,11 +30,11 @@
     "url": "ssh://git@code.nethesis.it:22022/Nethesis/nethcti-server.git"
   },
   "scripts": {
-    "start": "node nethcti.js",
-    "dev": "nodemon nethcti.js"
+    "start": "/usr/bin/scl enable rh-nodejs10 \"node nethcti.js\"",
+    "dev": "/usr/bin/scl enable rh-nodejs10 \"nodemon nethcti.js\""
   },
   "engines": {
-    "node": ">=6.9.1"
+    "node": ">=6.16.0"
   },
   "author": "Nethesis srl",
   "license": "GPL-2.0"
