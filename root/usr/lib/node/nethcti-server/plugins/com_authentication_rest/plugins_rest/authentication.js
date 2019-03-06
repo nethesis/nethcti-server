@@ -37,6 +37,15 @@ var logger = console;
 var compAuthe;
 
 /**
+ * The authorization architect component used for authentication.
+ *
+ * @property compAutho
+ * @type object
+ * @private
+ */
+var compAutho;
+
+/**
  * The utility architect component.
  *
  * @property compUtil
@@ -96,6 +105,21 @@ function setCompAuthentication(ca) {
   try {
     compAuthe = ca;
     logger.log.info(IDLOG, 'set authentication architect component');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the authorization architect component used by authentication.
+ *
+ * @method setCompAuthorization
+ * @param {object} comp The authorization architect component _arch\_authentication_.
+ */
+function setCompAuthorization(comp) {
+  try {
+    compAutho = comp;
+    logger.log.info(IDLOG, 'set authorization architect component');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -258,7 +282,7 @@ function setCompUser(comp) {
           // get username without "@domain" if it is present
           var clUser = username.indexOf('@') !== -1 ? username.substring(0, username.lastIndexOf('@')) : username;
 
-          if (!compUser.isUserPresent(clUser)) {
+          if (!compUser.isUserPresent(clUser) || compAutho.userHasProfile(clUser) === false) {
             var errmsg = 'user ' + clUser + ' is not configured';
             compUtil.net.sendHttp401(IDLOG, res, errmsg, '1');
             return;
@@ -324,6 +348,7 @@ function setCompUser(comp) {
     exports.setCompUtil = setCompUtil;
     exports.setCompUser = setCompUser;
     exports.setCompAstProxy = setCompAstProxy;
+    exports.setCompAuthorization = setCompAuthorization;
     exports.setCompAuthentication = setCompAuthentication;
 
   } catch (err) {

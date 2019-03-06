@@ -8,6 +8,7 @@
       "user",
       "logger",
       "astProxy",
+      "authorization",
       "authentication"
     ],
     "provides": []

@@ -261,6 +261,26 @@ function setCompAuthentication(compAuthentication) {
 }
 
 /**
+ * Set the authorization architect component to be used by REST plugins.
+ *
+ * @method setCompAuthorization
+ * @param {object} comp The authorization component
+ * @static
+ */
+function setCompAuthorization(comp) {
+  try {
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameter');
+    }
+    for (var p in plugins) {
+      plugins[p].setCompAuthorization(comp);
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Set the utility architect component to be used by REST plugins.
  *
  * @method setCompUtil
@@ -362,3 +382,4 @@ exports.setCompUtil = setCompUtil;
 exports.setCompUser = setCompUser;
 exports.setCompAstProxy = setCompAstProxy;
 exports.setCompAuthentication = setCompAuthentication;
+exports.setCompAuthorization = setCompAuthorization;
