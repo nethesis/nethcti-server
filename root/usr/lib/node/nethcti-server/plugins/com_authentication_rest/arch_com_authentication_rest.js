@@ -35,6 +35,7 @@ module.exports = function(options, imports, register) {
       serverRest.setCompUser(imports.user);
       serverRest.setCompAstProxy(imports.astProxy);
       serverRest.setCompAuthentication(imports.authentication);
+      serverRest.setCompAuthorization(imports.authorization);
       serverRest.start();
     });
   } catch (err) {

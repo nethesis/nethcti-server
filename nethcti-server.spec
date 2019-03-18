@@ -1,13 +1,13 @@
 Name: nethcti-server3
-Version: 3.8.0
+Version: 3.10.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
 License: GPLv2
 Source0: %{name}-%{version}.tar.gz
 BuildRequires: nethserver-devtools
-BuildRequires: nodejs >= 6.9.1
-Requires: nodejs >= 6.9.1
+BuildRequires: nodejs >= 6.16.0
+Requires: rh-nodejs10
 Requires: nethserver-nethvoice14
 Requires: nethserver-janus
 Requires: sox
@@ -87,6 +87,13 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Mar 15 2019 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.10.0-1
+- Added customization of "user not configured" message - nethesis/dev#5585
+- Wrong behavior of historycall/intervall using user as type - Bug nethesis/dev#5584
+- Automatic queue login/logout does not work using extension for login - Bug nethesis/dev#5581
+- Upgrade nodejs to v10 - nethesis/dev#5588
+- Upgrade some libraries for security reasons - Bug nethesis/dev#5587
+
 * Fri Feb 08 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.8.0-1
 - Add new service "Operator Panel" - nethesis/dev#5549
 - Queue agent penalty is not supported - Bug nethesis/dev#5575

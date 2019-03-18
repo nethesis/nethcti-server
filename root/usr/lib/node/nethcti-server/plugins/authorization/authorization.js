@@ -185,7 +185,6 @@ function config(obj) {
       delete mapUserProfile[userid];
       mapUserProfile[userid.toLowerCase()] = tmp;
     }
-
     // initialize profiles. The keys are the profile "id" and the value the profile object itself
     profiles = JSON.parse(fs.readFileSync(PROFILES_CONF_FILEPATH, 'utf8'));
     // fix the permission keys to be an object instead of an array
@@ -777,6 +776,26 @@ function getUserProfileId(username) {
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Returns true if the user has an associated profile.
+ *
+ * @method userHasProfile
+ * @param {string} username The username
+ * @return {boolean} Return true if the user has an associated profile.
+ * @private
+ */
+function userHasProfile(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameter: ' + username);
+    }
+    return (mapUserProfile[username] && typeof mapUserProfile[username].profile_id === 'string') ? true : false;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
   }
 }
 
@@ -2066,3 +2085,4 @@ exports.verifyOffhourUserAnnouncement = verifyOffhourUserAnnouncement;
 exports.verifyOffhourListenAnnouncement = verifyOffhourListenAnnouncement;
 exports.getAuthorizedRemoteOperatorGroups = getAuthorizedRemoteOperatorGroups;
 exports.getUserProfileId = getUserProfileId;
+exports.userHasProfile = userHasProfile;
