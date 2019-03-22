@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.10.0
+Version: 3.10.1
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Mar 22 2019 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.10.1-1
+- Asterisk 13.23+ missing IdentifyDetail event - Bug nethesis/dev#5597
+
 * Fri Mar 15 2019 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.10.0-1
 - Added customization of "user not configured" message - nethesis/dev#5585
 - Wrong behavior of historycall/intervall using user as type - Bug nethesis/dev#5584
