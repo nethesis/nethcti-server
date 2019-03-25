@@ -11,6 +11,7 @@ Actually it supports only [Asterisk PBX](https://www.asterisk.org/).
 * [Authentication](#authentication)
   * [Login](#login)
   * [Logout](#logout)
+  * [Disabling](#disabling)
 * [REST API](#rest-api)
 * [Reconnections](#reconnections)
 * [CORS](#cors)
@@ -93,6 +94,25 @@ To logout you have to do:
 ```
 POST /authentication/logout
 ```
+
+## Disabling
+
+To disable the authentication:
+
+config setprop nethcti AuthenticationEnabled false
+config setprop nethcti-server AuthenticationEnabled false
+signal-event nethcti3-update
+signal-event nethcti-server3-update
+
+at this point you can login to NethCTI only using the username.
+
+To re-enable it:
+
+config setprop nethcti AuthenticationEnabled true
+config setprop nethcti-server AuthenticationEnabled true
+signal-event nethcti3-update
+signal-event nethcti-server3-update
+
 
 ## REST API
 
