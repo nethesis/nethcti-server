@@ -290,23 +290,25 @@ function start() {
           return;
         }
         else if (req.url.indexOf('/astproxy/unauthe_call') === 0 && compAuthentication.isUnautheCallEnabled() === false) {
-          logger.log.warn(IDLOG, 'ATTENTION: attempt to use unauthenticated call from "' + req.headers['x-forwarded-for'] + '" (the function is disabled)');
+          logger.log.warn(IDLOG, 'WARNING: attempt to use unauthenticated call from "' + req.headers['x-forwarded-for'] + '" (the function is disabled)');
           compUtil.net.sendHttp401(IDLOG, res);
           return;
         }
         else if (req.url.indexOf('/astproxy/unauthe_call') === 0 && compAuthentication.isUnautheCallIPEnabled(req.headers['x-forwarded-for']) === false) {
-          logger.log.warn(IDLOG, 'ATTENTION: attempt to use unauthenticated call from "' + req.headers['x-forwarded-for'] + '" (ip not allowed)');
+          logger.log.warn(IDLOG, 'WARNING: attempt to use unauthenticated call from "' + req.headers['x-forwarded-for'] + '" (ip not allowed)');
           compUtil.net.sendHttp401(IDLOG, res);
           return;
         }
         // check authentication
         else if (req.headers.authorization) {
-
           var arr = req.headers.authorization.split(':');
           if (compAuthentication.verifyToken(arr[0], arr[1]) === true) {
-
             // add header used by the authorization module
-            if (compAstProxy.isExten(arr[0]) && req.url !== '/authentication/logout') {
+            if (compAuthentication.isShibbolethUser(arr[0])) {
+              // this is to support login with shibboleth headers
+              req.headers.authorization_user = compAuthentication.getShibbolethUsername(arr[0]);
+            }
+            else if (compAstProxy.isExten(arr[0]) && req.url !== '/authentication/logout') {
               // this is to support login with extension number
               req.headers.authorization_user = compUser.getUserUsingEndpointExtension(arr[0]);
             }
