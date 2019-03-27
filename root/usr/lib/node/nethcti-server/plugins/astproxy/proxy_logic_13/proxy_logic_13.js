@@ -3884,7 +3884,7 @@ function addConversationToExten(exten, resp, chid) {
       }
 
       // create a new conversation
-      var conv = new Conversation(exten, chSource, chDest, queue);
+      var conv = new Conversation(exten, chSource, chDest, queue, resp[chid].linkedid);
       var convid = conv.getId();
 
       // if the conversation is recording, sets its recording status
