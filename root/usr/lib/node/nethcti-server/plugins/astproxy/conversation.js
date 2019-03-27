@@ -7,7 +7,7 @@
  * @constructor
  * @return {object} The conversation object.
  */
-exports.Conversation = function(ownerId, sourceChan, destChan, queue) {
+exports.Conversation = function(ownerId, sourceChan, destChan, queue, linked) {
   // check parameters
   if (typeof ownerId !== 'string' ||
     (typeof destChan !== 'object' && typeof sourceChan !== 'object')) {
@@ -52,6 +52,15 @@ exports.Conversation = function(ownerId, sourceChan, destChan, queue) {
    * @private
    */
   var queueId = queue;
+
+  /**
+   * The linkedId value that will be stored into the cdr database table.
+   *
+   * @property linkedId
+   * @type {string}
+   * @private
+   */
+  var linkedId = linked;
 
   /**
    * The recordig status. It can be one of the "RECORDING_STATUS" property.
@@ -374,6 +383,7 @@ exports.Conversation = function(ownerId, sourceChan, destChan, queue) {
    *         owner:           "214",
    *         chDest:          { Channel.{{#crossLink "Channel/toJSON"}}{{/crossLink}}() }, // the source channel of the call
    *         queueId:         "401",                // the queue identifier if the conversation has gone through a queue
+   *         linkedId:        "1547571859.14", // the linkedid value that will be stored into the cdr database table
    *         chSource:        { Channel.{{#crossLink "Channel/toJSON"}}{{/crossLink}}() }, // the destination channel of the call
    *         duration:        26,
    *         recording:       "false",              // it's "true" or "mute" if the conversation is recording, "false" otherwise
@@ -413,6 +423,7 @@ exports.Conversation = function(ownerId, sourceChan, destChan, queue) {
       owner: owner,
       chDest: tempChDest,
       queueId: queueId,
+      linkedId: linkedId,
       chSource: tempChSource,
       duration: duration,
       startTime: startime,
