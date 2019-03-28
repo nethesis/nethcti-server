@@ -99,20 +99,23 @@ POST /authentication/logout
 
 To disable the authentication:
 
+```bash
 config setprop nethcti AuthenticationEnabled false
 config setprop nethcti-server AuthenticationEnabled false
 signal-event nethcti3-update
 signal-event nethcti-server3-update
+```
 
 at this point you can login to NethCTI only using the username.
 
 To re-enable it:
 
+```bash
 config setprop nethcti AuthenticationEnabled true
 config setprop nethcti-server AuthenticationEnabled true
 signal-event nethcti3-update
 signal-event nethcti-server3-update
-
+```
 
 ## REST API
 
