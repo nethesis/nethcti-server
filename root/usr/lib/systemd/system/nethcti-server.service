@@ -10,7 +10,7 @@ User=asterisk
 Restart=always
 RestartSec=10
 ExecStart=/usr/bin/scl enable rh-nodejs10 "node /usr/lib/node/nethcti-server/nethcti.js"
-ExecReload=/bin/kill -SIGUSR1 $MAINPID
+ExecReload=/usr/bin/scl enable rh-nodejs10 "node /usr/lib/node/nethcti-server/nethcti-cli reload"
 
 [Install]
 WantedBy=multi-user.target
