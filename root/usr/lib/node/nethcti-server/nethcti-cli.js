@@ -24,5 +24,6 @@ ipc.connectTo(name, () => {
   });
   ipc.of[name].on('error', (err) => {
     console.error(err);
+    process.exit(1);
   });
 });
