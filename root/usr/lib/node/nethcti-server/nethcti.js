@@ -116,8 +116,8 @@ try {
         logger.ctilog.log.error(IDLOG, err.stack);
       });
 
-      process.on('SIGUSR1', function() {
-        logger.ctilog.log.warn(IDLOG, 'received signal SIGUSR1: RELOAD all components');
+      process.on('reloadApp', function () {
+        logger.ctilog.log.warn(IDLOG, 'RELOAD all components');
         resetAllCompReloadStatus();
         // call reload on all components exposing the function
         Object.keys(app.services).forEach(function(k) {

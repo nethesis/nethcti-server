@@ -1,0 +1,11 @@
+{
+  "name": "com_ipc",
+  "main": "arch_com_ipc.js",
+  "private": true,
+  "plugin": {
+    "consumes": [
+      "logger"
+    ],
+    "provides": []
+  }
+}
