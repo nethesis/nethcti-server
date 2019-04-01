@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.10.1
+Version: 3.11.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,11 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Apr 01 2019 Stefano Fancello <stefano.fancello@nethesis.it> - 3.11.0-1
+- Added new com_ipc module to overcome reload problem - nethesis/dev#5600
+- Added `linkedid` data to the extensions conversations - nethesis/dev#5605
+- Add the possibility to disable the authentication - nethesis/dev#5532
+
 * Fri Mar 22 2019 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.10.1-1
 - Asterisk 13.23+ missing IdentifyDetail event - Bug nethesis/dev#5597
 
