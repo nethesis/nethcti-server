@@ -1117,7 +1117,6 @@ function getAgentsStatsByList(members, cb) {
       cb(null, cache.getAgentsStatsByList);
       return;
     }
-
     var agents = Object.keys(members);
     var functs = {
       calls_stats: getAgentsStatsCalls(agents),
@@ -1129,156 +1128,161 @@ function getAgentsStatsByList(members, cb) {
       logon_durations: getAgentsLogonDurations(agents)
     };
     async.parallel(functs, function (err, data) {
-      if (err) {
-        logger.log.error(IDLOG, 'getting stats about qmanager agents:', err);
-        cb(err);
-      } else {
-        var u, q;
-        var ret = {};
-        for (u in data.calls_stats) {
-          if (!ret[u]) {
-            ret[u] = {
-              incomingCalls: {
-                duration_incoming: 0,
-                avg_duration_incoming: 0,
-                min_duration_incoming: 99999,
-                max_duration_incoming: 0
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'getting stats about qmanager agents:', err);
+          cb(err);
+        } else {
+          var u, q;
+          var ret = {};
+          for (u in data.calls_stats) {
+            if (!ret[u]) {
+              ret[u] = {
+                incomingCalls: {
+                  duration_incoming: 0,
+                  avg_duration_incoming: 0,
+                  min_duration_incoming: 99999,
+                  max_duration_incoming: 0
+                }
+              };
+            }
+            for (q in data.calls_stats[u]) {
+              if (!ret[u][q]) {
+                ret[u][q] = {};
               }
-            };
-          }
-          for (q in data.calls_stats[u]) {
-            if (!ret[u][q]) {
-              ret[u][q] = {};
+              ret[u][q].calls_taken = data.calls_stats[u][q].calls_taken;
+              ret[u][q].last_call_time = data.calls_stats[u][q].last_call_time;
+              ret[u][q].duration_incoming = data.calls_stats[u][q].duration_incoming;
+              ret[u][q].max_duration_incoming = data.calls_stats[u][q].max_duration_incoming;
+              ret[u][q].min_duration_incoming = data.calls_stats[u][q].min_duration_incoming;
+              ret[u][q].avg_duration_incoming = data.calls_stats[u][q].avg_duration_incoming;
+              ret[u].incomingCalls.duration_incoming += data.calls_stats[u][q].duration_incoming;
+              ret[u].incomingCalls.avg_duration_incoming += data.calls_stats[u][q].avg_duration_incoming;
+              ret[u].incomingCalls.min_duration_incoming = data.calls_stats[u][q].min_duration_incoming < ret[u].incomingCalls.min_duration_incoming ? data.calls_stats[u][q].min_duration_incoming : ret[u].incomingCalls.min_duration_incoming;
+              ret[u].incomingCalls.max_duration_incoming = data.calls_stats[u][q].max_duration_incoming > ret[u].incomingCalls.max_duration_incoming ? data.calls_stats[u][q].max_duration_incoming : ret[u].incomingCalls.max_duration_incoming;
             }
-            ret[u][q].calls_taken = data.calls_stats[u][q].calls_taken;
-            ret[u][q].last_call_time = data.calls_stats[u][q].last_call_time;
-            ret[u][q].duration_incoming = data.calls_stats[u][q].duration_incoming;
-            ret[u][q].max_duration_incoming = data.calls_stats[u][q].max_duration_incoming;
-            ret[u][q].min_duration_incoming = data.calls_stats[u][q].min_duration_incoming;
-            ret[u][q].avg_duration_incoming = data.calls_stats[u][q].avg_duration_incoming;
-            ret[u].incomingCalls.duration_incoming += data.calls_stats[u][q].duration_incoming;
-            ret[u].incomingCalls.avg_duration_incoming += data.calls_stats[u][q].avg_duration_incoming;
-            ret[u].incomingCalls.min_duration_incoming = data.calls_stats[u][q].min_duration_incoming < ret[u].incomingCalls.min_duration_incoming ? data.calls_stats[u][q].min_duration_incoming : ret[u].incomingCalls.min_duration_incoming;
-            ret[u].incomingCalls.max_duration_incoming = data.calls_stats[u][q].max_duration_incoming > ret[u].incomingCalls.max_duration_incoming ? data.calls_stats[u][q].max_duration_incoming : ret[u].incomingCalls.max_duration_incoming;
+            ret[u].incomingCalls.avg_duration_incoming = Math.floor(ret[u].incomingCalls.avg_duration_incoming / Object.keys(data.calls_stats[u]).length);
           }
-          ret[u].incomingCalls.avg_duration_incoming = Math.floor(ret[u].incomingCalls.avg_duration_incoming / Object.keys(data.calls_stats[u]).length);
-        }
-        for (u in data.pause_unpause) {
-          if (!ret[u]) {
-            ret[u] = {};
-          }
-          for (q in data.pause_unpause[u]) {
-            if (!ret[u][q]) {
-              ret[u][q] = {};
+          for (u in data.pause_unpause) {
+            if (!ret[u]) {
+              ret[u] = {};
             }
-            ret[u][q].last_paused_time = data.pause_unpause[u][q].last_paused_time;
-            ret[u][q].last_unpaused_time = data.pause_unpause[u][q].last_unpaused_time;
-          }
-        }
-        for (u in data.login_logout) {
-          if (!ret[u]) {
-            ret[u] = {};
-          }
-          for (q in data.login_logout[u]) {
-            if (!ret[u][q]) {
-              ret[u][q] = {};
-            }
-            ret[u][q].last_login_time = data.login_logout[u][q].last_login_time;
-            ret[u][q].last_logout_time = data.login_logout[u][q].last_logout_time;
-          }
-        }
-        // missed calls
-        for (u in data.calls_missed) {
-          if (!ret[u]) {
-            ret[u] = {};
-          }
-          ret[u].no_answer_calls = data.calls_missed[u];
-        }
-        // outgoing calls
-        for (u in data.calls_outgoing) {
-          if (!ret[u]) {
-            ret[u] = {};
-          }
-          ret[u].outgoingCalls = data.calls_outgoing[u];
-        }
-        // pause durations
-        var nowtime = Math.round(new Date().getTime() / 1000);
-        for (u in data.pause_durations) {
-          if (!ret[u]) {
-            ret[u] = {};
-          }
-          for (q in data.pause_durations[u]){
-            if (!ret[u][q]) {
-              ret[u][q] = {};
-            }
-            ret[u][q].time_in_pause = data.pause_durations[u][q];
-            // check if the agent is currently in pause: in this case add
-            // current time passed from the last pause
-            if (members[u][q].isInPause === true) {
-              ret[u][q].time_in_pause += nowtime - data.pause_unpause[u][q].last_paused_time;
+            for (q in data.pause_unpause[u]) {
+              if (!ret[u][q]) {
+                ret[u][q] = {};
+              }
+              ret[u][q].last_paused_time = data.pause_unpause[u][q].last_paused_time;
+              ret[u][q].last_unpaused_time = data.pause_unpause[u][q].last_unpaused_time;
             }
           }
-        }
-        // logon durations
-        for (u in data.logon_durations) {
-          if (!ret[u]) {
-            ret[u] = {};
-          }
-          for (q in data.logon_durations[u]){
-            if (!ret[u][q]) {
-              ret[u][q] = {};
+          for (u in data.login_logout) {
+            if (!ret[u]) {
+              ret[u] = {};
             }
-            ret[u][q].time_in_logon = data.logon_durations[u][q];
-            // check if the agent is currently logged-in: in this case add
-            // current time passed from the last logon
-            if (members[u][q].isLoggedIn === true) {
-              ret[u][q].time_in_logon += nowtime - data.login_logout[u][q].last_login_time;
-            }
-            // pause percentage of logon time
-            if (ret[u][q].time_in_pause && ret[u][q].time_in_logon) {
-              var cp = (ret[u][q].time_in_pause * 100) / ret[u][q].time_in_logon;
-              ret[u][q].pause_percent = Math.round(cp) > 0 ? Math.round(cp) : cp.toFixed(2);
-            }
-            // in conversation percentage of logon time
-            if (ret[u][q].duration_incoming && ret[u][q].time_in_logon && ret[u][q].time_in_logon > ret[u][q].duration_incoming) {
-              var cp = (ret[u][q].duration_incoming * 100) / ret[u][q].time_in_logon;
-              ret[u][q].conversation_percent = Math.round(cp) > 0 ? Math.round(cp) : cp.toFixed(2);
+            for (q in data.login_logout[u]) {
+              if (!ret[u][q]) {
+                ret[u][q] = {};
+              }
+              ret[u][q].last_login_time = data.login_logout[u][q].last_login_time;
+              ret[u][q].last_logout_time = data.login_logout[u][q].last_logout_time;
             }
           }
-        }
-        // all calls: incoming & outgoing
-        for (u in ret) {
-          ret[u].allCalls = {};
-          // total avg duration
-          if (ret[u].incomingCalls && ret[u].incomingCalls.avg_duration_incoming && ret[u].outgoingCalls && ret[u].outgoingCalls.avg_duration_outgoing) {
-            ret[u].allCalls.avg_duration = Math.floor((ret[u].incomingCalls.avg_duration_incoming + ret[u].outgoingCalls.avg_duration_outgoing) / 2);
-          } else if (ret[u].incomingCalls && ret[u].incomingCalls.avg_duration_incoming) {
-            ret[u].allCalls.avg_duration = ret[u].incomingCalls.avg_duration_incoming;
-          } else if (ret[u].outgoingCalls && ret[u].outgoingCalls.avg_duration_outgoing) {
-            ret[u].allCalls.avg_duration = ret[u].outgoingCalls.avg_duration_outgoing;
+          // missed calls
+          for (u in data.calls_missed) {
+            if (!ret[u]) {
+              ret[u] = {};
+            }
+            ret[u].no_answer_calls = data.calls_missed[u];
           }
-          // total min duration
-          if (ret[u].incomingCalls && ret[u].incomingCalls.min_duration_incoming && ret[u].outgoingCalls && ret[u].outgoingCalls.min_duration_outgoing) {
-            ret[u].allCalls.min_duration = ret[u].incomingCalls.min_duration_incoming < ret[u].outgoingCalls.min_duration_outgoing ? ret[u].incomingCalls.min_duration_incoming : ret[u].outgoingCalls.min_duration_outgoing;
-          } else if (ret[u].incomingCalls && ret[u].incomingCalls.min_duration_incoming) {
-            ret[u].allCalls.min_duration = ret[u].incomingCalls.min_duration_incoming;
-          } else if (ret[u].outgoingCalls && ret[u].outgoingCalls.min_duration_outgoing) {
-            ret[u].allCalls.min_duration = ret[u].outgoingCalls.min_duration_outgoing;
+          // outgoing calls
+          for (u in data.calls_outgoing) {
+            if (!ret[u]) {
+              ret[u] = {};
+            }
+            ret[u].outgoingCalls = data.calls_outgoing[u];
           }
-          // total max duration
-          if (ret[u].incomingCalls && ret[u].incomingCalls.max_duration_incoming && ret[u].outgoingCalls && ret[u].outgoingCalls.max_duration_outgoing) {
-            ret[u].allCalls.max_duration = ret[u].incomingCalls.max_duration_incoming > ret[u].outgoingCalls.max_duration_outgoing ? ret[u].incomingCalls.max_duration_incoming : ret[u].outgoingCalls.max_duration_outgoing;
-          } else if (ret[u].incomingCalls && ret[u].incomingCalls.max_duration_incoming) {
-            ret[u].allCalls.max_duration = ret[u].incomingCalls.max_duration_incoming;
-          } else if (ret[u].outgoingCalls && ret[u].outgoingCalls.max_duration_outgoing) {
-            ret[u].allCalls.max_duration = ret[u].outgoingCalls.max_duration_outgoing;
+          // pause durations
+          var nowtime = Math.round(new Date().getTime() / 1000);
+          for (u in data.pause_durations) {
+            if (!ret[u]) {
+              ret[u] = {};
+            }
+            for (q in data.pause_durations[u]){
+              if (!ret[u][q]) {
+                ret[u][q] = {};
+              }
+              ret[u][q].time_in_pause = data.pause_durations[u][q];
+              // check if the agent is currently in pause: in this case add
+              // current time passed from the last pause
+              if (members[u] && members[u][q] && members[u][q].isInPause === true) {
+                ret[u][q].time_in_pause += nowtime - data.pause_unpause[u][q].last_paused_time;
+              }
+            }
           }
+          // logon durations
+          for (u in data.logon_durations) {
+            if (!ret[u]) {
+              ret[u] = {};
+            }
+            for (q in data.logon_durations[u]){
+              if (!ret[u][q]) {
+                ret[u][q] = {};
+              }
+              ret[u][q].time_in_logon = data.logon_durations[u][q];
+              // check if the agent is currently logged-in: in this case add
+              // current time passed from the last logon
+              if (members[u] && members[u][q] && members[u][q].isLoggedIn === true) {
+                ret[u][q].time_in_logon += nowtime - data.login_logout[u][q].last_login_time;
+              }
+              // pause percentage of logon time
+              if (ret[u][q].time_in_pause && ret[u][q].time_in_logon) {
+                var cp = (ret[u][q].time_in_pause * 100) / ret[u][q].time_in_logon;
+                ret[u][q].pause_percent = Math.round(cp) > 0 ? Math.round(cp) : cp.toFixed(2);
+              }
+              // in conversation percentage of logon time
+              if (ret[u][q].duration_incoming && ret[u][q].time_in_logon && ret[u][q].time_in_logon > ret[u][q].duration_incoming) {
+                var cp = (ret[u][q].duration_incoming * 100) / ret[u][q].time_in_logon;
+                ret[u][q].conversation_percent = Math.round(cp) > 0 ? Math.round(cp) : cp.toFixed(2);
+              }
+            }
+          }
+          // all calls: incoming & outgoing
+          for (u in ret) {
+            ret[u].allCalls = {};
+            // total avg duration
+            if (ret[u].incomingCalls && ret[u].incomingCalls.avg_duration_incoming && ret[u].outgoingCalls && ret[u].outgoingCalls.avg_duration_outgoing) {
+              ret[u].allCalls.avg_duration = Math.floor((ret[u].incomingCalls.avg_duration_incoming + ret[u].outgoingCalls.avg_duration_outgoing) / 2);
+            } else if (ret[u].incomingCalls && ret[u].incomingCalls.avg_duration_incoming) {
+              ret[u].allCalls.avg_duration = ret[u].incomingCalls.avg_duration_incoming;
+            } else if (ret[u].outgoingCalls && ret[u].outgoingCalls.avg_duration_outgoing) {
+              ret[u].allCalls.avg_duration = ret[u].outgoingCalls.avg_duration_outgoing;
+            }
+            // total min duration
+            if (ret[u].incomingCalls && ret[u].incomingCalls.min_duration_incoming && ret[u].outgoingCalls && ret[u].outgoingCalls.min_duration_outgoing) {
+              ret[u].allCalls.min_duration = ret[u].incomingCalls.min_duration_incoming < ret[u].outgoingCalls.min_duration_outgoing ? ret[u].incomingCalls.min_duration_incoming : ret[u].outgoingCalls.min_duration_outgoing;
+            } else if (ret[u].incomingCalls && ret[u].incomingCalls.min_duration_incoming) {
+              ret[u].allCalls.min_duration = ret[u].incomingCalls.min_duration_incoming;
+            } else if (ret[u].outgoingCalls && ret[u].outgoingCalls.min_duration_outgoing) {
+              ret[u].allCalls.min_duration = ret[u].outgoingCalls.min_duration_outgoing;
+            }
+            // total max duration
+            if (ret[u].incomingCalls && ret[u].incomingCalls.max_duration_incoming && ret[u].outgoingCalls && ret[u].outgoingCalls.max_duration_outgoing) {
+              ret[u].allCalls.max_duration = ret[u].incomingCalls.max_duration_incoming > ret[u].outgoingCalls.max_duration_outgoing ? ret[u].incomingCalls.max_duration_incoming : ret[u].outgoingCalls.max_duration_outgoing;
+            } else if (ret[u].incomingCalls && ret[u].incomingCalls.max_duration_incoming) {
+              ret[u].allCalls.max_duration = ret[u].incomingCalls.max_duration_incoming;
+            } else if (ret[u].outgoingCalls && ret[u].outgoingCalls.max_duration_outgoing) {
+              ret[u].allCalls.max_duration = ret[u].outgoingCalls.max_duration_outgoing;
+            }
+          }
+          if (CACHE_ENABLED) {
+            cache.getAgentsStatsByList = ret;
+            cacheTimestamps.getAgentsStatsByList = new Date().getTime();
+          }
+          cb(null, ret);
         }
-        if (CACHE_ENABLED) {
-          cache.getAgentsStatsByList = ret;
-          cacheTimestamps.getAgentsStatsByList = new Date().getTime();
-        }
-        cb(null, ret);
+      } catch (err1) {
+        logger.log.error(IDLOG, err1.stack);
+        cb(err1);
       }
     });
   } catch (err) {
