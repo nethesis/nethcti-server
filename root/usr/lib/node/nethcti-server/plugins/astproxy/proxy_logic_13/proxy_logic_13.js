@@ -3840,10 +3840,12 @@ function addConversationToExten(exten, resp, chid) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var ch, ch2, chDest, chSource, chBridged;
-
     // add "bridgedChannel" information to the response
     for (ch in resp) {
       resp[ch].bridgedChannel = '';
+      if (resp[ch].bridgeid === null) {
+        continue;
+      }
       for (ch2 in resp) {
         if (resp[ch2].bridgeid === resp[ch].bridgeid &&
           resp[ch2].channel !== resp[ch].channel) {
@@ -3859,15 +3861,12 @@ function addConversationToExten(exten, resp, chid) {
       // creates the source and destination channels
       ch = new Channel(resp[chid]);
       if (ch.isSource()) {
-
         chSource = ch;
         chBridged = resp[chid].bridgedChannel;
         if (resp[chBridged]) { // the call is connected
           chDest = new Channel(resp[chBridged]);
         }
-
       } else {
-
         chDest = ch;
         chBridged = resp[chid].bridgedChannel;
         if (resp[chBridged]) { // the call is connected
