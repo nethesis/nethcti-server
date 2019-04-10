@@ -1587,11 +1587,9 @@ var compConfigManager;
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
-          // get all extensions associated with the user
-          var userExtensions = compUser.getAllEndpointsExtension(username);
           var extension;
-          // check if the requested extension is owned by the user
-          if (userExtensions[req.params.id] || username === 'admin') {
+          // check if the user has the privacy enabled
+          if (compAuthorization.isPrivacyEnabled(username) === false) {
             extension = compAstProxy.getJSONExtension(req.params.id);
           }
           // checks if the user has the privacy enabled. In case the user has the "privacy" and
