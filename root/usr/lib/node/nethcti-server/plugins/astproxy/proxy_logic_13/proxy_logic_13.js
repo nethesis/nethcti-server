@@ -8752,29 +8752,6 @@ function startRecordConversation(extension, convid, cb) {
 
           function (callback) {
 
-            logger.log.info(IDLOG, 'set "AUDIOHOOK_INHERIT(MixMonitor)" asterisk variable');
-            astProxy.doCmd({
-              command: 'setVariable',
-              name: 'AUDIOHOOK_INHERIT(MixMonitor)',
-              value: 'yes',
-              channel: chid
-            }, function (err) {
-              try {
-                if (err) {
-                  callback(err);
-                } else {
-                  callback();
-                }
-
-              } catch (e) {
-                logger.log.error(IDLOG, e.stack);
-                callback(e);
-              }
-            });
-          },
-
-          function (callback) {
-
             logger.log.info(IDLOG, 'set "MASTER_CHANNEL(CDR(recordingfile))" asterisk variable with filename "' + filename + '"');
             astProxy.doCmd({
               command: 'setVariable',
