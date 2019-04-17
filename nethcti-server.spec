@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.11.0
+Version: 3.12.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,13 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Apr 17 2019 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.12.0-1
+- No call management box for spy action - Bug nethesis/dev#5612
+- Server history interval doesn't work correctly with type user - Bug nethesis/dev#5608
+- Call recording does not work - Bug nethesis/dev#5615
+- "astproxy/qmanager_astats" can generate a TypeError - Bug nethesis/dev#5611
+- Rest api "extension/:id" returns only your extension - Bug nethesis/dev#5609
+
 * Mon Apr 01 2019 Stefano Fancello <stefano.fancello@nethesis.it> - 3.11.0-1
 - Added new com_ipc module to overcome reload problem - nethesis/dev#5600
 - Added `linkedid` data to the extensions conversations - nethesis/dev#5605
