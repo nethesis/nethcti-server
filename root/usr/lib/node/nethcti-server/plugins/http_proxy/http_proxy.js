@@ -263,6 +263,7 @@ function start() {
               return;
             }
           } else { // authentication failed
+            logger.log.warn(IDLOG, 'admin user authentication failed (' + req.headers['x-forwarded-for'] + ')');
             compUtil.net.sendHttp401(IDLOG, res);
             return;
           }
@@ -343,6 +344,7 @@ function start() {
           }
         }
         else {
+          logger.log.warn(IDLOG, 'authentication attempt failed: http "Authorization" header is not present');
           compUtil.net.sendHttp401(IDLOG, res);
           return;
         }

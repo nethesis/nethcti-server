@@ -282,7 +282,7 @@ function setCompUser(comp) {
           var password = req.params.password;
 
           if (!username || !password) {
-            logger.log.warn('username or password has not been specified');
+            logger.log.warn(IDLOG, 'username or password has not been specified');
             compUtil.net.sendHttp401(IDLOG, res);
             return;
           }
@@ -299,6 +299,7 @@ function setCompUser(comp) {
 
           if (!compUser.isUserPresent(clUser) || compAutho.userHasProfile(clUser) === false) {
             var errmsg = 'user ' + clUser + ' is not configured';
+            logger.log.warn(IDLOG, errmsg);
             compUtil.net.sendHttp401(IDLOG, res, errmsg, '1');
             return;
           }
