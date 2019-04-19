@@ -5435,24 +5435,11 @@ function evtNewVoicemailMessage(data) {
  */
 function evtNewCdr(data) {
   try {
-    // check parameter
-    if (typeof data !== 'object' &&
-      typeof data.source !== 'string' && typeof data.channel !== 'string' &&
-      typeof data.endtime !== 'string' && typeof data.duration !== 'string' &&
-      typeof data.amaflags !== 'string' && typeof data.uniqueid !== 'string' &&
-      typeof data.callerid !== 'string' && typeof data.starttime !== 'string' &&
-      typeof data.answertime !== 'string' && typeof data.destination !== 'string' &&
-      typeof data.disposition !== 'string' && typeof data.lastapplication !== 'string' &&
-      typeof data.billableseconds !== 'string' && typeof data.destinationcontext !== 'string' &&
-      typeof data.destinationchannel !== 'string') {
-
+    if (typeof data !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    // emit the event
     logger.log.info(IDLOG, 'emit event ' + EVT_NEW_CDR + ' with uniqueid "' + data.uniqueid + '"');
     astProxy.emit(EVT_NEW_CDR, data);
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }

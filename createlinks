@@ -10,6 +10,7 @@ event_templates('nethcti-server3-update', qw(
                 /etc/nethcti/authentication.json
                 /etc/nethcti/dbstatic.d/phonebook.json
                 /etc/nethcti/dbstatic.d/nethcti3.json
+                /etc/nethcti/exec_script.json
                 /etc/nethcti/services.json
                 /etc/nethcti/win_popup.json
                 /etc/nethcti/nethcti.json
@@ -20,8 +21,8 @@ event_templates('nethcti-server3-update', qw(
 
 event_actions('nethcti-server3-update', qw(
 	            nethcti-server-conf 00
-                initialize-default-databases 02
-		        nethcti-server-astdbconfig 10
+              initialize-default-databases 02
+		          nethcti-server-astdbconfig 10
 ));
 
 event_services('nethcti-server3-update', qw(
