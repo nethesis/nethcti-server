@@ -2575,7 +2575,6 @@ function getAllEndpointsExtension(username) {
 
     // check the user existence
     if (typeof users[username] !== 'object') {
-      logger.log.warn(IDLOG, 'gettings all the extension endpoints: the user "' + username + '" does not exist');
       return {};
     }
 
