@@ -6,6 +6,8 @@
     "consumes": [
       "logger"
     ],
-    "provides": []
+    "provides": [
+      "comIpc"
+    ]
   }
 }

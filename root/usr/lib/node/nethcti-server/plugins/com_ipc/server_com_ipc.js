@@ -12,6 +12,7 @@
  * @class server_com_ipc
  */
 const ipc = require('node-ipc');
+const EventEmitter = require('events').EventEmitter;
 
 /**
  * The module identifier used by the logger.
@@ -26,6 +27,15 @@ const ipc = require('node-ipc');
 let IDLOG = '[server_com_ipc]';
 
 /**
+ * The name of the alarm event.
+ *
+ * @property EVT_ALARM
+ * @type string
+ * @default "evtAlarm"
+ */
+var EVT_ALARM = 'evtAlarm';
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -34,6 +44,15 @@ let IDLOG = '[server_com_ipc]';
  * @default console
  */
 let logger = console;
+
+/**
+ * The event emitter.
+ *
+ * @property emitter
+ * @type object
+ * @private
+ */
+let emitter = new EventEmitter();
 
 /**
  * The unix socket file path.
@@ -81,6 +100,7 @@ let start = () => {
     ipc.config.id = 'nethcti-server';
     ipc.config.encoding = 'utf8';
     ipc.config.silent = true;
+    ipc.config.rawBuffer = true;
     ipc.serve(sockPath, () => {
       ipc.server.on('error', (error) => {
         logger.log.error(IDLOG, error);
@@ -91,9 +111,16 @@ let start = () => {
       ipc.server.on('socket.disconnected', (socket, destroyedSocketID) => {
         logger.log.info(IDLOG, 'client disconnected');
       });
-      ipc.server.on('message', (data, socket) => {
-        if (data === 'reload') {
-          process.emit('reloadApp');
+      ipc.server.on('data', (data, socket) => {
+        try {
+          let o = JSON.parse(data.toString().trim());
+          if (o.type === 'message' && o.data === 'reload') {
+            process.emit('reloadApp');
+          } else if (o.type === 'collectd_notify') {
+            emitter.emit(EVT_ALARM, o.notification);
+          }
+        } catch (err1) {
+          logger.log.error(IDLOG, 'wrong JSON object received: ' + data.toString());
         }
       });
     });
@@ -104,5 +131,24 @@ let start = () => {
   }
 };
 
+/**
+ * Subscribe a callback function to a custom event fired by this object.
+ * It's the same of nodejs _events.EventEmitter.on._
+ *
+ * @method on
+ * @param {string} type The name of the event
+ * @param {function} cb The callback to execute in response to the event
+ * @return {object} A subscription handle capable of detaching that subscription.
+ */
+let on = (type, cb) => {
+  try {
+    return emitter.on(type, cb);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+exports.on = on;
+exports.EVT_ALARM = EVT_ALARM;
 exports.start = start;
 exports.setLogger = setLogger;
