@@ -903,14 +903,7 @@ function setComIpcListeners() {
 function evtAlarm(data) {
   try {
     if (data.status && data.type && data.type_instance && data.message) {
-      wsServer.sockets.in(WS_ROOM.QMANAGER_EVT)
-      .emit(EVT_QMANAGER_ALARM,
-        {
-          status: data.status.toLowerCase(),
-          alarm: data.type,
-          queue: data.type_instance.replace('Queue','')
-        }
-      );
+      wsServer.sockets.in(WS_ROOM.QMANAGER_EVT).emit(EVT_QMANAGER_ALARM, data);
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);

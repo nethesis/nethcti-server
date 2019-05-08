@@ -117,7 +117,13 @@ let start = () => {
           if (o.type === 'message' && o.data === 'reload') {
             process.emit('reloadApp');
           } else if (o.type === 'collectd_notify') {
-            emitter.emit(EVT_ALARM, o.notification);
+            emitter.emit(EVT_ALARM,
+              {
+                status: o.notification.status.toLowerCase(),
+                alarm: o.notification.type,
+                queue: o.notification.type_instance.replace('Queue','')
+              }
+            );
           }
         } catch (err1) {
           logger.log.error(IDLOG, 'wrong JSON object received: ' + data.toString());

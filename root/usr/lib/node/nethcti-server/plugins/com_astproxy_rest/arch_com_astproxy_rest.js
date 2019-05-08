@@ -38,6 +38,7 @@ module.exports = function(options, imports, register) {
     serverRest.setCompAuthorization(imports.authorization);
     serverRest.setCompConfigManager(imports.configManager);
     serverRest.setCompComNethctiWs(imports.com_nethcti_ws);
+    serverRest.setCompAlarm(imports.alarm);
     serverRest.start();
   } catch (err) {
     logger.ctilog.log.error(IDLOG, err.stack);

@@ -165,6 +165,25 @@ function setCompComNethctiWs(comp) {
 }
 
 /**
+ * Sets the component.
+ *
+ * @method setCompAlarm
+ * @param {object} comp The component.
+ */
+function setCompAlarm(comp) {
+  try {
+    for (let key in plugins) {
+      if (typeof plugins[key].setCompAlarm === 'function') {
+        plugins[key].setCompAlarm(comp);
+        logger.log.info(IDLOG, 'alarm component has been set for rest plugin ' + key);
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Set configuration manager architect component used by configuration functions.
  *
  * @method setCompConfigManager
@@ -595,6 +614,7 @@ exports.setCompUser = setCompUser;
 exports.configPrivacy = configPrivacy;
 exports.setCompOperator = setCompOperator;
 exports.setCompAstProxy = setCompAstProxy;
+exports.setCompAlarm = setCompAlarm;
 exports.setCompComNethctiWs = setCompComNethctiWs;
 exports.setCompAuthorization = setCompAuthorization;
 exports.setCompConfigManager = setCompConfigManager;

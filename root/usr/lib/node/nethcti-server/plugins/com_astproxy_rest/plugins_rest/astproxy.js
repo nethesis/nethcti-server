@@ -59,6 +59,15 @@ var dtmfTonesPermitted = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*',
 var compComNethctiWs;
 
 /**
+ * The architect component to be used for alarm.
+ *
+ * @property compAlarm
+ * @type object
+ * @private
+ */
+var compAlarm;
+
+/**
  * The architect component to be used for authorization.
  *
  * @property compAuthorization
@@ -135,6 +144,7 @@ var compConfigManager;
         * 1. [`astproxy/qmanager_qcalls`](#qmanager_qcallsget)
         * 1. [`astproxy/qmanager_astats`](#qmanager_astatsget)
         * 1. [`astproxy/opdata`](#opdataget)
+        * 1. [`astproxy/qalarms`](#qalarmsget)
         *
         * ---
         *
@@ -512,6 +522,24 @@ var compConfigManager;
          "waitingQueue": "501",
          "500": { Queue.{{#crossLink "Queue/toJSON"}}{{/crossLink}}() }
          "501": { Queue.{{#crossLink "Queue/toJSON"}}{{/crossLink}}() }
+     }
+        *
+        * ---
+        *
+        * ### <a id="qalarmsget">**`astproxy/qalarms`**</a>
+        *
+        * Get all the queues alarms.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "401":
+           {
+             "status": "ok",
+             "alarm": "queueload",
+             "queue": "401"
+           },
+          ...
      }
         *
         *
@@ -1092,6 +1120,7 @@ var compConfigManager;
          *   @param {string} cfcall/:type/:endpoint         Gets the call forward status to a destination number of the endpoint of the user
          *   @param {string} qmanager_queues                Gets all the queues of the queue supervisor
          *   @param {string} opdata                         Gets all the data needed by the operator panel
+         *   @param {string} qalarms                        Gets all the queues alarms
          */
         'get': [
           'queues',
@@ -1115,7 +1144,8 @@ var compConfigManager;
           'cfvm/:type/:endpoint',
           'cfcall/:type/:endpoint',
           'qmanager_queues',
-          'opdata'
+          'opdata',
+          'qalarms'
         ],
 
         /**
@@ -1779,6 +1809,42 @@ var compConfigManager;
               compUtil.net.sendHttp500(IDLOG, res, err.toString());
             }
           });
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      },
+
+      /**
+       *  Gets queues alarms with the following REST API:
+       *
+       *     GET  qalarms
+       *
+       * @method qmanager_astats
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      qalarms: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          if (compAuthorization.authorizeQManagerUser(username) === true) {
+            logger.log.info(IDLOG, 'getting queues alarms: user "' + username + '" has the "qmanager" authorization');
+          } else {
+            logger.log.warn(IDLOG, 'getting queues alarms: authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          var queuesList = compAuthorization.getAllowedQManagerQueues(username);
+          let alarms = compAlarm.getQueuesAlarms();
+          let data = {};
+          for (let i = 0; i < queuesList.length; i++) {
+            if (alarms[queuesList[i]]) {
+              data[queuesList[i]] = alarms[queuesList[i]];
+            }
+          }
+          res.send(200, data);
+          logger.log.info(IDLOG, 'sent qmanager alarms to user "' + username + '" ' + res.connection.remoteAddress);
         } catch (error) {
           logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -4656,6 +4722,7 @@ var compConfigManager;
     exports.atxfer = astproxy.atxfer;
     exports.answer = astproxy.answer;
     exports.opdata = astproxy.opdata;
+    exports.qalarms = astproxy.qalarms;
     exports.intrude = astproxy.intrude;
     exports.end_conf = astproxy.end_conf;
     exports.opgroups = astproxy.opgroups;
@@ -4677,6 +4744,7 @@ var compConfigManager;
     exports.stop_record = astproxy.stop_record;
     exports.setCompUser = setCompUser;
     exports.mute_record = astproxy.mute_record;
+    exports.setCompAlarm = setCompAlarm;
     exports.op_wait_conv = astproxy.op_wait_conv;
     exports.queue_recall = astproxy.queue_recall;
     exports.qrecall_info = astproxy.qrecall_info;
@@ -5486,6 +5554,22 @@ function setCompComNethctiWs(comp) {
     compComNethctiWs = comp;
     logger.log.info(IDLOG, 'websocket communication component has been set');
 
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the alarm component.
+ *
+ * @method setCompAlarm
+ * @param {object} comp The component
+ * @static
+ */
+function setCompAlarm(comp) {
+  try {
+    compAlarm = comp;
+    logger.log.info(IDLOG, 'alarm component has been set');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
