@@ -50,6 +50,31 @@ var EventEmitter = require('events').EventEmitter;
 var EVT_EXTEN_UPDATE = 'extenUpdate';
 
 /**
+ * Emitted to a websocket client connection on new alarm.
+ *
+ * Example:
+ *
+ *                         {
+        "alarm": "queueload",
+        "queue": "401",
+        "message": "Queue 401 has no waiting call",
+        "status": "ok"
+     }
+ *
+ * @event EVT_QMANAGER_ALARM
+ * @param {object} alarm The alarm data
+ *
+ */
+/**
+ * The name of the alarm update event.
+ *
+ * @property EVT_QMANAGER_ALARM
+ * @type string
+ * @default "qmAlarm"
+ */
+var EVT_QMANAGER_ALARM = 'qmAlarm';
+
+/**
  * Emitted to the extension involved in a connected conversation.
  *
  * Example:
@@ -514,6 +539,7 @@ var USER_AGENT_TYPE = {
 }
 */
 var WS_ROOM = {
+  QMANAGER_EVT: 'qmanager_evt',
   QUEUES_AST_EVT_CLEAR: 'queues_ast_evt_clear',
   QUEUES_AST_EVT_PRIVACY: 'queues_ast_evt_privacy',
   TRUNKS_AST_EVT_CLEAR: 'trunks_ast_evt_clear',
@@ -598,6 +624,15 @@ var astProxy;
  * @private
  */
 var compUser;
+
+/**
+ * The communication ipc component.
+ *
+ * @property compComIpc
+ * @type object
+ * @private
+ */
+var compComIpc;
 
 /**
  * The authentication module.
@@ -725,6 +760,20 @@ function setCompUser(comp) {
 }
 
 /**
+ * Sets the module to be used.
+ *
+ * @method setCompComIpc
+ * @param {object} comp The module.
+ */
+function setCompComIpc(comp) {
+  try {
+    compComIpc = comp;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Sets the authorization module to be used.
  *
  * @method setCompAuthorization
@@ -826,6 +875,36 @@ function setAstProxyListeners() {
     astProxy.on(astProxy.EVT_MEETME_CONF_END, meetmeConfEnd); // a meetme conference has been ended
     astProxy.on(astProxy.EVT_MEETME_CONF_CHANGED, meetmeConfChanged); // a meetme conference has changed
     astProxy.on(astProxy.EVT_QUEUE_MEMBER_CHANGED, queueMemberChanged); // a queue member has changed
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Sets the event listeners for the communication ipc component.
+ *
+ * @method setComIpcListeners
+ * @private
+ */
+function setComIpcListeners() {
+  try {
+    compComIpc.on(compComIpc.EVT_ALARM, evtAlarm);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Received an alarm.
+ *
+ * @method evtAlarm
+ * @private
+ */
+function evtAlarm(data) {
+  try {
+    if (data.status && data.type && data.type_instance && data.message) {
+      wsServer.sockets.in(WS_ROOM.QMANAGER_EVT).emit(EVT_QMANAGER_ALARM, data);
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -1811,6 +1890,8 @@ function configPrivacy(path) {
  */
 function start() {
   try {
+    setComIpcListeners();
+
     // set the listener for the aterisk proxy module
     setAstProxyListeners();
 
@@ -2168,6 +2249,10 @@ function doLogin(socket, obj) {
         socket.join(WS_ROOM.PARKINGS_AST_EVT_CLEAR);
       }
     }
+    // qmanager instances
+    if (compAuthorization.authorizeQManagerUser(username) === true) {
+      socket.join(WS_ROOM.QMANAGER_EVT);
+    }
     // emits the event for a logged in client. This event is emitted when a user has been logged in by a websocket connection
     logger.log.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_LOGGEDIN + '" for username "' + obj.accessKeyId + '"');
     emitter.emit(EVT_WS_CLIENT_LOGGEDIN, obj.accessKeyId);
@@ -2393,6 +2478,7 @@ exports.setLogger = setLogger;
 exports.setAstProxy = setAstProxy;
 exports.EVT_RELOADED = EVT_RELOADED;
 exports.setCompUser = setCompUser;
+exports.setCompComIpc = setCompComIpc;
 exports.configPrivacy = configPrivacy;
 exports.setCompPostit = setCompPostit;
 exports.setCompVoicemail = setCompVoicemail;

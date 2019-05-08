@@ -1,10 +1,11 @@
+'use strict';
 /**
  * The architect component that starts _server\_com\_ipc_ module.
  *
  * @class arch_com_ipc
  * @module com_ipc
  */
-var server = require('./server_com_ipc.js');
+const server = require('./server_com_ipc.js');
 
 /**
  * The module identifier used by the logger.
@@ -16,17 +17,16 @@ var server = require('./server_com_ipc.js');
  * @readOnly
  * @default [arch_com_ipc]
  */
-var IDLOG = '[arch_com_ipc]';
+let IDLOG = '[arch_com_ipc]';
 
 module.exports = function(options, imports, register) {
-
-  register();
-
-  var logger = console;
+  register(null, {
+    comIpc: server
+  });
+  let logger = console;
   if (imports.logger) {
     logger = imports.logger;
   }
-
   try {
     server.setLogger(logger.ctilog);
     server.start();
