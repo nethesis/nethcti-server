@@ -115,8 +115,10 @@ let start = () => {
         try {
           let o = JSON.parse(data.toString().trim());
           if (o.type === 'message' && o.data === 'reload') {
+            logger.log.info(IDLOG, 'received event reload');
             process.emit('reloadApp');
           } else if (o.type === 'collectd_notify') {
+            logger.log.info(IDLOG, 'received collectd event');
             emitter.emit(EVT_ALARM,
               {
                 status: o.notification.status.toLowerCase(),
@@ -124,6 +126,8 @@ let start = () => {
                 queue: o.notification.type_instance.replace('Queue','')
               }
             );
+          } else {
+            logger.log.warn(IDLOG, 'received unknown event: ' + JSON.stringify(o));
           }
         } catch (err1) {
           logger.log.error(IDLOG, 'wrong JSON object received: ' + data.toString());

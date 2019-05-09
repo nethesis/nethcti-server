@@ -108,6 +108,7 @@ function setComIpcListeners() {
  */
 function start() {
   try {
+    logger.log.info(IDLOG, 'set listeners for com ipc component');
     setComIpcListeners();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -123,10 +124,13 @@ function start() {
 function evtAlarm(data) {
   try {
     if (data.status && data.alarm && data.queue) {
+      logger.log.info(IDLOG, 'received valid alarm: ' + JSON.stringify(data));
       if (!alarms[data.queue]) {
         alarms[data.queue] = {}
       }
       alarms[data.queue][data.alarm] = data.status;
+    } else {
+      logger.log.warn(IDLOG, 'received invalid alarm: ' + JSON.stringify(data));
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);

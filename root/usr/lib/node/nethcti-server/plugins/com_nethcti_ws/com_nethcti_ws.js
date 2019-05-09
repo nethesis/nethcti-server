@@ -902,7 +902,8 @@ function setComIpcListeners() {
  */
 function evtAlarm(data) {
   try {
-    if (data.status && data.type && data.type_instance && data.message) {
+    if (data.status && data.alarm && data.queue) {
+      logger.log.info(IDLOG, 'emit event "' + EVT_QMANAGER_ALARM + '" to ws room qmanager');
       wsServer.sockets.in(WS_ROOM.QMANAGER_EVT).emit(EVT_QMANAGER_ALARM, data);
     }
   } catch (err) {
