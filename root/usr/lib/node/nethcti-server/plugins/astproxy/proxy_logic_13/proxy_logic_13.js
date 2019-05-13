@@ -650,6 +650,15 @@ var trunks = {};
 var queues = {};
 
 /**
+ * Statistics about queues calls. It is updated once every half an hour.
+ *
+ * @property qCallsStatsHist
+ * @type object
+ * @private
+ */
+var qCallsStatsHist = {};
+
+/**
  * All parkings. The key is the parkings number and the value
  * is the _Parking_ object.
  *
@@ -2223,20 +2232,40 @@ function getJSONAllQueuesStats(queuesList, cb) {
 }
 
 /**
- * Return history of stasts of queues calls.
+ * Return history of stasts of queues calls. Updates data once every half an hour.
  *
  * @method getQCallsStatsHist
- * @param {array} queuesList The list of the queues identifiers
  * @param {function} cb The callback function
  * @return {object} The JSON statistics about all queues.
  */
-function getQCallsStatsHist(queuesList, cb) {
+function getQCallsStatsHist(cb) {
   try {
-    if (Array.isArray(queuesList) === false || typeof cb !== 'function') {
+    if (typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+    if (qCallsStatsHist.last) {
+      var now = moment();
+      var dd = now.format('DD');
+      var HH = now.format('HH');
+      var mm = now.format('mm');
+      mm = parseInt(mm/30)*30;
+      var newdate = dd + '-' + HH + ':' + mm;
+      if (qCallsStatsHist.last === newdate) {
+        logger.log.info(IDLOG, 'return cached history of queues calls stats');
+        cb(null, qCallsStatsHist.data);
+        return;
+      }
+    }
     compDbconn.getQCallsStatsHist(function (err1, result) {
-      cb(err1, result);
+      var now = moment();
+      var dd = now.format('DD');
+      var HH = now.format('HH');
+      var mm = now.format('mm');
+      mm = parseInt(mm/30)*30;
+      qCallsStatsHist.data = result;
+      qCallsStatsHist.last = dd + '-' + HH + ':' + mm;
+      logger.log.info(IDLOG, 'return updated history of queues calls stats');
+      cb(err1, qCallsStatsHist.data);
     });
   } catch (error) {
     logger.log.error(IDLOG, error.stack);

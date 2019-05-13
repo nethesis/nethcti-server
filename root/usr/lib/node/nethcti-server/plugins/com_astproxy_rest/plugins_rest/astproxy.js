@@ -1782,7 +1782,7 @@ var compConfigManager;
             return;
           }
           var queuesList = compAuthorization.getAllowedQManagerQueues(username);
-          compAstProxy.getQCallsStatsHist(queuesList, function (err1, stats) {
+          compAstProxy.getQCallsStatsHist(function (err1, stats) {
             try {
               if (err1) {
                 throw err1;
