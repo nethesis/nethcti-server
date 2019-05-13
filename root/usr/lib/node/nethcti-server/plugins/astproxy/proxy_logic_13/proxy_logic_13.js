@@ -2223,6 +2223,28 @@ function getJSONAllQueuesStats(queuesList, cb) {
 }
 
 /**
+ * Return history of stasts of queues calls.
+ *
+ * @method getQCallsStatsHist
+ * @param {array} queuesList The list of the queues identifiers
+ * @param {function} cb The callback function
+ * @return {object} The JSON statistics about all queues.
+ */
+function getQCallsStatsHist(queuesList, cb) {
+  try {
+    if (Array.isArray(queuesList) === false || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    compDbconn.getQCallsStatsHist(function (err1, result) {
+      cb(err1, result);
+    });
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+    cb(error);
+  }
+}
+
+/**
  * Returns the JSON representation of all queues.
  *
  * @method getJSONQueues
@@ -9523,6 +9545,7 @@ exports.pickupParking = pickupParking;
 exports.getJSONQueues = getJSONQueues;
 exports.endMeetmeConf = endMeetmeConf;
 exports.opWaitConv = opWaitConv;
+exports.getQCallsStatsHist = getQCallsStatsHist;
 exports.getJSONTrunks = getJSONTrunks;
 exports.getTrunksList = getTrunksList;
 exports.getExtensList = getExtensList;

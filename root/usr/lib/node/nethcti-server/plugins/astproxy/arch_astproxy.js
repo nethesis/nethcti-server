@@ -81,6 +81,7 @@ module.exports = function(options, imports, register) {
       pickupConversation: astProxy.proxyLogic.pickupConversation,
       pickupParking: astProxy.proxyLogic.pickupParking,
       inoutDynQueues: astProxy.proxyLogic.inoutDynQueues,
+      getQCallsStatsHist: astProxy.proxyLogic.getQCallsStatsHist,
       queueMemberPauseUnpause: astProxy.proxyLogic.queueMemberPauseUnpause,
       queueMemberAdd: astProxy.proxyLogic.queueMemberAdd,
       queueMemberRemove: astProxy.proxyLogic.queueMemberRemove,
