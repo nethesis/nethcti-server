@@ -132,6 +132,7 @@ var compConfigManager;
         * 1. [`astproxy/wakeup`](#wakeupget)
         * 1. [`astproxy/queues`](#queuesget)
         * 1. [`astproxy/trunks`](#trunksget)
+        * 1. [`astproxy/qmanager_qcalls_hist`](#qmanager_qcalls_histget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
         * 1. [`astproxy/extension/:id`](#extensionget)
@@ -227,6 +228,28 @@ var compConfigManager;
                "serviceLevelTimePeriod": "60",
                "serviceLevelPercentage": "0.0"
            }
+     }
+        *
+        * ---
+        *
+        * ### <a id="qmanager_qcalls_histsget">**`astproxy/qmanager_qcalls_hist`**</a>
+        *
+        * Returns the history of queues calls statistics of the current day.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "401": {
+           "total": [
+             { "value": "2", "date": "13-May-19-09:30" },
+             { "value": "2", "date": "13-May-19-09:30" }
+           ],
+           "answered": [...]
+           "failed": [...]
+           "invalid": [...]
+         },
+         "402": { ... },
+         ...
      }
         *
         * ---
@@ -1105,6 +1128,7 @@ var compConfigManager;
          *   @param {string} opgroups                       Gets all the user groups of the operator panel
          *   @param {string} conference/:endpoint           Gets data about the meetme conference of the extension
          *   @param {string} parkings                       Gets all the parkings with all their status information
+         *   @param {string} qmanager_qcalls_hist           Gets the history of queues calls statistics of the current day
          *   @param {string} extension/:id                  Gets the extension with all their status information
          *   @param {string} extensions                     Gets all the extensions with all their status information
          *   @param {string} sip_webrtc                     Gets all the configuration about the sip WebRTC
@@ -1129,6 +1153,7 @@ var compConfigManager;
           'wakeup',
           'opgroups',
           'parkings',
+          'qmanager_qcalls_hist',
           'extension/:id',
           'extensions',
           'sip_webrtc',
@@ -1725,6 +1750,51 @@ var compConfigManager;
               }
               logger.log.info(IDLOG, 'sent JSON stats of all queues to user "' + username + '" ' + res.connection.remoteAddress);
               res.send(200, stats);
+            } catch (err) {
+              logger.log.error(IDLOG, err.stack);
+              compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            }
+          });
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      },
+
+      /**
+       *  Returns the history of queues calls statistics of the current day with the following REST API:
+       *
+       *     GET  qmanager_qcalls_hist
+       *
+       * @method qmanager_qcalls_hist
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      qmanager_qcalls_hist: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          if (compAuthorization.authorizeQManagerUser(username) === true) {
+            logger.log.info(IDLOG, 'getting history of statistics about queues calls: user "' + username + '" has the "qmanager" authorization');
+          } else {
+            logger.log.warn(IDLOG, 'getting history of statistics about queues calls: authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          var queuesList = compAuthorization.getAllowedQManagerQueues(username);
+          compAstProxy.getQCallsStatsHist(function (err1, stats) {
+            try {
+              if (err1) {
+                throw err1;
+              }
+              logger.log.info(IDLOG, 'sent history of statistics about queues ' + queuesList + ' calls to user "' + username + '" ' + res.connection.remoteAddress);
+              let values = {};
+              for (let i = 0; i < queuesList.length; i++) {
+                if (stats[queuesList[i]]) {
+                  values[queuesList[i]] = stats[queuesList[i]];
+                }
+              }
+              res.send(200, values);
             } catch (err) {
               logger.log.error(IDLOG, err.stack);
               compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -4750,6 +4820,7 @@ var compConfigManager;
     exports.qrecall_info = astproxy.qrecall_info;
     exports.qrecall_check = astproxy.qrecall_check;
     exports.qmanager_qstats = astproxy.qmanager_qstats;
+    exports.qmanager_qcalls_hist = astproxy.qmanager_qcalls_hist;
     exports.qmanager_qcalls = astproxy.qmanager_qcalls;
     exports.qmanager_astats = astproxy.qmanager_astats;
     exports.start_record = astproxy.start_record;

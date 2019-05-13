@@ -612,6 +612,135 @@ function getQueueStats(qid, nullCallPeriod, sla, cb) {
 }
 
 /**
+ * Gets hourly statistics about queues calls.
+ *
+ * @method getQCallsStatsHist
+ * @param {function} cb The callback function
+ */
+function getQCallsStatsHist(cb) {
+  try {
+    if (typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
+      where: [
+        'event IN ("DID","ENTERQUEUE","COMPLETEAGENT","COMPLETECALLER","ABANDON","EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL") ' +
+        'GROUP BY queuename, date'
+      ],
+      attributes: [
+        'queuename',
+        ['CASE ' +
+          'WHEN TIME(time) >= "00:00:00" AND TIME(time) < "00:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-00:30") ' +
+          'WHEN TIME(time) >= "00:30:00" AND TIME(time) < "01:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-01:00") ' +
+          'WHEN TIME(time) >= "01:00:00" AND TIME(time) < "01:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-01:30") ' +
+          'WHEN TIME(time) >= "01:30:00" AND TIME(time) < "02:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-02:00") ' +
+          'WHEN TIME(time) >= "02:00:00" AND TIME(time) < "02:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-02:30") ' +
+          'WHEN TIME(time) >= "02:30:00" AND TIME(time) < "03:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-03:00") ' +
+          'WHEN TIME(time) >= "03:00:00" AND TIME(time) < "03:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-03:30") ' +
+          'WHEN TIME(time) >= "03:30:00" AND TIME(time) < "04:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-04:00") ' +
+          'WHEN TIME(time) >= "04:00:00" AND TIME(time) < "04:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-04:30") ' +
+          'WHEN TIME(time) >= "04:30:00" AND TIME(time) < "05:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-05:00") ' +
+          'WHEN TIME(time) >= "05:00:00" AND TIME(time) < "05:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-05:30") ' +
+          'WHEN TIME(time) >= "05:30:00" AND TIME(time) < "06:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-06:00") ' +
+          'WHEN TIME(time) >= "06:00:00" AND TIME(time) < "06:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-06:30") ' +
+          'WHEN TIME(time) >= "06:30:00" AND TIME(time) < "07:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-07:00") ' +
+          'WHEN TIME(time) >= "07:00:00" AND TIME(time) < "07:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-07:30") ' +
+          'WHEN TIME(time) >= "07:30:00" AND TIME(time) < "08:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-08:00") ' +
+          'WHEN TIME(time) >= "08:00:00" AND TIME(time) < "08:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-08:30") ' +
+          'WHEN TIME(time) >= "08:30:00" AND TIME(time) < "09:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-09:00") ' +
+          'WHEN TIME(time) >= "09:00:00" AND TIME(time) < "09:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-09:30") ' +
+          'WHEN TIME(time) >= "09:30:00" AND TIME(time) < "10:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-10:00") ' +
+          'WHEN TIME(time) >= "10:00:00" AND TIME(time) < "10:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-10:30") ' +
+          'WHEN TIME(time) >= "10:30:00" AND TIME(time) < "11:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-11:00") ' +
+          'WHEN TIME(time) >= "11:00:00" AND TIME(time) < "11:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-11:30") ' +
+          'WHEN TIME(time) >= "11:30:00" AND TIME(time) < "12:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-12:00") ' +
+          'WHEN TIME(time) >= "12:00:00" AND TIME(time) < "12:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-12:30") ' +
+          'WHEN TIME(time) >= "12:30:00" AND TIME(time) < "13:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-13:00") ' +
+          'WHEN TIME(time) >= "13:00:00" AND TIME(time) < "13:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-13:30") ' +
+          'WHEN TIME(time) >= "13:30:00" AND TIME(time) < "14:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-14:00") ' +
+          'WHEN TIME(time) >= "14:00:00" AND TIME(time) < "14:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-14:30") ' +
+          'WHEN TIME(time) >= "14:30:00" AND TIME(time) < "15:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-15:00") ' +
+          'WHEN TIME(time) >= "15:00:00" AND TIME(time) < "15:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-15:30") ' +
+          'WHEN TIME(time) >= "15:30:00" AND TIME(time) < "16:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-16:00") ' +
+          'WHEN TIME(time) >= "16:00:00" AND TIME(time) < "16:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-16:30") ' +
+          'WHEN TIME(time) >= "16:30:00" AND TIME(time) < "17:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-17:00") ' +
+          'WHEN TIME(time) >= "17:00:00" AND TIME(time) < "17:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-17:30") ' +
+          'WHEN TIME(time) >= "17:30:00" AND TIME(time) < "18:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-18:00") ' +
+          'WHEN TIME(time) >= "18:00:00" AND TIME(time) < "18:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-18:30") ' +
+          'WHEN TIME(time) >= "18:30:00" AND TIME(time) < "19:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-19:00") ' +
+          'WHEN TIME(time) >= "19:00:00" AND TIME(time) < "19:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-19:30") ' +
+          'WHEN TIME(time) >= "19:30:00" AND TIME(time) < "20:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-20:00") ' +
+          'WHEN TIME(time) >= "20:00:00" AND TIME(time) < "20:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-20:30") ' +
+          'WHEN TIME(time) >= "20:30:00" AND TIME(time) < "21:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-21:00") ' +
+          'WHEN TIME(time) >= "21:00:00" AND TIME(time) < "21:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-21:30") ' +
+          'WHEN TIME(time) >= "21:30:00" AND TIME(time) < "22:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-22:00") ' +
+          'WHEN TIME(time) >= "22:00:00" AND TIME(time) < "22:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-22:30") ' +
+          'WHEN TIME(time) >= "22:30:00" AND TIME(time) < "23:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-23:00") ' +
+          'WHEN TIME(time) >= "23:00:00" AND TIME(time) < "23:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-23:30") ' +
+          'WHEN TIME(time) >= "23:30:00" AND TIME(time) < "00:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-00:00") END',
+        'date'],
+        ['COUNT(IF(event="DID", 1, NULL))', 'total'],
+        ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER"), 1, NULL))', 'answered'],
+        ['COUNT(IF((event IN ("EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL")) OR (event="ABANDON" AND data3>=5), 1, NULL))', 'failed'],
+        ['COUNT(IF(event="ABANDON" AND data3<5, 1, NULL))', 'invalid']
+      ]
+    }).then(function (results) {
+      try {
+        if (results) {
+          logger.log.info(IDLOG, 'get hist queues calls stats has been successful');
+          let i;
+          let values = {};
+          for (i = 0; i < results.length; i++) {
+            if (!values[results[i].dataValues.queuename]) {
+              values[results[i].dataValues.queuename] = {
+                total: [],
+                answered: [],
+                failed: [],
+                invalid: []
+              };
+            }
+            values[results[i].dataValues.queuename].total.push({
+              value: results[i].dataValues.total,
+              date: results[i].dataValues.date,
+              fullDate: new Date(results[i].dataValues.date).toISOString()
+            });
+            values[results[i].dataValues.queuename].answered.push({
+              value: results[i].dataValues.answered,
+              date: results[i].dataValues.date,
+              fullDate: new Date(results[i].dataValues.date).toISOString()
+            });
+            values[results[i].dataValues.queuename].failed.push({
+              value: results[i].dataValues.failed,
+              date: results[i].dataValues.date,
+              fullDate: new Date(results[i].dataValues.date).toISOString()
+            });
+            values[results[i].dataValues.queuename].invalid.push({
+              value: results[i].dataValues.invalid,
+              date: results[i].dataValues.date,
+              fullDate: new Date(results[i].dataValues.date).toISOString()
+            });
+          }
+          cb(null, values);
+        } else {
+          logger.log.info(IDLOG, 'get hist queues calls stats: no results');
+          cb(null, {});
+        }
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
+    }, function (err) {
+      logger.log.error(IDLOG, 'get hist queues calls stats: ' + err.toString());
+      cb(err.toString());
+    });
+    compDbconnMain.incNumExecQueries();
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Return function to have the time spent into pause queues.
  *
  * @method getAgentsPauseDurations
@@ -1406,6 +1535,7 @@ apiList.getFpbxAdminSha1Pwd = getFpbxAdminSha1Pwd;
 apiList.deleteCallRecording = deleteCallRecording;
 apiList.getAgentsStatsByList = getAgentsStatsByList;
 apiList.getCallRecordingFileData = getCallRecordingFileData;
+apiList.getQCallsStatsHist = getQCallsStatsHist;
 // public interface
 exports.apiList = apiList;
 exports.setLogger = setLogger;
