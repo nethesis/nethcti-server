@@ -241,8 +241,8 @@ var compConfigManager;
         *     {
          "401": {
            "total": [
-             { "value": "2", "date": "13-May-19-09:30" },
-             { "value": "2", "date": "13-May-19-09:30" }
+             { "value": "2", "date": "13-May-19-09:30", "fullDate": "2019-05-14T10:30:00.000Z" },
+             { "value": "2", "date": "13-May-19-09:30", "fullDate": "2019-05-14T10:30:00.000Z" }
            ],
            "answered": [...]
            "failed": [...]

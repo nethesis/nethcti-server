@@ -615,13 +615,28 @@ function getQueueStats(qid, nullCallPeriod, sla, cb) {
  * Gets hourly statistics about queues calls.
  *
  * @method getQCallsStatsHist
+ * @param {number} nullCallPeriod The period of time to consider a call as null
  * @param {function} cb The callback function
  */
-function getQCallsStatsHist(cb) {
+function getQCallsStatsHist(nullCallPeriod, cb) {
   try {
     if (typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+    const period = [
+      '00:00', '00:30', '01:00', '01:30', '02:00', '02:30', '03:00', '03:30', '04:00', '04:30',
+      '05:00', '05:30', '06:00', '06:30', '07:00', '07:30', '08:00', '08:30', '09:00', '09:30',
+      '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+      '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30',
+      '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30', '00:00'
+    ];
+    const day = moment();
+    const currday = day.format('DD-MMMM-YY');
+    let caseClause = 'CASE ';
+    for (var i = 0; i < period.length - 1; i++) {
+      caseClause += 'WHEN TIME(time) >= "' + period[i] + ':00" AND TIME(time) < "' + period[i+1] + ':00" THEN DATE_FORMAT(time, "' + currday + '-' + period[i+1] + '") ';
+    }
+    caseClause += 'END';
     compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
       where: [
         'event IN ("DID","ENTERQUEUE","COMPLETEAGENT","COMPLETECALLER","ABANDON","EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL") ' +
@@ -629,96 +644,68 @@ function getQCallsStatsHist(cb) {
       ],
       attributes: [
         'queuename',
-        ['CASE ' +
-          'WHEN TIME(time) >= "00:00:00" AND TIME(time) < "00:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-00:30") ' +
-          'WHEN TIME(time) >= "00:30:00" AND TIME(time) < "01:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-01:00") ' +
-          'WHEN TIME(time) >= "01:00:00" AND TIME(time) < "01:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-01:30") ' +
-          'WHEN TIME(time) >= "01:30:00" AND TIME(time) < "02:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-02:00") ' +
-          'WHEN TIME(time) >= "02:00:00" AND TIME(time) < "02:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-02:30") ' +
-          'WHEN TIME(time) >= "02:30:00" AND TIME(time) < "03:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-03:00") ' +
-          'WHEN TIME(time) >= "03:00:00" AND TIME(time) < "03:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-03:30") ' +
-          'WHEN TIME(time) >= "03:30:00" AND TIME(time) < "04:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-04:00") ' +
-          'WHEN TIME(time) >= "04:00:00" AND TIME(time) < "04:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-04:30") ' +
-          'WHEN TIME(time) >= "04:30:00" AND TIME(time) < "05:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-05:00") ' +
-          'WHEN TIME(time) >= "05:00:00" AND TIME(time) < "05:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-05:30") ' +
-          'WHEN TIME(time) >= "05:30:00" AND TIME(time) < "06:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-06:00") ' +
-          'WHEN TIME(time) >= "06:00:00" AND TIME(time) < "06:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-06:30") ' +
-          'WHEN TIME(time) >= "06:30:00" AND TIME(time) < "07:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-07:00") ' +
-          'WHEN TIME(time) >= "07:00:00" AND TIME(time) < "07:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-07:30") ' +
-          'WHEN TIME(time) >= "07:30:00" AND TIME(time) < "08:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-08:00") ' +
-          'WHEN TIME(time) >= "08:00:00" AND TIME(time) < "08:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-08:30") ' +
-          'WHEN TIME(time) >= "08:30:00" AND TIME(time) < "09:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-09:00") ' +
-          'WHEN TIME(time) >= "09:00:00" AND TIME(time) < "09:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-09:30") ' +
-          'WHEN TIME(time) >= "09:30:00" AND TIME(time) < "10:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-10:00") ' +
-          'WHEN TIME(time) >= "10:00:00" AND TIME(time) < "10:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-10:30") ' +
-          'WHEN TIME(time) >= "10:30:00" AND TIME(time) < "11:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-11:00") ' +
-          'WHEN TIME(time) >= "11:00:00" AND TIME(time) < "11:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-11:30") ' +
-          'WHEN TIME(time) >= "11:30:00" AND TIME(time) < "12:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-12:00") ' +
-          'WHEN TIME(time) >= "12:00:00" AND TIME(time) < "12:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-12:30") ' +
-          'WHEN TIME(time) >= "12:30:00" AND TIME(time) < "13:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-13:00") ' +
-          'WHEN TIME(time) >= "13:00:00" AND TIME(time) < "13:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-13:30") ' +
-          'WHEN TIME(time) >= "13:30:00" AND TIME(time) < "14:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-14:00") ' +
-          'WHEN TIME(time) >= "14:00:00" AND TIME(time) < "14:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-14:30") ' +
-          'WHEN TIME(time) >= "14:30:00" AND TIME(time) < "15:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-15:00") ' +
-          'WHEN TIME(time) >= "15:00:00" AND TIME(time) < "15:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-15:30") ' +
-          'WHEN TIME(time) >= "15:30:00" AND TIME(time) < "16:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-16:00") ' +
-          'WHEN TIME(time) >= "16:00:00" AND TIME(time) < "16:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-16:30") ' +
-          'WHEN TIME(time) >= "16:30:00" AND TIME(time) < "17:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-17:00") ' +
-          'WHEN TIME(time) >= "17:00:00" AND TIME(time) < "17:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-17:30") ' +
-          'WHEN TIME(time) >= "17:30:00" AND TIME(time) < "18:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-18:00") ' +
-          'WHEN TIME(time) >= "18:00:00" AND TIME(time) < "18:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-18:30") ' +
-          'WHEN TIME(time) >= "18:30:00" AND TIME(time) < "19:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-19:00") ' +
-          'WHEN TIME(time) >= "19:00:00" AND TIME(time) < "19:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-19:30") ' +
-          'WHEN TIME(time) >= "19:30:00" AND TIME(time) < "20:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-20:00") ' +
-          'WHEN TIME(time) >= "20:00:00" AND TIME(time) < "20:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-20:30") ' +
-          'WHEN TIME(time) >= "20:30:00" AND TIME(time) < "21:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-21:00") ' +
-          'WHEN TIME(time) >= "21:00:00" AND TIME(time) < "21:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-21:30") ' +
-          'WHEN TIME(time) >= "21:30:00" AND TIME(time) < "22:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-22:00") ' +
-          'WHEN TIME(time) >= "22:00:00" AND TIME(time) < "22:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-22:30") ' +
-          'WHEN TIME(time) >= "22:30:00" AND TIME(time) < "23:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-23:00") ' +
-          'WHEN TIME(time) >= "23:00:00" AND TIME(time) < "23:30:00" THEN DATE_FORMAT(time, "%d-%M-%y-23:30") ' +
-          'WHEN TIME(time) >= "23:30:00" AND TIME(time) < "00:00:00" THEN DATE_FORMAT(time, "%d-%M-%y-00:00") END',
-        'date'],
+        [caseClause, 'date'],
         ['COUNT(IF(event="DID", 1, NULL))', 'total'],
         ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER"), 1, NULL))', 'answered'],
-        ['COUNT(IF((event IN ("EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL")) OR (event="ABANDON" AND data3>=5), 1, NULL))', 'failed'],
-        ['COUNT(IF(event="ABANDON" AND data3<5, 1, NULL))', 'invalid']
+        ['COUNT(IF((event IN ("EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL")) OR (event="ABANDON" AND data3>=' + nullCallPeriod + '), 1, NULL))', 'failed'],
+        ['COUNT(IF(event="ABANDON" AND data3<' + nullCallPeriod + ', 1, NULL))', 'invalid']
       ]
     }).then(function (results) {
       try {
         if (results) {
           logger.log.info(IDLOG, 'get hist queues calls stats has been successful');
-          let i;
+          var min = Math.floor(day.minutes()/30)*30;
+          var currtime = day.hours() + ':' + (min === 0 ? '00' : min);
+          let tempdate, i;
+          let basevalues = {};
+          for (i = 0; i < period.length - 1; i++) {
+            tempdate = currday + '-' + period[i+1];
+            basevalues[tempdate] = {
+              value: 0,
+              date: tempdate,
+              fullDate: new Date(tempdate).toISOString()
+            };
+            if (period[i+1] === currtime) {
+              break;
+            }
+          }
           let values = {};
           for (i = 0; i < results.length; i++) {
             if (!values[results[i].dataValues.queuename]) {
               values[results[i].dataValues.queuename] = {
-                total: [],
-                answered: [],
-                failed: [],
-                invalid: []
+                totalTemp: JSON.parse(JSON.stringify(basevalues)),
+                answeredTemp: JSON.parse(JSON.stringify(basevalues)),
+                failedTemp: JSON.parse(JSON.stringify(basevalues)),
+                invalidTemp: JSON.parse(JSON.stringify(basevalues))
               };
             }
-            values[results[i].dataValues.queuename].total.push({
-              value: results[i].dataValues.total,
-              date: results[i].dataValues.date,
-              fullDate: new Date(results[i].dataValues.date).toISOString()
-            });
-            values[results[i].dataValues.queuename].answered.push({
-              value: results[i].dataValues.answered,
-              date: results[i].dataValues.date,
-              fullDate: new Date(results[i].dataValues.date).toISOString()
-            });
-            values[results[i].dataValues.queuename].failed.push({
-              value: results[i].dataValues.failed,
-              date: results[i].dataValues.date,
-              fullDate: new Date(results[i].dataValues.date).toISOString()
-            });
-            values[results[i].dataValues.queuename].invalid.push({
-              value: results[i].dataValues.invalid,
-              date: results[i].dataValues.date,
-              fullDate: new Date(results[i].dataValues.date).toISOString()
-            });
+            values[results[i].dataValues.queuename].totalTemp[results[i].dataValues.date].value = results[i].dataValues.total;
+            values[results[i].dataValues.queuename].answeredTemp[results[i].dataValues.date].value = results[i].dataValues.answered;
+            values[results[i].dataValues.queuename].failedTemp[results[i].dataValues.date].value = results[i].dataValues.failed;
+            values[results[i].dataValues.queuename].invalidTemp[results[i].dataValues.date].value = results[i].dataValues.invalid;
+          }
+          let q, entry;
+          for (q in values) {
+            values[q].total = [];
+            for (entry in values[q].totalTemp) {
+              values[q].total.push(values[q].totalTemp[entry]);
+            }
+            delete values[q].totalTemp;
+            values[q].answered = [];
+            for (entry in values[q].answeredTemp) {
+              values[q].answered.push(values[q].answeredTemp[entry]);
+            }
+            delete values[q].answeredTemp;
+            values[q].failed = [];
+            for (entry in values[q].failedTemp) {
+              values[q].failed.push(values[q].failedTemp[entry]);
+            }
+            delete values[q].failedTemp;
+            values[q].invalid = [];
+            for (entry in values[q].invalidTemp) {
+              values[q].invalid.push(values[q].invalidTemp[entry]);
+            }
+            delete values[q].invalidTemp;
           }
           cb(null, values);
         } else {

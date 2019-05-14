@@ -2256,7 +2256,7 @@ function getQCallsStatsHist(cb) {
         return;
       }
     }
-    compDbconn.getQCallsStatsHist(function (err1, result) {
+    compDbconn.getQCallsStatsHist(nullCallPeriod, function (err1, result) {
       var now = moment();
       var dd = now.format('DD');
       var HH = now.format('HH');
