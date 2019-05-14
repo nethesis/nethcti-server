@@ -654,8 +654,6 @@ function getQCallsStatsHist(nullCallPeriod, cb) {
       try {
         if (results) {
           logger.log.info(IDLOG, 'get hist queues calls stats has been successful');
-          var min = Math.floor(day.minutes()/30)*30;
-          var currtime = day.hours() + ':' + (min === 0 ? '00' : min);
           let tempdate, i;
           let basevalues = {};
           for (i = 0; i < period.length - 1; i++) {
@@ -665,9 +663,6 @@ function getQCallsStatsHist(nullCallPeriod, cb) {
               date: tempdate,
               fullDate: new Date(tempdate).toISOString()
             };
-            if (period[i+1] === currtime) {
-              break;
-            }
           }
           let values = {};
           for (i = 0; i < results.length; i++) {
@@ -685,25 +680,31 @@ function getQCallsStatsHist(nullCallPeriod, cb) {
             values[results[i].dataValues.queuename].invalidTemp[results[i].dataValues.date].value = results[i].dataValues.invalid;
           }
           let q, entry;
+          var min = Math.floor(day.minutes()/30)*30;
+          var currDatetime = currday + '-' + day.hours() + ':' + (min === 0 ? '00' : min);
           for (q in values) {
             values[q].total = [];
             for (entry in values[q].totalTemp) {
               values[q].total.push(values[q].totalTemp[entry]);
+              if (entry === currDatetime) { break; }
             }
             delete values[q].totalTemp;
             values[q].answered = [];
             for (entry in values[q].answeredTemp) {
               values[q].answered.push(values[q].answeredTemp[entry]);
+              if (entry === currDatetime) { break; }
             }
             delete values[q].answeredTemp;
             values[q].failed = [];
             for (entry in values[q].failedTemp) {
               values[q].failed.push(values[q].failedTemp[entry]);
+              if (entry === currDatetime) { break; }
             }
             delete values[q].failedTemp;
             values[q].invalid = [];
             for (entry in values[q].invalidTemp) {
               values[q].invalid.push(values[q].invalidTemp[entry]);
+              if (entry === currDatetime) { break; }
             }
             delete values[q].invalidTemp;
           }
