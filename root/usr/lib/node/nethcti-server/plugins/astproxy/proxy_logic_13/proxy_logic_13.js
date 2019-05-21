@@ -3893,18 +3893,32 @@ function addConversationToExten(exten, resp, chid) {
     var ch, ch2, chDest, chSource, chBridged;
     // add "bridgedChannel" information to the response
     for (ch in resp) {
-      resp[ch].bridgedChannel = '';
-      if (resp[ch].bridgeid === null) {
+      if (resp[ch].bridgedChannel !== '' && resp[ch].bridgedChannel !== undefined) {
         continue;
       }
+      resp[ch].bridgedChannel = '';
       for (ch2 in resp) {
-        if (resp[ch2].bridgeid === resp[ch].bridgeid &&
-          resp[ch2].channel !== resp[ch].channel) {
+        if (resp[ch2].bridgedChannel !== '' && resp[ch2].bridgedChannel !== undefined) {
+          continue;
+        }
+        if (
+          (
+            resp[ch2].bridgeid === resp[ch].bridgeid &&
+            resp[ch2].channel !== resp[ch].channel &&
+            resp[ch].bridgeid !== null
+          ) ||
+          (
+            resp[ch].bridgeid === null && resp[ch2].bridgeid === null &&
+            (resp[ch].status === 'ring' || resp[ch].status === 'ringing') &&
+            (resp[ch2].status === 'ring' || resp[ch2].status === 'ringing') &&
+            resp[ch].linkedid === resp[ch2].linkedid
+          )) {
 
           resp[ch].bridgedChannel = resp[ch2].channel;
           resp[ch2].bridgedChannel = resp[ch].channel;
           resp[ch].uniqueid_linked = resp[ch2].uniqueid;
           resp[ch2].uniqueid_linked = resp[ch].uniqueid;
+          continue;
         }
       }
     }
