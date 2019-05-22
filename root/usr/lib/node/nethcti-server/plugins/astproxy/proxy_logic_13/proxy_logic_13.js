@@ -3909,7 +3909,8 @@ function addConversationToExten(exten, resp, chid) {
           ) ||
           (
             resp[ch].bridgeid === null && resp[ch2].bridgeid === null &&
-            (resp[ch].status === 'ring' || resp[ch].status === 'ringing') &&
+            (resp[ch].status === 'ring' || resp[ch].status === 'ringing' || resp[ch].status === 'down') &&
+            resp[ch2].channel !== resp[ch].channel &&
             (resp[ch2].status === 'ring' || resp[ch2].status === 'ringing') &&
             resp[ch].linkedid === resp[ch2].linkedid
           )) {
