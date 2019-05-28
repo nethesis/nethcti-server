@@ -1040,10 +1040,10 @@ function getAgentsMissedCalls(agents) {
       try {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
           where: [
-            'event="RINGNOANSWER" AND agent IN ("' + agents.join('","') + '") GROUP BY agent'
+            'event="RINGNOANSWER" AND agent IN ("' + agents.join('","') + '") GROUP BY queuename, agent ORDER BY agent'
           ],
           attributes: [
-            ['COUNT(event)', 'noanswercalls'], 'agent'
+            ['COUNT(event)', 'noanswercalls'], 'agent', 'queuename'
           ]
         }).then(function (results) {
           try {
@@ -1051,7 +1051,13 @@ function getAgentsMissedCalls(agents) {
               logger.log.info(IDLOG, 'get missed calls count of queue agents "' + agents + '" has been successful');
               var values = {};
               for (var i = 0; i < results.length; i++) {
-                values[results[i].dataValues.agent] = results[i].dataValues.noanswercalls;
+                if (!values[results[i].dataValues.agent]) {
+                  values[results[i].dataValues.agent] = {};
+                }
+                if (!values[results[i].dataValues.agent][results[i].dataValues.queuename]) {
+                  values[results[i].dataValues.agent][results[i].dataValues.queuename] = {};
+                }
+                values[results[i].dataValues.agent][results[i].dataValues.queuename].noanswercalls = results[i].dataValues.noanswercalls;
               }
               callback(null, values);
             } else {
@@ -1309,7 +1315,12 @@ function getAgentsStatsByList(members, cb) {
             if (!ret[u]) {
               ret[u] = {};
             }
-            ret[u].no_answer_calls = data.calls_missed[u];
+            for (q in data.calls_missed[u]) {
+              if (!ret[u][q]) {
+                ret[u][q] = {};
+              }
+              ret[u][q].no_answer_calls = data.calls_missed[u][q].noanswercalls;
+            }
           }
           // outgoing calls
           for (u in data.calls_outgoing) {
