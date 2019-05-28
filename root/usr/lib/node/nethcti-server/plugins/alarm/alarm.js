@@ -128,7 +128,7 @@ function evtAlarm(data) {
       if (!alarms[data.queue]) {
         alarms[data.queue] = {}
       }
-      alarms[data.queue][data.alarm] = data.status;
+      alarms[data.queue][data.alarm] = { status: data.status, date: data.date };
     } else {
       logger.log.warn(IDLOG, 'received invalid alarm: ' + JSON.stringify(data));
     }
