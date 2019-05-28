@@ -2747,11 +2747,12 @@ function initializePjsipExten(err, results) {
     }
     var arr = [];
     var e, exten;
-
     for (e in results) {
-
       // skip if the current extension is a trunk
       if (staticDataTrunks[results[e].ext]) {
+        continue;
+      }
+      if (!staticDataExtens.names[results[e].ext]) {
         continue;
       }
       exten = new Extension(results[e].ext, 'pjsip');
