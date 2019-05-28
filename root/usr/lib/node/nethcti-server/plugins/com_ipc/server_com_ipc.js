@@ -121,6 +121,7 @@ let start = () => {
             logger.log.info(IDLOG, 'received collectd event');
             emitter.emit(EVT_ALARM,
               {
+                date: new Date().toISOString(),
                 status: o.notification.status.toLowerCase(),
                 alarm: o.notification.type,
                 queue: o.notification.type_instance.replace('Queue','')
