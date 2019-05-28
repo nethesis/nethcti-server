@@ -2150,6 +2150,12 @@ function getJSONAllAgentsStats(qlist, cb) {
       for (var u in result) {
         if (!permittedAgents[u]) {
           delete result[u];
+        } else {
+          for (var q in result[u]) {
+            if (qlist.indexOf(q) === -1 && q !== 'incomingCalls' && q !== 'outgoingCalls' && q !== 'allCalls') {
+              delete result[u][q];
+            }
+          }
         }
       }
       cb(err1, result);
