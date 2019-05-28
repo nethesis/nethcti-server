@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.12.0
+Version: 3.13.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,12 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Tue May 28 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.13.0-1
+- QManager new Dashboard tab - nethesis/dev#5610
+- Add notifications for queues - nethesis/dev#5621
+- Wrong call direction during ringing time - Bug nethesis/dev#5629
+- Execute script at the end of a call - nethesis/dev#5613
+
 * Wed Apr 17 2019 Alessandro Polidori <alessandro.polidori@gmail.com> - 3.12.0-1
 - No call management box for spy action - Bug nethesis/dev#5612
 - Server history interval doesn't work correctly with type user - Bug nethesis/dev#5608
