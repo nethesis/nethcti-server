@@ -5311,8 +5311,10 @@ function ajaxPhoneCall(username, req, res) {
             fallbackAjaxPhoneCall(username, req, res);
           }
         }).on('error', function (err1) {
-          logger.log.error(IDLOG, err1.message);
-          fallbackAjaxPhoneCall(username, req, res);
+          if (extenAgent.toLowerCase().indexOf('fanvil') === -1) {
+            logger.log.error(IDLOG, err1.message);
+            fallbackAjaxPhoneCall(username, req, res);
+          }
         });
       }
     } else {
