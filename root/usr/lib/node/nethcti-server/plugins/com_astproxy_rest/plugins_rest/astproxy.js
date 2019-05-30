@@ -1782,7 +1782,7 @@ var compConfigManager;
             return;
           }
           var queuesList = compAuthorization.getAllowedQManagerQueues(username);
-          compAstProxy.getQCallsStatsHist(function (err1, stats) {
+          compAstProxy.getQCallsStatsHist(function (err1, stats, len) {
             try {
               if (err1) {
                 throw err1;
@@ -1790,8 +1790,21 @@ var compConfigManager;
               logger.log.info(IDLOG, 'sent history of statistics about queues ' + queuesList + ' calls to user "' + username + '" ' + res.connection.remoteAddress);
               let values = {};
               for (let i = 0; i < queuesList.length; i++) {
-                if (stats[queuesList[i]]) {
+                if ((len > 0) && stats[queuesList[i]]) {
                   values[queuesList[i]] = stats[queuesList[i]];
+                } else {
+                  values[queuesList[i]] = {
+                    answered: [],
+                    failed: [],
+                    invalid: [],
+                    total: []
+                  }
+                  for (let period in stats) {
+                    values[queuesList[i]].answered.push(stats[period]);
+                    values[queuesList[i]].failed.push(stats[period]);
+                    values[queuesList[i]].invalid.push(stats[period]);
+                    values[queuesList[i]].total.push(stats[period]);
+                  }
                 }
               }
               res.send(200, values);

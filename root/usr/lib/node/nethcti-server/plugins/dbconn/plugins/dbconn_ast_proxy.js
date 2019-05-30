@@ -652,18 +652,25 @@ function getQCallsStatsHist(nullCallPeriod, cb) {
       ]
     }).then(function (results) {
       try {
-        if (results) {
-          logger.log.info(IDLOG, 'get hist queues calls stats has been successful');
-          let tempdate, i;
-          let basevalues = {};
-          for (i = 0; i < period.length - 1; i++) {
-            tempdate = currday + '-' + period[i+1];
-            basevalues[tempdate] = {
-              value: 0,
-              date: tempdate,
-              fullDate: new Date(tempdate).toISOString()
-            };
+        let tempdate, i, tempval,
+            min = Math.floor(day.minutes()/30)*30,
+            currDatetime = currday + '-' + day.hours() + ':' + (min === 0 ? '00' : min),
+            basevalues = {},
+            emptyValues = {};
+        for (i = 0; i < period.length - 1; i++) {
+          tempdate = currday + '-' + period[i+1];
+          tempval = {
+            value: 0,
+            date: tempdate,
+            fullDate: new Date(tempdate).toISOString()
+          };
+          basevalues[tempdate] = tempval;
+          if (new Date(tempdate).getTime() <= new Date(currDatetime).getTime()) {
+            emptyValues[tempdate] = tempval;
           }
+        }
+        if (results.length > 0) {
+          logger.log.info(IDLOG, 'get hist queues calls stats has been successful');
           let values = {};
           for (i = 0; i < results.length; i++) {
             if (!values[results[i].dataValues.queuename]) {
@@ -680,8 +687,6 @@ function getQCallsStatsHist(nullCallPeriod, cb) {
             values[results[i].dataValues.queuename].invalidTemp[results[i].dataValues.date].value = results[i].dataValues.invalid;
           }
           let q, entry;
-          var min = Math.floor(day.minutes()/30)*30;
-          var currDatetime = currday + '-' + day.hours() + ':' + (min === 0 ? '00' : min);
           for (q in values) {
             values[q].total = [];
             for (entry in values[q].totalTemp) {
@@ -708,10 +713,10 @@ function getQCallsStatsHist(nullCallPeriod, cb) {
             }
             delete values[q].invalidTemp;
           }
-          cb(null, values);
+          cb(null, values, results.length);
         } else {
           logger.log.info(IDLOG, 'get hist queues calls stats: no results');
-          cb(null, {});
+          cb(null, emptyValues, results.length);
         }
       } catch (error) {
         logger.log.error(IDLOG, error.stack);
