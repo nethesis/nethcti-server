@@ -124,6 +124,17 @@ var intervalGetSourceSample;
 var streamings = {};
 
 /**
+ * It is used when the streaming source has some problems. So it
+ * serves to log the error only once.
+ *
+ * @property streamings
+ * @type object
+ * @private
+ * @default {}
+ */
+let streamingErrors = {};
+
+/**
  * The asterisk proxy component used for asterisk functions.
  *
  * @property compAstProxy
@@ -272,21 +283,32 @@ function start() {
       for (var i in streamings) {
         if (loopStep % (streamings[i].getFramerate() / baseTime) === 0) {
           // emit the streaming source changed event
-          streamings[i].getSample(function(err, id, img) {
-            logger.log.info(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_CHANGED + '"');
-            emitter.emit(EVT_STREAMING_SOURCE_CHANGED, {
-              streaming: {
-                source: id,
-                image: img
+          streamings[i].getSample(function(err1, id, img) {
+            try {
+              if (err1) {
+                if (streamingErrors[id] === undefined) {
+                  streamingErrors[id] = 'logged';
+                  logger.log.warn(IDLOG, 'streaming "' + id + '" error: ' + err1.toString());
+                }
+                return;
               }
-            });
+              delete streamingErrors[id];
+              logger.log.info(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_CHANGED + '"');
+              emitter.emit(EVT_STREAMING_SOURCE_CHANGED, {
+                streaming: {
+                  source: id,
+                  image: img
+                }
+              });
+            } catch (err2) {
+              logger.log.error(IDLOG, err2.stack);
+            }
           });
         }
       }
       loopStep = (loopStep < 600 ? loopStep + 1 : 1);
     }, baseTime);
   } catch (err) {
-    console.error(err);
     logger.log.error(IDLOG, err.stack);
   }
 }

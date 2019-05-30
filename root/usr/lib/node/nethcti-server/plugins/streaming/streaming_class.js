@@ -199,7 +199,7 @@ exports.Streaming = function(data) {
           var data = "data:" + res.headers["content-type"] + ";base64," + new Buffer(body).toString('base64');
           cb(err, id, data);
         } else {
-          cb(err);
+          cb(err, id);
         }
       });
     } else {
