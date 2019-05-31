@@ -2258,20 +2258,21 @@ function getQCallsStatsHist(cb) {
       var newdate = dd + '-' + HH + ':' + mm;
       if (qCallsStatsHist.last === newdate) {
         logger.log.info(IDLOG, 'return cached history of queues calls stats');
-        cb(null, qCallsStatsHist.data);
+        cb(null, qCallsStatsHist.data, qCallsStatsHist.len);
         return;
       }
     }
-    compDbconn.getQCallsStatsHist(nullCallPeriod, function (err1, result) {
+    compDbconn.getQCallsStatsHist(nullCallPeriod, function (err1, result, len) {
       var now = moment();
       var dd = now.format('DD');
       var HH = now.format('HH');
       var mm = now.format('mm');
       mm = parseInt(mm/30)*30;
       qCallsStatsHist.data = result;
+      qCallsStatsHist.len = len;
       qCallsStatsHist.last = dd + '-' + HH + ':' + mm;
       logger.log.info(IDLOG, 'return updated history of queues calls stats');
-      cb(err1, qCallsStatsHist.data);
+      cb(err1, qCallsStatsHist.data, len);
     });
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
