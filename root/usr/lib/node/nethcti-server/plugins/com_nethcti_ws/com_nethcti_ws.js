@@ -1985,6 +1985,30 @@ function wsConnHdlr(socket) {
     socket.on('disconnect', function(data) {
       disconnHdlr(socket);
     });
+    socket.on('message', function(data) {
+      try {
+        if (data.message === 'screenSharingStart' || data.message === 'screenSharingStop' || data.message === 'screenSharingAccepted') {
+          if (socket.nethcti && socket.nethcti.username && compAuthorization.authorizeScreenSharing(socket.nethcti.username) === true) {
+            logger.log.info(IDLOG, 'screen sharing (roomId "' + data.roomId + '"): authorization successful for user "' + socket.nethcti.username + '"');
+          } else if (socket.nethcti && socket.nethcti.username && compAuthorization.authorizeScreenSharing(socket.nethcti.username) === false) {
+            logger.log.warn(IDLOG, 'screen sharing (roomId "' + data.roomId + '") by user "' + socket.nethcti.username + '" has been failed: user does not have the authorization');
+            return;
+          } else {
+            logger.log.warn(IDLOG, 'screen sharing (roomId "' + data.roomId + '") has been failed: username not present into the socket');
+            return;
+          }
+          for (let socketId in wsid) {
+            if (data.destUser === wsid[socketId].username) {
+              if (wsServer.sockets.sockets[socketId]) {
+                wsServer.sockets.sockets[socketId].emit('message', data);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        logger.log.error(IDLOG, err.stack);
+      }
+    });
     logger.log.info(IDLOG, 'listeners for new http websocket connection have been set');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
