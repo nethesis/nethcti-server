@@ -654,7 +654,7 @@ function getQCallsStatsHist(nullCallPeriod, cb) {
       try {
         let tempdate, i, tempval,
             min = Math.floor(day.minutes()/30)*30,
-            currDatetime = currday + '-' + day.hours() + ':' + (min === 0 ? '00' : min),
+            currDatetime = currday + '-' + ('0' + day.hours()).slice(-2) + ':' + (min === 0 ? '00' : min),
             basevalues = {},
             emptyValues = {};
         for (i = 0; i < period.length - 1; i++) {
