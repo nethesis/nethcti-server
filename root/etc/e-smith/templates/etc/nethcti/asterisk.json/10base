@@ -3,6 +3,7 @@
     my $autoc2c = ${'nethcti-server'}{'AutoC2C'} || "enabled";
     my $trunksEvents = ${'nethcti-server'}{'TrunksEvents'} || "enabled";
     my $nullCallPeriod = ${'nethcti-server'}{'NullCallPeriod'} || "5";
+    my $QMAlarmsNotificationsStatus = ${'nethvoice'}{'EnableNotifications'} || "false";
 
     if (defined ${'nethcti-server'}{'Prefix'} && ${'nethcti-server'}{'Prefix'} eq "0") {
         $prefix = "0";
@@ -12,13 +13,14 @@
     my $nethcti_pwd = NethServer::Password::store('NethctiManagerPasswd') || die('Could not generate Nethcti manager password!');
 
     $OUT = '{
-    "user": "proxycti",
-    "pass": "' . $nethcti_pwd . '",
-    "host": "localhost",
-    "port": "5038",
-    "prefix": "' . $prefix . '",
-    "auto_c2c": "' . $autoc2c . '",
-    "trunks_events": "' . $trunksEvents . '",
-    "null_call_period": "'. $nullCallPeriod . '"
-}';
+        "user": "proxycti",
+        "pass": "' . $nethcti_pwd . '",
+        "host": "localhost",
+        "port": "5038",
+        "prefix": "' . $prefix . '",
+        "auto_c2c": "' . $autoc2c . '",
+        "trunks_events": "' . $trunksEvents . '",
+        "null_call_period": "'. $nullCallPeriod . '",
+        "qm_alarms_notifications": ' . $QMAlarmsNotificationsStatus . '
+    }';
 }
