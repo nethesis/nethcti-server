@@ -1910,7 +1910,7 @@ var compConfigManager;
        */
       qalarms: function (req, res, next) {
         try {
-          var username = req.headers.authorization_user;
+          let username = req.headers.authorization_user;
           if (compAuthorization.authorizeQManagerUser(username) === true) {
             logger.log.info(IDLOG, 'getting queues alarms: user "' + username + '" has the "qmanager" authorization');
           } else {
@@ -1918,12 +1918,16 @@ var compConfigManager;
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
-          var queuesList = compAuthorization.getAllowedQManagerQueues(username);
+          let queuesList = compAuthorization.getAllowedQManagerQueues(username);
           let alarms = compAlarm.getQueuesAlarms();
-          let data = {};
+          let QMAlarmsNotificationsStatus = compAstProxy.getQMAlarmsNotificationsStatus();
+          let data = {
+            list : {},
+            status : QMAlarmsNotificationsStatus
+          };
           for (let i = 0; i < queuesList.length; i++) {
             if (alarms[queuesList[i]]) {
-              data[queuesList[i]] = alarms[queuesList[i]];
+              data.list[queuesList[i]] = alarms[queuesList[i]];
             }
           }
           res.send(200, data);

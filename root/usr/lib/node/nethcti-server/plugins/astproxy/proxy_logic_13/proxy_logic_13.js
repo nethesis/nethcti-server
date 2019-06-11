@@ -612,6 +612,15 @@ var staticDataTrunks = {};
 var staticDataQueues = {};
 
 /**
+ * QM alarms notifications status read from JSON configuration file.
+ *
+ * @property QMAlarmsNotificationsStatus
+ * @type boolean
+ * @private
+ */
+var QMAlarmsNotificationsStatus;
+
+/**
  * Feature codes of asterisk, e.g. the pickup code.
  *
  * @property featureCodes
@@ -1101,6 +1110,36 @@ function iaxExtenStructValidation(err, resp) {
 function setStaticDataQueues(obj) {
   try {
     staticDataQueues = obj;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set QM alarms notifications status read from JSON configuration file.
+ *
+ * @method setQMAlarmsNotificationsStatus
+ * @param {boolean} val The EnableNotifications value read from JSON config file
+ * @static
+ */
+function setQMAlarmsNotificationsStatus(val) {
+  try {
+    QMAlarmsNotificationsStatus = val;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Return the value of the QM alarms notifications status.
+ *
+ * @method getQMAlarmsNotificationsStatus
+ * @return {boolean} The EnableNotifications status
+ * @static
+ */
+function getQMAlarmsNotificationsStatus() {
+  try {
+    return QMAlarmsNotificationsStatus;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -9642,6 +9681,8 @@ exports.getQueueIdsOfExten = getQueueIdsOfExten;
 exports.getJSONQueueStats = getJSONQueueStats;
 exports.getJSONAllQueuesStats = getJSONAllQueuesStats;
 exports.getJSONAllAgentsStats = getJSONAllAgentsStats;
+exports.setQMAlarmsNotificationsStatus = setQMAlarmsNotificationsStatus;
+exports.getQMAlarmsNotificationsStatus = getQMAlarmsNotificationsStatus;
 exports.unmuteConversation = unmuteConversation;
 exports.setUnconditionalCf = setUnconditionalCf;
 exports.hangupConversation = hangupConversation;

@@ -173,6 +173,7 @@ function config(path) {
       reconnect: true, // do you want the ami to reconnect if the connection is dropped, default: false
       reconnect_after: 3000 // how long to wait to reconnect, in miliseconds, default: 3000
     };
+    proxyLogic.setQMAlarmsNotificationsStatus(json.qm_alarms_notifications);
     proxyLogic.setPrefix(json.prefix);
     proxyLogic.setAutoC2CStatus(json.auto_c2c);
     proxyLogic.setNullCallPeriod(parseInt(json.null_call_period));
