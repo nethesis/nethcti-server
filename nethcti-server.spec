@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.13.0
+Version: 3.14.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,15 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Jun 12 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.14.0-1
+- QManager_astats return queue data without privilege - Bug nethesis/dev#5634
+- QManager new Dashboard tab - nethesis/dev#5610
+- Fanvill support: 1 lost call for each outgoing call - Bug nethesis/dev#5526
+- Add date time to qmanager dashboard alarms - nethesis/dev#5635
+- Frequent log error on streaming error - Bug nethesis/dev#5637
+- Added desktop sharing functions - nethesis/dev#5607
+- Server error log "Error: Unable to retrieve transport udp,tcp,ws,wss" - Bug nethesis/dev#5636
+
 * Tue May 28 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.13.0-1
 - QManager new Dashboard tab - nethesis/dev#5610
 - Add notifications for queues - nethesis/dev#5621
