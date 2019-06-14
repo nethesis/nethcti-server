@@ -3071,8 +3071,6 @@ function getListChannelsForSingleTrunk(num) {
   }
 }
 
-
-
 /**
  * Initialize all pjsip trunks as _Trunk_ object into the _trunks_ property.
  *
@@ -6762,6 +6760,24 @@ function evtAstShutdown(data) {
 }
 
 /**
+ * It's called on asterisk module reloading. It is
+ * called from the _reload_ event plugin.
+ *
+ * @method evtAstModuleReloaded
+ * @param {object} data The data received from _reload_ event plugin
+ */
+function evtAstModuleReloaded(data) {
+  try {
+    if (typeof data !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.warn(IDLOG, 'asterisk module "' + data.module + '" reloaded: ' + data.status);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * It's called when an Hangup event is raised from the asterisk. It is
  * called from the _hangup_ event plugin.
  *
@@ -9735,6 +9751,7 @@ exports.evtQueueMemberRemoved = evtQueueMemberRemoved;
 exports.redirectWaitingCaller = redirectWaitingCaller;
 exports.evtHangupConversation = evtHangupConversation;
 exports.evtAstShutdown = evtAstShutdown;
+exports.evtAstModuleReloaded = evtAstModuleReloaded;
 exports.startMeetmeConference = startMeetmeConference;
 exports.evtExtenStatusChanged = evtExtenStatusChanged;
 exports.evtDeviceStatusChanged = evtDeviceStatusChanged;
