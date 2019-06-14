@@ -6741,6 +6741,27 @@ function pickupConversation(endpointId, destId, extForCtx, cb) {
 }
 
 /**
+ * It's called on asterisk shutdown. It is
+ * called from the _shutdown_ event plugin.
+ *
+ * @method evtAstShutdown
+ * @param {object} data The data received from _shutdown_ event plugin
+ */
+function evtAstShutdown(data) {
+  try {
+    if (typeof data !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.warn(IDLOG, 'asterisk shutdown' +
+      (data.shutdown ? ' "' + data.shutdown + '"' : '') +
+      (data.restart ? ' (restart: ' + data.restart + ')' : '')
+    );
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * It's called when an Hangup event is raised from the asterisk. It is
  * called from the _hangup_ event plugin.
  *
@@ -9713,6 +9734,7 @@ exports.EVT_NEW_VOICE_MESSAGE = EVT_NEW_VOICE_MESSAGE;
 exports.evtQueueMemberRemoved = evtQueueMemberRemoved;
 exports.redirectWaitingCaller = redirectWaitingCaller;
 exports.evtHangupConversation = evtHangupConversation;
+exports.evtAstShutdown = evtAstShutdown;
 exports.startMeetmeConference = startMeetmeConference;
 exports.evtExtenStatusChanged = evtExtenStatusChanged;
 exports.evtDeviceStatusChanged = evtDeviceStatusChanged;
