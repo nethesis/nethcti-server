@@ -251,8 +251,18 @@ function start() {
 
               var target = proxyRules.match(req);
               if (target) {
-                return proxy.web(req, res, {
-                  target: target
+                return proxy.web(req, res, { target: target }, function (err) {
+                  try {
+                    if (err) {
+                      logger.log.error(IDLOG, err.stack);
+                      res.writeHead(500);
+                      res.end(err.toString());
+                    }
+                  } catch (err1) {
+                    logger.log.error(IDLOG, err1.stack);
+                    res.writeHead(500);
+                    res.end(err.toString());
+                  }
                 });
               }
               compUtil.net.sendHttp404(IDLOG, res);
@@ -282,8 +292,23 @@ function start() {
           var target = proxyRules.match(req);
           if (target) {
             return proxy.web(req, res, { target: target }, function (err) {
-              if (err) {
-                logger.log.error(IDLOG, err.stack);
+              try {
+                if (err) {
+                  logger.log.error(IDLOG, err.stack);
+                  if (err.code === 'ECONNREFUSED' && err.port) {
+                    for (var k in router) {
+                      if (router[k].indexOf(err.address + ':' + err.port) !== -1) {
+                        process.emit('reloadComp', 'com_' + k.substring(1, k.length) + '_rest');
+                      }
+                    }
+                  }
+                  res.writeHead(500);
+                  res.end(err.toString());
+                }
+              } catch (err1) {
+                logger.log.error(IDLOG, err1.stack);
+                res.writeHead(500);
+                res.end(err.toString());
               }
             });
           }
@@ -331,8 +356,16 @@ function start() {
             var target = proxyRules.match(req);
             if (target) {
               return proxy.web(req, res, { target: target }, function (err) {
-                if (err) {
-                  logger.log.error(IDLOG, err.stack);
+                try {
+                  if (err) {
+                    logger.log.error(IDLOG, err.stack);
+                    res.writeHead(500);
+                    res.end(err.toString());
+                  }
+                } catch (err1) {
+                  logger.log.error(IDLOG, err1.stack);
+                  res.writeHead(500);
+                  res.end(err.toString());
                 }
               });
             }

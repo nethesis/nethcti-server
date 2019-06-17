@@ -20,7 +20,9 @@ var IDLOG = '[arch_com_authentication_rest]';
 
 module.exports = function(options, imports, register) {
 
-  register();
+  register(null, {
+    com_authentication_rest: serverRest
+  });
 
   var logger = console;
   if (imports.logger) {
@@ -28,16 +30,14 @@ module.exports = function(options, imports, register) {
   }
 
   try {
-    imports.user.on(imports.user.EVT_USERS_READY, function() {
-      serverRest.setLogger(logger.ctilog);
-      serverRest.config('/etc/nethcti/services.json');
-      serverRest.setCompUtil(imports.util);
-      serverRest.setCompUser(imports.user);
-      serverRest.setCompAstProxy(imports.astProxy);
-      serverRest.setCompAuthentication(imports.authentication);
-      serverRest.setCompAuthorization(imports.authorization);
-      serverRest.start();
-    });
+    serverRest.setLogger(logger.ctilog);
+    serverRest.config('/etc/nethcti/services.json');
+    serverRest.setCompUtil(imports.util);
+    serverRest.setCompUser(imports.user);
+    serverRest.setCompAstProxy(imports.astProxy);
+    serverRest.setCompAuthentication(imports.authentication);
+    serverRest.setCompAuthorization(imports.authorization);
+    serverRest.start();
   } catch (err) {
     logger.ctilog.log.error(IDLOG, err.stack);
   }

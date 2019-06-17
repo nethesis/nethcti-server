@@ -11,6 +11,8 @@
       "authorization",
       "authentication"
     ],
-    "provides": []
+    "provides": [
+      "com_authentication_rest"
+    ]
   }
 }

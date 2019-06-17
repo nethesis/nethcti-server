@@ -112,8 +112,10 @@ try {
       });
 
       process.on('uncaughtException', function(err) {
-        logger.ctilog.log.error(IDLOG, 'UncaughtException !!!');
-        logger.ctilog.log.error(IDLOG, err.stack);
+        logger.ctilog.log.error(IDLOG, 'UncaughtException !!!\n',
+          err.stack,
+          '\nprocess exit: waiting for systemd restart');
+        process.exit(1);
       });
 
       process.on('reloadApp', function () {
@@ -125,6 +127,17 @@ try {
             app.services[k].reload();
           }
         });
+      });
+
+      process.on('reloadComp', function (name) {
+        try {
+          logger.ctilog.log.warn(IDLOG, 'RELOAD component ' + name);
+          if (typeof app.services[name].reload === 'function') {
+            app.services[name].reload();
+          }
+        } catch (error) {
+          logger.ctilog.log.error(IDLOG, error.stack);
+        }
       });
 
       process.on('SIGTERM', function() {

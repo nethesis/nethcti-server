@@ -1284,6 +1284,7 @@ var initializationStatus = {
  */
 function start() {
   try {
+    logger.log.info(IDLOG, 'start');
     // initialize pjsip extensions
     astProxy.doCmd({
       command: 'listPjsipPeers'
@@ -2783,6 +2784,10 @@ function initializePjsipExten(err, results) {
   try {
     if (err) {
       logger.log.error(IDLOG, err);
+      logger.log.warn(IDLOG, 'try again in 2 sec');
+      setTimeout(() => {
+        start();
+      }, 2000);
       return;
     }
     var arr = [];
@@ -3070,8 +3075,6 @@ function getListChannelsForSingleTrunk(num) {
     logger.log.error(IDLOG, err.stack);
   }
 }
-
-
 
 /**
  * Initialize all pjsip trunks as _Trunk_ object into the _trunks_ property.
@@ -6741,6 +6744,45 @@ function pickupConversation(endpointId, destId, extForCtx, cb) {
 }
 
 /**
+ * It's called on asterisk shutdown. It is
+ * called from the _shutdown_ event plugin.
+ *
+ * @method evtAstShutdown
+ * @param {object} data The data received from _shutdown_ event plugin
+ */
+function evtAstShutdown(data) {
+  try {
+    if (typeof data !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.warn(IDLOG, 'asterisk shutdown' +
+      (data.shutdown ? ' "' + data.shutdown + '"' : '') +
+      (data.restart ? ' (restart: ' + data.restart + ')' : '')
+    );
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * It's called on asterisk module reloading. It is
+ * called from the _reload_ event plugin.
+ *
+ * @method evtAstModuleReloaded
+ * @param {object} data The data received from _reload_ event plugin
+ */
+function evtAstModuleReloaded(data) {
+  try {
+    if (typeof data !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.warn(IDLOG, 'asterisk module "' + data.module + '" reloaded: ' + data.status);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * It's called when an Hangup event is raised from the asterisk. It is
  * called from the _hangup_ event plugin.
  *
@@ -9713,6 +9755,8 @@ exports.EVT_NEW_VOICE_MESSAGE = EVT_NEW_VOICE_MESSAGE;
 exports.evtQueueMemberRemoved = evtQueueMemberRemoved;
 exports.redirectWaitingCaller = redirectWaitingCaller;
 exports.evtHangupConversation = evtHangupConversation;
+exports.evtAstShutdown = evtAstShutdown;
+exports.evtAstModuleReloaded = evtAstModuleReloaded;
 exports.startMeetmeConference = startMeetmeConference;
 exports.evtExtenStatusChanged = evtExtenStatusChanged;
 exports.evtDeviceStatusChanged = evtDeviceStatusChanged;

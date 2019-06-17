@@ -43,6 +43,7 @@ module.exports = function(options, imports, register) {
       getParamUrl: controllerUser.getParamUrl,
       EVT_RELOADED: controllerUser.EVT_RELOADED,
       saveSettings: controllerUser.saveSettings,
+      isConfigured: controllerUser.isConfigured,
       getUsernames: controllerUser.getUsernames,
       isUserPresent: controllerUser.isUserPresent,
       isExtenWebrtc: controllerUser.isExtenWebrtc,
