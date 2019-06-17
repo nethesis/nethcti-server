@@ -65,6 +65,25 @@ var proto;
 var address;
 
 /**
+ * The server.
+ *
+ * @property server
+ * @type object
+ * @private
+ */
+var server;
+
+/**
+ * True if the server is reloading.
+ *
+ * @property reloading
+ * @type boolean
+ * @private
+ * @default false
+ */
+var reloading = false;
+
+/**
  * Set the logger to be used.
  *
  * @method setLogger
@@ -196,7 +215,7 @@ function start() {
      * @private
      */
     var options = {};
-    var server = restify.createServer(options);
+    server = restify.createServer(options);
 
     // set the middlewares to use
     server.use(restify.acceptParser(server.acceptable));
@@ -227,9 +246,12 @@ function start() {
 
     // start the REST server
     server.listen(port, address, function() {
-      logger.log.info(IDLOG, server.name + ' listening at ' + server.url);
+      logger.log.warn(IDLOG, server.name + ' listening at ' + server.url);
     });
 
+    server.on('close', function() {
+      logger.log.warn(IDLOG, 'server closed');
+    });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -374,9 +396,46 @@ function config(path) {
   logger.log.info(IDLOG, 'configuration done by ' + path);
 }
 
+/**
+ * Reload the component.
+ *
+ * @method reload
+ */
+function reload() {
+  try {
+    logger.log.info(IDLOG, 'reloading');
+    reloading = true;
+    reset();
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reset the component.
+ *
+ * @method reset
+ */
+function reset() {
+  try {
+    logger.log.info(IDLOG, 'server closing...');
+    server.close(function () {
+      if (reloading === true) {
+        reloading = false;
+        server = undefined;
+        start();
+        logger.log.warn(IDLOG, 'reloaded');
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.start = start;
 exports.config = config;
+exports.reload = reload;
 exports.setLogger = setLogger;
 exports.setCompUtil = setCompUtil;
 exports.setCompUser = setCompUser;
