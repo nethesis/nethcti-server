@@ -1284,6 +1284,7 @@ var initializationStatus = {
  */
 function start() {
   try {
+    logger.log.info(IDLOG, 'start');
     // initialize pjsip extensions
     astProxy.doCmd({
       command: 'listPjsipPeers'
@@ -2783,6 +2784,10 @@ function initializePjsipExten(err, results) {
   try {
     if (err) {
       logger.log.error(IDLOG, err);
+      logger.log.warn(IDLOG, 'try again in 2 sec');
+      setTimeout(() => {
+        start();
+      }, 2000);
       return;
     }
     var arr = [];

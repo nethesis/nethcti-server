@@ -165,6 +165,16 @@ var emitter = new EventEmitter();
 var users = {};
 
 /**
+ * The configuration status.
+ *
+ * @property configured
+ * @type {boolean}
+ * @private
+ * @default false
+ */
+var configured = false;
+
+/**
  * Set the logger to be used.
  *
  * @method setLogger
@@ -273,6 +283,7 @@ function config(path) {
       emitter.emit(EVT_RELOADED);
       reloading = false;
     }
+    configured = true;
     logger.log.info(IDLOG, 'configuration done by ' + USERS_CONF_FILEPATH);
 
   } catch (err) {
@@ -2876,6 +2887,20 @@ function getUserSettings(username, cb) {
   }
 }
 
+/**
+ * Check the configuration status.
+ *
+ * @method isConfigured
+ * @return {boolean} True if the component has been configured.
+ */
+function isConfigured() {
+  try {
+    return configured;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.config = config;
@@ -2885,6 +2910,7 @@ exports.setPresence = setPresence;
 exports.getPresence = getPresence;
 exports.getQueueIds = getQueueIds;
 exports.EVT_RELOADED = EVT_RELOADED;
+exports.isConfigured = isConfigured;
 exports.saveSettings = saveSettings;
 exports.getUsernames = getUsernames;
 exports.isUserPresent = isUserPresent;
