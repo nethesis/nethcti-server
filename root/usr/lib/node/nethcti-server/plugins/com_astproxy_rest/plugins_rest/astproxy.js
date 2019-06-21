@@ -138,6 +138,7 @@ var compConfigManager;
         * 1. [`astproxy/extension/:id`](#extensionget)
         * 1. [`astproxy/conference/:endpoint`](#conferenceget)
         * 1. [`astproxy/queue_recall/:hours/:qids`](#queue_recallget)
+        * 1. [`astproxy/qmanager_queue_recall/:hours/:qids`](#qmanager_queue_recallget)
         * 1. [`astproxy/qrecall_info/:hours/:cid/:qid`](#qrecall_infoget)
         * 1. [`astproxy/qrecall_check/:num`](#qrecall_checkget)
         * 1. [`astproxy/qmanager_queues`](#qmanager_queuesget)
@@ -344,6 +345,40 @@ var compConfigManager;
         * ---
         *
         * ### <a id="queue_recallget">**`astproxy/queue_recall/:hours/:qids`**</a>
+        *
+        * Gets the recall data about the queue. The request must contains
+        * the following parameters:
+        *
+        * * `hours: is the amount of last hours to be searched of the current day
+        * * `qids: the queue identifiers list separated by comma: e.g. 401,402`
+        *
+        * Example JSON response:
+        *
+        *     [
+         {
+           company: "Nethesis",
+           name: null,
+           cid: "0721405516",
+           action: "RECALL",
+           time: "2015-12-30 17:21:45.2990102,
+           direction: "IN",
+           queuename: "401"
+       },
+       {
+           company: "Nethesis",
+           name: null,
+           cid: "0721405516",
+           action: "RECALL",
+           time: "2015-12-30 17:21:45.2990102,
+           direction: "IN",
+           queuename: "402"
+       },
+       ...
+     ]
+        *
+        * ---
+        *
+        * ### <a id="qmanager_queue_recallget">**`astproxy/qmanager_queue_recall/:hours/:qids`**</a>
         *
         * Gets the recall data about the queue. The request must contains
         * the following parameters:
@@ -1121,30 +1156,31 @@ var compConfigManager;
          * @property get
          * @type {array}
          *
-         *   @param {string} queues                         Gets all the queues of the operator panel of the user
-         *   @param {string} trunks                         Gets all the trunks of the operator panel of the user
-         *   @param {string} prefix                         Gets the prefix number used with outgoing external calls
-         *   @param {string} wakeup                         Gets the list of all alarms wakeup
-         *   @param {string} opgroups                       Gets all the user groups of the operator panel
-         *   @param {string} conference/:endpoint           Gets data about the meetme conference of the extension
-         *   @param {string} parkings                       Gets all the parkings with all their status information
-         *   @param {string} qmanager_qcalls_hist           Gets the history of queues calls statistics of the current day
-         *   @param {string} extension/:id                  Gets the extension with all their status information
-         *   @param {string} extensions                     Gets all the extensions with all their status information
-         *   @param {string} sip_webrtc                     Gets all the configuration about the sip WebRTC
-         *   @param {string} qmanager_qstats/:qid           Gets statistics about the queue
-         *   @param {string} qmanager_qcalls                Gets statistics about all the queues
-         *   @param {string} qmanager_astats                Gets statistics about all the agents
-         *   @param {string} queue_recall/:hours/:qids      Gets the recall data about the queues
-         *   @param {string} qrecall_info/:hours/:cid/:qid  Gets the details about the queue recall
-         *   @param {string} qrecall_check/:num             Checks if the number is in conversation
-         *   @param {string} cw/:endpoint                   Gets the call waiting status of the endpoint of the user
-         *   @param {string} dnd/:endpoint                  Gets the don't disturb status of the endpoint of the user
-         *   @param {string} cfvm/:type/:endpoint           Gets the call forward status to voicemail of the endpoint of the user
-         *   @param {string} cfcall/:type/:endpoint         Gets the call forward status to a destination number of the endpoint of the user
-         *   @param {string} qmanager_queues                Gets all the queues of the queue supervisor
-         *   @param {string} opdata                         Gets all the data needed by the operator panel
-         *   @param {string} qalarms                        Gets all the queues alarms
+         *   @param {string} queues                                Gets all the queues of the operator panel of the user
+         *   @param {string} trunks                                Gets all the trunks of the operator panel of the user
+         *   @param {string} prefix                                Gets the prefix number used with outgoing external calls
+         *   @param {string} wakeup                                Gets the list of all alarms wakeup
+         *   @param {string} opgroups                              Gets all the user groups of the operator panel
+         *   @param {string} conference/:endpoint                  Gets data about the meetme conference of the extension
+         *   @param {string} parkings                              Gets all the parkings with all their status information
+         *   @param {string} qmanager_qcalls_hist                  Gets the history of queues calls statistics of the current day
+         *   @param {string} extension/:id                         Gets the extension with all their status information
+         *   @param {string} extensions                            Gets all the extensions with all their status information
+         *   @param {string} sip_webrtc                            Gets all the configuration about the sip WebRTC
+         *   @param {string} qmanager_qstats/:qid                  Gets statistics about the queue
+         *   @param {string} qmanager_qcalls                       Gets statistics about all the queues
+         *   @param {string} qmanager_astats                       Gets statistics about all the agents
+         *   @param {string} queue_recall/:hours/:qids             Gets the recall data about the queues
+         *   @param {string} qmanager_queue_recall/:hours/:qids    Gets the qmanager recall data about the queues
+         *   @param {string} qrecall_info/:hours/:cid/:qid         Gets the details about the queue recall
+         *   @param {string} qrecall_check/:num                    Checks if the number is in conversation
+         *   @param {string} cw/:endpoint                          Gets the call waiting status of the endpoint of the user
+         *   @param {string} dnd/:endpoint                         Gets the don't disturb status of the endpoint of the user
+         *   @param {string} cfvm/:type/:endpoint                  Gets the call forward status to voicemail of the endpoint of the user
+         *   @param {string} cfcall/:type/:endpoint                Gets the call forward status to a destination number of the endpoint of the user
+         *   @param {string} qmanager_queues                       Gets all the queues of the queue supervisor
+         *   @param {string} opdata                                Gets all the data needed by the operator panel
+         *   @param {string} qalarms                               Gets all the queues alarms
          */
         'get': [
           'queues',
@@ -1162,6 +1198,7 @@ var compConfigManager;
           'qmanager_qcalls',
           'qmanager_qstats/:qid',
           'queue_recall/:hours/:qids',
+          'qmanager_queue_recall/:hours/:qids',
           'qrecall_info/:hours/:cid/:qid',
           'qrecall_check/:num',
           'cw/:endpoint',
@@ -2026,6 +2063,70 @@ var compConfigManager;
                 ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
               res.send(200, results);
 
+            } catch (error) {
+              logger.log.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      },
+
+      /**
+       *  Gets the recall data about the qmanager queue with the following REST API:
+       *
+       *     GET  qmanager_queue_recall
+       *
+       * @method qmanager_queue_recall
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      qmanager_queue_recall: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          if (typeof req.params.qids !== 'string' || typeof req.params.hours !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+          if (compAuthorization.authorizeQManagerUser(username) === true) {
+            logger.log.info(IDLOG, 'requesting qmanager queue recall: user "' + username + '" has the "qmanager" authorization');
+          } else {
+            logger.log.warn(IDLOG, 'requesting qmanager queue recall: authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          var qids = req.params.qids.split(',');
+          if (req.params.qids === '') {
+            logger.log.info(IDLOG, 'sent qmanager recall data about queues ' + qids +
+              ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+            res.send(200, []);
+            return;
+          }
+          var queues = compAuthorization.getAllowedQManagerQueues(username);
+          var authorizedQueues = [];
+          if (queues.length === 0) {
+            logger.log.warn(IDLOG, 'getting qmanager recall of queues of the user: user "' + username + '" has not any queue enabled in "qmanager"');
+            res.send(200, []);
+            return;
+          }
+          for (var i = 0; i < qids.length; i++) {
+            if (queues.indexOf(qids[i]) === -1) {
+              logger.log.warn(IDLOG, 'requesting last #' + req.params.hours + ' hours ' +
+                'qmanager recalls info of queues "' + req.params.qids + '": authorization failed for user "' +
+                username + '" who was not enabled in "qmanager" the queue "' + qids[i] + '"');
+            } else {
+              authorizedQueues.push(qids[i]);
+            }
+          }
+          compAstProxy.getQueueRecallData(req.params.hours, authorizedQueues, function (err, results) {
+            try {
+              if (err) { throw err; }
+              logger.log.info(IDLOG, 'sent qmanager recall data about queues ' + authorizedQueues +
+                ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+              res.send(200, results);
             } catch (error) {
               logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -4834,6 +4935,7 @@ var compConfigManager;
     exports.setCompAlarm = setCompAlarm;
     exports.op_wait_conv = astproxy.op_wait_conv;
     exports.queue_recall = astproxy.queue_recall;
+    exports.qmanager_queue_recall = astproxy.qmanager_queue_recall;
     exports.qrecall_info = astproxy.qrecall_info;
     exports.qrecall_check = astproxy.qrecall_check;
     exports.qmanager_qstats = astproxy.qmanager_qstats;
