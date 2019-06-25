@@ -129,7 +129,8 @@ var CAUSE = {
               cause: CAUSE[data.cause],
               channel: data.channel,
               callerNum: data.calleridnum,
-              channelExten: channelExten
+              channelExten: channelExten,
+              calledNum: data.connectedlinenum
             });
 
           } else {

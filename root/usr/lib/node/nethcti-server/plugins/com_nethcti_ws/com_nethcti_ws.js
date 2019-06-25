@@ -95,6 +95,27 @@ var EVT_QMANAGER_ALARM = 'qmAlarm';
 var EVT_EXTEN_CONNECTED = 'extenConnected';
 
 /**
+ * Emitted to the extension involved in a connected conversation. The difference
+ * with EVT_EXTEN_CONNECTED is that this event indicates both the involved numbers.
+ *
+ * Example:
+ *
+ *     { "num1": "223", "num2": "100" }
+ *
+ * @event extenConvConnected
+ * @param {object} data The data about the involved numbers
+ *
+ */
+/**
+ * The name of the extension conversation connected event.
+ *
+ * @property EVT_EXTEN_CONV_CONNECTED
+ * @type string
+ * @default "extenConvConnected"
+ */
+var EVT_EXTEN_CONV_CONNECTED = 'extenConvConnected';
+
+/**
  * Emitted to a websocket client connection on trunk update.
  *
  * Example:
@@ -1755,6 +1776,10 @@ function extenConnected(data) {
         var o = {};
         o[EVT_EXTEN_CONNECTED] = data.num1;
         wsServer.sockets.sockets[socketId].emit(EVT_EXTEN_CONNECTED, o);
+        wsServer.sockets.sockets[socketId].emit(EVT_EXTEN_CONV_CONNECTED, {
+          num1: data.num1,
+          num2: data.num2
+        });
       }
     }
   } catch (err) {
