@@ -3,7 +3,14 @@
     my $autoc2c = ${'nethcti-server'}{'AutoC2C'} || "enabled";
     my $trunksEvents = ${'nethcti-server'}{'TrunksEvents'} || "enabled";
     my $nullCallPeriod = ${'nethcti-server'}{'NullCallPeriod'} || "5";
-    my $QMAlarmsNotificationsStatus = ${'nethvoice'}{'EnableNotifications'} || "false";
+    my $alertstatus = ${'nethvoice-alerts'}{'status'} || "false";
+
+    my $QMAlarmsNotificationsStatus = '';
+    if ($alertstatus eq "enabled") {
+        $QMAlarmsNotificationsStatus = "true";
+    } else {
+        $QMAlarmsNotificationsStatus = "false";
+    }
 
     if (defined ${'nethcti-server'}{'Prefix'} && ${'nethcti-server'}{'Prefix'} eq "0") {
         $prefix = "0";
