@@ -145,6 +145,7 @@ var compConfigManager;
         * 1. [`astproxy/qmanager_qstats/:qid`](#qmanager_qstatsget)
         * 1. [`astproxy/qmanager_qcalls`](#qmanager_qcallsget)
         * 1. [`astproxy/qmanager_astats`](#qmanager_astatsget)
+        * 1. [`astproxy/queue_astats`](#queue_astatsget)
         * 1. [`astproxy/opdata`](#opdataget)
         * 1. [`astproxy/qalarms`](#qalarmsget)
         *
@@ -565,6 +566,33 @@ var compConfigManager;
              }
          },
          ....
+     }
+        *
+        * ---
+        *
+        * ### <a id="queue_astatsget">**`astproxy/queue_astats`**</a>
+        *
+        * Gets statistics about your user agent: the results is cached and updated every 25 seconds.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "John": {
+             "402": {
+                 "calls_taken": 1,
+                 "last_call_time": 1536330567,
+                 "duration_incoming": 7,
+                 "max_duration_incoming": 7,
+                 "min_duration_incoming": 7,
+                 "avg_duration_incoming": 7,
+                 "last_login_time": 1536331524,
+                 "last_logout_time": 1536331558,
+                 "time_in_pause": 3, // time spent in queue pause status
+                 "time_in_logon": 36, // time spent in queue logon status
+                 "pause_percent": 33 // pause percentage with respect to the logon time,
+                 "conversation_percent": 19 // conversations percentage with respect to the logon time,
+             }
+         }
      }
         *
         * ---
@@ -1170,6 +1198,7 @@ var compConfigManager;
          *   @param {string} qmanager_qstats/:qid                  Gets statistics about the queue
          *   @param {string} qmanager_qcalls                       Gets statistics about all the queues
          *   @param {string} qmanager_astats                       Gets statistics about all the agents
+         *   @param {string} queue_astats                          Gets statistics about your user agent
          *   @param {string} queue_recall/:hours/:qids             Gets the recall data about the queues
          *   @param {string} qmanager_queue_recall/:hours/:qids    Gets the qmanager recall data about the queues
          *   @param {string} qrecall_info/:hours/:cid/:qid         Gets the details about the queue recall
@@ -1195,6 +1224,7 @@ var compConfigManager;
           'sip_webrtc',
           'conference/:endpoint',
           'qmanager_astats',
+          'queue_astats',
           'qmanager_qcalls',
           'qmanager_qstats/:qid',
           'queue_recall/:hours/:qids',
@@ -1908,7 +1938,6 @@ var compConfigManager;
       qmanager_astats: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
-          var qid = req.params.qid;
           if (compAuthorization.authorizeQManagerUser(username) === true) {
             logger.log.info(IDLOG, 'getting statistics about all agents: user "' + username + '" has the "qmanager" authorization');
           } else {
@@ -1936,11 +1965,53 @@ var compConfigManager;
       },
 
       /**
+       *  Gets statistics about your user agent with the following REST API:
+       *
+       *     GET  queue_astats
+       *
+       * @method queue_astats
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      queue_astats: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
+            logger.log.info(IDLOG, 'getting statistics about own agent: user "' + username + '" has the "admin queue" authorization');
+          } else if (compAuthorization.authorizeQueuesUser(username) === true) {
+            logger.log.info(IDLOG, 'getting statistics about own agent: user "' + username + '" has the "queue" authorization');
+          } else {
+            logger.log.warn(IDLOG, 'getting statistics about own agent: authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          var queuesList = compAstProxy.getQueuesList();
+          compAstProxy.getJSONAllAgentsStats(queuesList, function (err1, stats) {
+            try {
+              if (err1) {
+                throw err1;
+              }
+              var userData = compUser.getUsernamesWithData();
+              logger.log.info(IDLOG, 'sent JSON stats of own user agent to user "' + username + '" ' + res.connection.remoteAddress);
+              res.send(200, stats[userData[username].name]);
+            } catch (err) {
+              logger.log.error(IDLOG, err.stack);
+              compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            }
+          });
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      },
+
+      /**
        *  Gets queues alarms with the following REST API:
        *
        *     GET  qalarms
        *
-       * @method qmanager_astats
+       * @method qalarms
        * @param {object} req The client request
        * @param {object} res The client response
        * @param {function} next Function to run the next handler in the chain
@@ -4942,6 +5013,7 @@ var compConfigManager;
     exports.qmanager_qcalls_hist = astproxy.qmanager_qcalls_hist;
     exports.qmanager_qcalls = astproxy.qmanager_qcalls;
     exports.qmanager_astats = astproxy.qmanager_astats;
+    exports.queue_astats = astproxy.queue_astats;
     exports.start_record = astproxy.start_record;
     exports.unauthe_call = astproxy.unauthe_call;
     exports.force_hangup = astproxy.force_hangup;
