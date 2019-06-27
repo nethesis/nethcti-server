@@ -98,6 +98,7 @@ module.exports = function(options, imports, register) {
       getJSONTrunks: astProxy.proxyLogic.getJSONTrunks,
       getTrunksList: astProxy.proxyLogic.getTrunksList,
       getExtensList: astProxy.proxyLogic.getExtensList,
+      getQueuesList: astProxy.proxyLogic.getQueuesList,
       getJSONParkings: astProxy.proxyLogic.getJSONParkings,
       sendDTMFSequence: astProxy.proxyLogic.sendDTMFSequence,
       getExtensionsFromConversation: astProxy.proxyLogic.getExtensionsFromConversation,

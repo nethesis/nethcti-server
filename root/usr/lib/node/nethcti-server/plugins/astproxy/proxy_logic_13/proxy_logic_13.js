@@ -2374,6 +2374,21 @@ function getExtensList() {
 }
 
 /**
+ * Returns the list of the queues.
+ *
+ * @method getQueuesList
+ * @return {array} The queues list.
+ */
+function getQueuesList() {
+  try {
+    return Object.keys(queues);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return [];
+  }
+}
+
+/**
  * Returns the JSON representation of all trunks.
  *
  * @method getJSONTrunks
@@ -9682,6 +9697,7 @@ exports.getQCallsStatsHist = getQCallsStatsHist;
 exports.getJSONTrunks = getJSONTrunks;
 exports.getTrunksList = getTrunksList;
 exports.getExtensList = getExtensList;
+exports.getQueuesList = getQueuesList;
 exports.getExtensionIp = getExtensionIp;
 exports.queueMemberAdd = queueMemberAdd;
 exports.inoutDynQueues = inoutDynQueues;
