@@ -92,6 +92,8 @@ module.exports = function(options, imports, register) {
       getJSONQueues: astProxy.proxyLogic.getJSONQueues,
       getJSONAllQueuesStats: astProxy.proxyLogic.getJSONAllQueuesStats,
       getJSONAllAgentsStats: astProxy.proxyLogic.getJSONAllAgentsStats,
+      evtConversationHold: astProxy.proxyLogic.evtConversationHold,
+      evtConversationUnhold: astProxy.proxyLogic.evtConversationUnhold,
       getQMAlarmsNotificationsStatus: astProxy.proxyLogic.getQMAlarmsNotificationsStatus,
       setQMAlarmsNotificationsStatus: astProxy.proxyLogic.setQMAlarmsNotificationsStatus,
       getJSONQueueStats: astProxy.proxyLogic.getJSONQueueStats,
