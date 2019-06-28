@@ -31,6 +31,7 @@ var MeetmeConfUser = require('../meetmeConfUser').MeetmeConfUser;
 var MeetmeConference = require('../meetmeConference').MeetmeConference;
 var RECORDING_STATUS = require('../conversation').RECORDING_STATUS;
 var TrunkConversation = require('../trunkConversation').TrunkConversation;
+var EXTEN_STATUS_ENUM = require('../extension').EXTEN_STATUS_ENUM;
 var QueueWaitingCaller = require('../queueWaitingCaller').QueueWaitingCaller;
 var QUEUE_MEMBER_TYPES_ENUM = require('../queueMember').QUEUE_MEMBER_TYPES_ENUM;
 
@@ -5930,6 +5931,58 @@ function evtConversationConnected(num1, num2) {
 }
 
 /**
+ * If the conversation has been unhold.
+ *
+ * @method evtConversationUnhold
+ * @param {object} data
+ *  @param {string} data.whoPutsOnHoldExten The extension that puts on unhold a destination number
+ *  @param {string} data.whoPutsOnHold The main extension that puts on unhold a destination number
+ *  @param {string} data.putOnHold The destination that has been put on unhold
+ */
+function evtConversationUnhold(data) {
+  try {
+    if (typeof data !== 'object' || typeof data.whoPutsOnUnholdExten !== 'string' ||
+      typeof data.whoPutsOnUnhold !== 'string' || typeof data.putOnUnhold !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (extensions[data.whoPutsOnUnholdExten]) {
+      extensions[data.whoPutsOnUnholdExten].setStatus(EXTEN_STATUS_ENUM.BUSY);
+      logger.log.info(IDLOG, 'set busy (from unhold event) for extension ' + data.whoPutsOnUnholdExten);
+      logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + data.whoPutsOnUnholdExten);
+      astProxy.emit(EVT_EXTEN_CHANGED, extensions[data.whoPutsOnUnholdExten]);
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * If the conversation has been put on hold.
+ *
+ * @method evtConversationHold
+ * @param {object} data
+ *  @param {string} data.whoPutsOnHoldExten The extension that puts on hold a destination number
+ *  @param {string} data.whoPutsOnHold The main extension that puts on hold a destination number
+ *  @param {string} data.putOnHold The destination that has been put on hold
+ */
+function evtConversationHold(data) {
+  try {
+    if (typeof data !== 'object' || typeof data.whoPutsOnHoldExten !== 'string' ||
+      typeof data.whoPutsOnHold !== 'string' || typeof data.putOnHold !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (extensions[data.whoPutsOnHoldExten]) {
+      extensions[data.whoPutsOnHoldExten].setStatus(EXTEN_STATUS_ENUM.ONHOLD);
+      logger.log.info(IDLOG, 'set hold status (from hold event) for extension ' + data.whoPutsOnHoldExten);
+      logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + data.whoPutsOnHoldExten);
+      astProxy.emit(EVT_EXTEN_CHANGED, extensions[data.whoPutsOnHoldExten]);
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Update the conversations of the specified num, that can be extension, trunk or other.
  *
  * @method updateConversationsOfNum
@@ -9749,6 +9802,8 @@ exports.pickupConversation = pickupConversation;
 exports.evtExtenDndChanged = evtExtenDndChanged;
 exports.muteUserMeetmeConf = muteUserMeetmeConf;
 exports.hangupMainExtension = hangupMainExtension;
+exports.evtConversationUnhold = evtConversationUnhold;
+exports.evtConversationHold = evtConversationHold;
 exports.EVT_EXTEN_CONNECTED = EVT_EXTEN_CONNECTED;
 exports.isExtenInMeetmeConf = isExtenInMeetmeConf;
 exports.evtRemoveMeetmeConf = evtRemoveMeetmeConf;
