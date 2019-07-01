@@ -1994,7 +1994,7 @@ var compConfigManager;
               }
               var userData = compUser.getUsernamesWithData();
               logger.log.info(IDLOG, 'sent JSON stats of own user agent to user "' + username + '" ' + res.connection.remoteAddress);
-              res.send(200, stats[userData[username].name]);
+              res.send(200, stats[userData[username].name] ? stats[userData[username].name] : {});
             } catch (err) {
               logger.log.error(IDLOG, err.stack);
               compUtil.net.sendHttp500(IDLOG, res, err.toString());
