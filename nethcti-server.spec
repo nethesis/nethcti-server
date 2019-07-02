@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.14.0
+Version: 3.15.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,14 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Tue Jul 02 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.15.0-1
+- Add personal statistic of queue agent into the "Queues" tab - nethesis/dev#5656
+- Add new events to WebSocket layer - nethesis/dev#5654
+- QM add new Lost Calls tab - nethesis/dev#5646
+- Show "hold" status into the box of the "Queues" of the QManager - Bug nethesis/dev#5658
+- Add notifications for queues - nethesis/dev#5621
+- No login on some boot scenarios and with no port 50113 listening - Bug nethesis/dev#5650
+
 * Wed Jun 12 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.14.0-1
 - QManager_astats return queue data without privilege - Bug nethesis/dev#5634
 - QManager new Dashboard tab - nethesis/dev#5610
