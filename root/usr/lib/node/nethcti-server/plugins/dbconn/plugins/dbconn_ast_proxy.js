@@ -1530,6 +1530,85 @@ function getCallRecordingFileData(uniqueid, cb) {
     cb(err.toString());
   }
 }
+
+/**
+ * Get pin of extensions.
+ *
+ * @method getPinExtens
+ * @param {array} extens The extension list
+ * @param {function} cb The callback
+ */
+function getPinExtens(extens, cb) {
+  try {
+    if (!Array.isArray(extens) || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.PIN].findAll({
+      where: [
+        'extension IN ("' + extens.join('","') + '")'
+      ],
+      attributes: [ 'extension', 'pin', 'enabled' ]
+    }).then(function (results) {
+      let retval = {};
+      if (results && results.length > 0) {
+        for (let i = 0; i < results.length; i++) {
+          retval[results[i].dataValues.extension] = results[i].dataValues;
+          retval[results[i].dataValues.extension].enabled = retval[results[i].dataValues.extension].enabled === 1;
+        }
+        logger.log.info(IDLOG, 'found pin of extens ' + extens);
+        cb(null, retval);
+      } else {
+        logger.log.info(IDLOG, `no pin found for extens ${extens}`);
+        cb(null, []);
+      }
+    }, function (err) {
+      logger.log.error(IDLOG, 'getting pin of extens ' + extens.toString());
+      logger.log.error(IDLOG, err);
+      cb(err);
+    });
+    compDbconnMain.incNumExecQueries();
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Set pin for the extension.
+ *
+ * @method setPinExten
+ * @param {string} extension The extension identifier
+ * @param {string} pin The pin number to be set
+ * @param {boolean} enabled True if the pin has to be enabled on the phone
+ * @param {function} cb The callback
+ * @private
+ */
+function setPinExten(extension, pin, enabled, cb) {
+  try {
+    if (typeof extension !== 'string' || typeof pin !== 'string' || typeof enabled !== 'boolean' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.PIN].upsert({
+      extension: extension,
+      pin: pin,
+      enabled: enabled
+    }).then(function(result) {
+      logger.log.info(IDLOG, `set pin ${pin} for exten ${extension} with status enabled "${enabled}"`);
+      cb();
+    }, function(err) {
+      logger.log.error(IDLOG, `setting pin ${pin} for exten ${extension} with status enabled "${enabled}"`);
+      logger.log.error(IDLOG, err);
+      cb(err);
+    });
+    compDbconnMain.incNumExecQueries();
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+apiList.setPinExten = setPinExten;
+apiList.getPinExtens = getPinExtens;
 apiList.getCallInfo = getCallInfo;
 apiList.getCallTrace = getCallTrace;
 apiList.getQueueStats = getQueueStats;

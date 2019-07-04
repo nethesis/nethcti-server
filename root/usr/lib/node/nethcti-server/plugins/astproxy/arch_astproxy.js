@@ -94,6 +94,8 @@ module.exports = function(options, imports, register) {
       getJSONAllAgentsStats: astProxy.proxyLogic.getJSONAllAgentsStats,
       evtConversationHold: astProxy.proxyLogic.evtConversationHold,
       evtConversationUnhold: astProxy.proxyLogic.evtConversationUnhold,
+      getPinExtens: astProxy.proxyLogic.getPinExtens,
+      setPinExten: astProxy.proxyLogic.setPinExten,
       getQMAlarmsNotificationsStatus: astProxy.proxyLogic.getQMAlarmsNotificationsStatus,
       setQMAlarmsNotificationsStatus: astProxy.proxyLogic.setQMAlarmsNotificationsStatus,
       getJSONQueueStats: astProxy.proxyLogic.getJSONQueueStats,

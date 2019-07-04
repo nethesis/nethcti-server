@@ -118,6 +118,7 @@ var logSequelize = false;
 * @type {object}
 * @private
 * @default {
+    PIN:           "pin",
     CEL:           "cel",
     POSTIT:        "postit",
     OFFHOUR:       "offhour",
@@ -139,6 +140,7 @@ var logSequelize = false;
 }
 */
 var JSON_KEYS = {
+  PIN: 'pin',
   CEL: 'cel',
   POSTIT: 'postit',
   OFFHOUR: 'offhour',
@@ -630,7 +632,6 @@ function initConnections() {
   try {
     var k, sequelize;
     for (k in dbConfig) {
-
       if (dbConfig[k].dbtype === 'mysql') {
         var config = {
           port: dbConfig[k].dbport,

@@ -148,6 +148,7 @@ var compConfigManager;
         * 1. [`astproxy/queue_astats`](#queue_astatsget)
         * 1. [`astproxy/opdata`](#opdataget)
         * 1. [`astproxy/qalarms`](#qalarmsget)
+        * 1. [`astproxy/pin`](#pinget)
         *
         * ---
         *
@@ -628,6 +629,27 @@ var compConfigManager;
           ...
      }
         *
+        * ---
+        *
+        * ### <a id="pinget">**`astproxy/pin`**</a>
+        *
+        * Get all the pin of the physical phones of the user.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "92200": {
+           "extension": 92200,
+           "pin": "12345",
+           "enabled": false
+         },
+         "93200": {
+           "extension": 93200,
+           "pin": "12345",
+           "enabled": true
+         }
+     }
+        *
         *
         * <br>
         *
@@ -667,6 +689,7 @@ var compConfigManager;
         * 1. [`astproxy/blindtransfer_queue`](#blindtransfer_queuepost)
         * 1. [`astproxy/unauthe_call`](#unauthe_callpost)
         * 1. [`astproxy/op_wait_conv`](#op_wait_convpost)
+        * 1. [`astproxy/pin`](#pinpost)
         *
         * ---
         *
@@ -1146,6 +1169,20 @@ var compConfigManager;
         *
         *     { "convid": "PJSIP/200-00000033>PJSIP/201-00000034" }
         *
+        * * ---
+        *
+        * ### <a id="pinpost">**`astproxy/pin`**</a>
+        *
+        * Sets the pin for an extension. The request must contains the following parameters:
+        *
+        * * `extension: the extension identifier`
+        * * `pin: the pin number`
+        * * `enabled: (true|false) if the pin has to be enabled or not`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "extension": "91223", "enabled: true, "pin": "1234" }
+        *
         *
         * <br>
         *
@@ -1210,6 +1247,7 @@ var compConfigManager;
          *   @param {string} qmanager_queues                       Gets all the queues of the queue supervisor
          *   @param {string} opdata                                Gets all the data needed by the operator panel
          *   @param {string} qalarms                               Gets all the queues alarms
+         *   @param {string} pin                                   Gets all the pin of the physical phones of the user
          */
         'get': [
           'queues',
@@ -1237,7 +1275,8 @@ var compConfigManager;
           'cfcall/:type/:endpoint',
           'qmanager_queues',
           'opdata',
-          'qalarms'
+          'qalarms',
+          'pin'
         ],
 
         /**
@@ -1274,6 +1313,7 @@ var compConfigManager;
          *   @param {string} force_hangup          Force hangup of a conversation
          *   @param {string} unauthe_call          Unauthenticated call from any extension to any destination number
          *   @param {string} op_wait_conv          puts the conversation waiting into the waiting queue associated to the user profile
+         *   @param {string} pin                   Sets the pin for an extension
          *   @param {string} mute_userconf         Mute a user of a meetme conference
          *   @param {string} answer_webrtc         Answer a conversation from the webrtc extension sending the command to the client
          *   @param {string} blindtransfer         Transfer a conversation with blind type
@@ -1321,6 +1361,7 @@ var compConfigManager;
           'force_hangup',
           'unauthe_call',
           'op_wait_conv',
+          'pin',
           'mute_userconf',
           'answer_webrtc',
           'blindtransfer',
@@ -2040,6 +2081,31 @@ var compConfigManager;
           }
           res.send(200, data);
           logger.log.info(IDLOG, 'sent qmanager alarms to user "' + username + '" ' + res.connection.remoteAddress);
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      },
+
+      /**
+       *  Gets all the pin of the physical phones of the user with the following REST API:
+       *
+       *     GET  pin
+       *
+       * @method pin
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      pin: function (req, res, next) {
+        try {
+          if (req.method.toLowerCase() === 'get') {
+            pinget(req, res, next);
+          } else if (req.method.toLowerCase() === 'post') {
+            pinset(req, res, next);
+          } else {
+            logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
+          }
         } catch (error) {
           logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -5005,6 +5071,7 @@ var compConfigManager;
     exports.mute_record = astproxy.mute_record;
     exports.setCompAlarm = setCompAlarm;
     exports.op_wait_conv = astproxy.op_wait_conv;
+    exports.pin = astproxy.pin;
     exports.queue_recall = astproxy.queue_recall;
     exports.qmanager_queue_recall = astproxy.qmanager_queue_recall;
     exports.qrecall_info = astproxy.qrecall_info;
@@ -6857,7 +6924,6 @@ function cfcallSetUnavailable(endpoint, username, activate, to, res) {
   }
 }
 
-
 /**
  * Pause or unpause an extension of a queue. The parameter "queueId" can be omitted. In this
  * case the pause or unpause is done in all queues.
@@ -6946,6 +7012,94 @@ function queueMemberPauseUnpause(req, res, paused) {
       }
     );
 
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+  }
+}
+
+/**
+ * Get all the pin of the physical phones of the user.
+ *
+ * @method pinget
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function pinget(req, res, next) {
+  try {
+    let username = req.headers.authorization_user;
+    let extens = compUser.getAllEndpointsExtension(username);
+    let pextens = [];
+    for (let e in extens) {
+      if (extens[e].isWebrtc() === false) {
+        pextens.push(e);
+      }
+    }
+    compAstProxy.getPinExtens(pextens, (err, results) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+          return;
+        }
+        res.send(200, results);
+        logger.log.info(IDLOG, `sent pin of all extens (${pextens}) to user ${username} ${compUtil.net.getRemoteAddress(req)}`);
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+  }
+}
+
+/**
+ * Set pin for an extension.
+ *
+ * @method pinset
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function pinset(req, res, next) {
+  try {
+    let username = req.headers.authorization_user;
+    let extension = req.params.extension;
+    let pin = req.params.pin;
+    let enabled = req.params.enabled;
+    if (!extension || !pin || !enabled || !username ||
+      (typeof enabled === 'string' && enabled !== 'true' && enabled !== 'false')) {
+      compUtil.net.sendHttp400(IDLOG, res);
+      return;
+    }
+    if (typeof enabled === 'string') {
+      enabled = (enabled === 'true');
+    }
+    if (compUser.hasExtensionEndpoint(username, extension)) {
+      compAstProxy.setPinExten(extension, pin, enabled, err => {
+        try {
+          if (err) {
+            logger.log.error(IDLOG, err.stack);
+            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            return;
+          }
+          logger.log.info(IDLOG, `user ${username} has set pin ${pin} for exten ${extension} ` +
+            ` with enabled status "${enabled}"`);
+          compUtil.net.sendHttp200(IDLOG, res);
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      });
+    } else {
+      logger.log.warn(IDLOG, `set pin ${pin} for exten ${extension} failed: ` +
+        `user exten ${extension} does not belong to user ${username}`);
+      compUtil.net.sendHttp403(IDLOG, res);
+      return;
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     compUtil.net.sendHttp500(IDLOG, res, err.toString());

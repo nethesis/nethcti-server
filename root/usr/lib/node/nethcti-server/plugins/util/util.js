@@ -318,6 +318,17 @@ function signalEventApplyChanges(cb) {
 }
 
 /**
+ * Extract remote address.
+ *
+ * @method getRemoteAddress
+ * @param {object} res The response object
+ * @return {string} The remote address
+ */
+function getRemoteAddress(obj) {
+  return obj.headers['x-forwarded-for'] || obj.connection.remoteAddress || 'unknown';
+}
+
+/**
 * Network utility functions.
 *
 * @property net
@@ -330,7 +341,8 @@ function signalEventApplyChanges(cb) {
     sendHttp401:      sendHttp401,
     sendHttp403:      sendHttp403,
     sendHttp500:      sendHttp500,
-    sendHttp401Nonce: sendHttp401Nonce
+    sendHttp401Nonce: sendHttp401Nonce,
+    getRemoteAddress: getRemoteAddress
 }
 */
 var net = {
@@ -341,7 +353,8 @@ var net = {
   sendHttp401: sendHttp401,
   sendHttp403: sendHttp403,
   sendHttp500: sendHttp500,
-  sendHttp401Nonce: sendHttp401Nonce
+  sendHttp401Nonce: sendHttp401Nonce,
+  getRemoteAddress: getRemoteAddress
 };
 
 // public interface
