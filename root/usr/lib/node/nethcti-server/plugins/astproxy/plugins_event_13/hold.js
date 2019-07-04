@@ -54,8 +54,6 @@ var astProxy;
        * @static
        */
       data: function(data) {
-        console.log(data);
-        
         try {
           if (data.channel && data.calleridnum && data.connectedlinenum && data.event === 'Hold') {
             logger.log.info(IDLOG, 'received event ' + data.event);
