@@ -7070,7 +7070,7 @@ function pinset(req, res, next) {
     let extension = req.params.extension;
     let pin = req.params.pin;
     let enabled = req.params.enabled;
-    if (!extension || !pin || !enabled || !username ||
+    if (!extension || !pin || enabled === null || !username ||
       (typeof enabled === 'string' && enabled !== 'true' && enabled !== 'false')) {
       compUtil.net.sendHttp400(IDLOG, res);
       return;
