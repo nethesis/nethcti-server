@@ -9705,6 +9705,38 @@ function setReloading(value) {
   }
 }
 
+/**
+ * Get pin of extensions.
+ *
+ * @method getPinExtens
+ * @param {array} extens The extension list
+ * @param {function} cb The callback
+ */
+function getPinExtens(extens, cb) {
+  try {
+    compDbconn.getPinExtens(extens, cb);
+  } catch (e) {
+    logger.log.error(IDLOG, e.stack);
+  }
+}
+
+/**
+ * Set pin for the extension.
+ *
+ * @method setPinExten
+ * @param {string} extension The extension identifier
+ * @param {string} pin The pin number to be set
+ * @param {boolean} enabled True if the pin has to be enabled on the phone
+ * @param {function} cb The callback
+ */
+function setPinExten(extension, pin, enabled, cb) {
+  try {
+    compDbconn.setPinExten(extension, pin, enabled, cb);
+  } catch (e) {
+    logger.log.error(IDLOG, e.stack);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.call = call;
@@ -9733,10 +9765,12 @@ exports.isExtenDnd = isExtenDnd;
 exports.isExtenCfVm = isExtenCfVm;
 exports.EVT_NEW_CDR = EVT_NEW_CDR;
 exports.createAlarm = createAlarm;
+exports.setPinExten = setPinExten;
 exports.deleteAlarm = deleteAlarm;
 exports.setReloading = setReloading;
 exports.EVT_RELOADED = EVT_RELOADED;
 exports.isExtenCfbVm = isExtenCfbVm;
+exports.getPinExtens = getPinExtens;
 exports.isExtenCfuVm = isExtenCfuVm;
 exports.setCompDbconn = setCompDbconn;
 exports.getExtensions = getExtensions;
