@@ -1740,7 +1740,7 @@ function initializeQueues(err, results) {
         }
         if (!reloading) {
           results.forEach(function (o) {
-            if (staticDataQueues[results[k].queue]) {
+            if (staticDataQueues[o.queue]) {
               logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + o.queue);
               astProxy.emit(EVT_QUEUE_CHANGED, queues[o.queue]);
             }
