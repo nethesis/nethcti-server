@@ -136,10 +136,11 @@ var logSequelize = false;
     CTI_PHONEBOOK: "cti_phonebook",
     USER_SETTINGS: "user_settings",
     USERMAN_USERS: "userman_users",
+    PIN_PROTECTED_ROUTES: "pin_protected_routes",
     REST_CTI_PROFILES_PARAMURL: "rest_cti_profiles_paramurl"
-}
-*/
-var JSON_KEYS = {
+  }
+  */
+ var JSON_KEYS = {
   PIN: 'pin',
   CEL: 'cel',
   POSTIT: 'postit',
@@ -159,6 +160,7 @@ var JSON_KEYS = {
   USER_SETTINGS: 'user_settings',
   CUSTOMER_CARD: 'customer_card',
   USERMAN_USERS: 'userman_users',
+  PIN_PROTECTED_ROUTES: 'pin_protected_routes',
   REST_CTI_PROFILES_PARAMURL: 'rest_cti_profiles_paramurl'
 };
 
