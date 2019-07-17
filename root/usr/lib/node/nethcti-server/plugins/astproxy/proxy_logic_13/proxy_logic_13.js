@@ -832,6 +832,21 @@ function isAutoC2CEnabled() {
 }
 
 /**
+ * Return true if the PIN has been enabled on at least one outbound route.
+ *
+ * @method isPinEnabledAtLeastOneRoute
+ * @param {function} cb The callback function
+ * @return {boolean} True if the PIN has been enabled on at least one outbound route.
+ */
+function isPinEnabledAtLeastOneRoute(cb) {
+  try {
+    compDbconn.isPinEnabledAtLeastOneRoute(cb);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Sets the remote sites phone prefixes used to filter the meetme conference members.
  *
  * @method setRemoteSitesPrefixes
@@ -9899,3 +9914,4 @@ exports.getExtensionsFromConversation = getExtensionsFromConversation;
 exports.evtExtenUnconditionalCfChanged = evtExtenUnconditionalCfChanged;
 exports.transferConversationToVoicemail = transferConversationToVoicemail;
 exports.evtExtenUnconditionalCfVmChanged = evtExtenUnconditionalCfVmChanged;
+exports.isPinEnabledAtLeastOneRoute = isPinEnabledAtLeastOneRoute;

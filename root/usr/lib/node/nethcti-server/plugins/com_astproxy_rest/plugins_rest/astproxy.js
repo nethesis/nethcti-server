@@ -149,6 +149,7 @@ var compConfigManager;
         * 1. [`astproxy/opdata`](#opdataget)
         * 1. [`astproxy/qalarms`](#qalarmsget)
         * 1. [`astproxy/pin`](#pinget)
+        * 1. [`astproxy/pinstatus`](#pinstatusget)
         *
         * ---
         *
@@ -648,6 +649,18 @@ var compConfigManager;
            "pin": "12345",
            "enabled": true
          }
+     }
+        *
+        * ---
+        *
+        * ### <a id="pinstatusget">**`astproxy/pinstatus`**</a>
+        *
+        * Gets the activation status of the pin at outbound routes level.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "enabled": true
      }
         *
         *
@@ -1248,6 +1261,7 @@ var compConfigManager;
          *   @param {string} opdata                                Gets all the data needed by the operator panel
          *   @param {string} qalarms                               Gets all the queues alarms
          *   @param {string} pin                                   Gets all the pin of the physical phones of the user
+         *   @param {string} pinstatus                             Gets the activation status of the pin at outbound routes level
          */
         'get': [
           'queues',
@@ -1276,7 +1290,8 @@ var compConfigManager;
           'qmanager_queues',
           'opdata',
           'qalarms',
-          'pin'
+          'pin',
+          'pinstatus'
         ],
 
         /**
@@ -2106,6 +2121,29 @@ var compConfigManager;
           } else {
             logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
           }
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      },
+
+      /**
+       * Gets the activation status of the pin at outbound routes level with the following REST API:
+       *
+       *     GET  pinstatus
+       *
+       * @method pinstatus
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      pinstatus: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          compAstProxy.isPinEnabledAtLeastOneRoute((err, activation) => {
+            logger.log.info(IDLOG, 'sent pin status activation "' + activation + '" (in at least one route) to user "' + username + '" ' + res.connection.remoteAddress);
+            res.send(200, { enabled: activation });
+          });
         } catch (error) {
           logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -5072,6 +5110,7 @@ var compConfigManager;
     exports.setCompAlarm = setCompAlarm;
     exports.op_wait_conv = astproxy.op_wait_conv;
     exports.pin = astproxy.pin;
+    exports.pinstatus = astproxy.pinstatus;
     exports.queue_recall = astproxy.queue_recall;
     exports.qmanager_queue_recall = astproxy.qmanager_queue_recall;
     exports.qrecall_info = astproxy.qrecall_info;

@@ -93,7 +93,7 @@ function setCompDbconnMain(comp) {
   try {
     // check parameter
     if (typeof comp !== 'object') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconnMain = comp;
@@ -140,7 +140,7 @@ function setLogger(log) {
 function getFpbxAdminSha1Pwd(cb) {
   try {
     if (typeof cb !== 'function') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var user = 'admin';
     compDbconnMain.models[compDbconnMain.JSON_KEYS.AMPUSERS].find({
@@ -1607,6 +1607,32 @@ function setPinExten(extension, pin, enabled, cb) {
   }
 }
 
+/**
+ * Return true if the PIN has been enabled on at least one outbound route.
+ *
+ * @method isPinEnabledAtLeastOneRoute
+ * @param {function} cb The callback function
+ */
+function isPinEnabledAtLeastOneRoute(cb) {
+  try {
+    if (typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.PIN_PROTECTED_ROUTES].count({
+      where: ['enabled=1']
+    }).then(function (result) {
+      cb(null, result > 0 ? true : false);
+    }, function (error) {
+      logger.log.error(IDLOG, 'getting pin activation status');
+      cb(error.toString());
+    });
+    compDbconnMain.incNumExecQueries();
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
 apiList.setPinExten = setPinExten;
 apiList.getPinExtens = getPinExtens;
 apiList.getCallInfo = getCallInfo;
@@ -1619,6 +1645,7 @@ apiList.deleteCallRecording = deleteCallRecording;
 apiList.getAgentsStatsByList = getAgentsStatsByList;
 apiList.getCallRecordingFileData = getCallRecordingFileData;
 apiList.getQCallsStatsHist = getQCallsStatsHist;
+apiList.isPinEnabledAtLeastOneRoute = isPinEnabledAtLeastOneRoute;
 // public interface
 exports.apiList = apiList;
 exports.setLogger = setLogger;
