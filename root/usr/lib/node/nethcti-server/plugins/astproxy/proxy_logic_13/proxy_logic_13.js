@@ -2844,7 +2844,7 @@ function initializePjsipExten(err, results) {
       arr.push(getPjsipDetailExten(exten.getExten()));
       arr.push(getListChannels());
     }
-    async.parallel(arr, function (err) {
+    async.series(arr, function (err) {
       if (err) {
         logger.log.error(IDLOG, err);
       }
@@ -4470,6 +4470,9 @@ function evtQueueMemberStatus(data) {
       typeof data.paused !== 'boolean' || typeof data.name !== 'string') {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (!queues[data.queueId] || !queues[data.queueId].getMember(data.member)) {
+      return;
     }
     // skip if there are no changes
     var oldAgent = (queues[data.queueId].getMember(data.member)).toJSON();
