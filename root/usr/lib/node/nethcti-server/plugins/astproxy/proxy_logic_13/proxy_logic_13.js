@@ -1306,10 +1306,12 @@ function start() {
       command: 'listPjsipPeers'
     }, initializePjsipExten);
 
-    // initialize queues
-    astProxy.doCmd({
-      command: 'listQueues'
-    }, initializeQueues);
+    emitter.on('pjsipExtenInitialized', () => {
+      // initialize queues
+      astProxy.doCmd({
+        command: 'listQueues'
+      }, initializeQueues);
+    });
 
     // initialize parkings
     astProxy.doCmd({
@@ -2850,6 +2852,7 @@ function initializePjsipExten(err, results) {
       }
       initializationStatus.pjsipExtens = true;
       checkInitializationStatus();
+      emitter.emit('pjsipExtenInitialized');
     });
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
