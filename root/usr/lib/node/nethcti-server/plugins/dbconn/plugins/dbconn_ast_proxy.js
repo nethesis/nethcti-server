@@ -53,7 +53,7 @@ var compDbconnMain;
  * @type boolean
  * @private
  */
-var CACHE_ENABLED = false;
+var CACHE_ENABLED = true;
 
 /**
  * Cache period time for some data.
@@ -61,8 +61,11 @@ var CACHE_ENABLED = false;
  * @property CACHE_TIMEOUT
  * @type number
  * @private
+ * @default { "ASTATS": 2000 }
  */
-var CACHE_TIMEOUT = 25000;
+var CACHE_TIMEOUT = {
+  ASTATS: 2000
+};
 
 /**
  * The data cache.
@@ -1240,7 +1243,7 @@ function getAgentsStatsByList(members, cb) {
     // check if the cache is enabled and result is into the cache
     if (CACHE_ENABLED &&
       cache.getAgentsStatsByList &&
-      (new Date().getTime() - cacheTimestamps.getAgentsStatsByList) < CACHE_TIMEOUT) {
+      (new Date().getTime() - cacheTimestamps.getAgentsStatsByList) < CACHE_TIMEOUT.ASTATS) {
 
       cb(null, cache.getAgentsStatsByList);
       return;
