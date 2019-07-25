@@ -665,10 +665,16 @@ function setCompUtil(comp) {
                 actions.answer = true;
                 actions.dtmf = true;
                 actions.hold = true;
-              } else {
+              } else if (extenAgent !== undefined) {
                 actions.answer = compConfigManager.phoneSupportHttpApi(extenAgent);
                 actions.dtmf = compConfigManager.phoneSupportDtmfHttpApi(extenAgent);
                 actions.hold = compConfigManager.phoneSupportHoldHttpApi(extenAgent);
+              } else {
+                logger.log.warn(IDLOG, 'extenAgent "' + extenAgent + '" for exten "' +
+                  result.endpoints[compUser.ENDPOINT_TYPES.extension][i].id + '" and username "' + username + '"');
+                actions.answer = false;
+                actions.dtmf = false;
+                actions.hold = false;
               }
               result.endpoints[compUser.ENDPOINT_TYPES.extension][i].actions = actions;
 
