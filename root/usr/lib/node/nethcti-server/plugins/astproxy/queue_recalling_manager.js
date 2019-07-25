@@ -113,7 +113,7 @@ function setCompDbconn(comp) {
 function checkQueueRecallingStatus(num, cb) {
   try {
     if (typeof num !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     logger.log.info(IDLOG, 'requests the channel list to be analized to get the recalling status');
     compAstProxy.doCmd({
@@ -143,7 +143,7 @@ function checkQueueRecallingStatus(num, cb) {
 function analizeQueueRecallingStatus(results, num, cb) {
   try {
     if (typeof results !== 'object' || typeof num !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var ch;
     for (ch in results) {
@@ -171,7 +171,7 @@ function analizeQueueRecallingStatus(results, num, cb) {
 function getQueueRecallData(hours, queues, cb) {
   try {
     if (Array.isArray(queues) === false || typeof hours !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     compDbconn.getQueueRecall({
         hours: hours,
@@ -182,7 +182,31 @@ function getQueueRecallData(hours, queues, cb) {
       });
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
-    callback(error);
+    cb(error);
+  }
+}
+
+/**
+ * Returns the recall data about the queues.
+ *
+ * @method getQMRecallData
+ * @param {object} obj
+ *   @param {string} obj.hours The amount of hours of the current day to be searched
+ *   @param {array} obj.queues The queue identifiers
+ *   @param {type} obj.type It can be ("lost"|"done"|"all"). The type of call to be retrieved
+ *   @param {integer} obj.offset The results offset
+ *   @param {integer} obj.limit The results limit
+ * @param {function} cb The callback function
+ */
+function getQMRecallData(obj, cb) {
+  try {
+    if (typeof obj !== 'object' || !obj.queues || !obj.type || !obj.hours || !obj.offset || !obj.limit) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    compDbconn.getQMRecall(obj, cb);
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+    cb(error);
   }
 }
 
@@ -202,7 +226,7 @@ function getQueueRecallInfo(hours, cid, qid, cb) {
       typeof qid !== 'string' ||
       typeof hours !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     compDbconn.getQueueRecallInfo({
         hours: hours,
@@ -222,5 +246,6 @@ exports.setLogger = setLogger;
 exports.setCompDbconn = setCompDbconn;
 exports.setCompAstProxy = setCompAstProxy;
 exports.getQueueRecallInfo = getQueueRecallInfo;
+exports.getQMRecallData = getQMRecallData;
 exports.getQueueRecallData = getQueueRecallData;
 exports.checkQueueRecallingStatus = checkQueueRecallingStatus;
