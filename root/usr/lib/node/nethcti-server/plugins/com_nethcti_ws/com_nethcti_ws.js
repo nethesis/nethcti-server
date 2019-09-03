@@ -2241,6 +2241,9 @@ function doLogin(socket, obj) {
     sendAutheSuccess(socket);
 
     var username = astProxy.isExten(obj.accessKeyId) ? compUser.getUserUsingEndpointExtension(obj.accessKeyId) : obj.accessKeyId;
+    if (compAuthe.isShibbolethUser(username)) {
+      username = compAuthe.getShibbolethUsername(username);
+    }
 
     // if the user has the "presence panel" permission, than he will receive
     // the asterisk events that involve the extensions
