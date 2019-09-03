@@ -147,6 +147,7 @@ module.exports = function(options, imports, register) {
       isExtenDnd: astProxy.proxyLogic.isExtenDnd,
       isAutoC2CEnabled: astProxy.proxyLogic.isAutoC2CEnabled,
       getQueueRecallData: queueRecallingManager.getQueueRecallData,
+      getQMRecallData: queueRecallingManager.getQMRecallData,
       getQueueRecallInfo: queueRecallingManager.getQueueRecallInfo,
       checkQueueRecallingStatus: queueRecallingManager.checkQueueRecallingStatus
     }
