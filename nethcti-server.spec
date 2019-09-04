@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.16.0
+Version: 3.16.1
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,10 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Sep 04 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.16.1-1
+- No login in sporadic scenario - nethesis/dev#5682
+- Improve PIN management hiding it in some circumstances - nethesis/dev#5681
+
 * Thu Jul 11 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.16.0-1
 - New phone pin management rest apis - nethesis/dev#5668
 
