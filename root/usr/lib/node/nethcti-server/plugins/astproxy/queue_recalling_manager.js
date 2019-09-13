@@ -161,28 +161,26 @@ function analizeQueueRecallingStatus(results, num, cb) {
 }
 
 /**
- * Returns the recall data about the queue.
+ * Returns the recall data about the queues.
  *
- * @method getQueueRecallData
- * @param {string} hours The amount of hours of the current day to be searched
- * @param {array} queues The queue identifiers
+ * @method getRecallData
+ * @param {object} obj
+ *   @param {string} obj.hours The amount of hours of the current day to be searched
+ *   @param {array} obj.queues The queue identifiers
+ *   @param {type} obj.type It can be ("lost"|"done"|"all"). The type of call to be retrieved
+ *   @param {integer} obj.offset The results offset
+ *   @param {integer} obj.limit The results limit
  * @param {function} cb The callback function
  */
-function getQueueRecallData(hours, queues, cb) {
+function getRecallData(obj, cb) {
   try {
-    if (Array.isArray(queues) === false || typeof hours !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+    if (typeof obj !== 'object' || !obj.queues || !obj.type || !obj.hours || !obj.offset || !obj.limit) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    compDbconn.getQueueRecall({
-        hours: hours,
-        queues: queues
-      },
-      function (err, results) {
-        cb(err, results);
-      });
+    compDbconn.getRecall(obj, cb);
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
-    callback(error);
+    cb(error);
   }
 }
 
@@ -222,5 +220,5 @@ exports.setLogger = setLogger;
 exports.setCompDbconn = setCompDbconn;
 exports.setCompAstProxy = setCompAstProxy;
 exports.getQueueRecallInfo = getQueueRecallInfo;
-exports.getQueueRecallData = getQueueRecallData;
+exports.getRecallData = getRecallData;
 exports.checkQueueRecallingStatus = checkQueueRecallingStatus;

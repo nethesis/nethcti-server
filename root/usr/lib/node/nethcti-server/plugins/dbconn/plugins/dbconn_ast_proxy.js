@@ -405,27 +405,32 @@ function getQueueRecallQueryTable(hours) {
  * Gets the last calls from queue_log db table basing the search
  * with the last X hours of the current day.
  *
- * @method getQueueRecall
- * @param {object} data
- *   @param {string} data.hours The value of the hours to be searched
- *   @param {array} data.queues The queues identifiers
+ * @method getRecall
+ * @param {object} obj
+ *   @param {string} obj.hours The amount of hours of the current day to be searched
+ *   @param {array} obj.queues The queue identifiers
+ *   @param {type} obj.type It can be ("lost"|"done"|"all"). The type of call to be retrieved
+ *   @param {integer} obj.offset The results offset
+ *   @param {integer} obj.limit The results limit
  * @param {function} cb The callback function
  */
-function getQueueRecall(data, cb) {
+function getRecall(obj, cb) {
   try {
-    if (typeof data !== 'object' ||
-      typeof cb !== 'function' ||
-      typeof data.hours !== 'string' ||
-      Array.isArray(data.queues) !== true) {
-
+    if (typeof obj !== 'object' || !obj.queues || !obj.type || !obj.hours || !obj.offset || !obj.limit) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    if (data.queues.length === 0) {
+    if (obj.queues.length === 0) {
       return cb(null, []);
     }
-
-    var query = [
+    var query, fromQuery;
+    if (obj.type === 'all') {
+      fromQuery = getAllQueueRecallQueryTable(obj.hours);
+    } else if (obj.type === 'done') {
+      fromQuery = getDoneQueueRecallQueryTable(obj.hours);
+    } else if (obj.type === 'lost') {
+      fromQuery = getLostQueueRecallQueryTable(obj.hours);
+    }
+    query = [
       'SELECT cid,',
       ' name,',
       ' company,',
@@ -434,24 +439,26 @@ function getQueueRecall(data, cb) {
       ' direction,',
       ' queuename, ',
       ' IF (event = "", action, event) AS event ',
-      'FROM ', getQueueRecallQueryTable(data.hours), ' ',
-      'WHERE queuename IN (' + data.queues + ') ',
+      'FROM ', fromQuery, ' ',
+      'WHERE queuename IN (' + obj.queues + ') ',
       'GROUP BY cid, queuename ',
-      'ORDER BY time DESC;'
+      'ORDER BY time DESC ',
+      'LIMIT ' + obj.limit + ' OFFSET ' + obj.offset + ';'
     ].join('');
-
     compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
-      logger.log.info(IDLOG, 'get queues ' + data.queues + ' recall of last ' + data.hours +
-        ' hours has been successful: ' + results.length + ' results');
-      cb(null, results[0]);
-
+      try {
+        logger.log.info(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours +
+          ' hours has been successful: ' + results.length + ' results');
+        cb(null, results[0]);
+      } catch (err2) {
+        logger.log.error(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours + ' hours: ' + err1.toString());
+        cb(err2, {});
+      }
     }, function (err1) {
-      logger.log.error(IDLOG, 'get queues ' + data.queues + ' recall of last ' + data.hours + ' hours: ' + err1.toString());
+      logger.log.error(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours + ' hours: ' + err1.toString());
       cb(err1, {});
     });
-
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -1638,7 +1645,7 @@ apiList.getPinExtens = getPinExtens;
 apiList.getCallInfo = getCallInfo;
 apiList.getCallTrace = getCallTrace;
 apiList.getQueueStats = getQueueStats;
-apiList.getQueueRecall = getQueueRecall;
+apiList.getRecall = getRecall;
 apiList.getQueueRecallInfo = getQueueRecallInfo;
 apiList.getFpbxAdminSha1Pwd = getFpbxAdminSha1Pwd;
 apiList.deleteCallRecording = deleteCallRecording;
