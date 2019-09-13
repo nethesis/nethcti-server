@@ -569,64 +569,7 @@ function getDoneQueueRecallQueryTable(hours) {
  * Gets the last calls from queue_log db table basing the search
  * with the last X hours of the current day.
  *
- * @method getQueueRecall
- * @param {object} data
- *   @param {string} data.hours The value of the hours to be searched
- *   @param {array} data.queues The queues identifiers
- * @param {function} cb The callback function
- */
-function getQueueRecall(data, cb) {
-  try {
-    if (typeof data !== 'object' ||
-      typeof cb !== 'function' ||
-      typeof data.hours !== 'string' ||
-      Array.isArray(data.queues) !== true) {
-
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    if (data.queues.length === 0) {
-      return cb(null, []);
-    }
-
-    var query = [
-      'SELECT cid,',
-      ' name,',
-      ' company,',
-      ' action,',
-      ' UNIX_TIMESTAMP(time) as time,',
-      ' direction,',
-      ' queuename, ',
-      ' IF (event = "", action, event) AS event ',
-      'FROM ', getAllQueueRecallQueryTable(data.hours), ' ',
-      'WHERE queuename IN (' + data.queues + ') ',
-      'GROUP BY cid, queuename ',
-      'ORDER BY time DESC;'
-    ].join('');
-
-    compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
-      logger.log.info(IDLOG, 'get queues ' + data.queues + ' recall of last ' + data.hours +
-        ' hours has been successful: ' + results.length + ' results');
-      cb(null, results[0]);
-
-    }, function (err1) {
-      logger.log.error(IDLOG, 'get queues ' + data.queues + ' recall of last ' + data.hours + ' hours: ' + err1.toString());
-      cb(err1, {});
-    });
-
-    compDbconnMain.incNumExecQueries();
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
- * Gets the last calls from queue_log db table basing the search
- * with the last X hours of the current day.
- *
- * @method getQMRecall
+ * @method getRecall
  * @param {object} obj
  *   @param {string} obj.hours The amount of hours of the current day to be searched
  *   @param {array} obj.queues The queue identifiers
@@ -635,7 +578,7 @@ function getQueueRecall(data, cb) {
  *   @param {integer} obj.limit The results limit
  * @param {function} cb The callback function
  */
-function getQMRecall(obj, cb) {
+function getRecall(obj, cb) {
   try {
     if (typeof obj !== 'object' || !obj.queues || !obj.type || !obj.hours || !obj.offset || !obj.limit) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -1866,8 +1809,7 @@ apiList.getPinExtens = getPinExtens;
 apiList.getCallInfo = getCallInfo;
 apiList.getCallTrace = getCallTrace;
 apiList.getQueueStats = getQueueStats;
-apiList.getQMRecall = getQMRecall;
-apiList.getQueueRecall = getQueueRecall;
+apiList.getRecall = getRecall;
 apiList.getQueueRecallInfo = getQueueRecallInfo;
 apiList.getFpbxAdminSha1Pwd = getFpbxAdminSha1Pwd;
 apiList.deleteCallRecording = deleteCallRecording;

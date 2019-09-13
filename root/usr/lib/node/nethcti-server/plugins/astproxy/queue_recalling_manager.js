@@ -161,35 +161,9 @@ function analizeQueueRecallingStatus(results, num, cb) {
 }
 
 /**
- * Returns the recall data about the queue.
- *
- * @method getQueueRecallData
- * @param {string} hours The amount of hours of the current day to be searched
- * @param {array} queues The queue identifiers
- * @param {function} cb The callback function
- */
-function getQueueRecallData(hours, queues, cb) {
-  try {
-    if (Array.isArray(queues) === false || typeof hours !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-    compDbconn.getQueueRecall({
-        hours: hours,
-        queues: queues
-      },
-      function (err, results) {
-        cb(err, results);
-      });
-  } catch (error) {
-    logger.log.error(IDLOG, error.stack);
-    cb(error);
-  }
-}
-
-/**
  * Returns the recall data about the queues.
  *
- * @method getQMRecallData
+ * @method getRecallData
  * @param {object} obj
  *   @param {string} obj.hours The amount of hours of the current day to be searched
  *   @param {array} obj.queues The queue identifiers
@@ -198,12 +172,12 @@ function getQueueRecallData(hours, queues, cb) {
  *   @param {integer} obj.limit The results limit
  * @param {function} cb The callback function
  */
-function getQMRecallData(obj, cb) {
+function getRecallData(obj, cb) {
   try {
     if (typeof obj !== 'object' || !obj.queues || !obj.type || !obj.hours || !obj.offset || !obj.limit) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    compDbconn.getQMRecall(obj, cb);
+    compDbconn.getRecall(obj, cb);
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
     cb(error);
@@ -246,6 +220,5 @@ exports.setLogger = setLogger;
 exports.setCompDbconn = setCompDbconn;
 exports.setCompAstProxy = setCompAstProxy;
 exports.getQueueRecallInfo = getQueueRecallInfo;
-exports.getQMRecallData = getQMRecallData;
-exports.getQueueRecallData = getQueueRecallData;
+exports.getRecallData = getRecallData;
 exports.checkQueueRecallingStatus = checkQueueRecallingStatus;
