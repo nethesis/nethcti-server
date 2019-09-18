@@ -173,6 +173,15 @@ exports.Extension = function(ext, chType) {
   var useWebsocket;
 
   /**
+   * The username.
+   *
+   * @property username
+   * @type string
+   * @private
+   */
+  var username;
+
+  /**
    * The user conversations. The key is the conversation identifier
    * and the value is the _conversation_ object.
    *
@@ -245,6 +254,26 @@ exports.Extension = function(ext, chType) {
    */
   function setIp(ipAddr) {
     ip = ipAddr;
+  }
+
+  /**
+   * Get the username.
+   *
+   * @method getUsername
+   * @return {string} The username.
+   */
+  function getUsername() {
+    return username;
+  }
+
+  /**
+   * Set the username.
+   *
+   * @method setUsername
+   * @param {string} name The name of the user
+   */
+  function setUsername(name) {
+    username = name;
   }
 
   /**
@@ -693,6 +722,7 @@ exports.Extension = function(ext, chType) {
    *         "exten":        "214",
    *         "status":       "online",                       // the status can be: "dnd", "busy", "online", "onhold", "offline", "ringing", "busy_ringing"
    *         "context":      "from-internal",                // the context
+   *         "username":     "user1",
    *         "useWebsocket": false,                          // if the extension use websocket
    *         "sipuseragent": "Twinkle/1.4.2",
    *         "conversations": { Conversation.{{#crossLink "Conversation/toJSON"}}{{/crossLink}}() } // the keys is the conversation identifiers
@@ -729,6 +759,7 @@ exports.Extension = function(ext, chType) {
       status: status,
       context: context,
       chanType: chanType,
+      username: username,
       useWebsocket: useWebsocket,
       sipuseragent: sipuseragent,
       conversations: jsonConvs
@@ -764,6 +795,8 @@ exports.Extension = function(ext, chType) {
     toString: toString,
     disableCf: disableCf,
     setStatus: setStatus,
+    setUsername: setUsername,
+    getUsername: getUsername,
     getStatus: getStatus,
     getCodecs: getCodecs,
     setCodecs: setCodecs,
