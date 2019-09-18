@@ -270,7 +270,7 @@ function getQueueRecallInfo(data, cb) {
       'cid, ',
       'agent, ',
       ' IF (event = "", action, event) AS event ',
-      'FROM ', getQueueRecallQueryTable(data.hours), ' ',
+      'FROM ', getAllQueueRecallQueryTable(data.hours, data.qid), ' ',
       'WHERE cid="', data.cid, '" AND queuename="', data.qid, '" ',
       'ORDER BY time ASC'
     ].join('');
@@ -280,7 +280,7 @@ function getQueueRecallInfo(data, cb) {
       cb(null, results[0]);
     }, function (err1) {
       logger.log.error(IDLOG, 'searching details about queue recall on cid "' + data.cid + '"');
-      cb(err.toString(), {});
+      cb(err1.toString(), {});
     });
     compDbconnMain.incNumExecQueries();
 
@@ -298,7 +298,116 @@ function getQueueRecallInfo(data, cb) {
  * @return {string} The query to obtain the entries about queue recall table
  * @private
  */
-function getQueueRecallQueryTable(hours) {
+function getAllQueueRecallQueryTable(hours, queues) {
+  try {
+    if (typeof hours !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    var timeConditionQl = 'TIMESTAMPDIFF(HOUR, time, now()) < ' + hours; // time condition on queue_log
+    var timeConditionCdr = 'TIMESTAMPDIFF(HOUR, calldate, now()) < ' + hours; // time condition on cdr
+    var query = [
+      '(',
+      'SELECT TIMESTAMP(time) AS time,',
+      ' queuename,',
+      ' "IN"  AS direction,',
+      ' "TIMEOUT" AS action,',
+      ' CAST(data1 AS UNSIGNED) AS position,',
+      ' CAST(data2 AS UNSIGNED) AS duration,',
+      ' CAST(data3 AS UNSIGNED) AS hold,',
+      ' (',
+      'SELECT DISTINCT(data2) ',
+      'FROM   asteriskcdrdb.queue_log z ',
+      'WHERE  z.event IN ("ENTERQUEUE", "FULL", "JOINEMPTY") AND z.callid=a.callid',
+      ' ) AS cid,',
+      ' (',
+      'SELECT DISTINCT(cdr.cnam) ',
+      'FROM   asteriskcdrdb.cdr cdr ',
+      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      ' ) AS  name,',
+      ' (',
+      'SELECT DISTINCT(cdr.ccompany) ',
+      'FROM   asteriskcdrdb.cdr cdr ',
+      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      ' ) AS  company,',
+      ' agent, ',
+      ' event ',
+      'FROM   asteriskcdrdb.queue_log a ',
+      'WHERE  event IN ("ABANDON", "EXITWITHTIMEOUT", "EXITWITHKEY", "EXITEMPTY", "FULL", "JOINEMPTY")',
+      ' AND   ', timeConditionQl,
+      ' AND   a.queuename IN (' + queues + ') ',
+
+      ' UNION ALL ',
+
+      'SELECT TIMESTAMP(time) AS time,',
+      ' queuename,',
+      ' "IN"  AS direction,',
+      ' "DONE" AS action,',
+      ' CAST(data3 AS UNSIGNED) AS position,',
+      ' CAST(data2 AS UNSIGNED) AS duration,',
+      ' CAST(data1 AS UNSIGNED) AS hold,',
+      ' (',
+      'SELECT DISTINCT(data2) ',
+      'FROM   asteriskcdrdb.queue_log z ',
+      'WHERE  z.event="ENTERQUEUE"',
+      ' AND   z.callid=a.callid',
+      ' ) AS  cid,',
+      ' (',
+      'SELECT DISTINCT(cdr.cnam) ',
+      'FROM   asteriskcdrdb.cdr cdr ',
+      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      ' ) AS  name,',
+      ' (',
+      'SELECT DISTINCT(cdr.ccompany) ',
+      'FROM   asteriskcdrdb.cdr cdr ',
+      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      ' ) AS  company,',
+      ' agent, ',
+      ' event ',
+      'FROM   asteriskcdrdb.queue_log a ',
+      'WHERE  event IN ("COMPLETEAGENT", "COMPLETECALLER")',
+      ' AND   ', timeConditionQl,
+      ' AND   a.queuename IN (' + queues + ') ',
+
+      ' UNION ALL ',
+
+      'SELECT TIMESTAMP(calldate) AS time,',
+      ' l.queuename as queuename,',
+      ' "OUT" AS direction,',
+      ' IF (disposition="ANSWERED", "DONE", disposition) AS action,',
+      ' 0 AS  position,',
+      ' 0 AS  duration,',
+      ' 0 AS  hold,',
+      ' dst AS cid,',
+      ' cnam AS name,',
+      ' ccompany AS company,',
+      ' src AS agent, ',
+      ' "" ',
+      'FROM   cdr c ',
+      'INNER JOIN asteriskcdrdb.queue_log l ON c.dst=l.data2 ',
+      'WHERE  l.event="ENTERQUEUE" ',
+      ' AND   ', timeConditionCdr,
+      ' AND   ', timeConditionQl,
+      ' AND   l.queuename IN (' + queues + ') ',
+      ')      queue_recall'
+      
+    ].join('');
+    return query;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return '';
+  }
+}
+
+/**
+ * Gets the query that returns the entries corresponding to queue recalls table (lost calls only).
+ *
+ * @method getLostQueueRecallQueryTable
+ * @param {string} hours The value of the interval time to be searched
+ * @return {string} The query to obtain the entries about queue recall table
+ * @private
+ */
+function getLostQueueRecallQueryTable(hours, queues) {
   try {
     if (typeof hours !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -318,54 +427,24 @@ function getQueueRecallQueryTable(hours) {
       ' (',
       'SELECT DISTINCT(data2) ',
       'FROM   asteriskcdrdb.queue_log z ',
-      'WHERE  z.event="ENTERQUEUE" AND z.callid=a.callid',
-      ' ) AS cid,',
+      'WHERE  z.event IN ("ENTERQUEUE", "FULL", "JOINEMPTY") AND z.callid=a.callid',
+      ' ) AS  cid,',
       ' (',
       'SELECT DISTINCT(cdr.cnam) ',
       'FROM   asteriskcdrdb.cdr cdr ',
-      'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
-      ' ) AS name,',
+      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      ' ) AS  name,',
       ' (',
       'SELECT DISTINCT(cdr.ccompany) ',
       'FROM   asteriskcdrdb.cdr cdr ',
-      'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
-      ' ) AS company,',
+      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      ' ) AS  company,',
       ' agent, ',
       ' event ',
       'FROM   asteriskcdrdb.queue_log a ',
-      'WHERE  event IN ("ABANDON", "EXITWITHTIMEOUT", "EXITWITHKEY", "EXITEMPTY")',
+      'WHERE  event IN ("ABANDON", "EXITWITHTIMEOUT", "EXITWITHKEY", "EXITEMPTY", "FULL", "JOINEMPTY")',
       ' AND ', timeConditionQl,
-
-      ' UNION ALL ',
-
-      'SELECT TIMESTAMP(time) AS time,',
-      ' queuename,',
-      ' "IN" AS direction,',
-      ' "DONE" AS action,',
-      ' CAST(data3 AS UNSIGNED) AS position,',
-      ' CAST(data2 AS UNSIGNED) AS duration,',
-      ' CAST(data1 AS UNSIGNED) AS hold,',
-      ' (',
-      'SELECT DISTINCT(data2) ',
-      'FROM   asteriskcdrdb.queue_log z ',
-      'WHERE  z.event="ENTERQUEUE"',
-      ' AND z.callid=a.callid',
-      ' ) AS cid,',
-      ' (',
-      'SELECT DISTINCT(cdr.cnam) ',
-      'FROM   asteriskcdrdb.cdr cdr ',
-      'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
-      ' ) AS name,',
-      ' (',
-      'SELECT DISTINCT(cdr.ccompany) ',
-      'FROM   asteriskcdrdb.cdr cdr ',
-      'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
-      ' ) AS company,',
-      ' agent, ',
-      ' event ',
-      'FROM   asteriskcdrdb.queue_log a ',
-      'WHERE  event IN ("COMPLETEAGENT", "COMPLETECALLER")',
-      ' AND ', timeConditionQl,
+      ' AND   a.queuename IN (' + queues + ')',
 
       ' UNION ALL ',
 
@@ -386,15 +465,88 @@ function getQueueRecallQueryTable(hours) {
       'WHERE  l.event="ENTERQUEUE" ',
       ' AND ', timeConditionCdr,
       ' AND ', timeConditionQl,
-
-      ' ORDER BY time DESC',
-
-      ') queue_recall'
+      ' AND   l.queuename IN (' + queues + ') ',
+      ')      queue_recall'
 
     ].join('');
-
     return query;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return '';
+  }
+}
 
+/**
+ * Gets the query that returns the entries corresponding to queue recalls table (done calls only).
+ *
+ * @method getDoneQueueRecallQueryTable
+ * @param {string} hours The value of the interval time to be searched
+ * @return {string} The query to obtain the entries about queue recall table
+ * @private
+ */
+function getDoneQueueRecallQueryTable(hours, queues) {
+  try {
+    if (typeof hours !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var timeConditionQl = 'TIMESTAMPDIFF(HOUR, time, now()) < ' + hours; // time condition on queue_log
+    var timeConditionCdr = 'TIMESTAMPDIFF(HOUR, calldate, now()) < ' + hours; // time condition on cdr
+    var query = [
+      '(',
+      'SELECT TIMESTAMP(time) AS time,',
+      ' queuename,',
+      ' "IN" AS direction,',
+      ' "DONE" AS action,',
+      ' CAST(data3 AS UNSIGNED) AS position,',
+      ' CAST(data2 AS UNSIGNED) AS duration,',
+      ' CAST(data1 AS UNSIGNED) AS hold,',
+      ' (',
+      'SELECT DISTINCT(data2) ',
+      'FROM   asteriskcdrdb.queue_log z ',
+      'WHERE  z.event="ENTERQUEUE"',
+      ' AND   z.callid=a.callid',
+      ' ) AS  cid,',
+      ' (',
+      'SELECT DISTINCT(cdr.cnam) ',
+      'FROM   asteriskcdrdb.cdr cdr ',
+      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      ' ) AS  name,',
+      ' (',
+      'SELECT DISTINCT(cdr.ccompany) ',
+      'FROM   asteriskcdrdb.cdr cdr ',
+      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      ' ) AS  company,',
+      ' agent, ',
+      ' event ',
+      'FROM   asteriskcdrdb.queue_log a ',
+      'WHERE  event IN ("COMPLETEAGENT", "COMPLETECALLER")',
+      ' AND   ', timeConditionQl,
+      ' AND   a.queuename IN (' + queues + ') ',
+
+      ' UNION ALL ',
+
+      'SELECT TIMESTAMP(calldate) AS time,',
+      ' l.queuename as queuename,',
+      ' "OUT" AS direction,',
+      ' IF (disposition="ANSWERED", "DONE", disposition) AS action,',
+      ' 0 AS position,',
+      ' 0 AS duration,',
+      ' 0 AS hold,',
+      ' dst AS cid,',
+      ' cnam AS name,',
+      ' ccompany AS company,',
+      ' src AS agent, ',
+      ' "" ',
+      'FROM   cdr c ',
+      'INNER JOIN asteriskcdrdb.queue_log l ON c.dst=l.data2 ',
+      'WHERE  l.event="ENTERQUEUE" ',
+      ' AND   ', timeConditionCdr,
+      ' AND   ', timeConditionQl,
+      ' AND   l.queuename IN (' + queues + ') ',
+      ')      queue_recall '
+
+    ].join('');
+    return query;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     return '';
@@ -424,12 +576,13 @@ function getRecall(obj, cb) {
     }
     var query, fromQuery;
     if (obj.type === 'all') {
-      fromQuery = getAllQueueRecallQueryTable(obj.hours);
+      fromQuery = getAllQueueRecallQueryTable(obj.hours, obj.queues);
     } else if (obj.type === 'done') {
-      fromQuery = getDoneQueueRecallQueryTable(obj.hours);
+      fromQuery = getDoneQueueRecallQueryTable(obj.hours, obj.queues);
     } else if (obj.type === 'lost') {
-      fromQuery = getLostQueueRecallQueryTable(obj.hours);
+      fromQuery = getLostQueueRecallQueryTable(obj.hours, obj.queues);
     }
+
     query = [
       'SELECT cid,',
       ' name,',
@@ -445,6 +598,8 @@ function getRecall(obj, cb) {
       'ORDER BY time DESC ',
       'LIMIT ' + obj.limit + ' OFFSET ' + obj.offset + ';'
     ].join('');
+
+    // start results query
     compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
       try {
         logger.log.info(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours +
@@ -458,11 +613,13 @@ function getRecall(obj, cb) {
       logger.log.error(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours + ' hours: ' + err1.toString());
       cb(err1, {});
     });
+
     compDbconnMain.incNumExecQueries();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
   }
+
 }
 
 /**
