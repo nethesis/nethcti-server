@@ -9758,6 +9758,42 @@ function setPinExten(extension, pin, enabled, cb) {
   }
 }
 
+/**
+ * Set the association between the extension and username.
+ *
+ * @method setExtensionUsername
+ * @param {string} exten The extension identifier
+ * @param {string} username The name of the user
+ */
+function setExtensionUsername(exten, username) {
+  try {
+    if (extensions[exten]) {
+      extensions[exten].setUsername(username);
+    } else {
+      logger.log.warn(IDLOG, `setting username ${username} to exten ${exten}`);
+    }
+  } catch (e) {
+    logger.log.error(IDLOG, e.stack);
+  }
+}
+
+/**
+ * Get the associated username from extension.
+ *
+ * @method getUsernameByExtension
+ * @param {string} exten The extension identifier
+ * @return {string} The username.
+ */
+function getUsernameByExtension(exten) {
+  try {
+    if (extensions[exten]) {
+      return extensions[exten].getUsername();
+    }
+  } catch (e) {
+    logger.log.error(IDLOG, e.stack);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.call = call;
@@ -9921,3 +9957,5 @@ exports.evtExtenUnconditionalCfChanged = evtExtenUnconditionalCfChanged;
 exports.transferConversationToVoicemail = transferConversationToVoicemail;
 exports.evtExtenUnconditionalCfVmChanged = evtExtenUnconditionalCfVmChanged;
 exports.isPinEnabledAtLeastOneRoute = isPinEnabledAtLeastOneRoute;
+exports.setExtensionUsername = setExtensionUsername;
+exports.getUsernameByExtension = getUsernameByExtension;

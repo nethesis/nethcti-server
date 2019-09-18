@@ -270,6 +270,8 @@ function config(path) {
     initializeEndpointsUsersByJSON(json);
     // set user presence
     initializeUsersPresence();
+    // set the association between extensions and usernames
+    setExtensionsUsernameAssociation();
 
     if (!ready) {
       // initialize asterisk proxy listeners
@@ -286,6 +288,26 @@ function config(path) {
     configured = true;
     logger.log.info(IDLOG, 'configuration done by ' + USERS_CONF_FILEPATH);
 
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the association between extensions and usernames.
+ *
+ * @method setExtensionsUsernameAssociation
+ * @private
+ */
+function setExtensionsUsernameAssociation() {
+  try {
+    var e, userExtens, u;
+    for (u in users) {
+      userExtens = getAllEndpointsExtension(u);
+      for (e in userExtens) {
+        compAstProxy.setExtensionUsername(e, u);
+      }
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2638,23 +2660,7 @@ function getAllUsersEndpointsExtension() {
  */
 function getUserUsingEndpointExtension(exten) {
   try {
-    // check parameter
-    if (typeof exten !== 'string') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    var extenKey, userExtens, username;
-    for (username in users) {
-
-      userExtens = getAllEndpointsExtension(username);
-
-      for (extenKey in userExtens) {
-        if (extenKey === exten) {
-          // the user have the specified extension endpoint
-          return username;
-        }
-      }
-    }
+    return compAstProxy.getUsernameByExtension(exten);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
