@@ -2,7 +2,7 @@
     my $restPort = ${'nethcti-server'}{RestPort} || "8179";
     my $wsPort = ${'nethcti-server'}{WsPort} || "8181";
 
-    $OUT.="ProxyPass /webrest http://127.0.0.1:$restPort\n";
+    $OUT.="ProxyPass /webrest http://127.0.0.1:$restPort retry=0\n";
     $OUT.="ProxyPassReverse /webrest http://127.0.0.1:$restPort\n";
 
     $OUT.= "ProxyPass        /socket.io ws://127.0.0.1:$wsPort/socket.io\n";
