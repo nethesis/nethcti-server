@@ -596,13 +596,14 @@ function getRecall(obj, cb) {
       'GROUP BY cid, queuename ',
       'ORDER BY time DESC;'
     ].join('');
+
     compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
       try {
         logger.log.info(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours +
           ' hours has been successful: ' + results.length + ' results');
         let objret = { count: results[0].length };
         if (obj.offset !== undefined && obj.limit !== undefined) {
-          objret.rows = results[0].slice(obj.offset, obj.limit);
+          objret.rows = results[0].slice(parseInt(obj.offset), (parseInt(obj.offset) + parseInt(obj.limit)));
         } else {
           objret.rows = results[0];
         }
