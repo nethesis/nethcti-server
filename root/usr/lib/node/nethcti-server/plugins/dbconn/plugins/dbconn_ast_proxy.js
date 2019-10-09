@@ -323,12 +323,12 @@ function getAllQueueRecallQueryTable(hours, queues) {
       ' (',
       'SELECT DISTINCT(cdr.cnam) ',
       'FROM   asteriskcdrdb.cdr cdr ',
-      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
       ' ) AS  name,',
       ' (',
       'SELECT DISTINCT(cdr.ccompany) ',
       'FROM   asteriskcdrdb.cdr cdr ',
-      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
       ' ) AS  company,',
       ' agent, ',
       ' event ',
@@ -355,12 +355,12 @@ function getAllQueueRecallQueryTable(hours, queues) {
       ' (',
       'SELECT DISTINCT(cdr.cnam) ',
       'FROM   asteriskcdrdb.cdr cdr ',
-      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
       ' ) AS  name,',
       ' (',
       'SELECT DISTINCT(cdr.ccompany) ',
       'FROM   asteriskcdrdb.cdr cdr ',
-      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
       ' ) AS  company,',
       ' agent, ',
       ' event ',
@@ -432,12 +432,12 @@ function getLostQueueRecallQueryTable(hours, queues) {
       ' (',
       'SELECT DISTINCT(cdr.cnam) ',
       'FROM   asteriskcdrdb.cdr cdr ',
-      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
       ' ) AS  name,',
       ' (',
       'SELECT DISTINCT(cdr.ccompany) ',
       'FROM   asteriskcdrdb.cdr cdr ',
-      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
       ' ) AS  company,',
       ' agent, ',
       ' event ',
@@ -509,12 +509,12 @@ function getDoneQueueRecallQueryTable(hours, queues) {
       ' (',
       'SELECT DISTINCT(cdr.cnam) ',
       'FROM   asteriskcdrdb.cdr cdr ',
-      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
       ' ) AS  name,',
       ' (',
       'SELECT DISTINCT(cdr.ccompany) ',
       'FROM   asteriskcdrdb.cdr cdr ',
-      'WHERE  cdr.uniqueid = a.callid AND ' + timeConditionCdr + ' GROUP BY cdr.uniqueid',
+      'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
       ' ) AS  company,',
       ' agent, ',
       ' event ',
@@ -593,22 +593,20 @@ function getRecall(obj, cb) {
       ' queuename, ',
       ' IF (event = "", action, event) AS event ',
       'FROM ', fromQuery, ' ',
-      'WHERE queuename IN (' + obj.queues + ') ',
       'GROUP BY cid, queuename ',
-      'ORDER BY time DESC '
+      'ORDER BY time DESC;'
     ].join('');
-
-    if (obj.offset !== undefined && obj.limit !== undefined) {
-      query += 'LIMIT ' + obj.limit + ' OFFSET ' + obj.offset;
-    }
-    query += ';';
-
-    // start results query
     compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
       try {
         logger.log.info(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours +
           ' hours has been successful: ' + results.length + ' results');
-        cb(null, results[0]);
+        let objret = { count: results[0].length };
+        if (obj.offset !== undefined && obj.limit !== undefined) {
+          objret.rows = results[0].slice(obj.offset, obj.limit);
+        } else {
+          objret.rows = results[0];
+        }
+        cb(null, objret);
       } catch (err2) {
         logger.log.error(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours + ' hours: ' + err1.toString());
         cb(err2, {});
@@ -617,7 +615,6 @@ function getRecall(obj, cb) {
       logger.log.error(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours + ' hours: ' + err1.toString());
       cb(err1, {});
     });
-
     compDbconnMain.incNumExecQueries();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
