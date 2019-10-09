@@ -2191,7 +2191,6 @@ var compConfigManager;
         try {
           var username = req.headers.authorization_user;
           if (typeof req.params.qids !== 'string' || typeof req.params.hours !== 'string' ||
-              typeof req.params.offset !== 'string' || typeof req.params.limit !== 'string' ||
               typeof req.params.type !== 'string' ||
               (req.params.type !== 'all' && req.params.type !== 'lost' && req.params.type !== 'done')) {
             compUtil.net.sendHttp400(IDLOG, res);

@@ -562,13 +562,13 @@ function getDoneQueueRecallQueryTable(hours, queues) {
  *   @param {string} obj.hours The amount of hours of the current day to be searched
  *   @param {array} obj.queues The queue identifiers
  *   @param {type} obj.type It can be ("lost"|"done"|"all"). The type of call to be retrieved
- *   @param {integer} obj.offset The results offset
- *   @param {integer} obj.limit The results limit
+ *   @param {integer} [obj.offset] The results offset
+ *   @param {integer} [obj.limit] The results limit
  * @param {function} cb The callback function
  */
 function getRecall(obj, cb) {
   try {
-    if (typeof obj !== 'object' || !obj.queues || !obj.type || !obj.hours || !obj.offset || !obj.limit) {
+    if (typeof obj !== 'object' || !obj.queues || !obj.type || !obj.hours) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (obj.queues.length === 0) {
@@ -595,9 +595,13 @@ function getRecall(obj, cb) {
       'FROM ', fromQuery, ' ',
       'WHERE queuename IN (' + obj.queues + ') ',
       'GROUP BY cid, queuename ',
-      'ORDER BY time DESC ',
-      'LIMIT ' + obj.limit + ' OFFSET ' + obj.offset + ';'
+      'ORDER BY time DESC '
     ].join('');
+
+    if (obj.offset !== undefined && obj.limit !== undefined) {
+      query += 'LIMIT ' + obj.limit + ' OFFSET ' + obj.offset;
+    }
+    query += ';';
 
     // start results query
     compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
