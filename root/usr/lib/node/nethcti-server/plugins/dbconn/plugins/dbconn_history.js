@@ -204,8 +204,8 @@ function getHistoryCallInterval(data, cb) {
       data.filter = '%';
     }
 
-    data.from = data.from.substring(0,4) + '-' + data.from.substring(4,6) + '-' + data.from.substring(6,8);
-    data.to = data.to.substring(0,4) + '-' + data.to.substring(4,6) + '-' + data.to.substring(6,8);
+    data.from = data.from.substring(0,4) + '-' + data.from.substring(4,6) + '-' + data.from.substring(6,8) + ' 00:00:00';
+    data.to = data.to.substring(0,4) + '-' + data.to.substring(4,6) + '-' + data.to.substring(6,8) + ' 23:59:59';
     var whereClause;
 
     if (data.direction && data.direction === 'in') {
@@ -367,8 +367,8 @@ function getHistorySwitchCallInterval(data, cb) {
     }
 
     data.extens = '("' + data.extens.join('","') + '")';
-    data.from = data.from.substring(0,4) + '-' + data.from.substring(4,6) + '-' + data.from.substring(6,8);
-    data.to = data.to.substring(0,4) + '-' + data.to.substring(4,6) + '-' + data.to.substring(6,8);
+    data.from = data.from.substring(0,4) + '-' + data.from.substring(4,6) + '-' + data.from.substring(6,8) + ' 00:00:00';
+    data.to = data.to.substring(0,4) + '-' + data.to.substring(4,6) + '-' + data.to.substring(6,8) + ' 23:59:59';
 
     var whereClause;
     if (data.type === 'in') {
