@@ -204,13 +204,15 @@ function getHistoryCallInterval(data, cb) {
       data.filter = '%';
     }
 
+    data.from = data.from.substring(0,4) + '-' + data.from.substring(4,6) + '-' + data.from.substring(6,8);
+    data.to = data.to.substring(0,4) + '-' + data.to.substring(4,6) + '-' + data.to.substring(6,8);
     var whereClause;
 
     if (data.direction && data.direction === 'in') {
 
       whereClause = [
         '(cnum NOT IN (?) AND dst IN (?)) AND ' +
-        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+        '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)',
         data.endpoints, data.endpoints,
         data.from, data.to,
@@ -221,7 +223,7 @@ function getHistoryCallInterval(data, cb) {
 
       whereClause = [
         '(cnum IN (?) AND dst NOT IN (?)) AND ' +
-        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+        '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)',
         data.endpoints, data.endpoints,
         data.from, data.to,
@@ -232,7 +234,7 @@ function getHistoryCallInterval(data, cb) {
 
       whereClause = [
         '(cnum IN (?) OR dst IN (?)) AND ' +
-        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+        '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR dst_cnam LIKE ? OR ccompany LIKE ? OR dst_ccompany LIKE ?)',
         data.endpoints, data.endpoints,
         data.from, data.to,
@@ -365,6 +367,8 @@ function getHistorySwitchCallInterval(data, cb) {
     }
 
     data.extens = '("' + data.extens.join('","') + '")';
+    data.from = data.from.substring(0,4) + '-' + data.from.substring(4,6) + '-' + data.from.substring(6,8);
+    data.to = data.to.substring(0,4) + '-' + data.to.substring(4,6) + '-' + data.to.substring(6,8);
 
     var whereClause;
     if (data.type === 'in') {
@@ -381,7 +385,7 @@ function getHistorySwitchCallInterval(data, cb) {
           ')' +
           // end include attended transfered calls
         ') AND ' +
-        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+        '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)',
         data.trunks,
         data.from, data.to,
@@ -392,7 +396,7 @@ function getHistorySwitchCallInterval(data, cb) {
 
       whereClause = [
         'dstchannel REGEXP ? AND ' +
-        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+        '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)',
         data.trunks,
         data.from, data.to,
@@ -408,7 +412,7 @@ function getHistorySwitchCallInterval(data, cb) {
         'src IN ' + data.extens + ' AND ' +
         'cnum IN ' + data.extens + ' AND ' +
         'dst IN ' + data.extens + ' AND ' +
-        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+        '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)',
         data.trunks, data.trunks,
         data.from, data.to,
@@ -417,9 +421,8 @@ function getHistorySwitchCallInterval(data, cb) {
       ];
 
     } else {
-
       whereClause = [
-        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+        '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)',
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
