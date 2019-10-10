@@ -372,7 +372,7 @@ function getAllQueueRecallQueryTable(hours, queues) {
 
       ' UNION ALL ',
 
-      'SELECT TIMESTAMP(calldate) AS time,',
+      'SELECT calldate AS time,',
       ' l.queuename as queuename,',
       ' "OUT" AS direction,',
       ' IF (disposition="ANSWERED", "DONE", disposition) AS action,',
@@ -450,7 +450,7 @@ function getLostQueueRecallQueryTable(hours, queues) {
 
       ' UNION ALL ',
 
-      'SELECT TIMESTAMP(calldate) AS time,',
+      'SELECT calldate AS time,',
       ' l.queuename as queuename,',
       ' "OUT" AS direction,',
       ' IF (disposition="ANSWERED", "DONE", disposition) AS action,',
@@ -529,7 +529,7 @@ function getDoneQueueRecallQueryTable(hours, queues) {
 
       ' UNION ALL ',
 
-      'SELECT TIMESTAMP(calldate) AS time,',
+      'SELECT calldate AS time,',
       ' l.queuename as queuename,',
       ' "OUT" AS direction,',
       ' IF (disposition="ANSWERED", "DONE", disposition) AS action,',
