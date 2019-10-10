@@ -309,7 +309,7 @@ function getAllQueueRecallQueryTable(hours, queues) {
     const timeConditionCdr = '(calldate BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on cdr
     const query = [
       '(',
-      'SELECT TIMESTAMP(time) AS time,',
+      'SELECT time,',
       ' queuename,',
       ' "IN"  AS direction,',
       ' "TIMEOUT" AS action,',
@@ -340,7 +340,7 @@ function getAllQueueRecallQueryTable(hours, queues) {
 
       ' UNION ALL ',
 
-      'SELECT TIMESTAMP(time) AS time,',
+      'SELECT time,',
       ' queuename,',
       ' "IN"  AS direction,',
       ' "DONE" AS action,',
@@ -420,7 +420,7 @@ function getLostQueueRecallQueryTable(hours, queues) {
     const timeConditionCdr = '(calldate BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on cdr
     const query = [
       '(',
-      'SELECT TIMESTAMP(time) AS time,',
+      'SELECT time,',
       ' queuename,',
       ' "IN" AS direction,',
       ' "TIMEOUT" AS action,',
@@ -498,7 +498,7 @@ function getDoneQueueRecallQueryTable(hours, queues) {
     const timeConditionCdr = '(calldate BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on cdr
     const query = [
       '(',
-      'SELECT TIMESTAMP(time) AS time,',
+      'SELECT time,',
       ' queuename,',
       ' "IN" AS direction,',
       ' "DONE" AS action,',
