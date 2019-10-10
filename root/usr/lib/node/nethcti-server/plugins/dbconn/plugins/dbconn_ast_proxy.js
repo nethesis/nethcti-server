@@ -303,10 +303,11 @@ function getAllQueueRecallQueryTable(hours, queues) {
     if (typeof hours !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    var timeConditionQl = 'TIMESTAMPDIFF(HOUR, time, now()) < ' + hours; // time condition on queue_log
-    var timeConditionCdr = 'TIMESTAMPDIFF(HOUR, calldate, now()) < ' + hours; // time condition on cdr
-    var query = [
+    const now = moment().format('YYYY-MM-DD HH:mm:ss');
+    const starting = moment().subtract({ hours: 8 }).format('YYYY-MM-DD HH:mm:ss');
+    const timeConditionQl = '(time BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on queue_log
+    const timeConditionCdr = '(calldate BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on cdr
+    const query = [
       '(',
       'SELECT TIMESTAMP(time) AS time,',
       ' queuename,',
@@ -412,10 +413,11 @@ function getLostQueueRecallQueryTable(hours, queues) {
     if (typeof hours !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    var timeConditionQl = 'TIMESTAMPDIFF(HOUR, time, now()) < ' + hours; // time condition on queue_log
-    var timeConditionCdr = 'TIMESTAMPDIFF(HOUR, calldate, now()) < ' + hours; // time condition on cdr
-    var query = [
+    const now = moment().format('YYYY-MM-DD HH:mm:ss');
+    const starting = moment().subtract({ hours: 8 }).format('YYYY-MM-DD HH:mm:ss');
+    const timeConditionQl = '(time BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on queue_log
+    const timeConditionCdr = '(calldate BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on cdr
+    const query = [
       '(',
       'SELECT TIMESTAMP(time) AS time,',
       ' queuename,',
@@ -489,9 +491,11 @@ function getDoneQueueRecallQueryTable(hours, queues) {
     if (typeof hours !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    var timeConditionQl = 'TIMESTAMPDIFF(HOUR, time, now()) < ' + hours; // time condition on queue_log
-    var timeConditionCdr = 'TIMESTAMPDIFF(HOUR, calldate, now()) < ' + hours; // time condition on cdr
-    var query = [
+    const now = moment().format('YYYY-MM-DD HH:mm:ss');
+    const starting = moment().subtract({ hours: 8 }).format('YYYY-MM-DD HH:mm:ss');
+    const timeConditionQl = '(time BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on queue_log
+    const timeConditionCdr = '(calldate BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on cdr
+    const query = [
       '(',
       'SELECT TIMESTAMP(time) AS time,',
       ' queuename,',
