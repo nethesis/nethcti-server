@@ -174,7 +174,7 @@ function analizeQueueRecallingStatus(results, num, cb) {
  */
 function getRecallData(obj, cb) {
   try {
-    if (typeof obj !== 'object' || !obj.queues || !obj.type || !obj.hours || !obj.offset || !obj.limit) {
+    if (typeof obj !== 'object' || !obj.queues || !obj.type || !obj.hours) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     compDbconn.getRecall(obj, cb);
