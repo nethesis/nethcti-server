@@ -177,6 +177,7 @@ function getRecallData(obj, cb) {
     if (typeof obj !== 'object' || !obj.queues || !obj.type || !obj.hours) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+    obj.agents = compAstProxy.proxyLogic.getAgentsOfQueues(obj.queues);
     compDbconn.getRecall(obj, cb);
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
