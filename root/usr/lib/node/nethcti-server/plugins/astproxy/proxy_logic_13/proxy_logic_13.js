@@ -2296,6 +2296,30 @@ function getJSONAllQueuesStats(queuesList, cb) {
 }
 
 /**
+ * Return the list of all agents of the specified queues.
+ *
+ * @method getAgentsOfQueues
+ * @param {array} queuesList The list of the queues identifiers
+ * @return {array} The list of all agents of the specified queues.
+ */
+function getAgentsOfQueues(queuesList, cb) {
+  try {
+    if (Array.isArray(queuesList) === false) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    let results = [];
+    for (let i = 0; i < queuesList.length; i++) {
+      if (queues[queuesList[i]]) {
+        results = results.concat(queues[queuesList[i]].getMembersList());
+      }
+    }
+    return results.filter((item, pos) => results.indexOf(item) === pos);
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
+
+/**
  * Return history of stasts of queues calls. Updates data once every half an hour.
  *
  * @method getQCallsStatsHist
@@ -9959,3 +9983,4 @@ exports.evtExtenUnconditionalCfVmChanged = evtExtenUnconditionalCfVmChanged;
 exports.isPinEnabledAtLeastOneRoute = isPinEnabledAtLeastOneRoute;
 exports.setExtensionUsername = setExtensionUsername;
 exports.getUsernameByExtension = getUsernameByExtension;
+exports.getAgentsOfQueues = getAgentsOfQueues;

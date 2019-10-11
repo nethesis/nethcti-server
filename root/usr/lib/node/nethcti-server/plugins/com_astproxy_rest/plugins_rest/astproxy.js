@@ -137,9 +137,10 @@ var compConfigManager;
         * 1. [`astproxy/extensions`](#extensionsget)
         * 1. [`astproxy/extension/:id`](#extensionget)
         * 1. [`astproxy/conference/:endpoint`](#conferenceget)
-        * 1. [`astproxy/queue_recall/:hours/:qids`](#queue_recallget)
-        * 1. [`astproxy/qmanager_queue_recall/:hours/:qids`](#qmanager_queue_recallget)
+        * 1. [`astproxy/queue_recall/:hours/:qids/:type?limit=n&offset=n`](#queue_recallget)
+        * 1. [`astproxy/qmanager_queue_recall/:hours/:qids/:type?limit=n&offset=n`](#qmanager_queue_recallget)
         * 1. [`astproxy/qrecall_info/:hours/:cid/:qid`](#qrecall_infoget)
+        * 1. [`astproxy/qmanager_qrecall_info/:hours/:cid/:qid`](#qmanager_qrecall_infoget)
         * 1. [`astproxy/qrecall_check/:num`](#qrecall_checkget)
         * 1. [`astproxy/qmanager_queues`](#qmanager_queuesget)
         * 1. [`astproxy/qmanager_qstats/:qid`](#qmanager_qstatsget)
@@ -347,7 +348,7 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="queue_recallget">**`astproxy/queue_recall/:hours/:qids`**</a>
+        * ### <a id="queue_recallget">**`astproxy/queue_recall/:hours/:qids/:type?limit=n&offset=n`**</a>
         *
         * Gets the recall data about the queue. The request must contains
         * the following parameters:
@@ -418,6 +419,34 @@ var compConfigManager;
         * ### <a id="qrecall_infoget">**`astproxy/qrecall_info/:hours/:cid/:qid`**</a>
         *
         * Gets details about the queue call. The request must contains
+        * the following parameters:
+        *
+        * * `hours: is the amount of last hours to be searched of the current day
+        * * `cid: the caller identifier`
+        * * `qid: the queue identifier`
+        *
+        * Example JSON response:
+        *
+        *     [
+         {
+           "queuename": "403",
+           "direction": "IN",
+           "action": "TIMEOUT",
+           "time": "2018-03-21 14:13:32.415053",
+           "position": 1,
+           "duration": 1,
+           "hold": 12,
+           "cid": "3296632153",
+           "agent": "NONE"
+       },
+       ...
+     ]
+        *
+        * ---
+        *
+        * ### <a id="qmanager_qrecall_infoget">**`astproxy/qmanager_qrecall_info/:hours/:cid/:qid`**</a>
+        *
+        * Gets details about the queue call in QManager. The request must contains
         * the following parameters:
         *
         * * `hours: is the amount of last hours to be searched of the current day
@@ -1249,9 +1278,10 @@ var compConfigManager;
          *   @param {string} qmanager_qcalls                       Gets statistics about all the queues
          *   @param {string} qmanager_astats                       Gets statistics about all the agents
          *   @param {string} queue_astats                          Gets statistics about your user agent
-         *   @param {string} queue_recall/:hours/:qids             Gets the recall data about the queues
-         *   @param {string} qmanager_queue_recall/:hours/:qids    Gets the qmanager recall data about the queues
+         *   @param {string} queue_recall/:hours/:qids/:type       Gets the recall data about the queues
+         *   @param {string} qmanager_queue_recall/:hours/:qids/:type Gets the qmanager recall data about the queues
          *   @param {string} qrecall_info/:hours/:cid/:qid         Gets the details about the queue recall
+         *   @param {string} qmanager_qrecall_info/:hours/:cid/:qid Gets the details about the queue recall in QManager
          *   @param {string} qrecall_check/:num                    Checks if the number is in conversation
          *   @param {string} cw/:endpoint                          Gets the call waiting status of the endpoint of the user
          *   @param {string} dnd/:endpoint                         Gets the don't disturb status of the endpoint of the user
@@ -1279,9 +1309,10 @@ var compConfigManager;
           'queue_astats',
           'qmanager_qcalls',
           'qmanager_qstats/:qid',
-          'queue_recall/:hours/:qids',
-          'qmanager_queue_recall/:hours/:qids',
+          'queue_recall/:hours/:qids/:type',
+          'qmanager_queue_recall/:hours/:qids/:type',
           'qrecall_info/:hours/:cid/:qid',
+          'qmanager_qrecall_info/:hours/:cid/:qid',
           'qrecall_check/:num',
           'cw/:endpoint',
           'dnd/:endpoint',
@@ -2190,19 +2221,19 @@ var compConfigManager;
       queue_recall: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
-
-          if (typeof req.params.qids !== 'string' || typeof req.params.hours !== 'string') {
+          if (typeof req.params.qids !== 'string' || typeof req.params.hours !== 'string' ||
+              typeof req.params.type !== 'string' ||
+              (req.params.type !== 'all' && req.params.type !== 'lost' && req.params.type !== 'done')) {
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
-
-          if (compAuthorization.authorizeLostQueueCallsUser(username) !== true) {
-            logger.log.warn(IDLOG, 'requesting last #' + req.params.hours + ' hours ' +
-              'recalls info of queues "' + req.params.qids + '": authorization failed for user "' + username + '"');
+          if (compAuthorization.authorizeLostQueueCallsUser(username) === true) {
+            logger.log.info(IDLOG, 'requesting queues recall: user "' + username + '" has the  authorization');
+          } else {
+            logger.log.warn(IDLOG, 'requesting queues recall: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
-
           var qids = req.params.qids.split(',');
           if (req.params.qids === '') {
             logger.log.info(IDLOG, 'sent recall data about queues ' + qids +
@@ -2210,11 +2241,12 @@ var compConfigManager;
             res.send(200, []);
             return;
           }
-
           var queues = compUser.getQueueIds(username);
           var authorizedQueues = [];
           if (queues.length === 0) {
             logger.log.warn(IDLOG, 'getting recall of queues of the user: user "' + username + '" do not belong to any queue');
+            res.send(200, []);
+            return;
           }
           for (var i = 0; i < qids.length; i++) {
             if (queues.indexOf(qids[i]) === -1) {
@@ -2225,14 +2257,19 @@ var compConfigManager;
               authorizedQueues.push(qids[i]);
             }
           }
-          compAstProxy.getQueueRecallData(req.params.hours, authorizedQueues, function (err, results) {
+          var obj = {
+            hours: req.params.hours,
+            type: req.params.type,
+            queues: authorizedQueues,
+            offset: req.params.offset,
+            limit: req.params.limit
+          };
+          compAstProxy.getRecallData(obj, function (err, results) {
             try {
               if (err) { throw err; }
-
               logger.log.info(IDLOG, 'sent recall data about queues ' + qids +
                 ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
               res.send(200, results);
-
             } catch (error) {
               logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -2291,7 +2328,14 @@ var compConfigManager;
               authorizedQueues.push(qids[i]);
             }
           }
-          compAstProxy.getQueueRecallData(req.params.hours, authorizedQueues, function (err, results) {
+          var obj = {
+            hours: req.params.hours,
+            type: req.params.type,
+            queues: authorizedQueues,
+            offset: req.params.offset,
+            limit: req.params.limit
+          };
+          compAstProxy.getRecallData(obj, function (err, results) {
             try {
               if (err) { throw err; }
               logger.log.info(IDLOG, 'sent qmanager recall data about queues ' + authorizedQueues +
@@ -2389,6 +2433,55 @@ var compConfigManager;
                 throw err;
               }
               logger.log.info(IDLOG, 'sent details about queue (' + req.params.qid + ') recall of cid "' + req.params.cid + '" from ' +
+                'last ' + req.params.hours + ' hours in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+              res.send(200, results);
+
+            } catch (error) {
+              logger.log.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      },
+
+      /**
+       *  Gets the details about the queue recall in QManager with the following REST API:
+       *
+       *     GET  qmanager_qrecall_info
+       *
+       * @method qmanager_qrecall_info
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      qmanager_qrecall_info: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+
+          if (typeof req.params.cid !== 'string' ||
+            typeof req.params.hours !== 'string' ||
+            typeof req.params.qid !== 'string') {
+
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+
+          if (compAuthorization.authorizeQManagerUser(username) !== true) {
+            logger.log.warn(IDLOG, 'requesting detailed info of last ' + req.params.hours + ' hours ' +
+              'recall cid ' + req.params.cid + ' of queue in QManager: authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+
+          compAstProxy.getQueueRecallInfo(req.params.hours, req.params.cid, req.params.qid, function (err, results) {
+            try {
+              if (err) {
+                throw err;
+              }
+              logger.log.info(IDLOG, 'sent details about queue (' + req.params.qid + ') recall in QManager of cid "' + req.params.cid + '" from ' +
                 'last ' + req.params.hours + ' hours in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
               res.send(200, results);
 
@@ -5109,6 +5202,7 @@ var compConfigManager;
     exports.queue_recall = astproxy.queue_recall;
     exports.qmanager_queue_recall = astproxy.qmanager_queue_recall;
     exports.qrecall_info = astproxy.qrecall_info;
+    exports.qmanager_qrecall_info = astproxy.qmanager_qrecall_info;
     exports.qrecall_check = astproxy.qrecall_check;
     exports.qmanager_qstats = astproxy.qmanager_qstats;
     exports.qmanager_qcalls_hist = astproxy.qmanager_qcalls_hist;

@@ -53,7 +53,7 @@ var compDbconnMain;
  * @type boolean
  * @private
  */
-var CACHE_ENABLED = false;
+var CACHE_ENABLED = true;
 
 /**
  * Cache period time for some data.
@@ -62,7 +62,7 @@ var CACHE_ENABLED = false;
  * @type number
  * @private
  */
-var CACHE_TIMEOUT = 25000;
+var CACHE_TIMEOUT = 20000;
 
 /**
  * The data cache.
@@ -72,6 +72,19 @@ var CACHE_TIMEOUT = 25000;
  * @private
  */
 var cache = {};
+
+/**
+ * The data cache for queue lost calls used by getRecall function.
+ *
+ * @property cacheGetRecall
+ * @type object
+ * @private
+ */
+var cacheGetRecall = {
+  all: [],
+  done: [],
+  lost: []
+};
 
 /**
  * The data cache timestamps.
@@ -270,7 +283,7 @@ function getQueueRecallInfo(data, cb) {
       'cid, ',
       'agent, ',
       ' IF (event = "", action, event) AS event ',
-      'FROM ', getQueueRecallQueryTable(data.hours), ' ',
+      'FROM ', getAllQueueRecallQueryTable(data.hours, data.qid), ' ',
       'WHERE cid="', data.cid, '" AND queuename="', data.qid, '" ',
       'ORDER BY time ASC'
     ].join('');
@@ -280,7 +293,7 @@ function getQueueRecallInfo(data, cb) {
       cb(null, results[0]);
     }, function (err1) {
       logger.log.error(IDLOG, 'searching details about queue recall on cid "' + data.cid + '"');
-      cb(err.toString(), {});
+      cb(err1.toString(), {});
     });
     compDbconnMain.incNumExecQueries();
 
@@ -293,24 +306,29 @@ function getQueueRecallInfo(data, cb) {
 /**
  * Gets the query that returns the entries corresponding to queue recalls table.
  *
- * @method getQueueRecallQueryTable
+ * @method getAllQueueRecallQueryTable
  * @param {string} hours The value of the interval time to be searched
+ * @param {array} queues The queues
+ * @param {array} agents The agents of the queues
  * @return {string} The query to obtain the entries about queue recall table
  * @private
  */
-function getQueueRecallQueryTable(hours) {
+function getAllQueueRecallQueryTable(hours, queues, agents) {
   try {
-    if (typeof hours !== 'string') {
+    queues = '"' + queues.join('","') + '"';
+    agents = '"' + agents.join('","') + '"';
+    if (typeof hours !== 'string' || !queues || !agents) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    var timeConditionQl = 'TIMESTAMPDIFF(HOUR, time, now()) < ' + hours; // time condition on queue_log
-    var timeConditionCdr = 'TIMESTAMPDIFF(HOUR, calldate, now()) < ' + hours; // time condition on cdr
-    var query = [
+    const now = moment().format('YYYY-MM-DD HH:mm:ss');
+    const starting = moment().subtract({ hours: hours }).format('YYYY-MM-DD HH:mm:ss');
+    const timeConditionQl = '(time BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on queue_log
+    const timeConditionCdr = '(calldate BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on cdr
+    const query = [
       '(',
-      'SELECT TIMESTAMP(time) AS time,',
+      'SELECT time,',
       ' queuename,',
-      ' "IN" AS direction,',
+      ' "IN"  AS direction,',
       ' "TIMEOUT" AS action,',
       ' CAST(data1 AS UNSIGNED) AS position,',
       ' CAST(data2 AS UNSIGNED) AS duration,',
@@ -318,29 +336,30 @@ function getQueueRecallQueryTable(hours) {
       ' (',
       'SELECT DISTINCT(data2) ',
       'FROM   asteriskcdrdb.queue_log z ',
-      'WHERE  z.event="ENTERQUEUE" AND z.callid=a.callid',
+      'WHERE  z.event = "ENTERQUEUE" AND z.callid=a.callid',
       ' ) AS cid,',
       ' (',
       'SELECT DISTINCT(cdr.cnam) ',
       'FROM   asteriskcdrdb.cdr cdr ',
       'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
-      ' ) AS name,',
+      ' ) AS  name,',
       ' (',
       'SELECT DISTINCT(cdr.ccompany) ',
       'FROM   asteriskcdrdb.cdr cdr ',
       'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
-      ' ) AS company,',
+      ' ) AS  company,',
       ' agent, ',
       ' event ',
       'FROM   asteriskcdrdb.queue_log a ',
-      'WHERE  event IN ("ABANDON", "EXITWITHTIMEOUT", "EXITWITHKEY", "EXITEMPTY")',
-      ' AND ', timeConditionQl,
+      'WHERE  event IN ("ABANDON", "EXITWITHTIMEOUT", "EXITWITHKEY", "EXITEMPTY", "FULL", "JOINEMPTY")',
+      ' AND   ', timeConditionQl,
+      ' AND   a.queuename IN (' + queues + ') ',
 
       ' UNION ALL ',
 
-      'SELECT TIMESTAMP(time) AS time,',
+      'SELECT time,',
       ' queuename,',
-      ' "IN" AS direction,',
+      ' "IN"  AS direction,',
       ' "DONE" AS action,',
       ' CAST(data3 AS UNSIGNED) AS position,',
       ' CAST(data2 AS UNSIGNED) AS duration,',
@@ -349,52 +368,49 @@ function getQueueRecallQueryTable(hours) {
       'SELECT DISTINCT(data2) ',
       'FROM   asteriskcdrdb.queue_log z ',
       'WHERE  z.event="ENTERQUEUE"',
-      ' AND z.callid=a.callid',
-      ' ) AS cid,',
+      ' AND   z.callid=a.callid',
+      ' ) AS  cid,',
       ' (',
       'SELECT DISTINCT(cdr.cnam) ',
       'FROM   asteriskcdrdb.cdr cdr ',
       'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
-      ' ) AS name,',
+      ' ) AS  name,',
       ' (',
       'SELECT DISTINCT(cdr.ccompany) ',
       'FROM   asteriskcdrdb.cdr cdr ',
       'WHERE  cdr.uniqueid = a.callid GROUP BY cdr.uniqueid',
-      ' ) AS company,',
+      ' ) AS  company,',
       ' agent, ',
       ' event ',
       'FROM   asteriskcdrdb.queue_log a ',
       'WHERE  event IN ("COMPLETEAGENT", "COMPLETECALLER")',
-      ' AND ', timeConditionQl,
+      ' AND   ', timeConditionQl,
+      ' AND   a.queuename IN (' + queues + ') ',
 
       ' UNION ALL ',
 
-      'SELECT TIMESTAMP(calldate) AS time,',
+      'SELECT calldate AS time,',
       ' l.queuename as queuename,',
       ' "OUT" AS direction,',
       ' IF (disposition="ANSWERED", "DONE", disposition) AS action,',
-      ' 0 AS position,',
-      ' 0 AS duration,',
-      ' 0 AS hold,',
+      ' 0 AS  position,',
+      ' 0 AS  duration,',
+      ' 0 AS  hold,',
       ' dst AS cid,',
       ' cnam AS name,',
       ' ccompany AS company,',
       ' src AS agent, ',
       ' "" ',
       'FROM   cdr c ',
-      'INNER JOIN asteriskcdrdb.queue_log l ON c.dst=l.data2 ',
+      'INNER JOIN asteriskcdrdb.queue_log l ON c.dst=l.data2',
+      ' AND   c.accountcode IN (' + agents + ') ',
       'WHERE  l.event="ENTERQUEUE" ',
-      ' AND ', timeConditionCdr,
-      ' AND ', timeConditionQl,
-
-      ' ORDER BY time DESC',
-
-      ') queue_recall'
-
+      ' AND   ', timeConditionCdr,
+      ' AND   ', timeConditionQl,
+      ' AND   l.queuename IN (' + queues + ') ',
+      ' ORDER  BY time DESC ) queue_recall'
     ].join('');
-
     return query;
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     return '';
@@ -405,53 +421,112 @@ function getQueueRecallQueryTable(hours) {
  * Gets the last calls from queue_log db table basing the search
  * with the last X hours of the current day.
  *
- * @method getQueueRecall
- * @param {object} data
- *   @param {string} data.hours The value of the hours to be searched
- *   @param {array} data.queues The queues identifiers
+ * @method getRecall
+ * @param {object} obj
+ *   @param {string} obj.hours The amount of hours of the current day to be searched
+ *   @param {array} obj.queues The queue identifiers
+ *   @param {array} obj.agents The agents of the queues
+ *   @param {type} obj.type It can be ("lost"|"done"|"all"). The type of call to be retrieved
+ *   @param {integer} [obj.offset] The results offset
+ *   @param {integer} [obj.limit] The results limit
  * @param {function} cb The callback function
  */
-function getQueueRecall(data, cb) {
+function getRecall(obj, cb) {
   try {
-    if (typeof data !== 'object' ||
-      typeof cb !== 'function' ||
-      typeof data.hours !== 'string' ||
-      Array.isArray(data.queues) !== true) {
-
+    if (typeof obj !== 'object' || !obj.queues || !obj.agents || !obj.type || !obj.hours) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    if (data.queues.length === 0) {
+    if (obj.queues.length === 0) {
       return cb(null, []);
     }
-
-    var query = [
-      'SELECT cid,',
-      ' name,',
-      ' company,',
-      ' action,',
-      ' UNIX_TIMESTAMP(time) as time,',
-      ' direction,',
-      ' queuename, ',
+    // cache hit
+    if (CACHE_ENABLED && (new Date().getTime() - cacheTimestamps.getRecall) < CACHE_TIMEOUT) {
+      if (obj.type === 'all') {
+        if (obj.offset && obj.limit) {
+          cb(null, { count: cacheGetRecall.all.length, rows: cacheGetRecall.all.slice(parseInt(obj.offset), (parseInt(obj.offset) + parseInt(obj.limit))) });
+        } else {
+          cb(null, { count: cacheGetRecall.all.length, rows: cacheGetRecall.all });
+        }
+      }
+      else if (obj.type === 'done') {
+        if (obj.offset && obj.limit) {
+          cb(null, { count: cacheGetRecall.done.length, rows: cacheGetRecall.done.slice(parseInt(obj.offset), (parseInt(obj.offset) + parseInt(obj.limit))) });
+        } else {
+          cb(null, { count: cacheGetRecall.done.length, rows: cacheGetRecall.done });
+        }
+      }
+      else if (obj.type === 'lost') {
+        if (obj.offset && obj.limit) {
+          cb(null, { count: cacheGetRecall.lost.length, rows: cacheGetRecall.lost.slice(parseInt(obj.offset), (parseInt(obj.offset) + parseInt(obj.limit))) });
+        } else {
+          cb(null, { count: cacheGetRecall.lost.length, rows: cacheGetRecall.lost });
+        }
+      }
+      logger.log.info(IDLOG, 'getRecall CACHE HIT for queue lost calls');
+      return;
+    }
+    let query = [
+      'SELECT cid, name, company, action, UNIX_TIMESTAMP(time) as time, direction, queuename, ',
       ' IF (event = "", action, event) AS event ',
-      'FROM ', getQueueRecallQueryTable(data.hours), ' ',
-      'WHERE queuename IN (' + data.queues + ') ',
+      'FROM ', getAllQueueRecallQueryTable(obj.hours, obj.queues, obj.agents), ' ',
       'GROUP BY cid, queuename ',
       'ORDER BY time DESC;'
     ].join('');
 
     compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
-      logger.log.info(IDLOG, 'get queues ' + data.queues + ' recall of last ' + data.hours +
-        ' hours has been successful: ' + results.length + ' results');
-      cb(null, results[0]);
-
+      try {
+        logger.log.info(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours +
+          ' hours has been successful: ' + results.length + ' results');
+        cacheGetRecall.all = [];
+        cacheGetRecall.done = [];
+        cacheGetRecall.lost = [];
+        cacheGetRecall.all = results[0];
+        let i;
+        for (i = 0; i < cacheGetRecall.all.length; i++) {
+          if (cacheGetRecall.all[i].action === 'DONE') {
+            cacheGetRecall.done.push(cacheGetRecall.all[i]);
+          } else {
+            cacheGetRecall.lost.push(cacheGetRecall.all[i]);
+          }
+        }
+        if (obj.type === 'all') {
+          if (obj.offset && obj.limit) {
+            cb(null, { count: cacheGetRecall.all.length, rows: cacheGetRecall.all.slice(parseInt(obj.offset), (parseInt(obj.offset) + parseInt(obj.limit))) });
+          } else {
+            cb(null, { count: cacheGetRecall.all.length, rows: cacheGetRecall.all });
+          }
+        }
+        else if (obj.type === 'done') {
+          if (obj.offset && obj.limit) {
+            cb(null, { count: cacheGetRecall.done.length, rows: cacheGetRecall.done.slice(parseInt(obj.offset), (parseInt(obj.offset) + parseInt(obj.limit))) });
+          } else {
+            cb(null, { count: cacheGetRecall.done.length, rows: cacheGetRecall.done });
+          }
+        }
+        else if (obj.type === 'lost') {
+          if (obj.offset && obj.limit) {
+            cb(null, { count: cacheGetRecall.lost.length, rows: cacheGetRecall.lost.slice(parseInt(obj.offset), (parseInt(obj.offset) + parseInt(obj.limit))) });
+          } else {
+            cb(null, { count: cacheGetRecall.lost.length, rows: cacheGetRecall.lost });
+          }
+        }
+        if (CACHE_ENABLED === false) {
+          cacheGetRecall.all = [];
+          cacheGetRecall.done = [];
+          cacheGetRecall.lost = [];
+        } else {
+          cacheTimestamps.getRecall = new Date().getTime();
+          logger.log.info(IDLOG, 'getRecall CACHE MISS for queue lost calls');
+        }
+      } catch (err2) {
+        logger.log.error(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours + ' hours: ' + err2.toString());
+        cb(err2, {});
+      }
     }, function (err1) {
-      logger.log.error(IDLOG, 'get queues ' + data.queues + ' recall of last ' + data.hours + ' hours: ' + err1.toString());
+      logger.log.error(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours + ' hours: ' + err1.toString());
       cb(err1, {});
     });
-
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -1242,6 +1317,7 @@ function getAgentsStatsByList(members, cb) {
       cache.getAgentsStatsByList &&
       (new Date().getTime() - cacheTimestamps.getAgentsStatsByList) < CACHE_TIMEOUT) {
 
+      logger.log.info(IDLOG, 'getAgentsStatsByList CACHE HIT for queue agent stats');
       cb(null, cache.getAgentsStatsByList);
       return;
     }
@@ -1410,6 +1486,7 @@ function getAgentsStatsByList(members, cb) {
           if (CACHE_ENABLED) {
             cache.getAgentsStatsByList = ret;
             cacheTimestamps.getAgentsStatsByList = new Date().getTime();
+            logger.log.info(IDLOG, 'getAgentsStatsByList CACHE MISS for queue agent stats');
           }
           cb(null, ret);
         }
@@ -1638,7 +1715,7 @@ apiList.getPinExtens = getPinExtens;
 apiList.getCallInfo = getCallInfo;
 apiList.getCallTrace = getCallTrace;
 apiList.getQueueStats = getQueueStats;
-apiList.getQueueRecall = getQueueRecall;
+apiList.getRecall = getRecall;
 apiList.getQueueRecallInfo = getQueueRecallInfo;
 apiList.getFpbxAdminSha1Pwd = getFpbxAdminSha1Pwd;
 apiList.deleteCallRecording = deleteCallRecording;

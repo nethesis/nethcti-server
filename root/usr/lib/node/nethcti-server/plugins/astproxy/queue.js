@@ -129,6 +129,16 @@ exports.Queue = function(queueNum) {
   }
 
   /**
+   * Returns the list of all members.
+   *
+   * @method getMembersList
+   * @return {array} The list of all members.
+   */
+  function getMembersList() {
+    return Object.keys(members);
+  }
+
+  /**
    * Returns all the waiting callers.
    *
    * @method getAllWaitingCallers
@@ -462,6 +472,7 @@ exports.Queue = function(queueNum) {
     getMember: getMember,
     removeMember: removeMember,
     getAllMembers: getAllMembers,
+    getMembersList: getMembersList,
     getAvgHoldTime: getAvgHoldTime,
     setAvgHoldTime: setAvgHoldTime,
     getAvgTalkTime: getAvgTalkTime,
