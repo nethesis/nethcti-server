@@ -304,7 +304,7 @@ function getAllQueueRecallQueryTable(hours, queues) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     const now = moment().format('YYYY-MM-DD HH:mm:ss');
-    const starting = moment().subtract({ hours: 8 }).format('YYYY-MM-DD HH:mm:ss');
+    const starting = moment().subtract({ hours: hours }).format('YYYY-MM-DD HH:mm:ss');
     const timeConditionQl = '(time BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on queue_log
     const timeConditionCdr = '(calldate BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on cdr
     const query = [
@@ -319,7 +319,7 @@ function getAllQueueRecallQueryTable(hours, queues) {
       ' (',
       'SELECT DISTINCT(data2) ',
       'FROM   asteriskcdrdb.queue_log z ',
-      'WHERE  z.event IN ("ENTERQUEUE", "FULL", "JOINEMPTY") AND z.callid=a.callid',
+      'WHERE  z.event = "ENTERQUEUE" AND z.callid=a.callid',
       ' ) AS cid,',
       ' (',
       'SELECT DISTINCT(cdr.cnam) ',
@@ -386,11 +386,12 @@ function getAllQueueRecallQueryTable(hours, queues) {
       ' "" ',
       'FROM   cdr c ',
       'INNER JOIN asteriskcdrdb.queue_log l ON c.dst=l.data2 ',
+      // ' AND c.accountcode IN (' + agents + ') ', // agents in selected queues
       'WHERE  l.event="ENTERQUEUE" ',
       ' AND   ', timeConditionCdr,
       ' AND   ', timeConditionQl,
       ' AND   l.queuename IN (' + queues + ') ',
-      ')      queue_recall'
+      ' ORDER  BY time DESC )      queue_recall'
       
     ].join('');
     return query;
@@ -414,7 +415,7 @@ function getLostQueueRecallQueryTable(hours, queues) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     const now = moment().format('YYYY-MM-DD HH:mm:ss');
-    const starting = moment().subtract({ hours: 8 }).format('YYYY-MM-DD HH:mm:ss');
+    const starting = moment().subtract({ hours: hours }).format('YYYY-MM-DD HH:mm:ss');
     const timeConditionQl = '(time BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on queue_log
     const timeConditionCdr = '(calldate BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on cdr
     const query = [
@@ -429,7 +430,7 @@ function getLostQueueRecallQueryTable(hours, queues) {
       ' (',
       'SELECT DISTINCT(data2) ',
       'FROM   asteriskcdrdb.queue_log z ',
-      'WHERE  z.event IN ("ENTERQUEUE", "FULL", "JOINEMPTY") AND z.callid=a.callid',
+      'WHERE  z.event = "ENTERQUEUE" AND z.callid=a.callid',
       ' ) AS  cid,',
       ' (',
       'SELECT DISTINCT(cdr.cnam) ',
@@ -468,7 +469,7 @@ function getLostQueueRecallQueryTable(hours, queues) {
       ' AND ', timeConditionCdr,
       ' AND ', timeConditionQl,
       ' AND   l.queuename IN (' + queues + ') ',
-      ')      queue_recall'
+      ' ORDER  BY time DESC )      queue_recall'
 
     ].join('');
     return query;
@@ -492,7 +493,7 @@ function getDoneQueueRecallQueryTable(hours, queues) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     const now = moment().format('YYYY-MM-DD HH:mm:ss');
-    const starting = moment().subtract({ hours: 8 }).format('YYYY-MM-DD HH:mm:ss');
+    const starting = moment().subtract({ hours: hours }).format('YYYY-MM-DD HH:mm:ss');
     const timeConditionQl = '(time BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on queue_log
     const timeConditionCdr = '(calldate BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on cdr
     const query = [
@@ -507,8 +508,7 @@ function getDoneQueueRecallQueryTable(hours, queues) {
       ' (',
       'SELECT DISTINCT(data2) ',
       'FROM   asteriskcdrdb.queue_log z ',
-      'WHERE  z.event="ENTERQUEUE"',
-      ' AND   z.callid=a.callid',
+      'WHERE  z.event = "ENTERQUEUE" AND z.callid=a.callid',
       ' ) AS  cid,',
       ' (',
       'SELECT DISTINCT(cdr.cnam) ',
@@ -547,7 +547,7 @@ function getDoneQueueRecallQueryTable(hours, queues) {
       ' AND   ', timeConditionCdr,
       ' AND   ', timeConditionQl,
       ' AND   l.queuename IN (' + queues + ') ',
-      ')      queue_recall '
+      ' ORDER  BY time DESC )      queue_recall '
 
     ].join('');
     return query;
