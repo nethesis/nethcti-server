@@ -1103,9 +1103,11 @@ function getAgentsOutgoingCalls(agents) {
     }
     return function (callback) {
       try {
+        const now = moment().format('YYYY-MM-DD');
         compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
           where: [
-            'disposition="ANSWERED" AND cnam IN ("' + agents.join('","') + '") AND calldate LIKE "' + moment().format('YYYY-MM-DD') + '%" GROUP BY cnam'
+            'disposition="ANSWERED" AND cnam IN ("' + agents.join('","') + '") AND ' +
+            '(calldate BETWEEN "' + (now + ' 00:00:00"') + ' AND "' + (now + ' 23:59:59') + '") GROUP BY cnam'
           ],
           attributes: [
             ['MAX(duration)', 'max_duration_outgoing'],
