@@ -206,7 +206,8 @@ function getQueueRecallInfo(hours, cid, qid, cb) {
     compDbconn.getQueueRecallInfo({
         hours: hours,
         cid: cid,
-        qid: qid
+        qid: qid,
+        agents: compAstProxy.proxyLogic.getAgentsOfQueues([qid])
       },
       function (err, results) {
         cb(err, results);
