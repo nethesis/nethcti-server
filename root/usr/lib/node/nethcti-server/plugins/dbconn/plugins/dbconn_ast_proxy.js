@@ -246,6 +246,7 @@ function getCallInfo(uniqueid, privacyStr, cb) {
  *   @param {string} data.hours The value of the hours of the current day to be searched
  *   @param {string} data.cid The caller identifier
  *   @param {string} data.qid The queue identifier
+ *   @param {string} data.agents The agents of the queue
  * @param {function} cb The callback function
  */
 function getQueueRecallInfo(data, cb) {
@@ -254,26 +255,23 @@ function getQueueRecallInfo(data, cb) {
       typeof cb !== 'function' ||
       typeof data.hours !== 'string' ||
       typeof data.qid !== 'string' ||
-      typeof data.cid !== 'string') {
-
+      typeof data.cid !== 'string' || !data.agents) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    var query = [
-      'SELECT queuename, ',
-      'direction, ',
-      'action, ',
-      'UNIX_TIMESTAMP(time) as time, ',
-      'position, ',
-      'duration, ',
-      'hold, ',
-      'cid, ',
-      'agent, ',
-      ' IF (event = "", action, event) AS event ',
-      'FROM ', getAllQueueRecallQueryTable(data.hours, data.qid), ' ',
-      'WHERE cid="', data.cid, '" AND queuename="', data.qid, '" ',
-      'ORDER BY time ASC'
-    ].join('');
+    const query = '\
+SELECT queuename,\
+  direction,\
+  action,\
+  UNIX_TIMESTAMP(time) as time,\
+  position,\
+  duration,\
+  hold,\
+  cid,\
+  agent,\
+  IF (event = "", action, event) AS event \
+FROM ' + getAllQueueRecallQueryTable(data.hours, [data.qid], data.agents) + ' \
+WHERE cid="' + data.cid + '" AND queuename="' + data.qid + '"\
+  ORDER BY time ASC';
 
     compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
       logger.log.info(IDLOG, results.length + ' results searching details about queue recall on cid "' + data.cid + '"');
@@ -283,7 +281,6 @@ function getQueueRecallInfo(data, cb) {
       cb(err1.toString(), {});
     });
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -378,11 +375,10 @@ const queryCdrCalls = '\
  * @param {string} hours The value of the interval time to be searched
  * @param {array} queues The queues
  * @param {array} agents The agents of the queues
- * @param {array} [type] The type of the call ("lost"|"done"|"all")
  * @return {string} The query to obtain the entries about queue recall table
  * @private
  */
-function getAllQueueRecallQueryTable(hours, queues, agents, type) {
+function getAllQueueRecallQueryTable(hours, queues, agents) {
   try {
     if (typeof hours !== 'string' || !queues || !agents) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -433,10 +429,10 @@ function getRecall(obj, cb) {
     if (obj.queues.length === 0) {
       return cb(null, []);
     }
-    let query = [
+    const query = [
       'SELECT cid, name, company, action, UNIX_TIMESTAMP(time) as time, direction, queuename, ',
       ' IF (event = "", action, event) AS event ',
-      'FROM ', getAllQueueRecallQueryTable(obj.hours, obj.queues, obj.agents, obj.type), ' ',
+      'FROM ', getAllQueueRecallQueryTable(obj.hours, obj.queues, obj.agents), ' ',
       'GROUP BY cid, queuename ',
       'ORDER BY time DESC;'
     ].join('');
