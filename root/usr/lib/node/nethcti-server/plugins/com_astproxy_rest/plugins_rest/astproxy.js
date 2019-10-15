@@ -2253,11 +2253,7 @@ var compConfigManager;
             return;
           }
           for (var i = 0; i < qids.length; i++) {
-            if (queues.indexOf(qids[i]) === -1) {
-              logger.log.warn(IDLOG, 'requesting last #' + req.params.hours + ' hours ' +
-                'recalls info of queues "' + req.params.qids + '": authorization failed for user "' +
-                username + '" who does not belong to queue "' + qids[i] + '"');
-            } else {
+            if (queues.indexOf(qids[i]) !== -1) {
               authorizedQueues.push(qids[i]);
             }
           }
