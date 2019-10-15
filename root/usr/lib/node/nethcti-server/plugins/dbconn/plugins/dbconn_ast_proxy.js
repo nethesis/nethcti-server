@@ -358,7 +358,7 @@ const queryCdrCalls = '\
     dst AS cid,\
     cnam AS name,\
     ccompany AS company,\
-    src AS agent,\
+    accountcode AS agent,\
     "" \
   FROM cdr c\
     INNER JOIN asteriskcdrdb.queue_log l ON c.dst=l.data2\
