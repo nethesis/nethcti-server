@@ -1659,10 +1659,14 @@ var compConfigManager;
           } else {
             queues = compAstProxy.getJSONQueues();
           }
-
+          // remove queues used by the operator panel
+          for (let k in queues) {
+            if (k.indexOf('ctiopqueue') !== -1) {
+              delete queues[k];
+            }
+          }
           logger.log.info(IDLOG, 'sent all queues in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, queues);
-
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
