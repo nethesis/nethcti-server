@@ -1286,6 +1286,21 @@ function reset() {
   }
 }
 
+/**
+ * Asterisk has been fully booted.
+ *
+ * @method evtFullyBooted
+ * @static
+ */
+function evtFullyBooted() {
+  try {
+    logger.log.info(IDLOG, 'asterisk fully booted');
+    start();
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 var initializationStatus = {
   pjsipExtens: false,
   queues: false,
@@ -2899,12 +2914,12 @@ function checkInitializationStatus() {
       }
     }
     if (!ready) {
-      logger.log.info(IDLOG, 'emit "' + EVT_READY + '" event');
+      logger.log.warn(IDLOG, 'emit "' + EVT_READY + '" event');
       astProxy.emit(EVT_READY);
       ready = true;
     } else {
       logger.log.warn(IDLOG, 'reloaded');
-      logger.log.info(IDLOG, 'emit "' + EVT_RELOADED + '" event');
+      logger.log.warn(IDLOG, 'emit "' + EVT_RELOADED + '" event');
       astProxy.emit(EVT_RELOADED);
       setReloading(false);
     }
@@ -2930,7 +2945,6 @@ function updateMeetmeConferences(err, data) {
       logger.log.error(IDLOG, 'updating data about all meetme conferences: ' + err.toString());
       return;
     }
-
     if (typeof data === 'object') {
 
       var extOwnerId;
@@ -4712,7 +4726,6 @@ function evtNewExternalCall(number) {
  */
 function evtExtenDndChanged(exten, enabled) {
   try {
-    // check parameters
     if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
@@ -5813,19 +5826,18 @@ function evtMeetmeUserConfMute(data) {
  */
 function evtNewQueueWaitingCaller(data) {
   try {
-    // check parameter
     if (typeof data !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    // create new waiting caller and add it to relative queue
     var wCaller = new QueueWaitingCaller(data);
     var q = wCaller.getQueue();
-    queues[q].addWaitingCaller(wCaller);
-    logger.log.info(IDLOG, 'added new queue waiting caller ' + wCaller.getNumber() + ' to queue ' + q);
-    getListChannelsForTrunks();
-    // emit the event
-    logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
-    astProxy.emit(EVT_QUEUE_CHANGED, queues[q]);
+    if (queues[q]) {
+      queues[q].addWaitingCaller(wCaller);
+      logger.log.info(IDLOG, 'added new queue waiting caller ' + wCaller.getNumber() + ' to queue ' + q);
+      getListChannelsForTrunks();
+      logger.log.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
+      astProxy.emit(EVT_QUEUE_CHANGED, queues[q]);
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -9977,3 +9989,4 @@ exports.isPinEnabledAtLeastOneRoute = isPinEnabledAtLeastOneRoute;
 exports.setExtensionUsername = setExtensionUsername;
 exports.getUsernameByExtension = getUsernameByExtension;
 exports.getAgentsOfQueues = getAgentsOfQueues;
+exports.evtFullyBooted = evtFullyBooted;
