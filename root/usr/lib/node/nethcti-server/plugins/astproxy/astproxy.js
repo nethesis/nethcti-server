@@ -521,8 +521,6 @@ function onLogin(err, resp) {
       return;
     }
     logger.log.info(IDLOG, 'logged-in into asterisk');
-    proxyLogic.start();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -563,7 +561,6 @@ function onData(data) {
       pluginsCmd.listParkings.data(data);
 
     } else if (data.event) { // check if data is an event
-
       var ev = data.event.toLowerCase();
       // check the event plugin presence. This event is an asterisk
       // event generated in response to some action. It passes the
