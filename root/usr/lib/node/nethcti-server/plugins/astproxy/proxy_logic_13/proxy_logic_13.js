@@ -5095,7 +5095,6 @@ function isExtenDnd(exten) {
     if (extensions[exten]) {
       return extensions[exten].getDnd();
     }
-    logger.log.warn(IDLOG, 'checking dnd status of non existent extension "' + exten + '"');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -5116,7 +5115,6 @@ function isExtenCf(exten) {
     if (extensions[exten]) {
       return !(extensions[exten].getCf() === '');
     }
-    logger.log.warn(IDLOG, 'checking cf status of non existent extension "' + exten + '"');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -5137,7 +5135,6 @@ function isExtenCfb(exten) {
     if (extensions[exten]) {
       return !(extensions[exten].getCfb() === '');
     }
-    logger.log.warn(IDLOG, 'checking cfb status of non existent extension "' + exten + '"');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -5158,7 +5155,6 @@ function isExtenCfu(exten) {
     if (extensions[exten]) {
       return !(extensions[exten].getCfu() === '');
     }
-    logger.log.warn(IDLOG, 'checking cfu status of non existent extension "' + exten + '"');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -5179,7 +5175,6 @@ function isExtenCfbVm(exten) {
     if (extensions[exten]) {
       return !(extensions[exten].getCfbVm() === '');
     }
-    logger.log.warn(IDLOG, 'checking cfbVm status of non existent extension "' + exten + '"');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -5200,7 +5195,6 @@ function isExtenCfuVm(exten) {
     if (extensions[exten]) {
       return !(extensions[exten].getCfuVm() === '');
     }
-    logger.log.warn(IDLOG, 'checking cfbVm status of non existent extension "' + exten + '"');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -5284,7 +5278,6 @@ function isExtenCfVm(exten) {
     if (extensions[exten]) {
       return !(extensions[exten].getCfVm() === '');
     }
-    logger.log.warn(IDLOG, 'checking cfVm status of non existent extension "' + exten + '"');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
