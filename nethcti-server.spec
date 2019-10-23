@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.16.1
+Version: 3.17.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,14 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Oct 23 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.17.0-1
+- Fix login problems after server reboot (#148) - nethesis/dev#5724
+- Improve performance of queue agent stats - nethesis/dev#5719
+- Improve performance of the history search query - nethesis/dev#5717
+- Improve performance of lost calls query - nethesis/dev#5708
+- Sometimes, after a server restart, clients can't login to the cti - nethesis/dev#5707
+- Rest api "extensions" performance improvement - nethesis/dev#5700
+
 * Wed Sep 04 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.16.1-1
 - No login in sporadic scenario - nethesis/dev#5682
 - Improve PIN management hiding it in some circumstances - nethesis/dev#5681
