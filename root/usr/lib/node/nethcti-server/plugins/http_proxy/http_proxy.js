@@ -47,6 +47,15 @@ var logger = console;
 var compAuthentication;
 
 /**
+ * The authorization component.
+ *
+ * @property compAuthorization
+ * @type object
+ * @private
+ */
+let compAuthorization;
+
+/**
  * The asterisk proxy architect component.
  *
  * @property compAstProxy
@@ -82,6 +91,15 @@ var compUtil;
  * @private
  */
 var port;
+
+/**
+ * Base url to be used for provisioning requests.
+ *
+ * @property provisioningBaseUrl
+ * @type string
+ * @private
+ */
+let provisioningBaseUrl;
 
 /**
  * Listening address of the HTTP proxy server.
@@ -152,23 +170,27 @@ function config(path) {
   if (typeof path !== 'string') {
     throw new TypeError('wrong parameter');
   }
-
   if (!fs.existsSync(path)) {
     throw new Error(path + ' does not exist');
   }
+  let json = (JSON.parse(fs.readFileSync(path, 'utf8')));
 
-  var json = (JSON.parse(fs.readFileSync(path, 'utf8'))).http_proxy;
-
-  if (json.router) {
-    router = json.router;
+  if (json.http_proxy.router) {
+    router = json.http_proxy.router;
   } else {
     logger.log.warn(IDLOG, 'wrong ' + path + ': no "router" key into "http_proxy"');
   }
 
-  if (json.http_port) {
-    port = json.http_port;
+  if (json.http_proxy.http_port) {
+    port = json.http_proxy.http_port;
   } else {
     logger.log.warn(IDLOG, 'wrong ' + path + ': no "http_port" key into "http_proxy"');
+  }
+
+  if (json.provisioning && json.provisioning.base_url) {
+    provisioningBaseUrl = json.provisioning.base_url;
+  } else {
+    logger.log.warn(IDLOG, 'wrong ' + path + ': no "provisioning.base_url"');
   }
   logger.log.info(IDLOG, 'configuration done by ' + path);
 }
@@ -183,6 +205,21 @@ function setCompAuthentication(comp) {
   try {
     compAuthentication = comp;
     logger.log.info(IDLOG, 'set authentication architect component');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Sets the authorization component.
+ *
+ * @method setCompAuthorization
+ * @param {object} comp The authorization component.
+ */
+function setCompAuthorization(comp) {
+  try {
+    compAuthorization = comp;
+    logger.log.info(IDLOG, 'set authorization component');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -352,6 +389,40 @@ function start() {
             // So the login becomes case-insensitive
             req.headers.authorization_user = req.headers.authorization_user.toLowerCase();
 
+            // provisioning requests proxy
+            if (req.url.indexOf('/tancredi') === 0) {
+              if (req.method === 'GET' || req.method === 'PATCH') {
+                let macToCheck = req.url.split('/').pop();
+                let extenToCheck = compAstProxy.getExtenFromMac(macToCheck) || '';
+                if (compAuthorization.verifyUserEndpointExten(req.headers.authorization_user, extenToCheck) === true) {
+                  logger.log.info(IDLOG, 'proxy provisioning request "' + req.url + '" for user "' + req.headers.authorization_user);
+                  delete req.headers.authorization;
+                  delete req.headers.authorization_user;
+                  delete req.headers.authorization_token;
+                  return proxy.web(req, res, { target: provisioningBaseUrl }, function (err) {
+                    try {
+                      if (err) {
+                        logger.log.warn(IDLOG, 'proxying provisioning request "' + provisioningBaseUrl + req.url + '" ' +
+                          'for user "' + arr[0] + '" from ' + req.headers['x-forwarded-for']);
+                        logger.log.warn(IDLOG, err.stack);
+                        res.writeHead(500);
+                        res.end(err.toString());
+                      }
+                    } catch (err1) {
+                      logger.log.error(IDLOG, err1.stack);
+                      res.writeHead(500);
+                      res.end(err.toString());
+                    }
+                  });
+                } else {
+                  logger.log.warn(IDLOG, 'authorization failed for user "' + req.headers.authorization_user + '" calling api ' + req.method + ' ' + req.url);
+                  compUtil.net.sendHttp403(IDLOG, res);
+                }
+                return;
+              }
+              compUtil.net.sendHttp404(IDLOG, res);
+              return;
+            }
             // proxy the request
             var target = proxyRules.match(req);
             if (target) {
@@ -481,3 +552,4 @@ exports.setCompUtil = setCompUtil;
 exports.setCompUser = setCompUser;
 exports.setCompAstProxy = setCompAstProxy;
 exports.setCompAuthentication = setCompAuthentication;
+exports.setCompAuthorization = setCompAuthorization;
