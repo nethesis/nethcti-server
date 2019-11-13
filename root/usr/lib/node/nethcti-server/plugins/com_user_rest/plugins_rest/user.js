@@ -292,7 +292,7 @@ function setCompUtil(comp) {
             {
               "id": "92304",
               "description": "janus",
-              "type": "webrtc_mobile",
+              "type": "mobile",
               "secret": "password",
               "actions": {
                 "answer": true,
@@ -660,7 +660,7 @@ function setCompUtil(comp) {
               var extenAgent = compAstProxy.getExtensionAgent(result.endpoints[compUser.ENDPOINT_TYPES.extension][i].id);
               var actions = {};
               if (result.endpoints[compUser.ENDPOINT_TYPES.extension][i].type === 'webrtc' ||
-                result.endpoints[compUser.ENDPOINT_TYPES.extension][i].type === 'webrtc_mobile') {
+                result.endpoints[compUser.ENDPOINT_TYPES.extension][i].type === 'mobile') {
 
                 actions.answer = true;
                 actions.dtmf = true;

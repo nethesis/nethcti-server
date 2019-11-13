@@ -6,7 +6,7 @@
  * @class EndpointExtension
  * @param {string} identifier The extension identifier
  * @param {object} data
- *  @param {string} data.type The type of the extension ("physical" | "webrtc" | "webrtc_mobile")
+ *  @param {string} data.type The type of the extension ("physical" | "webrtc" | "mobile")
  *  @param {string} [data.web_user] The username of the physical phone to be used to invoke HTTP apis
  *  @param {string} [data.web_password] The password of the physical phone to be used to invoke HTTP apis
  *  @param {string} [data.username] The username of the sip extension. It is present with webrtc type
@@ -17,7 +17,7 @@
 exports.EndpointExtension = function(identifier, data) {
   // check the parameter
   if (typeof identifier !== 'string' || typeof data !== 'object' ||
-    (data.type !== 'physical' && data.type !== 'webrtc' && data.type !== 'webrtc_mobile')) {
+    (data.type !== 'physical' && data.type !== 'webrtc' && data.type !== 'mobile')) {
 
     throw new Error('wrong parameters: ' + JSON.stringify(arguments));
   }
@@ -81,13 +81,13 @@ exports.EndpointExtension = function(identifier, data) {
   var webApiPassword = data.web_password ? data.web_password : '';
 
   /**
-   * Check if the extension is of webrtc or webrtc_mobile type.
+   * Check if the extension is of webrtc type.
    *
    * @method isWebrtc
-   * @return {string} True if the phone is of webrtc or webrtc_mobile type.
+   * @return {string} True if the phone is of webrtc type.
    */
   function isWebrtc() {
-    return (type === 'webrtc' || type === 'webrtc_mobile');
+    return (type === 'webrtc');
   }
 
   /**
@@ -168,7 +168,7 @@ exports.EndpointExtension = function(identifier, data) {
    *
    *     {
    *         "id": "214",
-   *         "type": "webrtc_mobile",
+   *         "type": "mobile",
    *         "secret": "sip password",
    *         "username": "sip username"
    *     }
@@ -182,7 +182,7 @@ exports.EndpointExtension = function(identifier, data) {
       type: type
     };
 
-    if (type === 'webrtc' || type === 'webrtc_mobile') {
+    if (type === 'webrtc' || type === 'mobile') {
       obj.secret = sipPassword;
       obj.username = sipUser;
     }
