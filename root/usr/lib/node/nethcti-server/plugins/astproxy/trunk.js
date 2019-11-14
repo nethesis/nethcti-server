@@ -281,20 +281,20 @@ exports.Trunk = function(ext, chType, maxCh) {
    *
    * @method setStatus
    * @param {string} trunkStatus The trunk status must be one of _STATUS\_ENUM_ property.
-   *
-   * **It can throw exception**.
    */
   function setStatus(trunkStatus) {
-
-    if (!trunkStatus) {
-      throw new Error('wrong parameter trunkStatus "' + trunkStatus + '" for trunk ' + chanType + ' "' + name + '" ' + exten);
+    try {
+      if (!trunkStatus) {
+        throw new Error('wrong parameter trunkStatus "' + trunkStatus + '" for trunk ' + chanType + ' "' + name + '" ' + exten);
+      }
+      if (STATUS_ENUM[trunkStatus.toUpperCase()]) {
+        status = trunkStatus;
+        return true;
+      }
+      throw new Error('wrong parameter trunkStatus: ' + trunkStatus);
+    } catch (error) {
+      logger.log.error(IDLOG, error.stack);
     }
-
-    if (STATUS_ENUM[trunkStatus.toUpperCase()]) {
-      status = trunkStatus;
-      return true;
-    }
-    throw new Error('wrong parameter trunkStatus');
   }
 
   /**
