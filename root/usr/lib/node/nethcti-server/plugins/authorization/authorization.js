@@ -509,6 +509,7 @@ function authorizeQManagerUser(username) {
     var profid = getUserProfileId(username);
     return (
       profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.qmanager &&
       profiles[profid].macro_permissions.qmanager.value === true
     );
   } catch (err) {
