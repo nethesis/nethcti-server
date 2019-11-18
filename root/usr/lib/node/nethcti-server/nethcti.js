@@ -56,6 +56,7 @@ var allCompReloadStatus = {};
 var app;
 
 try {
+  process.setMaxListeners(30);
   fs.readdir(PLUGINS_DIRNAME, function(err, files) {
     try {
       if (err) {
