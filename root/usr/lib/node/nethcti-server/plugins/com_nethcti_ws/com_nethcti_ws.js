@@ -1955,18 +1955,17 @@ function start() {
  */
 function startWsServer() {
   try {
-    var httpServer = http.createServer(function(req, res) {});
-    // websocket server (http)
-    wsServer = io.listen(httpServer, {
+    var httpServer = http.createServer();
+    wsServer = io(httpServer, {
       'log level': WS_LOG_LEVEL,
-      'transports': ['websocket']
+      'transports': ['websocket'],
+      'pingInterval': 25000, // default
+      'allowUpgrades': false
     });
-    httpServer.listen(wsPort, '127.0.0.1');
-
-    // add websocket listeners
     wsServer.on('connection', wsConnHdlr);
-    logger.log.warn(IDLOG, 'websocket server (ws) listening on port ' + wsPort);
-
+    httpServer.listen(wsPort, '127.0.0.1', () => {
+      logger.log.warn(IDLOG, 'websocket server (ws) listening on port ' + wsPort);
+    });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2007,8 +2006,14 @@ function wsConnHdlr(socket) {
     socket.on('login', function(data) {
       loginHdlr(socket, data);
     });
-    socket.on('disconnect', function(data) {
-      disconnHdlr(socket);
+    socket.on('disconnect', reason => {
+      disconnHdlr(socket, reason);
+    });
+    socket.on('disconnecting', reason => {
+      logger.log.info(IDLOG, `disconnecting socket sid "${socket.id}" - reason: ${reason}`);
+    });
+    socket.on('error', err => {
+      logger.log.error(IDLOG, `error on socket sid "${socket.id}" - ${err}`);
     });
     socket.on('message', function(data) {
       try {
@@ -2087,7 +2092,7 @@ function badRequest(socket) {
  */
 function getWebsocketEndpoint(socket) {
   try {
-    return socket.handshake.headers.origin;
+    return socket.handshake.headers['x-forwarded-for'];
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2123,7 +2128,6 @@ function unauthorized(socket) {
  */
 function loginHdlr(socket, obj) {
   try {
-    // check parameters
     if (typeof socket !== 'object' ||
       typeof obj !== 'object' ||
       typeof obj.token !== 'string' ||
@@ -2136,10 +2140,8 @@ function loginHdlr(socket, obj) {
     }
 
     if (compAuthe.verifyToken(obj.accessKeyId, obj.token, false) === true) { // user successfully authenticated
-
       logger.log.info(IDLOG, 'user "' + obj.accessKeyId + '" successfully authenticated from ' + getWebsocketEndpoint(socket) +
         ' with socket id ' + socket.id);
-
       // if uaType has been specified it checks for other already logged in user.
       // If it is already present, it logout previously logged in user and login current one
       var takeOvered = false;
@@ -2223,23 +2225,18 @@ function doLogin(socket, obj) {
     if (!socket.nethcti) {
       socket.nethcti = {};
     }
-
     if (socket.handshake &&
       socket.handshake.headers &&
       socket.handshake.headers['user-agent']) {
 
-      // sets the origin application (cti) property to the client socket
+      // set the origin application (cti) property to the client socket
       socket.nethcti.userAgent = socket.handshake.headers['user-agent'];
-      logger.log.info(IDLOG, 'setted userAgent property "' + socket.nethcti.userAgent + '" to socket "' + socket.id + '"');
+      logger.log.info(IDLOG, 'set userAgent "' + socket.nethcti.userAgent + '" to socket "' + socket.id + '"');
     }
-
     socket.nethcti.uaType = obj.uaType;
-    // sets username property to the client socket
     socket.nethcti.username = obj.accessKeyId;
-
     // send authenticated successfully response
     sendAutheSuccess(socket);
-
     var username = astProxy.isExten(obj.accessKeyId) ? compUser.getUserUsingEndpointExtension(obj.accessKeyId) : obj.accessKeyId;
     if (compAuthe.isShibbolethUser(username)) {
       username = compAuthe.getShibbolethUsername(username);
@@ -2318,11 +2315,12 @@ function doLogin(socket, obj) {
  *
  * @method disconnHdlr
  * @param {object} socket The client websocket
+ * @param {string} reason The disconnection reason
  * @private
  */
-function disconnHdlr(socket) {
+function disconnHdlr(socket, reason) {
   try {
-    logger.log.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket));
+    logger.log.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket) + ' - reason: ' + reason);
     var username;
     // when the user is not authenticated but connected by websocket,
     // the "socket.id" is not present in the "wsid" property
@@ -2366,7 +2364,7 @@ function disconnHdlr(socket) {
  *
  * @method removeWebsocketId
  * @param {string} socketId The client websocket identifier
- * private
+ * @private
  */
 function removeWebsocketId(socketId) {
   try {
@@ -2389,7 +2387,7 @@ function removeWebsocketId(socketId) {
  * @param {string} user     The user used as key
  * @param {string} token    The access token
  * @param {string} socketId The client websocket identifier to store in the memory
- * private
+ * @private
  */
 function addWebsocketId(user, token, socketId) {
   try {

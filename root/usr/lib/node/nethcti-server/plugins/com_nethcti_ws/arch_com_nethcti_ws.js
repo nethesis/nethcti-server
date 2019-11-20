@@ -46,7 +46,12 @@ module.exports = function(options, imports, register) {
       comNethctiWs.setCompVoicemail(imports.voicemail);
       comNethctiWs.setCompAuthorization(imports.authorization);
       comNethctiWs.setCompStreaming(imports.streaming);
-      comNethctiWs.start();
+      let idIntUserReady = setInterval(() => {
+        if (imports.user.isConfigured() === true) {
+          clearInterval(idIntUserReady);
+          comNethctiWs.start();
+        }
+      }, 500);
     });
   } catch (err) {
     logger.ctilog.log.error(IDLOG, err.stack);

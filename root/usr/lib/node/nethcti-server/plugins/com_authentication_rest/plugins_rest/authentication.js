@@ -288,9 +288,9 @@ function setCompUser(comp) {
           }
           // check if the user component has been configured (after asterisk ready status)
           if (compUser.isConfigured() === false) {
-            var errmsg = 'user component not configured: possible asterisk delay';
+            var errmsg = 'service not ready: user component not configured - possible asterisk delay';
             logger.log.warn(IDLOG, errmsg);
-            compUtil.net.sendHttp500(IDLOG, res, errmsg);
+            compUtil.net.sendHttp503(IDLOG, res, errmsg);
             return;
           }
           // check if user tryed to login using main extension instead of username
@@ -310,7 +310,6 @@ function setCompUser(comp) {
             compUtil.net.sendHttp401(IDLOG, res, errmsg, '1');
             return;
           }
-
           compAuthe.authenticate(username, password, function(err) {
             try {
               if (err) {
