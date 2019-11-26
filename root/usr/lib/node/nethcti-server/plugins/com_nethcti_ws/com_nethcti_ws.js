@@ -1960,6 +1960,7 @@ function startWsServer() {
       'log level': WS_LOG_LEVEL,
       'transports': ['websocket'],
       'pingInterval': 25000, // default
+      'pingTimeout': 5000, // default
       'allowUpgrades': false
     });
     wsServer.on('connection', wsConnHdlr);
@@ -2001,7 +2002,7 @@ function wsConnHdlr(socket) {
     // this event is emitted when a client websocket has been connected
     logger.log.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_CONNECTED + '"');
     emitter.emit(EVT_WS_CLIENT_CONNECTED, socket);
-    logger.log.info(IDLOG, 'new local websocket connection (http) from ' + getWebsocketEndpoint(socket));
+    logger.log.warn(IDLOG, 'new ws connection from ' + getWebsocketEndpoint(socket));
     // set the listeners for the new http socket connection
     socket.on('login', function(data) {
       loginHdlr(socket, data);
@@ -2109,6 +2110,7 @@ function getWebsocketEndpoint(socket) {
 function unauthorized(socket) {
   try {
     send401(socket); // send 401 unauthorized response to the client
+    logger.log.warn(IDLOG, 'disconnect socket ' + getWebsocketEndpoint(socket));
     socket.disconnect();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -2154,8 +2156,11 @@ function loginHdlr(socket, obj) {
             wsServer.sockets.sockets[sid].nethcti.uaType === obj.uaType) {
 
               takeOvered = true;
+              logger.log.warn(IDLOG, `double login by user "${obj.accessKeyId}" (${getWebsocketEndpoint(wsServer.sockets.sockets[sid])}): do takeOver procedure`);
+
               wsServer.sockets.sockets[sid].on('takeOverAck', function () {
                 try {
+                  logger.log.warn(IDLOG, `recv ack for login takeOver procedure by user "${obj.accessKeyId}" (${getWebsocketEndpoint(wsServer.sockets.sockets[sid])})`);
                   if (wsServer.takeOverTimeouts[sid]) {
                     clearTimeout(wsServer.takeOverTimeouts[sid]);
                     delete wsServer.takeOverTimeouts[sid];
@@ -2179,6 +2184,7 @@ function loginHdlr(socket, obj) {
               }
               wsServer.takeOverTimeouts[sid] = setTimeout(function () {
                 try {
+                  logger.log.warn(IDLOG, `no ack for login takeOver procedure recv by user "${obj.accessKeyId}" (${getWebsocketEndpoint(wsServer.sockets.sockets[sid])})`);
                   if (wsServer.sockets.sockets[sid]) {
                     wsServer.sockets.sockets[sid].removeAllListeners('takeOverAck');
                   }
@@ -2303,7 +2309,7 @@ function doLogin(socket, obj) {
     // emits the event for a logged in client. This event is emitted when a user has been logged in by a websocket connection
     logger.log.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_LOGGEDIN + '" for username "' + obj.accessKeyId + '"');
     emitter.emit(EVT_WS_CLIENT_LOGGEDIN, obj.accessKeyId);
-
+    logWsNumber();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     unauthorized(socket);
@@ -2320,7 +2326,7 @@ function doLogin(socket, obj) {
  */
 function disconnHdlr(socket, reason) {
   try {
-    logger.log.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket) + ' - reason: ' + reason);
+    logger.log.warn(IDLOG, 'ws disconnected ' + getWebsocketEndpoint(socket) + ' - reason: ' + reason);
     var username;
     // when the user is not authenticated but connected by websocket,
     // the "socket.id" is not present in the "wsid" property
@@ -2353,11 +2359,25 @@ function disconnHdlr(socket, reason) {
     }
     // remove trusted identifier of the websocket
     removeWebsocketId(socket.id);
-
+    logWsNumber();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
 }
+
+/**
+ * Log the number of websocket connections.
+ *
+ * @method logWsNumber
+ * @private
+ */
+let logWsNumber = () => {
+  try {
+    logger.log.warn(IDLOG, `ws conn ${Object.keys(wsServer.sockets.sockets).length} - wsid conn ${getNumConnectedClients()}`);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+};
 
 /**
  * Removes the client websocket identifier from the private object _wsid_.
@@ -2433,7 +2453,7 @@ function sendAutheSuccess(socket) {
     socket.emit('authe_ok', {
       message: 'authorized successfully'
     });
-    logger.log.info(IDLOG, 'sent authorized successfully ("authe_ok") to "' + socket.nethcti.username + '" ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
+    logger.log.warn(IDLOG, 'sent authorized successfully ("authe_ok") to "' + socket.nethcti.username + '" ' + getWebsocketEndpoint(socket) + ' with sid ' + socket.id);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
