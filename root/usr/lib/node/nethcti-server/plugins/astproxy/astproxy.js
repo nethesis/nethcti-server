@@ -699,7 +699,6 @@ function setAllPluginsCmdLogger(log) {
  */
 function on(type, cb) {
   try {
-    emitter.setMaxListeners(0);
     return emitter.on(type, cb);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
