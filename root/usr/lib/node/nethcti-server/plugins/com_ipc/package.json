@@ -4,7 +4,8 @@
   "private": true,
   "plugin": {
     "consumes": [
-      "logger"
+      "logger",
+      "com_nethcti_ws"
     ],
     "provides": [
       "comIpc"

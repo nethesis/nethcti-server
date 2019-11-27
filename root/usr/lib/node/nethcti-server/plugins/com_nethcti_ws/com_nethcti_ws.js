@@ -502,18 +502,6 @@ var EVT_WS_CLIENT_LOGGEDIN = 'wsClientLoggedIn';
 var IDLOG = '[com_nethcti_ws]';
 
 /**
- * The log level of the websocket library. Log only the errors by default.
- *
- * @property WS_LOG_LEVEL
- * @type {number}
- * @private
- * @final
- * @readOnly
- * @default 0
- */
-var WS_LOG_LEVEL = 0;
-
-/**
  * The user agent used to recognize cti client application. The user agent is set
  * to the socket properties when client login (loginHdlr) and checked when disconnect
  * (disconnHdlr) to set the offline presence of the client user.
@@ -647,15 +635,6 @@ var astProxy;
 var compUser;
 
 /**
- * The communication ipc component.
- *
- * @property compComIpc
- * @type object
- * @private
- */
-var compComIpc;
-
-/**
  * The authentication module.
  *
  * @property compAuthe
@@ -781,20 +760,6 @@ function setCompUser(comp) {
 }
 
 /**
- * Sets the module to be used.
- *
- * @method setCompComIpc
- * @param {object} comp The module.
- */
-function setCompComIpc(comp) {
-  try {
-    compComIpc = comp;
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-  }
-}
-
-/**
  * Sets the authorization module to be used.
  *
  * @method setCompAuthorization
@@ -909,7 +874,7 @@ function setAstProxyListeners() {
  */
 function setComIpcListeners() {
   try {
-    compComIpc.on(compComIpc.EVT_ALARM, evtAlarm);
+    process.on('evtAlarm', evtAlarm);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -1957,7 +1922,6 @@ function startWsServer() {
   try {
     var httpServer = http.createServer();
     wsServer = io(httpServer, {
-      'log level': WS_LOG_LEVEL,
       'transports': ['websocket'],
       'pingInterval': 25000, // default
       'pingTimeout': 5000, // default
@@ -2535,8 +2499,41 @@ function reload() {
   }
 }
 
+/**
+ * Get the info about the component.
+ *
+ * @method dump
+ * @return {object} The data about the component.
+ */
+let dump = () => {
+  try {
+    let wsServerSockets = {};
+    for (let sid in wsServer.sockets.sockets) {
+      wsServerSockets[sid] = {
+        rooms: wsServer.sockets.sockets[sid].rooms,
+        headers: wsServer.sockets.sockets[sid].handshake.headers,
+        nethcti: wsServer.sockets.sockets[sid].nethcti,
+        connected: wsServer.sockets.sockets[sid].connected,
+        disconnected: wsServer.sockets.sockets[sid].disconnected,
+        url: wsServer.sockets.sockets[sid].handshake.url,
+        query: wsServer.sockets.sockets[sid].handshake.query
+      };
+    }
+    return {
+      wsid: wsid,
+      wsidLength: Object.keys(wsid).length,
+      wsServerSockets: wsServerSockets,
+      wsServerSocketsLength: Object.keys(wsServerSockets).length,
+      rooms: wsServer.sockets.adapter.rooms
+    };
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+};
+
 // public interface
 exports.on = on;
+exports.dump = dump;
 exports.start = start;
 exports.reload = reload;
 exports.stop = stop;
@@ -2546,7 +2543,6 @@ exports.setLogger = setLogger;
 exports.setAstProxy = setAstProxy;
 exports.EVT_RELOADED = EVT_RELOADED;
 exports.setCompUser = setCompUser;
-exports.setCompComIpc = setCompComIpc;
 exports.configPrivacy = configPrivacy;
 exports.setCompPostit = setCompPostit;
 exports.setCompVoicemail = setCompVoicemail;
