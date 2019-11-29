@@ -1321,12 +1321,14 @@ function start() {
       command: 'listPjsipPeers'
     }, initializePjsipExten);
 
-    emitter.on('pjsipExtenInitialized', () => {
-      // initialize queues
-      astProxy.doCmd({
-        command: 'listQueues'
-      }, initializeQueues);
-    });
+    if (!reloading) {
+      emitter.on('pjsipExtenInitialized', () => {
+        // initialize queues
+        astProxy.doCmd({
+          command: 'listQueues'
+        }, initializeQueues);
+      });
+    }
 
     // initialize parkings
     astProxy.doCmd({

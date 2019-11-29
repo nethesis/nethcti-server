@@ -242,6 +242,25 @@ function sendHttp500(parentIdLog, resp, err) {
 }
 
 /**
+ * Sends an HTTP 503 internal server unavailable.
+ *
+ * @method sendHttp503
+ * @param {string} parentIdLog The identifier of the component that uses the utility
+ * @param {object} resp The client response object
+ * @param {string} reason The reason message
+ * @static
+ */
+let sendHttp503 = (parentIdLog, resp, reason) => {
+  try {
+    resp.writeHead(503, { error: reason });
+    logger.log.warn(parentIdLog, 'send HTTP 503 response to ' + getRemoteClientIp(resp) + ' - reason: ' + reason);
+    resp.end();
+  } catch (err) {
+    logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+  }
+};
+
+/**
  * Returns the remote IP address of the client from the http response object.
  *
  * @method getRemoteClientIp
@@ -341,6 +360,7 @@ function getRemoteAddress(obj) {
     sendHttp401:      sendHttp401,
     sendHttp403:      sendHttp403,
     sendHttp500:      sendHttp500,
+    sendHttp503:      sendHttp503,
     sendHttp401Nonce: sendHttp401Nonce,
     getRemoteAddress: getRemoteAddress
 }
@@ -353,6 +373,7 @@ var net = {
   sendHttp401: sendHttp401,
   sendHttp403: sendHttp403,
   sendHttp500: sendHttp500,
+  sendHttp503: sendHttp503,
   sendHttp401Nonce: sendHttp401Nonce,
   getRemoteAddress: getRemoteAddress
 };

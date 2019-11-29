@@ -10,8 +10,7 @@
       "authorization",
       "authentication",
       "voicemail",
-      "streaming",
-      "comIpc"
+      "streaming"
     ],
     "provides": [
       "com_nethcti_ws"

@@ -46,6 +46,15 @@ var EVT_ALARM = 'evtAlarm';
 let logger = console;
 
 /**
+ * The ws component.
+ *
+ * @property compComNethctiWs
+ * @type object
+ * @private
+ */
+let compComNethctiWs;
+
+/**
  * The event emitter.
  *
  * @property emitter
@@ -90,6 +99,21 @@ let setLogger = (log) => {
 }
 
 /**
+ * Set ws component.
+ *
+ * @method setCompComNethctiWs
+ * @param {object} comp The component
+ * @static
+ */
+let setCompComNethctiWs = comp => {
+  try {
+    compComNethctiWs = comp;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Start the server.
  *
  * @method start
@@ -113,13 +137,15 @@ let start = () => {
       });
       ipc.server.on('data', (data, socket) => {
         try {
-          let o = JSON.parse(data.toString().trim());
+          let o = JSON.parse(data.toString());
           if (o.type === 'message' && o.data === 'reload') {
             logger.log.info(IDLOG, 'received event reload');
             process.emit('reloadApp');
+          } else if (o.type === 'message' && o.data === 'dump') {
+            ipc.server.emit(socket, JSON.stringify({ type: 'dump', data: compComNethctiWs.dump() }));
           } else if (o.type === 'collectd_notify') {
             logger.log.info(IDLOG, 'received collectd event');
-            emitter.emit(EVT_ALARM,
+            process.emit(EVT_ALARM,
               {
                 date: new Date().toISOString(),
                 status: o.notification.status.toLowerCase(),
@@ -163,3 +189,4 @@ exports.on = on;
 exports.EVT_ALARM = EVT_ALARM;
 exports.start = start;
 exports.setLogger = setLogger;
+exports.setCompComNethctiWs = setCompComNethctiWs;

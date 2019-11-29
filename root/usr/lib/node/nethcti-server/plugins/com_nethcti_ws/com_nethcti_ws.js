@@ -502,18 +502,6 @@ var EVT_WS_CLIENT_LOGGEDIN = 'wsClientLoggedIn';
 var IDLOG = '[com_nethcti_ws]';
 
 /**
- * The log level of the websocket library. Log only the errors by default.
- *
- * @property WS_LOG_LEVEL
- * @type {number}
- * @private
- * @final
- * @readOnly
- * @default 0
- */
-var WS_LOG_LEVEL = 0;
-
-/**
  * The user agent used to recognize cti client application. The user agent is set
  * to the socket properties when client login (loginHdlr) and checked when disconnect
  * (disconnHdlr) to set the offline presence of the client user.
@@ -647,15 +635,6 @@ var astProxy;
 var compUser;
 
 /**
- * The communication ipc component.
- *
- * @property compComIpc
- * @type object
- * @private
- */
-var compComIpc;
-
-/**
  * The authentication module.
  *
  * @property compAuthe
@@ -781,20 +760,6 @@ function setCompUser(comp) {
 }
 
 /**
- * Sets the module to be used.
- *
- * @method setCompComIpc
- * @param {object} comp The module.
- */
-function setCompComIpc(comp) {
-  try {
-    compComIpc = comp;
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-  }
-}
-
-/**
  * Sets the authorization module to be used.
  *
  * @method setCompAuthorization
@@ -909,7 +874,7 @@ function setAstProxyListeners() {
  */
 function setComIpcListeners() {
   try {
-    compComIpc.on(compComIpc.EVT_ALARM, evtAlarm);
+    process.on('evtAlarm', evtAlarm);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -1955,18 +1920,17 @@ function start() {
  */
 function startWsServer() {
   try {
-    var httpServer = http.createServer(function(req, res) {});
-    // websocket server (http)
-    wsServer = io.listen(httpServer, {
-      'log level': WS_LOG_LEVEL,
-      'transports': ['websocket']
+    var httpServer = http.createServer();
+    wsServer = io(httpServer, {
+      'transports': ['websocket'],
+      'pingInterval': 25000, // default
+      'pingTimeout': 20000,
+      'allowUpgrades': false
     });
-    httpServer.listen(wsPort, '127.0.0.1');
-
-    // add websocket listeners
     wsServer.on('connection', wsConnHdlr);
-    logger.log.warn(IDLOG, 'websocket server (ws) listening on port ' + wsPort);
-
+    httpServer.listen(wsPort, '127.0.0.1', () => {
+      logger.log.warn(IDLOG, 'websocket server (ws) listening on port ' + wsPort);
+    });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2002,13 +1966,19 @@ function wsConnHdlr(socket) {
     // this event is emitted when a client websocket has been connected
     logger.log.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_CONNECTED + '"');
     emitter.emit(EVT_WS_CLIENT_CONNECTED, socket);
-    logger.log.info(IDLOG, 'new local websocket connection (http) from ' + getWebsocketEndpoint(socket));
+    logger.log.warn(IDLOG, 'new ws connection from ' + getWebsocketEndpoint(socket));
     // set the listeners for the new http socket connection
     socket.on('login', function(data) {
       loginHdlr(socket, data);
     });
-    socket.on('disconnect', function(data) {
-      disconnHdlr(socket);
+    socket.on('disconnect', reason => {
+      disconnHdlr(socket, reason);
+    });
+    socket.on('disconnecting', reason => {
+      logger.log.info(IDLOG, `disconnecting socket sid "${socket.id}" - reason: ${reason}`);
+    });
+    socket.on('error', err => {
+      logger.log.error(IDLOG, `error on socket sid "${socket.id}" - ${err}`);
     });
     socket.on('message', function(data) {
       try {
@@ -2087,7 +2057,7 @@ function badRequest(socket) {
  */
 function getWebsocketEndpoint(socket) {
   try {
-    return socket.handshake.headers.origin;
+    return socket.handshake.headers['x-forwarded-for'];
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2104,6 +2074,7 @@ function getWebsocketEndpoint(socket) {
 function unauthorized(socket) {
   try {
     send401(socket); // send 401 unauthorized response to the client
+    logger.log.warn(IDLOG, 'disconnect socket ' + getWebsocketEndpoint(socket));
     socket.disconnect();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -2123,7 +2094,6 @@ function unauthorized(socket) {
  */
 function loginHdlr(socket, obj) {
   try {
-    // check parameters
     if (typeof socket !== 'object' ||
       typeof obj !== 'object' ||
       typeof obj.token !== 'string' ||
@@ -2136,10 +2106,8 @@ function loginHdlr(socket, obj) {
     }
 
     if (compAuthe.verifyToken(obj.accessKeyId, obj.token, false) === true) { // user successfully authenticated
-
       logger.log.info(IDLOG, 'user "' + obj.accessKeyId + '" successfully authenticated from ' + getWebsocketEndpoint(socket) +
         ' with socket id ' + socket.id);
-
       // if uaType has been specified it checks for other already logged in user.
       // If it is already present, it logout previously logged in user and login current one
       var takeOvered = false;
@@ -2152,8 +2120,11 @@ function loginHdlr(socket, obj) {
             wsServer.sockets.sockets[sid].nethcti.uaType === obj.uaType) {
 
               takeOvered = true;
+              logger.log.warn(IDLOG, `double login by user "${obj.accessKeyId}" (${getWebsocketEndpoint(wsServer.sockets.sockets[sid])}): do takeOver procedure`);
+
               wsServer.sockets.sockets[sid].on('takeOverAck', function () {
                 try {
+                  logger.log.warn(IDLOG, `recv ack for login takeOver procedure by user "${obj.accessKeyId}" (${getWebsocketEndpoint(wsServer.sockets.sockets[sid])})`);
                   if (wsServer.takeOverTimeouts[sid]) {
                     clearTimeout(wsServer.takeOverTimeouts[sid]);
                     delete wsServer.takeOverTimeouts[sid];
@@ -2177,6 +2148,7 @@ function loginHdlr(socket, obj) {
               }
               wsServer.takeOverTimeouts[sid] = setTimeout(function () {
                 try {
+                  logger.log.warn(IDLOG, `no ack for login takeOver procedure recv by user "${obj.accessKeyId}" (${getWebsocketEndpoint(wsServer.sockets.sockets[sid])})`);
                   if (wsServer.sockets.sockets[sid]) {
                     wsServer.sockets.sockets[sid].removeAllListeners('takeOverAck');
                   }
@@ -2223,23 +2195,18 @@ function doLogin(socket, obj) {
     if (!socket.nethcti) {
       socket.nethcti = {};
     }
-
     if (socket.handshake &&
       socket.handshake.headers &&
       socket.handshake.headers['user-agent']) {
 
-      // sets the origin application (cti) property to the client socket
+      // set the origin application (cti) property to the client socket
       socket.nethcti.userAgent = socket.handshake.headers['user-agent'];
-      logger.log.info(IDLOG, 'setted userAgent property "' + socket.nethcti.userAgent + '" to socket "' + socket.id + '"');
+      logger.log.info(IDLOG, 'set userAgent "' + socket.nethcti.userAgent + '" to socket "' + socket.id + '"');
     }
-
     socket.nethcti.uaType = obj.uaType;
-    // sets username property to the client socket
     socket.nethcti.username = obj.accessKeyId;
-
     // send authenticated successfully response
     sendAutheSuccess(socket);
-
     var username = astProxy.isExten(obj.accessKeyId) ? compUser.getUserUsingEndpointExtension(obj.accessKeyId) : obj.accessKeyId;
     if (compAuthe.isShibbolethUser(username)) {
       username = compAuthe.getShibbolethUsername(username);
@@ -2306,7 +2273,7 @@ function doLogin(socket, obj) {
     // emits the event for a logged in client. This event is emitted when a user has been logged in by a websocket connection
     logger.log.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_LOGGEDIN + '" for username "' + obj.accessKeyId + '"');
     emitter.emit(EVT_WS_CLIENT_LOGGEDIN, obj.accessKeyId);
-
+    logWsNumber();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     unauthorized(socket);
@@ -2318,11 +2285,12 @@ function doLogin(socket, obj) {
  *
  * @method disconnHdlr
  * @param {object} socket The client websocket
+ * @param {string} reason The disconnection reason
  * @private
  */
-function disconnHdlr(socket) {
+function disconnHdlr(socket, reason) {
   try {
-    logger.log.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket));
+    logger.log.warn(IDLOG, 'ws disconnected ' + getWebsocketEndpoint(socket) + ' - reason: ' + reason);
     var username;
     // when the user is not authenticated but connected by websocket,
     // the "socket.id" is not present in the "wsid" property
@@ -2355,18 +2323,32 @@ function disconnHdlr(socket) {
     }
     // remove trusted identifier of the websocket
     removeWebsocketId(socket.id);
-
+    logWsNumber();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
 }
 
 /**
+ * Log the number of websocket connections.
+ *
+ * @method logWsNumber
+ * @private
+ */
+let logWsNumber = () => {
+  try {
+    logger.log.warn(IDLOG, `ws conn ${Object.keys(wsServer.sockets.sockets).length} - wsid conn ${getNumConnectedClients()}`);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+};
+
+/**
  * Removes the client websocket identifier from the private object _wsid_.
  *
  * @method removeWebsocketId
  * @param {string} socketId The client websocket identifier
- * private
+ * @private
  */
 function removeWebsocketId(socketId) {
   try {
@@ -2389,7 +2371,7 @@ function removeWebsocketId(socketId) {
  * @param {string} user     The user used as key
  * @param {string} token    The access token
  * @param {string} socketId The client websocket identifier to store in the memory
- * private
+ * @private
  */
 function addWebsocketId(user, token, socketId) {
   try {
@@ -2435,7 +2417,7 @@ function sendAutheSuccess(socket) {
     socket.emit('authe_ok', {
       message: 'authorized successfully'
     });
-    logger.log.info(IDLOG, 'sent authorized successfully ("authe_ok") to "' + socket.nethcti.username + '" ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
+    logger.log.warn(IDLOG, 'sent authorized successfully ("authe_ok") to "' + socket.nethcti.username + '" ' + getWebsocketEndpoint(socket) + ' with sid ' + socket.id);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2517,8 +2499,41 @@ function reload() {
   }
 }
 
+/**
+ * Get the info about the component.
+ *
+ * @method dump
+ * @return {object} The data about the component.
+ */
+let dump = () => {
+  try {
+    let wsServerSockets = {};
+    for (let sid in wsServer.sockets.sockets) {
+      wsServerSockets[sid] = {
+        rooms: wsServer.sockets.sockets[sid].rooms,
+        headers: wsServer.sockets.sockets[sid].handshake.headers,
+        nethcti: wsServer.sockets.sockets[sid].nethcti,
+        connected: wsServer.sockets.sockets[sid].connected,
+        disconnected: wsServer.sockets.sockets[sid].disconnected,
+        url: wsServer.sockets.sockets[sid].handshake.url,
+        query: wsServer.sockets.sockets[sid].handshake.query
+      };
+    }
+    return {
+      wsid: wsid,
+      wsidLength: Object.keys(wsid).length,
+      wsServerSockets: wsServerSockets,
+      wsServerSocketsLength: Object.keys(wsServerSockets).length,
+      rooms: wsServer.sockets.adapter.rooms
+    };
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+};
+
 // public interface
 exports.on = on;
+exports.dump = dump;
 exports.start = start;
 exports.reload = reload;
 exports.stop = stop;
@@ -2528,7 +2543,6 @@ exports.setLogger = setLogger;
 exports.setAstProxy = setAstProxy;
 exports.EVT_RELOADED = EVT_RELOADED;
 exports.setCompUser = setCompUser;
-exports.setCompComIpc = setCompComIpc;
 exports.configPrivacy = configPrivacy;
 exports.setCompPostit = setCompPostit;
 exports.setCompVoicemail = setCompVoicemail;
