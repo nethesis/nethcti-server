@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.17.0
+Version: 3.17.3
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Dec 02 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.17.3-1
+- Sometimes reconnection fail - Bug nethesis/dev#5742
+
 * Wed Oct 23 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.17.0-1
 - Fix login problems after server reboot (#148) - nethesis/dev#5724
 - Improve performance of queue agent stats - nethesis/dev#5719
