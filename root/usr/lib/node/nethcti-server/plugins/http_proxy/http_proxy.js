@@ -93,13 +93,13 @@ var compUtil;
 var port;
 
 /**
- * Base url to be used for provisioning requests.
+ * Token used to communicate with tancredi server.
  *
- * @property provisioningBaseUrl
+ * @property tancrediToken
  * @type string
  * @private
  */
-let provisioningBaseUrl;
+let tancrediToken;
 
 /**
  * Listening address of the HTTP proxy server.
@@ -187,10 +187,10 @@ function config(path) {
     logger.log.warn(IDLOG, 'wrong ' + path + ': no "http_port" key into "http_proxy"');
   }
 
-  if (json.provisioning && json.provisioning.base_url) {
-    provisioningBaseUrl = json.provisioning.base_url;
+  if (json.http_proxy.tancredi_token) {
+    tancrediToken = 'static ' + json.http_proxy.tancredi_token;
   } else {
-    logger.log.warn(IDLOG, 'wrong ' + path + ': no "provisioning.base_url"');
+    logger.log.warn(IDLOG, 'wrong ' + path + ': no "tancredi_token" key into "http_proxy"');
   }
   logger.log.info(IDLOG, 'configuration done by ' + path);
 }
@@ -395,25 +395,12 @@ function start() {
                 let macToCheck = req.url.split('/').pop();
                 let extenToCheck = compAstProxy.getExtenFromMac(macToCheck) || '';
                 if (compAuthorization.verifyUserEndpointExten(req.headers.authorization_user, extenToCheck) === true) {
-                  logger.log.info(IDLOG, 'proxy provisioning request "' + req.url + '" for user "' + req.headers.authorization_user);
                   delete req.headers.authorization;
                   delete req.headers.authorization_user;
                   delete req.headers.authorization_token;
-                  return proxy.web(req, res, { target: provisioningBaseUrl }, function (err) {
-                    try {
-                      if (err) {
-                        logger.log.warn(IDLOG, 'proxying provisioning request "' + provisioningBaseUrl + req.url + '" ' +
-                          'for user "' + arr[0] + '" from ' + req.headers['x-forwarded-for']);
-                        logger.log.warn(IDLOG, err.stack);
-                        res.writeHead(500);
-                        res.end(err.toString());
-                      }
-                    } catch (err1) {
-                      logger.log.error(IDLOG, err1.stack);
-                      res.writeHead(500);
-                      res.end(err.toString());
-                    }
-                  });
+                  req.headers.authentication = tancrediToken;
+                  logger.log.info(IDLOG, 'proxy provisioning request "' + req.url + '" for user "' + arr[0] + '" from ' + req.headers['x-forwarded-for']);
+                  return proxy.web(req, res, { target: '' });
                 } else {
                   logger.log.warn(IDLOG, 'authorization failed for user "' + req.headers.authorization_user + '" calling api ' + req.method + ' ' + req.url);
                   compUtil.net.sendHttp403(IDLOG, res);
