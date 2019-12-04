@@ -214,7 +214,8 @@ function configExtens(path) {
       mainExtens: {}, // keys are main extensions and the values are array containing list of secondary associated extensions
       secondExtens: {} // keys are the secondary extensions and the value are the corresponding main extensions
     };
-    let mac = {}; // keys are mac addresses and the values are the corresponding extension identifiers
+    let macByMac = {}; // keys are mac addresses and the values are the corresponding extension identifiers
+    let macByExt = {}; // keys are extension identifiers and the values are the corresponding mac addresses
     for (u in json) {
       for (e in json[u].endpoints.mainextension) {
         obj.names[e] = json[u].name;
@@ -234,12 +235,14 @@ function configExtens(path) {
           obj.secondExtens[e] = Object.keys(json[u].endpoints.mainextension)[0];
         }
         if (json[u].endpoints.extension[e].mac) {
-          mac[json[u].endpoints.extension[e].mac] = e;
+          macByMac[json[u].endpoints.extension[e].mac] = e;
+          macByExt[e] = json[u].endpoints.extension[e].mac;
         }
       }
     }
     proxyLogic.setStaticDataExtens(obj);
-    proxyLogic.setStaticDataMacExtens(mac);
+    proxyLogic.setMacDataByMac(macByMac);
+    proxyLogic.setMacDataByExt(macByExt);
     logger.log.info(IDLOG, 'extension names configuration done by ' + USERS_CONF_FILEPATH);
 
   } catch (err) {
