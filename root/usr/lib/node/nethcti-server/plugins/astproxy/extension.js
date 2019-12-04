@@ -182,6 +182,15 @@ exports.Extension = function(ext, chType) {
   var username;
 
   /**
+   * The mac address.
+   *
+   * @property mac
+   * @type string
+   * @private
+   */
+  let mac;
+
+  /**
    * The user conversations. The key is the conversation identifier
    * and the value is the _conversation_ object.
    *
@@ -591,6 +600,16 @@ exports.Extension = function(ext, chType) {
   }
 
   /**
+   * Set the mac address.
+   *
+   * @method setMac
+   * @param {string} addr The mac address
+   */
+  function setMac(addr) {
+    mac = addr;
+  }
+
+  /**
    * Get the call forward status.
    *
    * @method getCf
@@ -746,6 +765,7 @@ exports.Extension = function(ext, chType) {
     return {
       ip: ip,
       cf: cf,
+      mac: mac,
       cfb: cfb,
       cfu: cfu,
       dnd: dnd,
@@ -772,6 +792,7 @@ exports.Extension = function(ext, chType) {
     getCf: getCf,
     setIp: setIp,
     getIp: getIp,
+    setMac: setMac,
     setCfb: setCfb,
     getCfb: getCfb,
     setCfu: setCfu,

@@ -598,11 +598,21 @@ var staticDataExtens = {};
  * Mac addresses data read from JSON configuration file. Keys are
  * mac addresses and the values are the extension identifiers.
  *
- * @property staticDataMacExtens
+ * @property macDataByMac
  * @type object
  * @private
  */
-let staticDataMacExtens = {};
+let macDataByMac = {};
+
+/**
+ * Mac addresses data read from JSON configuration file. Keys are
+ * extension identifiers and the values are the mac addresses.
+ *
+ * @property macDataByExt
+ * @type object
+ * @private
+ */
+let macDataByExt = {};
 
 /**
  * Trunks data read from JSON configuration file.
@@ -1234,13 +1244,28 @@ function setStaticDataTrunks(obj) {
 /**
  * Set the mac addresses read from JSON configuration file.
  *
- * @method setStaticDataMacExtens
- * @param {object} obj The mac address associations
+ * @method setMacDataByMac
+ * @param {object} obj The mac address associations. Keys are the mac addresses
  * @static
  */
-function setStaticDataMacExtens(obj) {
+function setMacDataByMac(obj) {
   try {
-    staticDataMacExtens = obj;
+    macDataByMac = obj;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the mac addresses read from JSON configuration file.
+ *
+ * @method setMacDataByExt
+ * @param {object} obj The mac address associations. Keys are the extension identifiers
+ * @static
+ */
+function setMacDataByExt(obj) {
+  try {
+    macDataByExt = obj;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -1255,7 +1280,7 @@ function setStaticDataMacExtens(obj) {
  */
 function getExtenFromMac(mac) {
   try {
-    return staticDataMacExtens[mac];
+    return macDataByMac[mac];
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -1313,7 +1338,8 @@ function reset() {
     }
     parkedChannels = {};
     staticDataExtens = {};
-    staticDataMacExtens = {};
+    macDataByMac = {};
+    macDataByExt = {};
     staticDataTrunks = {};
     staticDataQueues = {};
     featureCodes = {};
@@ -2916,8 +2942,8 @@ function initializePjsipExten(err, results) {
         continue;
       }
       exten = new Extension(results[e].ext, 'pjsip');
+      exten.setMac(macDataByExt[exten.getExten()] ? macDataByExt[exten.getExten()] : '');
       extensions[exten.getExten()] = exten;
-
       arr.push(getDndExten(exten.getExten()));
       arr.push(getCfExten(exten.getExten()));
       arr.push(getCfuExten(exten.getExten()));
@@ -9977,7 +10003,8 @@ exports.setAsteriskPresence = setAsteriskPresence;
 exports.setStaticDataTrunks = setStaticDataTrunks;
 exports.setStaticDataQueues = setStaticDataQueues;
 exports.setStaticDataExtens = setStaticDataExtens;
-exports.setStaticDataMacExtens = setStaticDataMacExtens;
+exports.setMacDataByMac = setMacDataByMac;
+exports.setMacDataByExt = setMacDataByExt;
 exports.unmuteUserMeetmeConf = unmuteUserMeetmeConf;
 exports.hangupUserMeetmeConf = hangupUserMeetmeConf;
 exports.evtAddMeetmeUserConf = evtAddMeetmeUserConf;
