@@ -188,12 +188,12 @@ function config(path) {
 }
 
 /**
- * Reads the extension names.
+ * Reads the extension names and mac.
  *
- * @method configExtenNames
+ * @method configExtens
  * @param {string} path The file path of the users JSON file
  */
-function configExtenNames(path) {
+function configExtens(path) {
   try {
     if (typeof path !== 'string') {
       throw new TypeError('wrong parameter: ' + path);
@@ -214,6 +214,7 @@ function configExtenNames(path) {
       mainExtens: {}, // keys are main extensions and the values are array containing list of secondary associated extensions
       secondExtens: {} // keys are the secondary extensions and the value are the corresponding main extensions
     };
+    let mac = {}; // keys are mac addresses and the values are the corresponding extension identifiers
     for (u in json) {
       for (e in json[u].endpoints.mainextension) {
         obj.names[e] = json[u].name;
@@ -232,9 +233,13 @@ function configExtenNames(path) {
         if (obj.mainExtens[e] === undefined) {
           obj.secondExtens[e] = Object.keys(json[u].endpoints.mainextension)[0];
         }
+        if (json[u].endpoints.extension[e].mac) {
+          mac[json[u].endpoints.extension[e].mac] = e;
+        }
       }
     }
     proxyLogic.setStaticDataExtens(obj);
+    proxyLogic.setStaticDataMacExtens(mac);
     logger.log.info(IDLOG, 'extension names configuration done by ' + USERS_CONF_FILEPATH);
 
   } catch (err) {
@@ -382,7 +387,7 @@ function reload() {
     reset();
     config(AST_CONF_FILEPATH);
     configAstObjects(AST_OBJECTS_FILEPATH);
-    configExtenNames(USERS_CONF_FILEPATH);
+    configExtens(USERS_CONF_FILEPATH);
     start();
     logger.log.warn(IDLOG, 'reloaded');
   } catch (err) {
@@ -747,5 +752,5 @@ exports.proxyLogic = proxyLogic;
 exports.configSipWebrtc = configSipWebrtc;
 exports.getSipWebrtcConf = getSipWebrtcConf;
 exports.configAstObjects = configAstObjects;
-exports.configExtenNames = configExtenNames;
+exports.configExtens = configExtens;
 exports.configRemoteSitesPrefixes = configRemoteSitesPrefixes;

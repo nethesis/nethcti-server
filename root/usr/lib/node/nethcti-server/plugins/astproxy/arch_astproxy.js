@@ -145,6 +145,7 @@ module.exports = function(options, imports, register) {
       isExtenCfVm: astProxy.proxyLogic.isExtenCfVm,
       isExtenCfbVm: astProxy.proxyLogic.isExtenCfbVm,
       isExtenCfuVm: astProxy.proxyLogic.isExtenCfuVm,
+      getExtenFromMac: astProxy.proxyLogic.getExtenFromMac,
       setDnd: astProxy.proxyLogic.setDnd,
       isExtenDnd: astProxy.proxyLogic.isExtenDnd,
       isAutoC2CEnabled: astProxy.proxyLogic.isAutoC2CEnabled,
@@ -159,7 +160,7 @@ module.exports = function(options, imports, register) {
     astProxy.setLogger(logger.ctilog);
     astProxy.config('/etc/nethcti/asterisk.json');
     astProxy.configAstObjects('/etc/nethcti/ast_objects.json');
-    astProxy.configExtenNames('/etc/nethcti/users.json');
+    astProxy.configExtens('/etc/nethcti/users.json');
     // astProxy.configRemoteSitesPrefixes('/etc/nethcti/remote_sites.json');
     // astProxy.configSipWebrtc('/etc/nethcti/sip_webrtc.json');
     astProxy.proxyLogic.setCompDbconn(imports.dbconn);

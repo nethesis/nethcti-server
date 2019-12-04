@@ -595,6 +595,16 @@ var conferences = {};
 var staticDataExtens = {};
 
 /**
+ * Mac addresses data read from JSON configuration file. Keys are
+ * mac addresses and the values are the extension identifiers.
+ *
+ * @property staticDataMacExtens
+ * @type object
+ * @private
+ */
+let staticDataMacExtens = {};
+
+/**
  * Trunks data read from JSON configuration file.
  *
  * @property staticDataTrunks
@@ -1222,6 +1232,36 @@ function setStaticDataTrunks(obj) {
 }
 
 /**
+ * Set the mac addresses read from JSON configuration file.
+ *
+ * @method setStaticDataMacExtens
+ * @param {object} obj The mac address associations
+ * @static
+ */
+function setStaticDataMacExtens(obj) {
+  try {
+    staticDataMacExtens = obj;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Get extension from mac address.
+ *
+ * @method getExtenFromMac
+ * @param {string} mac The mac address
+ * @return {string} The extension identifier.
+ */
+function getExtenFromMac(mac) {
+  try {
+    return staticDataMacExtens[mac];
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Set the extension names read from JSON configuration file.
  *
  * @method setStaticDataExtens
@@ -1273,6 +1313,7 @@ function reset() {
     }
     parkedChannels = {};
     staticDataExtens = {};
+    staticDataMacExtens = {};
     staticDataTrunks = {};
     staticDataQueues = {};
     featureCodes = {};
@@ -9936,6 +9977,7 @@ exports.setAsteriskPresence = setAsteriskPresence;
 exports.setStaticDataTrunks = setStaticDataTrunks;
 exports.setStaticDataQueues = setStaticDataQueues;
 exports.setStaticDataExtens = setStaticDataExtens;
+exports.setStaticDataMacExtens = setStaticDataMacExtens;
 exports.unmuteUserMeetmeConf = unmuteUserMeetmeConf;
 exports.hangupUserMeetmeConf = hangupUserMeetmeConf;
 exports.evtAddMeetmeUserConf = evtAddMeetmeUserConf;
@@ -9992,3 +10034,4 @@ exports.setExtensionUsername = setExtensionUsername;
 exports.getUsernameByExtension = getUsernameByExtension;
 exports.getAgentsOfQueues = getAgentsOfQueues;
 exports.evtFullyBooted = evtFullyBooted;
+exports.getExtenFromMac = getExtenFromMac;
