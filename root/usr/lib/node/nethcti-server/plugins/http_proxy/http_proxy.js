@@ -93,15 +93,6 @@ var compUtil;
 var port;
 
 /**
- * Token used to communicate with tancredi server.
- *
- * @property tancrediToken
- * @type string
- * @private
- */
-let tancrediToken;
-
-/**
  * Listening address of the HTTP proxy server.
  *
  * @property address
@@ -185,12 +176,6 @@ function config(path) {
     port = json.http_proxy.http_port;
   } else {
     logger.log.warn(IDLOG, 'wrong ' + path + ': no "http_port" key into "http_proxy"');
-  }
-
-  if (json.http_proxy.tancredi_token) {
-    tancrediToken = 'static ' + json.http_proxy.tancredi_token;
-  } else {
-    logger.log.warn(IDLOG, 'wrong ' + path + ': no "tancredi_token" key into "http_proxy"');
   }
   logger.log.info(IDLOG, 'configuration done by ' + path);
 }
@@ -390,7 +375,7 @@ function start() {
             req.headers.authorization_user = req.headers.authorization_user.toLowerCase();
 
             // provisioning requests proxy
-            if (req.url.indexOf('/tancredi') === 0) {
+            if (req.url.indexOf('/tancredi') === 0 || req.url.indexOf('/corbera') === 0) {
               if (req.method === 'GET' || req.method === 'PATCH') {
                 let macToCheck = req.url.split('/').pop();
                 let extenToCheck = compAstProxy.getExtenFromMac(macToCheck) || '';
@@ -398,7 +383,8 @@ function start() {
                   delete req.headers.authorization;
                   delete req.headers.authorization_user;
                   delete req.headers.authorization_token;
-                  req.headers.authentication = tancrediToken;
+                  req.headers.User = 'admin';
+                  req.headers.SecretKey = compAuthentication.getAdminSecretKey();
                   logger.log.info(IDLOG, 'proxy provisioning request "' + req.url + '" for user "' + arr[0] + '" from ' + req.headers['x-forwarded-for']);
                   return proxy.web(req, res, { target: '' });
                 } else {
