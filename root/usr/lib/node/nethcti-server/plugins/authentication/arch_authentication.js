@@ -41,6 +41,7 @@ module.exports = function(options, imports, register) {
       calculateToken: authentication.calculateToken,
       addShibbolethMap: authentication.addShibbolethMap,
       isShibbolethUser: authentication.isShibbolethUser,
+      getAdminSecretKey: authentication.getAdminSecretKey,
       getRemoteSiteName: authentication.getRemoteSiteName,
       updateTokenExpires: authentication.updateTokenExpires,
       removeShibbolethMap: authentication.removeShibbolethMap,

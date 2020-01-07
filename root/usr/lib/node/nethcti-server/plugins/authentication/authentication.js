@@ -834,6 +834,16 @@ function authenticateFreepbxAdmin(secretkey) {
 }
 
 /**
+ * Return admin secret key.
+ *
+ * @method getAdminSecretKey
+ * @return {string} Return admin secret key.
+ */
+function getAdminSecretKey() {
+  return fpbxAdminSecretKey;
+}
+
+/**
  * Authenticate the user using the choosen method in the configuration step.
  *
  * **It can throw an exception.**
@@ -1205,6 +1215,7 @@ exports.calculateToken = calculateToken;
 exports.addShibbolethMap = addShibbolethMap;
 exports.isShibbolethUser = isShibbolethUser;
 exports.getRemoteSiteName = getRemoteSiteName;
+exports.getAdminSecretKey = getAdminSecretKey;
 exports.updateTokenExpires = updateTokenExpires;
 exports.removeShibbolethMap = removeShibbolethMap;
 exports.isUnautheCallEnabled = isUnautheCallEnabled;

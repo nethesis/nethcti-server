@@ -1,7 +1,6 @@
 {
   my $ports_str = ${'nethcti-server'}{TCPPorts};
   our @ports = split(',', $ports_str);
-  our $TancrediCTIStaticToken = NethServer::Password->new('TancrediCTIStaticToken',{'length' => 32})->save()->getAscii();
   return "";
 }
 \{
@@ -14,4 +13,3 @@
   \},
   "http_proxy": \{
     "http_port":  "{${'nethcti-server'}{RestPort} || 8179}",
-    "tancredi_token": "{$TancrediCTIStaticToken}",
