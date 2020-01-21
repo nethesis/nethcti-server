@@ -235,8 +235,8 @@ function configExtens(path) {
           obj.secondExtens[e] = Object.keys(json[u].endpoints.mainextension)[0];
         }
         if (json[u].endpoints.extension[e].mac) {
-          macByMac[json[u].endpoints.extension[e].mac] = e;
-          macByExt[e] = json[u].endpoints.extension[e].mac;
+          macByMac[json[u].endpoints.extension[e].mac.replace(/:/g, '-').toLowerCase()] = e;
+          macByExt[e] = json[u].endpoints.extension[e].mac.replace(/:/g, '-').toLowerCase();
         }
       }
     }

@@ -375,7 +375,7 @@ function start() {
             req.headers.authorization_user = req.headers.authorization_user.toLowerCase();
 
             // provisioning requests proxy
-            if (req.url.indexOf('/tancredi') === 0 || req.url.indexOf('/corbera') === 0) {
+            if (req.url.indexOf('/tancredi') === 0) {
               if (req.method === 'GET' || req.method === 'PATCH') {
                 let macToCheck = req.url.split('/').pop();
                 let extenToCheck = compAstProxy.getExtenFromMac(macToCheck) || '';
@@ -385,15 +385,31 @@ function start() {
                   delete req.headers.authorization_token;
                   req.headers.User = 'admin';
                   req.headers.SecretKey = compAuthentication.getAdminSecretKey();
-                  logger.log.info(IDLOG, 'proxy provisioning request "' + req.url + '" for user "' + arr[0] + '" from ' + req.headers['x-forwarded-for']);
+                  logger.log.info(IDLOG, `proxy provisioning request ${req.method} ${req.url} for user ${arr[0]} from ${req.headers['x-forwarded-for']}`);
                   return proxy.web(req, res, { target: '' });
                 } else {
-                  logger.log.warn(IDLOG, 'authorization failed for user "' + req.headers.authorization_user + '" calling api ' + req.method + ' ' + req.url);
+                  logger.log.warn(IDLOG, `authorization failed for user ${req.headers.authorization_user} calling api ${req.method} ${req.url}`);
                   compUtil.net.sendHttp403(IDLOG, res);
                 }
                 return;
               }
-              compUtil.net.sendHttp404(IDLOG, res);
+              logger.log.warn(IDLOG, `${req.method} ${req.url} not permitted: (from user ${req.headers.authorization_user})`);
+              compUtil.net.sendHttp403(IDLOG, res);
+              return;
+            }
+            if (req.url.indexOf('/freepbx') === 0) {
+              if (
+                (req.url.indexOf('/freepbx/rest/provisioning/engine') === 0 && req.method === 'GET')
+                ||
+                (req.url.indexOf('/freepbx/rest/phones/reboot') === 0 && req.method === 'POST')
+              ) {
+                req.headers.User = 'admin';
+                req.headers.SecretKey = compAuthentication.getAdminSecretKey();
+                logger.log.info(IDLOG, `proxy provisioning request ${req.method} ${req.url} for user ${arr[0]} from ${req.headers['x-forwarded-for']}`);
+                return proxy.web(req, res, { target: 'https://127.0.0.1/', secure: false });
+              }
+              logger.log.warn(IDLOG, `${req.method} ${req.url} not permitted: (from user ${req.headers.authorization_user})`);
+              compUtil.net.sendHttp403(IDLOG, res);
               return;
             }
             // proxy the request
