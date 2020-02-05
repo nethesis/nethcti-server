@@ -1966,7 +1966,7 @@ function wsConnHdlr(socket) {
     // this event is emitted when a client websocket has been connected
     logger.log.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_CONNECTED + '"');
     emitter.emit(EVT_WS_CLIENT_CONNECTED, socket);
-    logger.log.warn(IDLOG, 'new ws connection from ' + getWebsocketEndpoint(socket));
+    logger.log.warn(IDLOG, 'new ws connection from ' + getWebsocketEndpoint(socket) + ' (sid: ' + socket.id + ')');
     // set the listeners for the new http socket connection
     socket.on('login', function(data) {
       loginHdlr(socket, data);
