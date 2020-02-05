@@ -2290,7 +2290,7 @@ function doLogin(socket, obj) {
  */
 function disconnHdlr(socket, reason) {
   try {
-    logger.log.warn(IDLOG, 'ws disconnected ' + getWebsocketEndpoint(socket) + ' - reason: ' + reason);
+    logger.log.warn(IDLOG, 'ws disconnected ' + getWebsocketEndpoint(socket) + ' - reason: ' + reason + ' (user: ' + wsid[socket.id].username + ')');
     var username;
     // when the user is not authenticated but connected by websocket,
     // the "socket.id" is not present in the "wsid" property
