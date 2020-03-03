@@ -375,7 +375,16 @@ function start() {
             req.headers.authorization_user = req.headers.authorization_user.toLowerCase();
 
             // provisioning requests proxy
-            if (req.url.indexOf('/tancredi') === 0) {
+            if (req.url.indexOf('/tancredi') === 0 && req.url.indexOf('/models/') !== -1 && req.method === 'GET') {
+              delete req.headers.authorization;
+              delete req.headers.authorization_user;
+              delete req.headers.authorization_token;
+              req.headers.User = 'admin';
+              req.headers.SecretKey = compAuthentication.getAdminSecretKey();
+              logger.log.info(IDLOG, `proxy provisioning request ${req.method} ${req.url} for user ${arr[0]} from ${req.headers['x-forwarded-for']}`);
+              return proxy.web(req, res, { target: '' });
+            }
+            else if (req.url.indexOf('/tancredi') === 0) {
               if (req.method === 'GET' || req.method === 'PATCH') {
                 let macToCheck = req.url.split('/').pop();
                 let extenToCheck = compAstProxy.getExtenFromMac(macToCheck) || '';
