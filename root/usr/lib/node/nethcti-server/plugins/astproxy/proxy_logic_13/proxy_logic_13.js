@@ -1280,7 +1280,7 @@ function setMacDataByExt(obj) {
  */
 function getExtenFromMac(mac) {
   try {
-    return macDataByMac[mac];
+    return macDataByMac[mac.toLowerCase()];
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
