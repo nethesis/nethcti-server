@@ -970,6 +970,31 @@ function authorizeDndUser(username) {
 }
 
 /**
+ * Returns true if the specified user has the authorization to customize
+ * physical phone buttons.
+ *
+ * @method authorizePhoneButtonsUser
+ * @param  {string}  username The username
+ * @return {boolean} True if the user has the permission.
+ */
+function authorizePhoneButtonsUser(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var profid = getUserProfileId(username);
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.settings.value === true &&
+      profiles[profid].macro_permissions.settings.permissions.phone_buttons.value === true
+    );
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
  * Returns true if the specified user has the authorization to view all extensions
  * with their complete status information.
  *
@@ -2112,3 +2137,4 @@ exports.getAuthorizedRemoteOperatorGroups = getAuthorizedRemoteOperatorGroups;
 exports.getUserProfileId = getUserProfileId;
 exports.userHasProfile = userHasProfile;
 exports.authorizeScreenSharing = authorizeScreenSharing;
+exports.authorizePhoneButtonsUser = authorizePhoneButtonsUser;

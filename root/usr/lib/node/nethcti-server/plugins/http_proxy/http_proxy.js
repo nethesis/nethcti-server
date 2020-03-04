@@ -375,7 +375,11 @@ function start() {
             req.headers.authorization_user = req.headers.authorization_user.toLowerCase();
 
             // provisioning requests proxy
-            if (req.url.indexOf('/tancredi') === 0 && req.url.indexOf('/models/') !== -1 && req.method === 'GET') {
+            if (req.url.indexOf('/tancredi') === 0 && compAuthorization.authorizePhoneButtonsUser(req.headers.authorization_user) !== true) {
+              logger.log.warn(IDLOG, `authorization failed for user ${req.headers.authorization_user} calling api ${req.method} ${req.url}: no permission`);
+              return;
+            }
+            else if (req.url.indexOf('/tancredi') === 0 && req.url.indexOf('/models/') !== -1 && req.method === 'GET') {
               delete req.headers.authorization;
               delete req.headers.authorization_user;
               delete req.headers.authorization_token;
