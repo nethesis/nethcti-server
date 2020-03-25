@@ -46,7 +46,7 @@ module.exports = function(options, imports, register) {
       unmuteUserMeetmeConf: astProxy.proxyLogic.unmuteUserMeetmeConf,
       hangupUserMeetmeConf: astProxy.proxyLogic.hangupUserMeetmeConf,
       endMeetmeConf: astProxy.proxyLogic.endMeetmeConf,
-      setExtensionUsername: astProxy.proxyLogic.setExtensionUsername,
+      setAllExtensionsUsername: astProxy.proxyLogic.setAllExtensionsUsername,
       getUsernameByExtension: astProxy.proxyLogic.getUsernameByExtension,
       muteUserMeetmeConf: astProxy.proxyLogic.muteUserMeetmeConf,
       isExtenInMeetmeConf: astProxy.proxyLogic.isExtenInMeetmeConf,

@@ -236,7 +236,6 @@ function configExtenNames(path) {
     }
     proxyLogic.setStaticDataExtens(obj);
     logger.log.info(IDLOG, 'extension names configuration done by ' + USERS_CONF_FILEPATH);
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -383,7 +382,7 @@ function reload() {
     config(AST_CONF_FILEPATH);
     configAstObjects(AST_OBJECTS_FILEPATH);
     configExtenNames(USERS_CONF_FILEPATH);
-    start();
+    proxyLogic.start();
     logger.log.warn(IDLOG, 'reloaded');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -419,9 +418,6 @@ function addAstListeners() {
 function reset() {
   try {
     proxyLogic.reset();
-    am.removeAllListeners();
-    am.disconnect();
-    am = null;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
