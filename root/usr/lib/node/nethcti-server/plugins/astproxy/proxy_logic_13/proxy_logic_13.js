@@ -3539,6 +3539,13 @@ function extSipDetails(err, resp) {
     extensions[data.exten].setName(data.name);
     extensions[data.exten].setContext(data.context);
     extensions[data.exten].setSipUserAgent(data.sipuseragent);
+    if (isReloading() && tempExtensions[data.exten]) {
+      tempExtensions[data.exten].setIp(data.ip);
+      tempExtensions[data.exten].setPort(data.port);
+      tempExtensions[data.exten].setName(data.name);
+      tempExtensions[data.exten].setContext(data.context);
+      tempExtensions[data.exten].setSipUserAgent(data.sipuseragent);
+    }
     logger.log.info(IDLOG, 'set sip details for ext ' + data.exten);
 
   } catch (error) {
@@ -4259,6 +4266,9 @@ function extenStatus(err, resp) {
     }
 
     extensions[resp.exten].setStatus(resp.status);
+    if (isReloading() && tempExtensions[resp.exten]) {
+      tempExtensions[resp.exten].setStatus(resp.status);
+    }
     logger.log.info(IDLOG, 'sets status ' + resp.status + ' for extension ' + resp.exten);
 
   } catch (error) {
@@ -4745,6 +4755,9 @@ function evtExtenDndChanged(exten, enabled) {
         return;
       }
       extensions[exten].setDnd(enabled);
+      if (isReloading() && tempExtensions[exten]) {
+        tempExtensions[exten].setDnd(enabled);
+      }
       logger.log.info(IDLOG, 'set dnd status to ' + enabled + ' for extension ' + exten);
       // emit the events
       logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
@@ -4783,11 +4796,17 @@ function evtExtenUnconditionalCfChanged(exten, enabled, to) {
       if (enabled) {
         logger.log.info(IDLOG, 'set cf status to ' + enabled + ' for extension ' + exten + ' to ' + to);
         extensions[exten].setCf(to);
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].setCf(to);
+        }
         // disable the call forward to voicemail because the call forward set the same property in the database
         evtExtenUnconditionalCfVmChanged(exten, false);
       } else {
         logger.log.info(IDLOG, 'set cf status to ' + enabled + ' for extension ' + exten);
         extensions[exten].disableCf();
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].disableCf();
+        }
       }
       // emit the event
       logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
@@ -4826,6 +4845,9 @@ function evtExtenCfbChanged(exten, enabled, to) {
       if (enabled) {
         logger.log.info(IDLOG, 'set cfb status to ' + enabled + ' for extension ' + exten + ' to ' + to);
         extensions[exten].setCfb(to);
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].setCfb(to);
+        }
 
         // disable the call forward to voicemail because the call forward set the same property in the database
         evtExtenCfbVmChanged(exten, false);
@@ -4833,6 +4855,9 @@ function evtExtenCfbChanged(exten, enabled, to) {
       } else {
         logger.log.info(IDLOG, 'set cfb status to ' + enabled + ' for extension ' + exten);
         extensions[exten].disableCfb();
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].disableCfb();
+        }
       }
 
       // emit the event
@@ -4872,6 +4897,9 @@ function evtExtenCfuChanged(exten, enabled, to) {
       if (enabled) {
         logger.log.info(IDLOG, 'set cfu status to ' + enabled + ' for extension ' + exten + ' to ' + to);
         extensions[exten].setCfu(to);
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].setCfu(to);
+        }
 
         // disable the call forward to voicemail because the call forward set the same property in the database
         evtExtenCfuVmChanged(exten, false);
@@ -4879,6 +4907,9 @@ function evtExtenCfuChanged(exten, enabled, to) {
       } else {
         logger.log.info(IDLOG, 'set cfu status to ' + enabled + ' for extension ' + exten);
         extensions[exten].disableCfu();
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].disableCfu();
+        }
       }
 
       // emit the event
@@ -4919,11 +4950,17 @@ function evtExtenUnconditionalCfVmChanged(exten, enabled, vm) {
       if (enabled) {
         logger.log.info(IDLOG, 'set cfvm status to ' + enabled + ' for extension ' + exten + ' to voicemail ' + vm);
         extensions[exten].setCfVm(vm);
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].setCfVm(vm);
+        }
         // disable the call forward because the call forward to voicemail set the same property in the database
         evtExtenUnconditionalCfChanged(exten, false);
       } else {
         logger.log.info(IDLOG, 'set cfvm status to ' + enabled + ' for extension ' + exten);
         extensions[exten].disableCfVm();
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].disableCfVm();
+        }
       }
       // emit the events
       logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
@@ -4963,6 +5000,9 @@ function evtExtenCfbVmChanged(exten, enabled, vm) {
       if (enabled) {
         logger.log.info(IDLOG, 'set cfbvm status to ' + enabled + ' for extension ' + exten + ' to voicemail ' + vm);
         extensions[exten].setCfbVm(vm);
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].setCfbVm(vm);
+        }
 
         // disable the call forward busy because the call forward to voicemail set the same property in the database
         evtExtenCfbChanged(exten, false);
@@ -4970,6 +5010,9 @@ function evtExtenCfbVmChanged(exten, enabled, vm) {
       } else {
         logger.log.info(IDLOG, 'set cfbvm status to ' + enabled + ' for extension ' + exten);
         extensions[exten].disableCfbVm();
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].disableCfbVm();
+        }
       }
 
       // emit the events
@@ -5011,6 +5054,9 @@ function evtExtenCfuVmChanged(exten, enabled, vm) {
       if (enabled) {
         logger.log.info(IDLOG, 'set cfuvm status to ' + enabled + ' for extension ' + exten + ' to voicemail ' + vm);
         extensions[exten].setCfuVm(vm);
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].setCfuVm(vm);
+        }
 
         // disable the call forward unavailable because the call forward to voicemail set the same property in the database
         evtExtenCfuChanged(exten, false);
@@ -5018,6 +5064,9 @@ function evtExtenCfuVmChanged(exten, enabled, vm) {
       } else {
         logger.log.info(IDLOG, 'set cfuvm status to ' + enabled + ' for extension ' + exten);
         extensions[exten].disableCfuVm();
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].disableCfuVm();
+        }
       }
 
       // emit the events
@@ -6008,6 +6057,9 @@ function evtConversationUnhold(data) {
     }
     if (extensions[data.whoPutsOnUnholdExten]) {
       extensions[data.whoPutsOnUnholdExten].setStatus(EXTEN_STATUS_ENUM.BUSY);
+      if (isReloading() && tempExtensions[data.whoPutsOnUnholdExten]) {
+        tempExtensions[data.whoPutsOnUnholdExten].setStatus(EXTEN_STATUS_ENUM.BUSY);
+      }
       logger.log.info(IDLOG, 'set busy (from unhold event) for extension ' + data.whoPutsOnUnholdExten);
       logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + data.whoPutsOnUnholdExten);
       astProxy.emit(EVT_EXTEN_CHANGED, extensions[data.whoPutsOnUnholdExten]);
@@ -6034,6 +6086,9 @@ function evtConversationHold(data) {
     }
     if (extensions[data.whoPutsOnHoldExten]) {
       extensions[data.whoPutsOnHoldExten].setStatus(EXTEN_STATUS_ENUM.ONHOLD);
+      if (isReloading() && tempExtensions[data.whoPutsOnHoldExten]) {
+        tempExtensions[data.whoPutsOnHoldExten].setStatus(EXTEN_STATUS_ENUM.ONHOLD);
+      }
       logger.log.info(IDLOG, 'set hold status (from hold event) for extension ' + data.whoPutsOnHoldExten);
       logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + data.whoPutsOnHoldExten);
       astProxy.emit(EVT_EXTEN_CHANGED, extensions[data.whoPutsOnHoldExten]);
