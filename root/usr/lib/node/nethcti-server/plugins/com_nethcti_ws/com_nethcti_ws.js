@@ -1328,8 +1328,6 @@ function extenChanged(exten) {
       } else if (wsServer.sockets.sockets[sockid]) {
         extJson = exten.toJSON();
       }
-
-      extJson.username = compUser.getUserUsingEndpointExtension(exten.getExten());
       if (wsServer.sockets.sockets[sockid]) {
         wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, extJson);
       }

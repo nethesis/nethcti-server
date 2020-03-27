@@ -190,10 +190,10 @@ function config(path) {
 /**
  * Reads the extension names and mac.
  *
- * @method configExtens
+ * @method configExtenNames
  * @param {string} path The file path of the users JSON file
  */
-function configExtens(path) {
+function configExtenNames(path) {
   try {
     if (typeof path !== 'string') {
       throw new TypeError('wrong parameter: ' + path);
@@ -244,7 +244,6 @@ function configExtens(path) {
     proxyLogic.setMacDataByMac(macByMac);
     proxyLogic.setMacDataByExt(macByExt);
     logger.log.info(IDLOG, 'extension names configuration done by ' + USERS_CONF_FILEPATH);
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -390,8 +389,8 @@ function reload() {
     reset();
     config(AST_CONF_FILEPATH);
     configAstObjects(AST_OBJECTS_FILEPATH);
-    configExtens(USERS_CONF_FILEPATH);
-    start();
+    configExtenNames(USERS_CONF_FILEPATH);
+    proxyLogic.start();
     logger.log.warn(IDLOG, 'reloaded');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -427,9 +426,6 @@ function addAstListeners() {
 function reset() {
   try {
     proxyLogic.reset();
-    am.removeAllListeners();
-    am.disconnect();
-    am = null;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -755,5 +751,5 @@ exports.proxyLogic = proxyLogic;
 exports.configSipWebrtc = configSipWebrtc;
 exports.getSipWebrtcConf = getSipWebrtcConf;
 exports.configAstObjects = configAstObjects;
-exports.configExtens = configExtens;
+exports.configExtenNames = configExtenNames;
 exports.configRemoteSitesPrefixes = configRemoteSitesPrefixes;

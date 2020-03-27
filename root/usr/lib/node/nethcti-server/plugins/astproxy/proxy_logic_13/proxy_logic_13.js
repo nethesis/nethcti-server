@@ -576,6 +576,16 @@ var callerIdentityData = {};
 var extensions = {};
 
 /**
+ * Temporarly used for reloading operations. It will become extensions
+ * only on setAllExtensionsUsername method.
+ *
+ * @property tempExtensions
+ * @type object
+ * @private
+ */
+let tempExtensions = {};
+
+/**
  * All mettme conferences. The key is the extension owner number and the value
  * is the _MeetmeConference_ object.
  *
@@ -1295,6 +1305,7 @@ function getExtenFromMac(mac) {
  */
 function setStaticDataExtens(obj) {
   try {
+    staticDataExtens = undefined;
     staticDataExtens = obj;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1313,11 +1324,6 @@ function reset() {
     intervalUpdateQueuesDetails = null;
 
     var k;
-    for (k in extensions) {
-      delete extensions[k];
-    }
-    extensions = {};
-
     for (k in trunks) {
       delete trunks[k];
     }
@@ -1337,7 +1343,6 @@ function reset() {
       delete parkedChannels[k];
     }
     parkedChannels = {};
-    staticDataExtens = {};
     macDataByMac = {};
     macDataByExt = {};
     staticDataTrunks = {};
@@ -2913,6 +2918,21 @@ function getListChannels() {
 }
 
 /**
+ * Return true if the component is reloading.
+ *
+ * @method isReloading
+ * @return {boolean} True if the component is reloading.
+ * @private
+ */
+let isReloading = () => {
+  try {
+    return (ready === true && reloading === true);
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+};
+
+/**
  * Initialize all pjsip extensions as _Extension_ object into the
  * _extensions_ property.
  *
@@ -2931,36 +2951,57 @@ function initializePjsipExten(err, results) {
       }, 2000);
       return;
     }
-    var arr = [];
-    var e, exten;
-    for (e in results) {
-      // skip if the current extension is a trunk
-      if (staticDataTrunks[results[e].ext]) {
+    let parallelOp = {}; // parallel operations for each extension
+    let objToUse = isReloading() ? tempExtensions : extensions; // based on boot or reload time
+    for (let e in results) {
+      if (staticDataTrunks[results[e].ext]) { // skip if trunk
         continue;
       }
       if (!staticDataExtens.names[results[e].ext]) {
         continue;
       }
-      exten = new Extension(results[e].ext, 'pjsip');
-      exten.setMac(macDataByExt[exten.getExten()] ? macDataByExt[exten.getExten()] : '');
-      extensions[exten.getExten()] = exten;
-      arr.push(getDndExten(exten.getExten()));
-      arr.push(getCfExten(exten.getExten()));
-      arr.push(getCfuExten(exten.getExten()));
-      arr.push(getCfbExten(exten.getExten()));
-      arr.push(getCfVmExten(exten.getExten()));
-      arr.push(getCfbVmExten(exten.getExten()));
-      arr.push(getCfuVmExten(exten.getExten()));
-      arr.push(getPjsipDetailExten(exten.getExten()));
-      arr.push(getListChannels());
+      let extenId = results[e].ext;
+      objToUse[extenId] = new Extension(extenId, 'pjsip');
+      parallelOp[extenId] = [];
+      parallelOp[extenId].push(getDndExten(extenId));
+      parallelOp[extenId].push(getCfExten(extenId));
+      parallelOp[extenId].push(getCfuExten(extenId));
+      parallelOp[extenId].push(getCfbExten(extenId));
+      parallelOp[extenId].push(getCfVmExten(extenId));
+      parallelOp[extenId].push(getCfbVmExten(extenId));
+      parallelOp[extenId].push(getCfuVmExten(extenId));
+      parallelOp[extenId].push(getPjsipDetailExten(extenId));
+      parallelOp[extenId].push(getListChannels());
     }
-    async.series(arr, function (err) {
-      if (err) {
-        logger.log.error(IDLOG, err);
+    objToUse = undefined;
+    let arrSeries = []; // series operation one for each extension
+    for (let extenId in parallelOp) {
+      arrSeries.push(callback => {
+        async.parallel(parallelOp[extenId], err => {
+          try {
+            if (err) {
+              logger.log.error(IDLOG, err);
+            }
+            callback(null);
+          } catch (error) {
+            logger.log.error(IDLOG, error.stack);
+          }
+        });
+      })
+    }
+    logger.log.info(IDLOG, `start series/parallel op for pjsip exten init`);
+    async.series(arrSeries, function (err) {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, err);
+        }
+        initializationStatus.pjsipExtens = true;
+        checkInitializationStatus();
+        emitter.emit('pjsipExtenInitialized');
+        logger.log.info(IDLOG, `end series/parallel op for pjsip exten init`);
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
       }
-      initializationStatus.pjsipExtens = true;
-      checkInitializationStatus();
-      emitter.emit('pjsipExtenInitialized');
     });
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
@@ -2990,7 +3031,6 @@ function checkInitializationStatus() {
       logger.log.warn(IDLOG, 'reloaded');
       logger.log.warn(IDLOG, 'emit "' + EVT_RELOADED + '" event');
       astProxy.emit(EVT_RELOADED);
-      setReloading(false);
     }
     for (k in initializationStatus) {
       initializationStatus[k] = false;
@@ -3315,21 +3355,19 @@ function initializeIaxTrunk(err, results) {
  */
 function setCfStatus(err, resp) {
   try {
-    // check the error
     if (err) {
       throw err;
     }
-    // check parameter
     if (typeof resp !== 'object' || typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    if (extensions[resp.exten]) { // the extension exists
+    let objToUse = isReloading() ? tempExtensions : extensions; // based on boot or reload time
+    if (objToUse[resp.exten]) {
       if (resp.status === 'on') {
-        extensions[resp.exten].setCf(resp.to);
+        objToUse[resp.exten].setCf(resp.to);
         logger.log.info(IDLOG, 'set extension ' + resp.exten + ' cf enable to ' + resp.to);
       } else {
-        extensions[resp.exten].disableCf();
+        objToUse[resp.exten].disableCf();
         logger.log.info(IDLOG, 'set extension ' + resp.exten + ' cf disable');
       }
     } else {
@@ -3350,21 +3388,19 @@ function setCfStatus(err, resp) {
  */
 function setCfbStatus(err, resp) {
   try {
-    // check the error
     if (err) {
       throw err;
     }
-    // check parameter
     if (typeof resp !== 'object' || typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    if (extensions[resp.exten]) { // the extension exists
+    let objToUse = isReloading() ? tempExtensions : extensions; // based on boot or reload time
+    if (objToUse[resp.exten]) { // the extension exists
       if (resp.status === 'on') {
-        extensions[resp.exten].setCfb(resp.to);
+        objToUse[resp.exten].setCfb(resp.to);
         logger.log.info(IDLOG, 'set extension ' + resp.exten + ' cfb enable to ' + resp.to);
       } else {
-        extensions[resp.exten].disableCfb();
+        objToUse[resp.exten].disableCfb();
         logger.log.info(IDLOG, 'set extension ' + resp.exten + ' cfb disable');
       }
     } else {
@@ -3385,21 +3421,19 @@ function setCfbStatus(err, resp) {
  */
 function setCfuStatus(err, resp) {
   try {
-    // check the error
     if (err) {
       throw err;
     }
-    // check parameter
     if (typeof resp !== 'object' || typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    if (extensions[resp.exten]) { // the extension exists
+    let objToUse = isReloading() ? tempExtensions : extensions; // based on boot or reload time
+    if (objToUse[resp.exten]) {
       if (resp.status === 'on') {
-        extensions[resp.exten].setCfu(resp.to);
+        objToUse[resp.exten].setCfu(resp.to);
         logger.log.info(IDLOG, 'set extension ' + resp.exten + ' cfu enable to ' + resp.to);
       } else {
-        extensions[resp.exten].disableCfu();
+        objToUse[resp.exten].disableCfu();
         logger.log.info(IDLOG, 'set extension ' + resp.exten + ' cfu disable');
       }
     } else {
@@ -3420,33 +3454,24 @@ function setCfuStatus(err, resp) {
  */
 function setCfVmStatus(err, resp) {
   try {
-    // check the error
     if (err) {
       throw err;
     }
-
-    // check parameter
-    if (typeof resp !== 'object' ||
-      typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
-
+    if (typeof resp !== 'object' || typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    if (extensions[resp.exten]) { // the extension exists
-
+    let objToUse = isReloading() ? tempExtensions : extensions; // based on boot or reload time
+    if (objToUse[resp.exten]) { // the extension exists
       if (resp.status === 'on') {
-        extensions[resp.exten].setCfVm(resp.to);
+        objToUse[resp.exten].setCfVm(resp.to);
         logger.log.info(IDLOG, 'set extension ' + resp.exten + ' cfvm enable to ' + resp.to);
-
       } else {
-        extensions[resp.exten].disableCfVm();
+        objToUse[resp.exten].disableCfVm();
         logger.log.info(IDLOG, 'set extension ' + resp.exten + ' cfvm disabled');
       }
-
     } else {
       logger.log.warn(IDLOG, 'request cfvm for not existing extension ' + resp.exten);
     }
-
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
   }
@@ -3462,33 +3487,25 @@ function setCfVmStatus(err, resp) {
  */
 function setCfbVmStatus(err, resp) {
   try {
-    // check the error
     if (err) {
       throw err;
     }
-
-    // check parameter
     if (typeof resp !== 'object' ||
       typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
-
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    if (extensions[resp.exten]) { // the extension exists
-
+    let objToUse = isReloading() ? tempExtensions : extensions; // based on boot or reload time
+    if (objToUse[resp.exten]) { // the extension exists
       if (resp.status === 'on') {
-        extensions[resp.exten].setCfbVm(resp.to);
+        objToUse[resp.exten].setCfbVm(resp.to);
         logger.log.info(IDLOG, 'set extension ' + resp.exten + ' cfbvm enable to ' + resp.to);
-
       } else {
-        extensions[resp.exten].disableCfbVm();
+        objToUse[resp.exten].disableCfbVm();
         logger.log.info(IDLOG, 'set extension ' + resp.exten + ' cfbvm disabled');
       }
-
     } else {
       logger.log.warn(IDLOG, 'request cfbvm for not existing extension ' + resp.exten);
     }
-
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
   }
@@ -3504,33 +3521,24 @@ function setCfbVmStatus(err, resp) {
  */
 function setCfuVmStatus(err, resp) {
   try {
-    // check the error
     if (err) {
       throw err;
     }
-
-    // check parameter
-    if (typeof resp !== 'object' ||
-      typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
-
+    if (typeof resp !== 'object' || typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    if (extensions[resp.exten]) { // the extension exists
-
+    let objToUse = isReloading() ? tempExtensions : extensions; // based on boot or reload time
+    if (objToUse[resp.exten]) { // the extension exists
       if (resp.status === 'on') {
-        extensions[resp.exten].setCfuVm(resp.to);
+        objToUse[resp.exten].setCfuVm(resp.to);
         logger.log.info(IDLOG, 'set extension ' + resp.exten + ' cfuvm enable to ' + resp.to);
-
       } else {
-        extensions[resp.exten].disableCfuVm();
+        objToUse[resp.exten].disableCfuVm();
         logger.log.info(IDLOG, 'set extension ' + resp.exten + ' cfuvm disabled');
       }
-
     } else {
       logger.log.warn(IDLOG, 'request cfuvm for not existing extension ' + resp.exten);
     }
-
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
   }
@@ -3540,28 +3548,25 @@ function setCfuVmStatus(err, resp) {
  * Set the don't disturb status of the extension.
  *
  * @method setDndStatus
- * @param {object} err  The error object of the _dndGet_ command plugin.
+ * @param {object} err The error object of the _dndGet_ command plugin.
  * @param {object} resp The response object of the _dndGet_ command plugin.
  * @private
  */
 function setDndStatus(err, resp) {
   try {
-    // check the error
     if (err) {
       throw err;
     }
-    // check parameter
     if (typeof resp !== 'object' || typeof resp.exten !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    if (extensions[resp.exten]) { // the extension exists
-
+    let objToUse = isReloading() ? tempExtensions : extensions; // based on boot or reload time
+    if (objToUse[resp.exten]) {
       if (resp.dnd === 'on') {
-        extensions[resp.exten].setDnd(true);
+        objToUse[resp.exten].setDnd(true);
         logger.log.info(IDLOG, 'set extension ' + resp.exten + ' dnd true');
       } else {
-        extensions[resp.exten].setDnd(false);
+        objToUse[resp.exten].setDnd(false);
         logger.log.info(IDLOG, 'set extension ' + resp.exten + ' dnd false');
       }
     } else {
@@ -3601,6 +3606,13 @@ function extSipDetails(err, resp) {
     extensions[data.exten].setName(data.name);
     extensions[data.exten].setContext(data.context);
     extensions[data.exten].setSipUserAgent(data.sipuseragent);
+    if (isReloading() && tempExtensions[data.exten]) {
+      tempExtensions[data.exten].setIp(data.ip);
+      tempExtensions[data.exten].setPort(data.port);
+      tempExtensions[data.exten].setName(data.name);
+      tempExtensions[data.exten].setContext(data.context);
+      tempExtensions[data.exten].setSipUserAgent(data.sipuseragent);
+    }
     logger.log.info(IDLOG, 'set sip details for ext ' + data.exten);
 
   } catch (error) {
@@ -3622,11 +3634,9 @@ function extPjsipDetails(err, resp) {
       logger.log.error(IDLOG, 'setting pjsip extension details: ' + err.toString());
       return;
     }
-    // check parameter
     if (!resp) {
       throw new Error('wrong parameter: ' + JSON.stringify(arguments));
     }
-    // set the extension information
     if (extensions[resp.exten]) {
       extensions[resp.exten].setIp(resp.ip);
       extensions[resp.exten].setPort(resp.port);
@@ -3635,8 +3645,17 @@ function extPjsipDetails(err, resp) {
       extensions[resp.exten].setCodecs(resp.codecs);
       extensions[resp.exten].setSipUserAgent(resp.sipuseragent);
       extensions[resp.exten].setStatus(resp.status);
-      logger.log.info(IDLOG, 'set pjsip details for ext "' + resp.exten + '"');
     }
+    if (isReloading() && tempExtensions[resp.exten]) {
+      tempExtensions[resp.exten].setIp(resp.ip);
+      tempExtensions[resp.exten].setPort(resp.port);
+      tempExtensions[resp.exten].setName(staticDataExtens.names[resp.exten]);
+      tempExtensions[resp.exten].setContext(resp.context);
+      tempExtensions[resp.exten].setCodecs(resp.codecs);
+      tempExtensions[resp.exten].setSipUserAgent(resp.sipuseragent);
+      tempExtensions[resp.exten].setStatus(resp.status);
+    }
+    logger.log.info(IDLOG, 'set pjsip details for ext "' + resp.exten + '"');
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
   }
@@ -3826,28 +3845,22 @@ function updateConversationsForAllExten(err, resp) {
     if (!resp) {
       throw new Error('wrong parameter: ' + JSON.stringify(resp));
     }
-
     // removes all conversations of all extensions
     var ext;
     for (ext in extensions) {
       extensions[ext].removeAllConversations();
     }
-
     // cycle in all received channels
     var chid;
     for (chid in resp) {
-
       ext = resp[chid].channelExten;
-
       // add new conversation to the extension. Queue channel is not considered,
       // otherwise an extension has also wrong conversation (e.g. 214 has the
       // conversation SIP/221-00000592>Local/221@from-queue-000009dc;2)
-      if (chid.indexOf('Local') === -1 &&
-        chid.indexOf('@from') === -1 &&
-        extensions[ext]) { // the extension exists
+      if (chid.indexOf('Local') === -1 && chid.indexOf('@from') === -1 &&
+        (extensions[ext] || tempExtensions[ext])) { // the extension exists
 
         addConversationToExten(ext, resp, chid);
-
         // emit the event
         if (!reloading) {
           logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + ext);
@@ -4114,7 +4127,7 @@ function addConversationToExten(exten, resp, chid) {
         }
       }
     }
-    if (extensions[exten] && resp[chid].bridgedChannel !== undefined) {
+    if ((extensions[exten] || tempExtensions[exten]) && resp[chid].bridgedChannel !== undefined) {
       // creates the source and destination channels
       ch = new Channel(resp[chid]);
       if (ch.isSource()) {
@@ -4140,8 +4153,8 @@ function addConversationToExten(exten, resp, chid) {
       }
 
       // create a new conversation
-      var conv = new Conversation(exten, chSource, chDest, queue, resp[chid].linkedid);
-      var convid = conv.getId();
+      let conv = new Conversation(exten, chSource, chDest, queue, resp[chid].linkedid);
+      let convid = conv.getId();
 
       // if the conversation is recording, sets its recording status
       if (recordingConv[convid] !== undefined) {
@@ -4155,6 +4168,9 @@ function addConversationToExten(exten, resp, chid) {
       }
       // add the created conversation to the extension
       extensions[exten].addConversation(conv);
+      if (reloading) {
+        tempExtensions[exten].addConversation(conv);
+      }
       logger.log.info(IDLOG, 'the conversation ' + convid + ' has been added to exten ' + exten);
     }
   } catch (err) {
@@ -4317,6 +4333,9 @@ function extenStatus(err, resp) {
     }
 
     extensions[resp.exten].setStatus(resp.status);
+    if (isReloading() && tempExtensions[resp.exten]) {
+      tempExtensions[resp.exten].setStatus(resp.status);
+    }
     logger.log.info(IDLOG, 'sets status ' + resp.status + ' for extension ' + resp.exten);
 
   } catch (error) {
@@ -4803,6 +4822,9 @@ function evtExtenDndChanged(exten, enabled) {
         return;
       }
       extensions[exten].setDnd(enabled);
+      if (isReloading() && tempExtensions[exten]) {
+        tempExtensions[exten].setDnd(enabled);
+      }
       logger.log.info(IDLOG, 'set dnd status to ' + enabled + ' for extension ' + exten);
       // emit the events
       logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
@@ -4841,11 +4863,17 @@ function evtExtenUnconditionalCfChanged(exten, enabled, to) {
       if (enabled) {
         logger.log.info(IDLOG, 'set cf status to ' + enabled + ' for extension ' + exten + ' to ' + to);
         extensions[exten].setCf(to);
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].setCf(to);
+        }
         // disable the call forward to voicemail because the call forward set the same property in the database
         evtExtenUnconditionalCfVmChanged(exten, false);
       } else {
         logger.log.info(IDLOG, 'set cf status to ' + enabled + ' for extension ' + exten);
         extensions[exten].disableCf();
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].disableCf();
+        }
       }
       // emit the event
       logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
@@ -4884,6 +4912,9 @@ function evtExtenCfbChanged(exten, enabled, to) {
       if (enabled) {
         logger.log.info(IDLOG, 'set cfb status to ' + enabled + ' for extension ' + exten + ' to ' + to);
         extensions[exten].setCfb(to);
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].setCfb(to);
+        }
 
         // disable the call forward to voicemail because the call forward set the same property in the database
         evtExtenCfbVmChanged(exten, false);
@@ -4891,6 +4922,9 @@ function evtExtenCfbChanged(exten, enabled, to) {
       } else {
         logger.log.info(IDLOG, 'set cfb status to ' + enabled + ' for extension ' + exten);
         extensions[exten].disableCfb();
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].disableCfb();
+        }
       }
 
       // emit the event
@@ -4930,6 +4964,9 @@ function evtExtenCfuChanged(exten, enabled, to) {
       if (enabled) {
         logger.log.info(IDLOG, 'set cfu status to ' + enabled + ' for extension ' + exten + ' to ' + to);
         extensions[exten].setCfu(to);
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].setCfu(to);
+        }
 
         // disable the call forward to voicemail because the call forward set the same property in the database
         evtExtenCfuVmChanged(exten, false);
@@ -4937,6 +4974,9 @@ function evtExtenCfuChanged(exten, enabled, to) {
       } else {
         logger.log.info(IDLOG, 'set cfu status to ' + enabled + ' for extension ' + exten);
         extensions[exten].disableCfu();
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].disableCfu();
+        }
       }
 
       // emit the event
@@ -4977,11 +5017,17 @@ function evtExtenUnconditionalCfVmChanged(exten, enabled, vm) {
       if (enabled) {
         logger.log.info(IDLOG, 'set cfvm status to ' + enabled + ' for extension ' + exten + ' to voicemail ' + vm);
         extensions[exten].setCfVm(vm);
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].setCfVm(vm);
+        }
         // disable the call forward because the call forward to voicemail set the same property in the database
         evtExtenUnconditionalCfChanged(exten, false);
       } else {
         logger.log.info(IDLOG, 'set cfvm status to ' + enabled + ' for extension ' + exten);
         extensions[exten].disableCfVm();
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].disableCfVm();
+        }
       }
       // emit the events
       logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
@@ -5021,6 +5067,9 @@ function evtExtenCfbVmChanged(exten, enabled, vm) {
       if (enabled) {
         logger.log.info(IDLOG, 'set cfbvm status to ' + enabled + ' for extension ' + exten + ' to voicemail ' + vm);
         extensions[exten].setCfbVm(vm);
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].setCfbVm(vm);
+        }
 
         // disable the call forward busy because the call forward to voicemail set the same property in the database
         evtExtenCfbChanged(exten, false);
@@ -5028,6 +5077,9 @@ function evtExtenCfbVmChanged(exten, enabled, vm) {
       } else {
         logger.log.info(IDLOG, 'set cfbvm status to ' + enabled + ' for extension ' + exten);
         extensions[exten].disableCfbVm();
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].disableCfbVm();
+        }
       }
 
       // emit the events
@@ -5069,6 +5121,9 @@ function evtExtenCfuVmChanged(exten, enabled, vm) {
       if (enabled) {
         logger.log.info(IDLOG, 'set cfuvm status to ' + enabled + ' for extension ' + exten + ' to voicemail ' + vm);
         extensions[exten].setCfuVm(vm);
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].setCfuVm(vm);
+        }
 
         // disable the call forward unavailable because the call forward to voicemail set the same property in the database
         evtExtenCfuChanged(exten, false);
@@ -5076,6 +5131,9 @@ function evtExtenCfuVmChanged(exten, enabled, vm) {
       } else {
         logger.log.info(IDLOG, 'set cfuvm status to ' + enabled + ' for extension ' + exten);
         extensions[exten].disableCfuVm();
+        if (isReloading() && tempExtensions[exten]) {
+          tempExtensions[exten].disableCfuVm();
+        }
       }
 
       // emit the events
@@ -6066,6 +6124,9 @@ function evtConversationUnhold(data) {
     }
     if (extensions[data.whoPutsOnUnholdExten]) {
       extensions[data.whoPutsOnUnholdExten].setStatus(EXTEN_STATUS_ENUM.BUSY);
+      if (isReloading() && tempExtensions[data.whoPutsOnUnholdExten]) {
+        tempExtensions[data.whoPutsOnUnholdExten].setStatus(EXTEN_STATUS_ENUM.BUSY);
+      }
       logger.log.info(IDLOG, 'set busy (from unhold event) for extension ' + data.whoPutsOnUnholdExten);
       logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + data.whoPutsOnUnholdExten);
       astProxy.emit(EVT_EXTEN_CHANGED, extensions[data.whoPutsOnUnholdExten]);
@@ -6092,6 +6153,9 @@ function evtConversationHold(data) {
     }
     if (extensions[data.whoPutsOnHoldExten]) {
       extensions[data.whoPutsOnHoldExten].setStatus(EXTEN_STATUS_ENUM.ONHOLD);
+      if (isReloading() && tempExtensions[data.whoPutsOnHoldExten]) {
+        tempExtensions[data.whoPutsOnHoldExten].setStatus(EXTEN_STATUS_ENUM.ONHOLD);
+      }
       logger.log.info(IDLOG, 'set hold status (from hold event) for extension ' + data.whoPutsOnHoldExten);
       logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + data.whoPutsOnHoldExten);
       astProxy.emit(EVT_EXTEN_CHANGED, extensions[data.whoPutsOnHoldExten]);
@@ -9857,19 +9921,35 @@ function setPinExten(extension, pin, enabled, cb) {
 }
 
 /**
- * Set the association between the extension and username.
+ * Set the association between the extension and username for all extensions.
  *
- * @method setExtensionUsername
- * @param {string} exten The extension identifier
- * @param {string} username The name of the user
+ * @method setAllExtensionsUsername
+ * @param {object} assoc Keys are exten id and values are the usernames
  */
-function setExtensionUsername(exten, username) {
+function setAllExtensionsUsername(assoc) {
   try {
-    if (extensions[exten]) {
-      extensions[exten].setUsername(username);
-    } else {
-      logger.log.warn(IDLOG, `setting username ${username} to exten ${exten}`);
+    logger.log.info(IDLOG, 'start setting username to extensions');
+    let objToUse = isReloading() ? tempExtensions : extensions; // based on boot or reload time
+    for (let exten in assoc) {
+      if (objToUse[exten]) {
+        objToUse[exten].setUsername(assoc[exten]);
+      } else {
+        logger.log.warn(IDLOG, `setting username ${assoc[exten]} to exten ${exten}`);
+      }
     }
+    if (isReloading()) {
+      // switch tempExtensions into extensions: this phase is executed only during reload
+      for (let k in extensions) {
+        delete extensions[k];
+        extensions[k] = undefined;
+      }
+      extensions = undefined;
+      extensions = tempExtensions;
+      tempExtensions = undefined;
+      tempExtensions = {};
+      setReloading(false);
+    }
+    logger.log.info(IDLOG, 'end setting username to extensions');
   } catch (e) {
     logger.log.error(IDLOG, e.stack);
   }
@@ -10057,7 +10137,7 @@ exports.evtExtenUnconditionalCfChanged = evtExtenUnconditionalCfChanged;
 exports.transferConversationToVoicemail = transferConversationToVoicemail;
 exports.evtExtenUnconditionalCfVmChanged = evtExtenUnconditionalCfVmChanged;
 exports.isPinEnabledAtLeastOneRoute = isPinEnabledAtLeastOneRoute;
-exports.setExtensionUsername = setExtensionUsername;
+exports.setAllExtensionsUsername = setAllExtensionsUsername;
 exports.getUsernameByExtension = getUsernameByExtension;
 exports.getAgentsOfQueues = getAgentsOfQueues;
 exports.evtFullyBooted = evtFullyBooted;

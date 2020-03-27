@@ -248,21 +248,12 @@ function config(path) {
     USERS_CONF_FILEPATH = path;
 
     // read JSON file with the user/endpoint associations
-    var json = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
-    // lower case all usernames used as keys
-    var tmp, userid;
-    for (userid in json) {
-      tmp = json[userid];
-      delete json[userid];
-      json[userid.toLowerCase()] = tmp;
-    }
-    // initialize user objects
-    var newuser;
-    for (userid in json) { // cycle users
-      // add new user in memory
-      newuser = new User(userid, json[userid].name);
-      users[userid] = newuser;
-      logger.log.info(IDLOG, 'new user "' + newuser.getUsername() + '" has been created');
+    let json = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
+    let useridLower;
+    for (let userid in json) {
+      useridLower = userid.toLowerCase();
+      users[useridLower] = new User(useridLower, json[userid].name);
+      logger.log.info(IDLOG, 'new user "' + users[useridLower].getUsername() + '" has been created');
     }
     logger.log.info(IDLOG, Object.keys(users).length + ' users has been created');
 
@@ -301,31 +292,15 @@ function config(path) {
  */
 function setExtensionsUsernameAssociation() {
   try {
-    var e, userExtens, u;
-    for (u in users) {
+    let userExtens;
+    let assoc = {};
+    for (let u in users) {
       userExtens = getAllEndpointsExtension(u);
-      for (e in userExtens) {
-        compAstProxy.setExtensionUsername(e, u);
+      for (let e in userExtens) {
+        assoc[e] = u;
       }
     }
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-  }
-}
-
-/**
- * Reload the component.
- *
- * @method reset
- * @private
- */
-function reset() {
-  try {
-    var k;
-    for (k in users) {
-      delete users[k];
-    }
-    users = {};
+    compAstProxy.setAllExtensionsUsername(assoc);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -340,7 +315,6 @@ function reset() {
 function reload() {
   try {
     reloading = true;
-    reset();
     logger.log.warn(IDLOG, 'reloaded');
     config(USERS_CONF_FILEPATH);
   } catch (err) {
@@ -1777,12 +1751,9 @@ function initializeEndpointsUsersByJSON(json) {
     if (typeof json !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    var userid, endpoType;
-    for (userid in json) { // cycle users
-
+    for (let userid in json) {
       // set the endpoints to the user
-      for (endpoType in json[userid].endpoints) {
+      for (let endpoType in json[userid].endpoints) {
 
         // check the validity of the endpoint type
         if (endpointTypes.isValidEndpointType(endpoType) === false) {
@@ -1911,7 +1882,6 @@ function updateUserPresence(username) {
     if (cf) {
       cfval = compAstProxy.getExtenCfValue(mainExtId);
     }
-
     // set presence
     if (dnd) {
       logger.log.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.dnd + '"');
@@ -1930,7 +1900,6 @@ function updateUserPresence(username) {
       logger.log.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.online + '"');
       users[username].setPresence(userPresence.STATUS.online);
     }
-
     if (!reloading) {
       logger.log.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_CHANGED + '"');
       emitter.emit(EVT_USER_PRESENCE_CHANGED, {
@@ -2087,8 +2056,7 @@ function updateUserPresenceOnBusy(username) {
  */
 function initializeUsersPresence() {
   try {
-    var username;
-    for (username in users) {
+    for (let username in users) {
       updateUserPresence(username);
       updateCondUserPresence(username);
     }
@@ -2113,8 +2081,7 @@ function addEndpointsToUser(userid, endpoType, obj) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     // adds all endpoints of the specified type to the user
-    var id;
-    for (id in obj) { // cycle endpoints
+    for (let id in obj) { // cycle endpoints
       users[userid].addEndpoint(endpoType, id, obj[id]);
       logger.log.info(IDLOG, 'added endpoint "' + endpoType + ' ' + id + '" to user "' + users[userid].getUsername() + '"');
     }

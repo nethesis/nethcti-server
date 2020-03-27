@@ -46,7 +46,7 @@ module.exports = function(options, imports, register) {
       unmuteUserMeetmeConf: astProxy.proxyLogic.unmuteUserMeetmeConf,
       hangupUserMeetmeConf: astProxy.proxyLogic.hangupUserMeetmeConf,
       endMeetmeConf: astProxy.proxyLogic.endMeetmeConf,
-      setExtensionUsername: astProxy.proxyLogic.setExtensionUsername,
+      setAllExtensionsUsername: astProxy.proxyLogic.setAllExtensionsUsername,
       getUsernameByExtension: astProxy.proxyLogic.getUsernameByExtension,
       muteUserMeetmeConf: astProxy.proxyLogic.muteUserMeetmeConf,
       isExtenInMeetmeConf: astProxy.proxyLogic.isExtenInMeetmeConf,
@@ -160,7 +160,7 @@ module.exports = function(options, imports, register) {
     astProxy.setLogger(logger.ctilog);
     astProxy.config('/etc/nethcti/asterisk.json');
     astProxy.configAstObjects('/etc/nethcti/ast_objects.json');
-    astProxy.configExtens('/etc/nethcti/users.json');
+    astProxy.configExtenNames('/etc/nethcti/users.json');
     // astProxy.configRemoteSitesPrefixes('/etc/nethcti/remote_sites.json');
     // astProxy.configSipWebrtc('/etc/nethcti/sip_webrtc.json');
     astProxy.proxyLogic.setCompDbconn(imports.dbconn);
