@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.17.3
+Version: 3.18.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu Apr 02 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.18.0-1
+- Add a proxy to communicate with tancredi and corbera components - nethesis/dev#5728
+
 * Mon Dec 02 2019 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.17.3-1
 - Sometimes reconnection fail - Bug nethesis/dev#5742
 
