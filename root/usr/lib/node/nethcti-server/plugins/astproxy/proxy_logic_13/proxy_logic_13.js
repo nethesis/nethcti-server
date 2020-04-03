@@ -2962,6 +2962,7 @@ function initializePjsipExten(err, results) {
       }
       let extenId = results[e].ext;
       objToUse[extenId] = new Extension(extenId, 'pjsip');
+      objToUse[extenId].setMac(macDataByExt[extenId] ? macDataByExt[extenId] : '');
       parallelOp[extenId] = [];
       parallelOp[extenId].push(getDndExten(extenId));
       parallelOp[extenId].push(getCfExten(extenId));
