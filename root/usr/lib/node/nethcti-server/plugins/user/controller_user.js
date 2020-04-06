@@ -248,12 +248,21 @@ function config(path) {
     USERS_CONF_FILEPATH = path;
 
     // read JSON file with the user/endpoint associations
-    let json = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
-    let useridLower;
-    for (let userid in json) {
-      useridLower = userid.toLowerCase();
-      users[useridLower] = new User(useridLower, json[userid].name);
-      logger.log.info(IDLOG, 'new user "' + users[useridLower].getUsername() + '" has been created');
+    var json = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
+    // lower case all usernames used as keys
+    var tmp, userid;
+    for (userid in json) {
+      tmp = json[userid];
+      delete json[userid];
+      json[userid.toLowerCase()] = tmp;
+    }
+    // initialize user objects
+    var newuser;
+    for (userid in json) { // cycle users
+      // add new user in memory
+      newuser = new User(userid, json[userid].name);
+      users[userid] = newuser;
+      logger.log.info(IDLOG, 'new user "' + newuser.getUsername() + '" has been created');
     }
     logger.log.info(IDLOG, Object.keys(users).length + ' users has been created');
 
