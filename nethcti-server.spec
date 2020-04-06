@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.18.1
+Version: 3.18.2
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Apr 06 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.18.2-1
+- Fix a regression that cause problem during boot for user initialization with capital letter in username
+
 * Sun Apr 05 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.18.1-1
 - Some data inconsistency during reload - Bug nethesis/dev#5758
 
