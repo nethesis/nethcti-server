@@ -17,6 +17,7 @@ var async = require('async');
 var EventEmitter = require('events').EventEmitter;
 var userPresence = require('./user_presence');
 var endpointTypes = require('./endpoint_types');
+const endpointExtension = require('./endpointExtension');
 
 /**
  * The module identifier used by the logger.
@@ -2091,6 +2092,10 @@ function addEndpointsToUser(userid, endpoType, obj) {
     }
     // adds all endpoints of the specified type to the user
     for (let id in obj) { // cycle endpoints
+      if (endpoType === endpointTypes.TYPES.extension && !endpointExtension.isValidExtensionType(obj[id].type)) {
+        logger.log.warn(IDLOG,  `not valid exten type "${obj[id].type}": adding exten ${id} to user "${users[userid].getUsername()}"`);
+        continue;
+      }
       users[userid].addEndpoint(endpoType, id, obj[id]);
       logger.log.info(IDLOG, 'added endpoint "' + endpoType + ' ' + id + '" to user "' + users[userid].getUsername() + '"');
     }
