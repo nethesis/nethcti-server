@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.18.2
+Version: 3.18.3
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Apr 08 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.18.3-1
+- Manage the presence of "webrtc_mobile" exten into users.json - Bug nethesis/dev#5770
+
 * Mon Apr 06 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.18.2-1
 - Fix a regression that cause problem during boot for user initialization with capital letter in username
 
