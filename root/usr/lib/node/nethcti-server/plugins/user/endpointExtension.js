@@ -202,3 +202,40 @@ exports.EndpointExtension = function(identifier, data) {
     getWebApiPassword: getWebApiPassword
   };
 };
+
+/**
+ * The list of the extension types.
+ *
+ * @property TYPES
+ * @type {object}
+ * @readOnly
+ * @default {
+    "physical": "physical",
+    "webrtc": "webrtc",
+    "mobile": "mobile"
+}
+ */
+const TYPES = {
+  physical: 'physical',
+  webrtc: 'webrtc',
+  mobile: 'mobile'
+};
+
+/**
+ * Checks if the extension type is valid.
+ *
+ * @method isValidExtensionType
+ * @param {string} type The type of the extension
+ * @return {boolean} Return true if the type is valid, false otherwise.
+ */
+let isValidExtensionType = type => {
+  if (typeof type !== 'string') {
+    throw new Error('wrong parameter');
+  }
+  if (TYPES[type] !== undefined) {
+    return true;
+  }
+  return false;
+}
+
+exports.isValidExtensionType = isValidExtensionType;
