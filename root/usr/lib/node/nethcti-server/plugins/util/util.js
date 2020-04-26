@@ -178,6 +178,22 @@ function sendHttp401(parentIdLog, resp, err, code) {
   }
 }
 
+function send401(parentIdLog, resp, err, code) {
+  try {
+    if (!err && !code) {
+      resp.code(401).send();
+    } else {
+      var data = {};
+      if (err) { data.message = err; }
+      if (code) { data.code = code; }
+      resp.code(401).send(data);
+    }
+    logger.log.warn(parentIdLog, 'send HTTP 401 response to ' + getRemoteClient(resp) + (err ? ' with message "' + err + '"' : ''));
+  } catch (err) {
+    logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+  }
+}
+
 /**
  * Sends an HTTP 401 unauthorized response with nonce into the WWW-Authenticate http header.
  *
@@ -217,6 +233,15 @@ function sendHttp403(parentIdLog, resp) {
   }
 }
 
+function send403(parentIdLog, resp) {
+  try {
+    resp.code(403).send();
+    logger.log.info(parentIdLog, 'send HTTP 403 response to ' + getRemoteClient(resp));
+  } catch (err) {
+    logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+  }
+}
+
 /**
  * Sends an HTTP 500 internal server error response.
  *
@@ -236,6 +261,17 @@ function sendHttp500(parentIdLog, resp, err) {
     });
     logger.log.error(parentIdLog, 'send HTTP 500 response to ' + getRemoteClientIp(resp));
     resp.end();
+  } catch (err) {
+    logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+  }
+}
+
+function send500(parentIdLog, resp, err) {
+  try {
+    var text;
+    typeof err !== 'string' ? text = '' : text = err;
+    resp.code(500).send({ error: err });
+    logger.log.error(parentIdLog, 'send HTTP 500 response to ' + getRemoteClient(resp));
   } catch (err) {
     logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
   }
@@ -283,6 +319,10 @@ function getRemoteClientIp(resp) {
     logger.log.error(IDLOG, 'retrieving remote client IP: ' + err.stack);
     return resp.connection.remoteAddress;
   }
+}
+
+function getRemoteClient(resp) {
+  return resp.request.headers['x-forwarded-for'];
 }
 
 /**
@@ -371,8 +411,11 @@ var net = {
   sendHttp400: sendHttp400,
   sendHttp404: sendHttp404,
   sendHttp401: sendHttp401,
+  send401: send401,
   sendHttp403: sendHttp403,
+  send403: send403,
   sendHttp500: sendHttp500,
+  send500: send500,
   sendHttp503: sendHttp503,
   sendHttp401Nonce: sendHttp401Nonce,
   getRemoteAddress: getRemoteAddress
