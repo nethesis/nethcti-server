@@ -8295,94 +8295,32 @@ function queueMemberPauseUnpause(endpointId, queueId, reason, paused, cb) {
     // check the endpoint existence
     if (extensions[endpointId]) {
 
-      var obj = {};
+      let obj = {
+        command: 'queueMemberPauseUnpause',
+        exten: endpointId,
+        reason: reason,
+        paused: paused
+      };
+      // if queueId is omitted the action is done on all queues
+      if (queueId) {
+        obj.queue = queueId;
+      }
 
-      // sequentially executes two operations:
-      // 1. pause or resume the member to/from the queue
-      // 2. add a new entry into the "asteriskcdrdb.queue_log" database with the name of the member
-      // This is used by "queue report" application. Without the second operation asterisk only add
-      // an entry with extension identifier data
-      async.series([
-
-        // add the member to the queue
-        function (callback) {
-
-          obj = {
-            command: 'queueMemberPauseUnpause',
-            exten: endpointId,
-            reason: reason,
-            paused: paused
-          };
-
-          // if queueId is omitted the action is done on all queues
-          if (queueId) {
-            obj.queue = queueId;
+      logger.log.info(IDLOG, 'execute ' + logWord + ' ' + endpointId + ' of ' + logWord);
+      astProxy.doCmd(obj, function (err1) {
+        try {
+          if (err1) {
+            var str = logWord + ' extension ' + endpointId + ' from ' + logQueue + ' has been failed: ' + err1.toString();
+            cb(str);
+          } else {
+            logger.log.info(IDLOG, logWord + ' extension ' + endpointId + ' from ' + logQueue + ' has been successful');
+            cb();
           }
-
-          logger.log.info(IDLOG, 'execute ' + logWord + ' ' + endpointId + ' of ' + logQueue);
-          astProxy.doCmd(obj, function (err1) {
-            try {
-              if (err1) {
-                var str = logWord + ' extension ' + endpointId + ' from ' + logQueue + ' has been failed: ' + err1.toString();
-                callback(str);
-
-              } else {
-                logger.log.info(IDLOG, logWord + ' extension ' + endpointId + ' from ' + logQueue + ' has been successful');
-                callback();
-              }
-            } catch (err2) {
-              logger.log.error(IDLOG, err2.stack);
-              cb(err2.stack);
-            }
-          });
-        },
-
-        // add the entry into the "asteriskcdrdb.queue_log" database
-        function (callback) {
-
-          var name = extensions[endpointId].getName();
-          var queueLogEvent = (paused ? 'PAUSE' : 'UNPAUSE');
-
-          obj = {
-            command: 'queueLog',
-            queue: queueId ? queueId : 'all', // queueId is optional and if omitted it means all queues
-            event: queueLogEvent,
-            message: reason,
-            interface: name
-          };
-
-          logger.log.info(IDLOG, 'add new entry in queue_log asterisk db: interface "' + name + '", queue "' +
-            queueId + '", event "' + queueLogEvent + '" and reason "' + reason + '"');
-
-          astProxy.doCmd(obj, function (err3) {
-            try {
-              if (err3) {
-                var str = 'add new entry in "queue_log" asterisk db has been failed: interface "' + name + '", queue "' +
-                  queueId + '", event "' + queueLogEvent + '" and reason "' + reason + '": ' + err3.toString();
-                callback(str);
-
-              } else {
-                logger.log.info(IDLOG, 'add new entry in "queue_log" asterisk db has been successful: interface "' + name + '", queue "' +
-                  queueId + '", event "' + queueLogEvent + '" and reason "' + reason + '"');
-                callback();
-              }
-
-            } catch (err4) {
-              logger.log.error(IDLOG, err4.stack);
-              callback(err4.stack);
-            }
-          });
+        } catch (err2) {
+          logger.log.error(IDLOG, err2.stack);
+          cb(err2.stack);
         }
-
-      ], function (err5) {
-
-        if (err5) {
-          logger.log.error(IDLOG, err5);
-        }
-
-        cb(err5);
       });
-
     } else {
       var err = logWord + ' queue member: extension not present';
       logger.log.warn(IDLOG, err);
