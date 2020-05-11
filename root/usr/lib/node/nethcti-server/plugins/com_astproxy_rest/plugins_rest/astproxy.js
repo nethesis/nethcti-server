@@ -5886,25 +5886,28 @@ function asteriskCall(username, req, res) {
     if (req.params.endpointType === 'cellphone') {
       extenForContext = compConfigManager.getDefaultUserExtensionConf(username);
     }
-    compAstProxy.call(req.params.endpointType, req.params.endpointId, req.params.number, extenForContext, function (err) {
-      try {
-        if (err) {
-          logger.log.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' ' +
-            'using ' + req.params.endpointType + ' ' + req.params.endpointId + ' ' +
-            'with exten for context ' + extenForContext);
-          compUtil.net.sendHttp500(IDLOG, res, err.toString());
-          return;
+    compAstProxy.call(
+      req.params.endpointType,
+      req.params.endpointId,
+      req.params.number,
+      extenForContext,
+      function (err, data) {
+        try {
+          if (err) {
+            logger.log.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' ' +
+              'using ' + req.params.endpointType + ' ' + req.params.endpointId + ' ' +
+              'with exten for context ' + extenForContext);
+            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            return;
+          }
+          logger.log.info(IDLOG, `new call ${data.uniqueid} from user "${username}" to ${req.params.number} with ${req.params.endpointType} ${req.params.endpointId} and exten for context "${extenForContext}" has been successful`);
+          res.send(200, { uniqueid: data.uniqueid });
+        } catch (err1) {
+          logger.log.error(IDLOG, err1.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err1.toString());
         }
-        logger.log.info(IDLOG, 'new call from user "' + username + '" to ' + req.params.number + ' with ' +
-          req.params.endpointType + ' ' + req.params.endpointId + ' and exten for ' +
-          'context "' + extenForContext + '" has been successful');
-        compUtil.net.sendHttp200(IDLOG, res);
-
-      } catch (err1) {
-        logger.log.error(IDLOG, err1.stack);
-        compUtil.net.sendHttp500(IDLOG, res, err1.toString());
       }
-    });
+    );
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());

@@ -6504,9 +6504,9 @@ function call(endpointType, endpointId, to, extenForContext, cb) {
       from: endpointId,
       chanType: extensions[endpointId] ? extensions[endpointId].getChanType() : undefined,
       to: to
-    }, function (error) {
-      cb(error);
-      callCb(error);
+    }, function (error, data) {
+      cb(error, data);
+      callCb(error, data);
     });
   } catch (e) {
     logger.log.error(IDLOG, e.stack);
