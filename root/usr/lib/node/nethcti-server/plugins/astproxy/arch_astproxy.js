@@ -127,6 +127,7 @@ module.exports = function(options, imports, register) {
       EVT_MEETME_CONF_CHANGED: astProxy.proxyLogic.EVT_MEETME_CONF_CHANGED,
       EVT_TRUNK_CHANGED: astProxy.proxyLogic.EVT_TRUNK_CHANGED,
       EVT_EXTEN_DIALING: astProxy.proxyLogic.EVT_EXTEN_DIALING,
+      EVT_CALLIN_BY_TRUNK: astProxy.proxyLogic.EVT_CALLIN_BY_TRUNK,
       EVT_EXTEN_CONNECTED: astProxy.proxyLogic.EVT_EXTEN_CONNECTED,
       EVT_QUEUE_CHANGED: astProxy.proxyLogic.EVT_QUEUE_CHANGED,
       EVT_PARKING_CHANGED: astProxy.proxyLogic.EVT_PARKING_CHANGED,

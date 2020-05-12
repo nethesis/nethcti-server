@@ -256,6 +256,21 @@ var EVT_TRUNK_CHANGED = 'trunkChanged';
 var EVT_EXTEN_DIALING = 'extenDialing';
 
 /**
+ * Fired when a new call is incoming from a trunk.
+ *
+ * @event callInByTrunk
+ * @param {object} data The caller number
+ */
+/**
+ * The name of the call in by trunk event.
+ *
+ * @property EVT_CALLIN_BY_TRUNK
+ * @type string
+ * @default "callInByTrunk"
+ */
+let EVT_CALLIN_BY_TRUNK = 'callInByTrunk';
+
+/**
  * Fired when an extension is connected in a conversation.
  *
  * @event extenConnected
@@ -6118,6 +6133,28 @@ function evtConversationDialing(data) {
 }
 
 /**
+ * A new channel has been created. If it involves a trunk en event
+ * is emitted.
+ *
+ * @method evtNewExternalCallIn
+ * @param {object} data The data received from the _newchannel_ event plugin
+ */
+function evtNewExternalCallIn(data) {
+  try {
+    if (typeof data !== 'object' && typeof data.uniqueid !== 'string' && typeof data.calledNum !== 'string' && typeof data.callerNum !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.info(IDLOG, `emit event ${EVT_CALLIN_BY_TRUNK} on trunk ${data.exten} by caller num ${data.callerNum}`);
+    astProxy.emit(EVT_CALLIN_BY_TRUNK, {
+      callerNum: data.callerNum,
+      uniqueid: data.uniqueid
+    });
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
+
+/**
  * If the involved numbers are extensions, it updates their conversations.
  *
  * @method evtConversationConnected
@@ -10033,6 +10070,7 @@ exports.EVT_EXTEN_CFUVM_CHANGED = EVT_EXTEN_CFUVM_CHANGED;
 exports.EVT_EXTEN_DND_CHANGED = EVT_EXTEN_DND_CHANGED;
 exports.EVT_TRUNK_CHANGED = EVT_TRUNK_CHANGED;
 exports.EVT_EXTEN_DIALING = EVT_EXTEN_DIALING;
+exports.EVT_CALLIN_BY_TRUNK = EVT_CALLIN_BY_TRUNK;
 exports.EVT_QUEUE_CHANGED = EVT_QUEUE_CHANGED;
 exports.getQueueIdsOfExten = getQueueIdsOfExten;
 exports.getJSONQueueStats = getJSONQueueStats;
@@ -10085,6 +10123,7 @@ exports.getEchoCallDestination = getEchoCallDestination;
 exports.evtNewVoicemailMessage = evtNewVoicemailMessage;
 exports.stopRecordConversation = stopRecordConversation;
 exports.evtConversationDialing = evtConversationDialing;
+exports.evtNewExternalCallIn = evtNewExternalCallIn;
 exports.muteRecordConversation = muteRecordConversation;
 exports.getUserExtenIdFromConf = getUserExtenIdFromConf;
 exports.evtRemoveMeetmeUserConf = evtRemoveMeetmeUserConf;
