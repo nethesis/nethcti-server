@@ -5376,8 +5376,13 @@ function call(username, req, res) {
     // If the user has enabled the automatic click2call then make an HTTP
     // request directly to the phone, otherwise make a new call by asterisk
     if (compUser.isExtenWebrtc(req.params.endpointId)) {
-      compComNethctiWs.sendCallWebrtcToClient(username, req.params.number);
-      compUtil.net.sendHttp200(IDLOG, res);
+      if (compAstProxy.isExtenOnline(req.params.endpointId)) {
+        compComNethctiWs.sendCallWebrtcToClient(username, req.params.number);
+        compUtil.net.sendHttp200(IDLOG, res);
+      } else {
+        logger.log.warn(IDLOG, `making call from webrtc exten ${req.params.endpointId}: it is ${compAstProxy.getExtenStatus(req.params.endpointId)}`);
+        compUtil.net.sendHttp500(IDLOG, res, `exten ${req.params.endpointId} is ${compAstProxy.getExtenStatus(req.params.endpointId)}`);
+      }
     } else if (isSupported && compAstProxy.isAutoC2CEnabled()) {
       ajaxPhoneCall(username, req, res);
     } else {
