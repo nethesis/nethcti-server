@@ -4399,6 +4399,42 @@ function getExtensions() {
 }
 
 /**
+ * Return true is the extension status is online.
+ *
+ * @method isExtenOnline
+ * @param {string} exten The extension id
+ * @return {boolean} True is the extension status is online.
+ */
+function isExtenOnline(exten) {
+  try {
+    if (extensions[exten]) {
+      return extensions[exten].isOnline();
+    }
+    return false;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
+ * Return the extension status.
+ *
+ * @method getExtenStatus
+ * @param {string} exten The extension id
+ * @return {string} The extension status.
+ */
+function getExtenStatus(exten) {
+  try {
+    if (extensions[exten]) {
+      return extensions[exten].getStatus();
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Returns a conference of the extension.
  *
  * @method getConference
@@ -9948,6 +9984,8 @@ exports.getPinExtens = getPinExtens;
 exports.isExtenCfuVm = isExtenCfuVm;
 exports.setCompDbconn = setCompDbconn;
 exports.getExtensions = getExtensions;
+exports.isExtenOnline = isExtenOnline;
+exports.getExtenStatus = getExtenStatus;
 exports.getConference = getConference;
 exports.hangupChannel = hangupChannel;
 exports.pickupParking = pickupParking;

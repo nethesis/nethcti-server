@@ -56,6 +56,8 @@ module.exports = function(options, imports, register) {
       startMeetmeConference: astProxy.proxyLogic.startMeetmeConference,
       setUnconditionalCf: astProxy.proxyLogic.setUnconditionalCf,
       getExtensions: astProxy.proxyLogic.getExtensions,
+      isExtenOnline: astProxy.proxyLogic.isExtenOnline,
+      getExtenStatus: astProxy.proxyLogic.getExtenStatus,
       getExtensionAgent: astProxy.proxyLogic.getExtensionAgent,
       getExtensionIp: astProxy.proxyLogic.getExtensionIp,
       getPrefix: astProxy.proxyLogic.getPrefix,
