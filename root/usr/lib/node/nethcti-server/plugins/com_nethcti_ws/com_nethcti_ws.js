@@ -1741,7 +1741,10 @@ function extenConnected(data) {
         wsServer.sockets.sockets[socketId].emit(EVT_EXTEN_CONNECTED, o);
         wsServer.sockets.sockets[socketId].emit(EVT_EXTEN_CONV_CONNECTED, {
           num1: data.num1,
-          num2: data.num2
+          num2: data.num2,
+          direction: data.direction,
+          uniqueid: data.uniqueid,
+          throughTrunk: data.throughTrunk
         });
       }
     }
