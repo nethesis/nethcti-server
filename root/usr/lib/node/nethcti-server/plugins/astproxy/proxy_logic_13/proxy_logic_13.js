@@ -6160,8 +6160,10 @@ function evtNewExternalCallIn(data) {
  * @method evtConversationConnected
  * @param {string} num1 One of the two connected numbers
  * @param {string} num2 The other of the two connected numbers
+ * @param {string} uniqueid The uniqueid of the call
+ * @param {string} linkedid The linkedid of the call
  */
-function evtConversationConnected(num1, num2) {
+function evtConversationConnected(num1, num2, uniqueid, linkedid) {
   try {
     // check parameters
     if (typeof num1 !== 'string' || typeof num2 !== 'string') {
@@ -6173,7 +6175,10 @@ function evtConversationConnected(num1, num2) {
     logger.log.info(IDLOG, 'emit event ' + EVT_EXTEN_CONNECTED + ' between num1=' + num1 + ' and num2=' + num2);
     astProxy.emit(EVT_EXTEN_CONNECTED, {
       num1: num1,
-      num2: num2
+      num2: num2,
+      direction: uniqueid === linkedid ? 'out' : 'in',
+      uniqueid: uniqueid,
+      throughTrunk: (extensions[num1] && extensions[num2]) ? false : true
     });
     getListChannelsForTrunks();
   } catch (err) {

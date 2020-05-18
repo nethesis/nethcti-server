@@ -55,10 +55,19 @@ var astProxy;
        */
       data: function(data) {
         try {
-          if (data.channel && data.connectedlinenum && data.event === 'BridgeEnter') {
+          if (data.channel &&
+            data.connectedlinenum &&
+            data.uniqueid &&
+            data.linkedid &&
+            data.event === 'BridgeEnter') {
             logger.log.info(IDLOG, 'received event ' + data.event);
             var channelExten = utilChannel13.extractExtensionFromChannel(data.channel);
-            astProxy.proxyLogic.evtConversationConnected(channelExten, data.connectedlinenum);
+            astProxy.proxyLogic.evtConversationConnected(
+              channelExten,
+              data.connectedlinenum,
+              data.uniqueid,
+              data.linkedid
+            );
           }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
