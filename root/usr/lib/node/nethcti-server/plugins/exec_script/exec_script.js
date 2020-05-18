@@ -169,6 +169,7 @@ function setAstProxyListeners() {
       // listen for each new call detail records (cdr) emitted by the asterisk proxy component.
       // It emits the event each time a new cdr has been logged into the call history
       compAstProxy.on(compAstProxy.EVT_NEW_CDR, evtNewCdr);
+      compAstProxy.on(compAstProxy.EVT_CALLIN_BY_TRUNK, evtCallInByTrunk);
       logger.log.info(IDLOG, 'new listener has been set for "' + compAstProxy.EVT_NEW_CDR + '" event in the astProxy component');
     }
   } catch (err) {
@@ -212,6 +213,9 @@ function evtNewCdr(data) {
     var params = '';
 
     for (k in data) {
+      if (data[k] === null || data[k] === undefined) {
+        data[k] = '';
+      }
       temp = data[k].replace(/'/g, "\\'");
       temp = '"' + data[k].replace(/"/g, "\\\"") + '"';
       params += temp + SEP;
@@ -232,6 +236,53 @@ function evtNewCdr(data) {
         } else {
           logger.log.error(IDLOG, 'executing script - ' + cmd + ' - with ' + configJSON.cdr.timeout + ' msec timeout after "' + compAstProxy.EVT_NEW_CDR +
           '" event with uniqueid "' + data.uniqueid + '": exit code "' + error.code + '" signal "' + error.signal + '"');
+          logger.log.error(IDLOG, stderr);
+        }
+      } catch (err) {
+        logger.log.error(IDLOG, err.stack);
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * A new call has been arrived on a trunk. It executes an external script and
+ * it will kill the child process if it runs longer than timeout interval.
+ *
+ * @method evtCallInByTrunk
+ * @param {object} data
+ *  @param {string} data.trunk The trunk id
+ *  @param {string} data.callerNum The caller number
+ */
+function evtCallInByTrunk(data) {
+  try {
+    if (typeof data !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.info(IDLOG, `received event "${compAstProxy.EVT_CALLIN_BY_TRUNK}" from astProxy for trunk ${data.trunk} with caller num ${data.callerNum}`);
+    let temp;
+    let SEP = ' ';
+    let params = '';
+    for (let k in data) {
+      if (data[k] === null || data[k] === undefined) {
+        data[k] = '';
+      }
+      temp = data[k].replace(/'/g, "\\'");
+      temp = '"' + data[k].replace(/"/g, "\\\"") + '"';
+      params += temp + SEP;
+    }
+    let cmd = (configJSON.callIn.script + SEP + params).trim();
+    logger.log.info(IDLOG, `executing script - ${cmd} (${configJSON.callIn.timeout} msec timeout) after "${compAstProxy.EVT_CALLIN_BY_TRUNK}" evt on trunk ${data.trunk} by caller num ${data.callerNum}`);
+    childProcess.exec(cmd, {
+      timeout: configJSON.callIn.timeout
+    }, function (error, stdout, stderr) {
+      try {
+        if (error === null) {
+          logger.log.info(IDLOG, `script - ${cmd} - successfully executed after "${compAstProxy.EVT_CALLIN_BY_TRUNK}" evt on trunk ${data.trunk} by caller num ${data.callerNum}`);
+        } else {
+          logger.log.error(IDLOG, `executing script - ${cmd} - with ${configJSON.callIn.timeout} msec timeout after "${compAstProxy.EVT_CALLIN_BY_TRUNK}" evt on trunk ${data.trunk} by caller num ${data.callerNum}: exit code "${error.code}" signal "${error.signal}"`);
           logger.log.error(IDLOG, stderr);
         }
       } catch (err) {
