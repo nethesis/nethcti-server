@@ -732,6 +732,7 @@ var compConfigManager;
         * 1. [`astproxy/unauthe_call`](#unauthe_callpost)
         * 1. [`astproxy/op_wait_conv`](#op_wait_convpost)
         * 1. [`astproxy/pin`](#pinpost)
+        * 1. [`astproxy/incall_audio`](#incall_audiopost)
         *
         * ---
         *
@@ -1211,7 +1212,7 @@ var compConfigManager;
         *
         *     { "convid": "PJSIP/200-00000033>PJSIP/201-00000034" }
         *
-        * * ---
+        * ---
         *
         * ### <a id="pinpost">**`astproxy/pin`**</a>
         *
@@ -1225,6 +1226,17 @@ var compConfigManager;
         *
         *     { "extension": "91223", "enabled: true, "pin": "1234" }
         *
+        * ---
+        *
+        * ### <a id="incall_audiopost">**`astproxy/incall_audio`**</a>
+        *
+        * Listen an audio file into the current conversation of the user. The request must contains the following parameters:
+        *
+        * * `audio_id: the identifier of the audio file`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "audio_id": "111" }
         *
         * <br>
         *
@@ -1360,6 +1372,7 @@ var compConfigManager;
          *   @param {string} unauthe_call          Unauthenticated call from any extension to any destination number
          *   @param {string} op_wait_conv          puts the conversation waiting into the waiting queue associated to the user profile
          *   @param {string} pin                   Sets the pin for an extension
+         *   @param {string} incall_audio          Listen an audio file into the current conversation
          *   @param {string} mute_userconf         Mute a user of a meetme conference
          *   @param {string} answer_webrtc         Answer a conversation from the webrtc extension sending the command to the client
          *   @param {string} blindtransfer         Transfer a conversation with blind type
@@ -1408,6 +1421,7 @@ var compConfigManager;
           'unauthe_call',
           'op_wait_conv',
           'pin',
+          'incall_audio',
           'mute_userconf',
           'answer_webrtc',
           'blindtransfer',
@@ -2762,6 +2776,64 @@ var compConfigManager;
             compUtil.net.sendHttp400(IDLOG, res);
           }
 
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * Listen an audio file into the current conversation of the user with the following REST API:
+       *
+       *     POST incall_audio
+       *
+       * @method call
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      incall_audio: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          if (typeof req.params !== 'object' || typeof req.params.audio_id !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+          if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
+            logger.log.info(IDLOG, `incall_audio by user ${username} with audio_id ${req.params.audio_id}: has the "admin queues" permission`);
+          } else {
+            logger.log.warn(IDLOG, `incall_audio by user ${username} with audio_id ${req.params.audio_id}: permission failed`);
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          let userExtensions = Object.keys(compUser.getAllEndpointsExtension(username));
+          let extToUse;
+          for (let i = 0; i < userExtensions.length; i++) {
+            if (compAstProxy.extenHasConv(userExtensions[i])) {
+              extToUse = userExtensions[i];
+              break;
+            }
+          }
+          if (extToUse) {
+            compAstProxy.inCallAudio(extToUse, req.params.audio_id, err => {
+              try {
+                if (err) {
+                  logger.log.warn(IDLOG, `incall_audio by user ${username} with audio_id ${req.params.audio_id} in exten ${extToUse}: failed`);
+                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                  return;
+                }
+                logger.log.info(IDLOG, `incall_audio by user ${username} with audio_id ${req.params.audio_id} in exten ${extToUse}: success`);
+                compUtil.net.sendHttp200(IDLOG, res);
+              } catch (error) {
+                logger.log.error(IDLOG, error.stack);
+                compUtil.net.sendHttp500(IDLOG, res, error.toString());
+              }
+            });
+          } else {
+            let msg = `incall_audio by user ${username} with audio_id ${req.params.audio_id}: no exten with conversation is present`;
+            logger.log.warn(IDLOG, msg);
+            compUtil.net.sendHttp500(IDLOG, res, msg);
+          }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -5160,6 +5232,7 @@ var compConfigManager;
     exports.dnd = astproxy.dnd;
     exports.park = astproxy.park;
     exports.call = astproxy.call;
+    exports.incall_audio = astproxy.incall_audio;
     exports.dtmf = astproxy.dtmf;
     exports.mute = astproxy.mute;
     exports.cfvm = astproxy.cfvm;

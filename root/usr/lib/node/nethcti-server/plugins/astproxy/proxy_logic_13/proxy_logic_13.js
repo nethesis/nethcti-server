@@ -4433,6 +4433,25 @@ function isExtenOnline(exten) {
 }
 
 /**
+ * Return true if the extension has a conversation.
+ *
+ * @method extenHasConv
+ * @param {string} exten The extension id
+ * @return {boolean} True if the extension has a conversation.
+ */
+function extenHasConv(exten) {
+  try {
+    if (extensions[exten]) {
+      return extensions[exten].conversationCount() > 0 ? true : false;
+    }
+    return false;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
  * Return the extension status.
  *
  * @method getExtenStatus
@@ -6549,6 +6568,53 @@ function call(endpointType, endpointId, to, extenForContext, cb) {
     }, function (error, data) {
       cb(error, data);
       callCb(error, data);
+    });
+  } catch (e) {
+    logger.log.error(IDLOG, e.stack);
+    cb(e);
+  }
+}
+
+/**
+ * Return the code for in call audio function.
+ *
+ * @method getInCallAudioCode
+ * @return {string} The code for in call audio function.
+ */
+function getInCallAudioCode() {
+  try {
+    return featureCodes['incall_audio'];
+  } catch (e) {
+    logger.log.error(IDLOG, e.stack);
+  }
+}
+
+/**
+ * Listen an audio file into the current conversation of the user.
+ *
+ * @method inCallAudio
+ * @param {string} exten The extension with the conversation audio
+ * @param {string} audioId The identifier of the audio file
+ * @param {function} cb The callback function
+ */
+function inCallAudio(exten, audioId, cb) {
+  try {
+    if (typeof cb !== 'function' || typeof exten !== 'string' || typeof audioId !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (!extensions[exten]) {
+      let err = 'incall_audio from non existent extension ' + exten;
+      logger.log.warn(IDLOG, err);
+      cb(err);
+      return;
+    }
+    logger.log.info(IDLOG, 'execute incall_audio for exten ' + exten + ' with audioId ' + audioId);
+    astProxy.doCmd({
+      command: 'inCallAudio',
+      extension: getInCallAudioCode() + exten,
+      audioId: audioId
+    }, function (error) {
+      cb(error);
     });
   } catch (e) {
     logger.log.error(IDLOG, e.stack);
@@ -10027,6 +10093,7 @@ exports.isExtenCfuVm = isExtenCfuVm;
 exports.setCompDbconn = setCompDbconn;
 exports.getExtensions = getExtensions;
 exports.isExtenOnline = isExtenOnline;
+exports.extenHasConv = extenHasConv;
 exports.getExtenStatus = getExtenStatus;
 exports.getConference = getConference;
 exports.hangupChannel = hangupChannel;
@@ -10163,3 +10230,4 @@ exports.getUsernameByExtension = getUsernameByExtension;
 exports.getAgentsOfQueues = getAgentsOfQueues;
 exports.evtFullyBooted = evtFullyBooted;
 exports.getExtenFromMac = getExtenFromMac;
+exports.inCallAudio = inCallAudio;
