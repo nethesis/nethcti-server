@@ -523,7 +523,7 @@ var prefix = '';
 /**
  * The types of the automatic click2call.
  *
- * @property AUTO_C2C_TYPES
+ * @property C2C_TYPES
  * @type object
  * @default {
   "AUTOMATIC": "",
@@ -532,7 +532,7 @@ var prefix = '';
 }
  * @private
  */
-const AUTO_C2C_TYPES = {
+const C2C_TYPES = {
   AUTOMATIC: 'automatic',
   MANUAL: 'manual',
   CLOUD: 'cloud'
@@ -540,14 +540,14 @@ const AUTO_C2C_TYPES = {
 
 /**
  * The configured type of automatic click2call. It can be
- * one of the AUTO_C2C_TYPES.
+ * one of the C2C_TYPES.
  *
- * @property autoC2CMode
+ * @property c2cMode
  * @type string
- * @default AUTO_C2C_TYPES.AUTOMATIC
+ * @default C2C_TYPES.AUTOMATIC
  * @private
  */
-let autoC2CMode = AUTO_C2C_TYPES.AUTOMATIC;
+let c2cMode = C2C_TYPES.AUTOMATIC;
 
 /**
  * If the trunks events has to be managed.
@@ -842,19 +842,34 @@ function setPrefix(code) {
 }
 
 /**
- * Set the autoc2c mode to be used.
+ * Set the c2c mode to be used.
  *
- * @method setAutoC2CStatus
+ * @method setC2CMode
  * @param {string} status The status ("enabled"|"disabled"|"cloud").
  * @static
  */
-function setAutoC2CStatus(status) {
+function setC2CMode(status) {
   try {
     if (typeof status !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    autoC2CMode = status === 'cloud' ? AUTO_C2C_TYPES.CLOUD : (status === 'enabled' ? AUTO_C2C_TYPES.AUTOMATIC : AUTO_C2C_TYPES.MANUAL);
+    c2cMode = status === 'cloud' ? C2C_TYPES.CLOUD : (status === 'enabled' ? C2C_TYPES.AUTOMATIC : C2C_TYPES.MANUAL);
     logger.log.info(IDLOG, 'auto c2c has been set to "' + status + '"');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Get the configured c2c mode.
+ *
+ * @method getC2CMode
+ * @return {string} The click2call mode.
+ * @static
+ */
+function getC2CMode() {
+  try {
+    return c2cMode;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -889,7 +904,7 @@ function setNullCallPeriod(period) {
  */
 function isAutoC2CEnabled() {
   try {
-    return autoC2CMode === AUTO_C2C_TYPES.AUTOMATIC;
+    return c2cMode === C2C_TYPES.AUTOMATIC;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -10139,7 +10154,7 @@ exports.EVT_EXTEN_HANGUP = EVT_EXTEN_HANGUP;
 exports.muteConversation = muteConversation;
 exports.sendDTMFSequence = sendDTMFSequence;
 exports.parkConversation = parkConversation;
-exports.setAutoC2CStatus = setAutoC2CStatus;
+exports.setC2CMode = setC2CMode;
 exports.setNullCallPeriod = setNullCallPeriod;
 exports.isAutoC2CEnabled = isAutoC2CEnabled;
 exports.setCompPhonebook = setCompPhonebook;
@@ -10250,3 +10265,4 @@ exports.getAgentsOfQueues = getAgentsOfQueues;
 exports.evtFullyBooted = evtFullyBooted;
 exports.getExtenFromMac = getExtenFromMac;
 exports.inCallAudio = inCallAudio;
+exports.getC2CMode = getC2CMode;

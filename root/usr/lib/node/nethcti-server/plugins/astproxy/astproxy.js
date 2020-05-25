@@ -175,7 +175,7 @@ function config(path) {
     };
     proxyLogic.setQMAlarmsNotificationsStatus(json.qm_alarms_notifications);
     proxyLogic.setPrefix(json.prefix);
-    proxyLogic.setAutoC2CStatus(json.auto_c2c);
+    proxyLogic.setC2CMode(json.auto_c2c);
     proxyLogic.setNullCallPeriod(parseInt(json.null_call_period));
     if (json.trunks_events === 'disabled') {
       proxyLogic.disableTrunksEvents();

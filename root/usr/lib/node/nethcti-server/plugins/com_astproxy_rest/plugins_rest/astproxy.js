@@ -151,6 +151,7 @@ var compConfigManager;
         * 1. [`astproxy/qalarms`](#qalarmsget)
         * 1. [`astproxy/pin`](#pinget)
         * 1. [`astproxy/pinstatus`](#pinstatusget)
+        * 1. [`astproxy/c2cmode`](#c2cmodeget)
         *
         * ---
         *
@@ -690,6 +691,18 @@ var compConfigManager;
         *
         *     {
          "enabled": true
+     }
+        *
+        * ---
+        *
+        * ### <a id="c2cmodeget">**`astproxy/c2cmode`**</a>
+        *
+        * Gets the clic2call mode. It can be ("automatic"|"manual"|"cloud").
+        *
+        * Example JSON response:
+        *
+        *     {
+         "c2cmode": "automatic"
      }
         *
         *
@@ -1304,6 +1317,7 @@ var compConfigManager;
          *   @param {string} qalarms                               Gets all the queues alarms
          *   @param {string} pin                                   Gets all the pin of the physical phones of the user
          *   @param {string} pinstatus                             Gets the activation status of the pin at outbound routes level
+         *   @param {string} c2cmode                           Gets the click2call mode
          */
         'get': [
           'queues',
@@ -1334,7 +1348,8 @@ var compConfigManager;
           'opdata',
           'qalarms',
           'pin',
-          'pinstatus'
+          'pinstatus',
+          'c2cmode'
         ],
 
         /**
@@ -2188,6 +2203,28 @@ var compConfigManager;
             logger.log.info(IDLOG, 'sent pin status activation "' + activation + '" (in at least one route) to user "' + username + '" ' + res.connection.remoteAddress);
             res.send(200, { enabled: activation });
           });
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      },
+
+      /**
+       * Gets the click2call mode with the following REST API:
+       *
+       *     GET  c2cmode
+       *
+       * @method c2cmode
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      c2cmode: function (req, res, next) {
+        try {
+          let username = req.headers.authorization_user;
+          let mode = compAstProxy.getC2CMode();
+          logger.log.info(IDLOG, `sent c2cmode "${mode}" to user "${username}" ${res.connection.remoteAddress}`);
+          res.send(200, { c2cmode: mode });
         } catch (error) {
           logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -5246,6 +5283,7 @@ var compConfigManager;
     exports.atxfer = astproxy.atxfer;
     exports.answer = astproxy.answer;
     exports.opdata = astproxy.opdata;
+    exports.c2cmode = astproxy.c2cmode;
     exports.qalarms = astproxy.qalarms;
     exports.intrude = astproxy.intrude;
     exports.end_conf = astproxy.end_conf;

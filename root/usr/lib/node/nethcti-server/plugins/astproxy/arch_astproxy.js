@@ -154,6 +154,7 @@ module.exports = function(options, imports, register) {
       inCallAudio: astProxy.proxyLogic.inCallAudio,
       isExtenDnd: astProxy.proxyLogic.isExtenDnd,
       isAutoC2CEnabled: astProxy.proxyLogic.isAutoC2CEnabled,
+      getC2CMode: astProxy.proxyLogic.getC2CMode,
       getRecallData: queueRecallingManager.getRecallData,
       getQueueRecallInfo: queueRecallingManager.getQueueRecallInfo,
       checkQueueRecallingStatus: queueRecallingManager.checkQueueRecallingStatus
