@@ -521,14 +521,33 @@ var astProxy;
 var prefix = '';
 
 /**
- * If the automatica click 2 call has to be used or not.
+ * The types of the automatic click2call.
  *
- * @property autoC2CEnabled
- * @type boolean
- * @default true
+ * @property AUTO_C2C_TYPES
+ * @type object
+ * @default {
+  "AUTOMATIC": "",
+  "MANUAL": "",
+  "CLOUD": ""
+}
  * @private
  */
-var autoC2CEnabled = true;
+const AUTO_C2C_TYPES = {
+  AUTOMATIC: 'automatic',
+  MANUAL: 'manual',
+  CLOUD: 'cloud'
+};
+
+/**
+ * The configured type of automatic click2call. It can be
+ * one of the AUTO_C2C_TYPES.
+ *
+ * @property autoC2CMode
+ * @type string
+ * @default AUTO_C2C_TYPES.AUTOMATIC
+ * @private
+ */
+let autoC2CMode = AUTO_C2C_TYPES.AUTOMATIC;
 
 /**
  * If the trunks events has to be managed.
@@ -823,10 +842,10 @@ function setPrefix(code) {
 }
 
 /**
- * Enable/disable if automatica click 2 call has to be used.
+ * Set the autoc2c mode to be used.
  *
  * @method setAutoC2CStatus
- * @param {string} status The status ("enabled"|"disabled").
+ * @param {string} status The status ("enabled"|"disabled"|"cloud").
  * @static
  */
 function setAutoC2CStatus(status) {
@@ -834,7 +853,7 @@ function setAutoC2CStatus(status) {
     if (typeof status !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    autoC2CEnabled = status === 'enabled' ? true : false;
+    autoC2CMode = status === 'cloud' ? AUTO_C2C_TYPES.CLOUD : (status === 'enabled' ? AUTO_C2C_TYPES.AUTOMATIC : AUTO_C2C_TYPES.MANUAL);
     logger.log.info(IDLOG, 'auto c2c has been set to "' + status + '"');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -870,7 +889,7 @@ function setNullCallPeriod(period) {
  */
 function isAutoC2CEnabled() {
   try {
-    return autoC2CEnabled;
+    return autoC2CMode === AUTO_C2C_TYPES.AUTOMATIC;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
