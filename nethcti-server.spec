@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.18.3
+Version: 3.19.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,15 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri May 29 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.19.0-1
+- Insert audio into a conversation - nethesis/dev#5808
+- Add call "uniqueid" into astproxy/call response - nethesis/dev#5806
+- Additional data into "extenConvConnected" event from cti server - nethesis/dev#5804
+- Add possibility to execute a script for each incoming external call - nethesis/dev#5805
+- Improve management of parameterized URL - nethesis/dev#5803
+- Wrong response code using rest api `astproxy/call` using offline webrtc - Bug nethesis/dev#5801
+- NethCTI: Pauses are doubled - Bug nethesis/dev#5793
+
 * Wed Apr 08 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.18.3-1
 - Manage the presence of "webrtc_mobile" exten into users.json - Bug nethesis/dev#5770
 
