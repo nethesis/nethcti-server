@@ -1744,6 +1744,7 @@ function extenConnected(data) {
           num2: data.num2,
           direction: data.direction,
           uniqueid: data.uniqueid,
+          linkedid: data.linkedid,
           throughTrunk: data.throughTrunk
         });
       }
