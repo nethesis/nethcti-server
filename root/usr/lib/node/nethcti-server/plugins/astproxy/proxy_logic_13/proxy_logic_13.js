@@ -6197,6 +6197,7 @@ function evtConversationConnected(num1, num2, uniqueid, linkedid) {
       num2: num2,
       direction: uniqueid === linkedid ? 'out' : 'in',
       uniqueid: uniqueid,
+      linkedid: linkedid,
       throughTrunk: (extensions[num1] && extensions[num2]) ? false : true
     });
     getListChannelsForTrunks();
