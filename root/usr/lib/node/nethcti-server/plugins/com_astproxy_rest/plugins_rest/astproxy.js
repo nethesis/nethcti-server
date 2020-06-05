@@ -152,6 +152,7 @@ var compConfigManager;
         * 1. [`astproxy/pin`](#pinget)
         * 1. [`astproxy/pinstatus`](#pinstatusget)
         * 1. [`astproxy/c2cmode`](#c2cmodeget)
+        * 1. [`astproxy/phoneurls`](#phoneurlsget)
         *
         * ---
         *
@@ -703,6 +704,26 @@ var compConfigManager;
         *
         *     {
          "c2cmode": "automatic"
+     }
+        *
+        * ---
+        *
+        * ### <a id="phoneurlsget">**`astproxy/phoneurls`**</a>
+        *
+        * Gets the phone URLs of the user.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "phoneurls": {
+           "2001": {
+             "urls": {
+               "answer": "http://user:pass@192.168.0.50/servlet?key=OK",
+               ...
+             }
+           },
+           ...
+         }
      }
         *
         *
@@ -1317,7 +1338,8 @@ var compConfigManager;
          *   @param {string} qalarms                               Gets all the queues alarms
          *   @param {string} pin                                   Gets all the pin of the physical phones of the user
          *   @param {string} pinstatus                             Gets the activation status of the pin at outbound routes level
-         *   @param {string} c2cmode                           Gets the click2call mode
+         *   @param {string} c2cmode                               Gets the click2call mode
+         *   @param {string} phoneurls                             Gets the phone URLs of the user
          */
         'get': [
           'queues',
@@ -1349,7 +1371,8 @@ var compConfigManager;
           'qalarms',
           'pin',
           'pinstatus',
-          'c2cmode'
+          'c2cmode',
+          'phoneurls'
         ],
 
         /**
@@ -2225,6 +2248,78 @@ var compConfigManager;
           let mode = compAstProxy.getC2CMode();
           logger.log.info(IDLOG, `sent c2cmode "${mode}" to user "${username}" ${res.connection.remoteAddress}`);
           res.send(200, { c2cmode: mode });
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      },
+
+      /**
+       * Gets the click2call mode with the following REST API:
+       *
+       *     GET  phoneurls
+       *
+       * @method phoneurls
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      phoneurls: function (req, res, next) {
+        try {
+          let username = req.headers.authorization_user;
+          let results = {};
+          let extens = compUser.getAllUserExtensions(username);
+          let url, phoneUser, phonePass;
+          for (let i = 0; i < extens.length; i++) {
+            results[extens[i]] = { urls: {} };
+            extenAgent = compAstProxy.getExtensionAgent(extens[i]);
+            let isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
+            if (isSupported) {
+              let extenIp = compAstProxy.getExtensionIp(extens[i]);
+              // call url
+              url = compConfigManager.getCallUrlFromAgent(extenAgent);
+              if (typeof url === 'string' && url !== '') {
+                phoneUser = compUser.getPhoneWebUser(username, extens[i]);
+                phonePass = compUser.getPhoneWebPass(username, extens[i]);
+                url = url.replace(/\$PHONE_IP/g, extenIp);
+                url = url.replace(/\$PHONE_USER/g, phoneUser);
+                url = url.replace(/\$PHONE_PASS/g, phonePass);
+                results[extens[i]].urls.call = url;
+              }
+              // answer url
+              url = compConfigManager.getAnswerUrlFromAgent(extenAgent);
+              if (typeof url === 'string' && url !== '') {
+                phoneUser = compUser.getPhoneWebUser(username, extens[i]);
+                phonePass = compUser.getPhoneWebPass(username, extens[i]);
+                url = url.replace(/\$PHONE_IP/g, extenIp);
+                url = url.replace(/\$PHONE_USER/g, phoneUser);
+                url = url.replace(/\$PHONE_PASS/g, phonePass);
+                results[extens[i]].urls.answer = url;
+              }
+              // hold/unhold url
+              url = compConfigManager.getHoldUnholdUrlFromAgent(extenAgent);
+              if (typeof url === 'string' && url !== '') {
+                phoneUser = compUser.getPhoneWebUser(username, extens[i]);
+                phonePass = compUser.getPhoneWebPass(username, extens[i]);
+                url = url.replace(/\$PHONE_IP/g, extenIp);
+                url = url.replace(/\$PHONE_USER/g, phoneUser);
+                url = url.replace(/\$PHONE_PASS/g, phonePass);
+                results[extens[i]].urls.holdUnhold = url;
+              }
+              // dtmf url
+              url = compConfigManager.getDtmfUrlFromAgent(extenAgent);
+              if (typeof url === 'string' && url !== '') {
+                phoneUser = compUser.getPhoneWebUser(username, extens[i]);
+                phonePass = compUser.getPhoneWebPass(username, extens[i]);
+                url = url.replace(/\$PHONE_IP/g, extenIp);
+                url = url.replace(/\$PHONE_USER/g, phoneUser);
+                url = url.replace(/\$PHONE_PASS/g, phonePass);
+                results[extens[i]].urls.dtmf = url;
+              }
+            }
+          }
+          logger.log.info(IDLOG, `sent phone urls to user "${username}"`);
+          res.send(200, { phoneUrls: results });
         } catch (error) {
           logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -5284,6 +5379,7 @@ var compConfigManager;
     exports.answer = astproxy.answer;
     exports.opdata = astproxy.opdata;
     exports.c2cmode = astproxy.c2cmode;
+    exports.phoneurls = astproxy.phoneurls;
     exports.qalarms = astproxy.qalarms;
     exports.intrude = astproxy.intrude;
     exports.end_conf = astproxy.end_conf;
