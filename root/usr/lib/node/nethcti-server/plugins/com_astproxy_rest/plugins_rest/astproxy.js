@@ -2738,6 +2738,9 @@ var compConfigManager;
             compUtil.net.sendHttp500(IDLOG, res, str);
           } else {
             ajaxPhoneHoldUnhold(username, req, res);
+            if (compAstProxy.isC2CModeCloud()) {
+              logger.log.warn(IDLOG, 'fallback mode: toggle hold/unhold by ajax to phone but c2cmode is set to "cloud"');
+            }
           }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
@@ -3479,7 +3482,9 @@ var compConfigManager;
             return;
           }
           ajaxPhoneAnswer(username, req, res);
-
+          if (compAstProxy.isC2CModeCloud()) {
+            logger.log.warn(IDLOG, 'fallback mode: answering by ajax call to phone but c2cmode is set to "cloud"');
+          }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -5213,6 +5218,9 @@ var compConfigManager;
             compUtil.net.sendHttp500(IDLOG, res, str);
           } else {
             ajaxPhoneDtmf(username, req, res);
+            if (compAstProxy.isC2CModeCloud()) {
+              logger.log.warn(IDLOG, 'fallback mode: sending dtmf by ajax to phone but c2cmode is set to "cloud"');
+            }
           }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
@@ -5594,6 +5602,9 @@ function call(username, req, res) {
       ajaxPhoneCall(username, req, res);
     } else {
       asteriskCall(username, req, res);
+      if (isSupported && compAstProxy.isC2CModeCloud()) {
+        logger.log.warn(IDLOG, 'fallback mode: making asterisk call by ajax to phone but c2cmode is set to "cloud"');
+      }
     }
   } catch (error) {
     logger.log.error(IDLOG, error.stack);

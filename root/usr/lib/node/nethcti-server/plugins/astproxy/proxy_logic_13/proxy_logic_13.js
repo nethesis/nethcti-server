@@ -876,6 +876,21 @@ function getC2CMode() {
 }
 
 /**
+ * Check if c2cmode is set to cloud.
+ *
+ * @method isC2CModeCloud
+ * @return {boolean} True if the c2c mode is set to cloud.
+ * @static
+ */
+function isC2CModeCloud() {
+  try {
+    return c2cMode === C2C_TYPES.CLOUD;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Set the period of time to consider a call as null. All calls with
  * waiting time less than this period is considered null.
  *
@@ -10266,3 +10281,4 @@ exports.evtFullyBooted = evtFullyBooted;
 exports.getExtenFromMac = getExtenFromMac;
 exports.inCallAudio = inCallAudio;
 exports.getC2CMode = getC2CMode;
+exports.isC2CModeCloud = isC2CModeCloud;

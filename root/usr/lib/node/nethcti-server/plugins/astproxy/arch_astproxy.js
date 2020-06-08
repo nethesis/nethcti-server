@@ -65,6 +65,7 @@ module.exports = function(options, imports, register) {
       isTrunk: astProxy.proxyLogic.isTrunk,
       isExten: astProxy.proxyLogic.isExten,
       hangupChannel: astProxy.proxyLogic.hangupChannel,
+      isC2CModeCloud: astProxy.proxyLogic.isC2CModeCloud,
       hangupConversation: astProxy.proxyLogic.hangupConversation,
       hangupMainExtension: astProxy.proxyLogic.hangupMainExtension,
       forceHangupConversation: astProxy.proxyLogic.forceHangupConversation,
