@@ -296,10 +296,101 @@ module.exports = function(options, imports, register) {
     }
   }
 
+  /**
+   * Reload the component.
+   *
+   * @method reload
+   */
+  function reload() {
+    try {
+      astProxy.proxyLogic.setReloading(true);
+      astProxy.reset();
+      asteriskConfiguration();
+      asteriskObjectsConfiguration();
+      extenNamesConfiguration();
+      astProxy.proxyLogic.start();
+      logger.log.warn(IDLOG, 'reloaded');
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+    }
+  }
+
+  /**
+   * Asterisk configuration.
+   *
+   * @method asteriskConfiguration
+   */
+  function asteriskConfiguration() {
+    try {
+      const AST_CONF_FILEPATH = '/etc/nethcti/asterisk.json';
+      let json = JSON.parse(fs.readFileSync(AST_CONF_FILEPATH, 'utf8'));
+      if (typeof json.user !== 'string' ||
+        typeof json.auto_c2c !== 'string' ||
+        typeof json.null_call_period !== 'string' ||
+        typeof json.pass !== 'string' || typeof json.prefix !== 'string' ||
+        typeof json.host !== 'string' || typeof json.port !== 'string') {
+
+        throw new Error(AST_CONF_FILEPATH + ' wrong file format');
+      }
+      let astConf = {
+        port: json.port,
+        host: json.host,
+        username: json.user,
+        password: json.pass,
+        prefix: json.prefix,
+        qm_alarms_notifications: json.qm_alarms_notifications,
+        auto_c2c: json.auto_c2c,
+        null_call_period: json.null_call_period,
+        trunks_events: json.trunks_events,
+        reconnect: true, // do you want the ami to reconnect if the connection is dropped, default: false
+        reconnect_after: 3000 // how long to wait to reconnect, in miliseconds, default: 3000
+      };
+      astProxy.config(astConf);
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+    }
+  }
+
+  /**
+   * Asterisk objects configuration.
+   *
+   * @method asteriskObjectsConfiguration
+   */
+  function asteriskObjectsConfiguration() {
+    try {
+      const AST_OBJECTS_FILEPATH = '/etc/nethcti/ast_objects.json';
+      json = JSON.parse(fs.readFileSync(AST_OBJECTS_FILEPATH, 'utf8'));
+      if (typeof json.trunks !== 'object' || typeof json.queues !== 'object') {
+        throw new Error(AST_OBJECTS_FILEPATH + ' wrong file format');
+      }
+      astProxy.configAstObjects(json);
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+    }
+  }
+
+  /**
+   * Extensions names configuration.
+   *
+   * @method extenNamesConfiguration
+   */
+  function extenNamesConfiguration() {
+    try {
+      const USERS_CONF_FILEPATH = '/etc/nethcti/users.json';
+      json = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
+      if (typeof json !== 'object') {
+        throw new Error(USERS_CONF_FILEPATH + ' wrong file format');
+      }
+      astProxy.configExtenNames(json);
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+    }
+  }
+
   // public interface for other architect components
   register(null, {
     astProxy: {
-      reload: astProxy.reload,
+      reload: reload,
       on: astProxy.on,
       doCmd: astProxy.doCmd,
       setCfb: astProxy.proxyLogic.setCfb,
@@ -435,53 +526,13 @@ module.exports = function(options, imports, register) {
 
   try {
     astProxy.setLogger(logger.log);
-
-    // asterisk configuration
-    const AST_CONF_FILEPATH = '/etc/nethcti/asterisk.json';
-    let json = JSON.parse(fs.readFileSync(AST_CONF_FILEPATH, 'utf8'));
-    if (typeof json.user !== 'string' ||
-      typeof json.auto_c2c !== 'string' ||
-      typeof json.null_call_period !== 'string' ||
-      typeof json.pass !== 'string' || typeof json.prefix !== 'string' ||
-      typeof json.host !== 'string' || typeof json.port !== 'string') {
-
-      throw new Error(AST_CONF_FILEPATH + ' wrong file format');
-    }
-    let astConf = {
-      port: json.port,
-      host: json.host,
-      username: json.user,
-      password: json.pass,
-      prefix: json.prefix,
-      qm_alarms_notifications: json.qm_alarms_notifications,
-      auto_c2c: json.auto_c2c,
-      null_call_period: json.null_call_period,
-      trunks_events: json.trunks_events,
-      reconnect: true, // do you want the ami to reconnect if the connection is dropped, default: false
-      reconnect_after: 3000 // how long to wait to reconnect, in miliseconds, default: 3000
-    };
-    astProxy.config(astConf);
-
-    // configure asterisk objects
-    const AST_OBJECTS_FILEPATH = '/etc/nethcti/ast_objects.json';
-    json = JSON.parse(fs.readFileSync(AST_OBJECTS_FILEPATH, 'utf8'));
-    if (typeof json.trunks !== 'object' || typeof json.queues !== 'object') {
-      throw new Error(AST_OBJECTS_FILEPATH + ' wrong file format');
-    }
-    astProxy.configAstObjects(json);
-
-    // configure extensions names
-    const USERS_CONF_FILEPATH = '/etc/nethcti/users.json';
-    json = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
-    if (typeof json !== 'object') {
-      throw new Error(USERS_CONF_FILEPATH + ' wrong file format');
-    }
-    astProxy.configExtenNames(json);
-
+    asteriskConfiguration();
+    asteriskObjectsConfiguration();
+    extenNamesConfiguration();
     astProxy.start();
     queueRecallingManager.setLogger(logger.log);
     queueRecallingManager.setCompAstProxy(astProxy);
   } catch (err) {
-    logger.ctilog.log.error(err.stack);
+    logger.log.error(err.stack);
   }
 };
