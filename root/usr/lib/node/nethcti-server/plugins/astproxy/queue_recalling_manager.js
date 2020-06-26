@@ -38,15 +38,6 @@ var logger = console;
 var compAstProxy;
 
 /**
- * The database component.
- *
- * @property compDbconn
- * @type object
- * @private
- */
-var compDbconn;
-
-/**
  * Sets the logger to be used.
  *
  * @method setLogger
@@ -82,21 +73,6 @@ function setCompAstProxy(comp) {
   try {
     compAstProxy = comp;
     logger.log.info(IDLOG, 'set asterisk proxy component');
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-  }
-}
-
-/**
- * Sets the database architect component.
- *
- * @method setCompDbconn
- * @param {object} comp The database architect component.
- */
-function setCompDbconn(comp) {
-  try {
-    compDbconn = comp;
-    logger.log.info(IDLOG, 'set database architect component');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }

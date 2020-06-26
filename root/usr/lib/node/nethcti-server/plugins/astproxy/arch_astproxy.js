@@ -3,8 +3,10 @@
  *
  * @class arch_astproxy
  */
-var astProxy = require('./astproxy');
-var queueRecallingManager = require('./queue_recalling_manager');
+const fs = require('fs');
+const moment = require('moment');
+const astProxy = require('astproxy');
+var queueRecallingManager = astProxy.queueRecallingManager;
 
 /**
  * The module identifier used by the logger.
@@ -18,12 +20,282 @@ var queueRecallingManager = require('./queue_recalling_manager');
  */
 var IDLOG = '[arch_astproxy]';
 
+/**
+ * The database component.
+ *
+ * @property compDbconn
+ * @type object
+ * @private
+ */
+var compDbconn;
+
+/**
+ * Statistics about queues calls. It is updated once every half an hour.
+ *
+ * @property qCallsStatsHist
+ * @type object
+ * @private
+ */
+var qCallsStatsHist = {};
+
 module.exports = function(options, imports, register) {
 
   var logger = console;
   if (imports.logger) {
-    logger = imports.logger;
+    logger = imports.logger.ctilog;
   }
+  compDbconn = imports.dbconn;
+
+  /**
+   * Return true if the PIN has been enabled on at least one outbound route.
+   *
+   * @method isPinEnabledAtLeastOneRoute
+   * @param {function} cb The callback function
+   * @return {boolean} True if the PIN has been enabled on at least one outbound route.
+   */
+  function isPinEnabledAtLeastOneRoute(cb) {
+    try {
+      compDbconn.isPinEnabledAtLeastOneRoute(cb);
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+    }
+  }
+
+  /**
+   * Return the JSON representation of queue statistics.
+   *
+   * @method getJSONQueueStats
+   * @param {string} qid The queue identifier
+   * @param {function} cb The callback function
+   * @return {object} The JSON representation of extended queue statistics.
+   */
+  function getJSONQueueStats(qid, cb) {
+    try {
+      if (typeof qid !== 'string' || typeof cb !== 'function') {
+        throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+      }
+      var queues = astProxy.proxyLogic.getQueues();
+      if (!queues[qid]) {
+        var msg = 'getting JSON stats of queue "' + qid + '": queue does not exist';
+        logger.log.warn(IDLOG, msg);
+        cb(msg);
+        return;
+      }
+      var staticDataQueues = astProxy.proxyLogic.getStaticDataQueues();
+      if (!staticDataQueues[qid] || !staticDataQueues[qid].sla) {
+        var msg = 'getting JSON stats of queue "' + qid + '": no static data about the queue';
+        logger.log.warn(IDLOG, msg);
+        cb(msg);
+        return;
+      }
+      var nullCallPeriod = astProxy.proxyLogic.getNullCallPeriod();
+      compDbconn.getQueueStats(qid, nullCallPeriod, staticDataQueues[qid].sla, function (err1, result) {
+        cb(err1, result);
+      });
+    } catch (error) {
+      logger.log.error(IDLOG, error.stack);
+      cb(error);
+    }
+  }
+
+  /**
+   * Return the JSON representation of agents statistics.
+   *
+   * @method getJSONAllAgentsStats
+   * @param {array} qlist The queue identifiers
+   * @param {function} cb The callback function
+   * @return {object} The JSON representation of queue agents statistics.
+   */
+  function getJSONAllAgentsStats(qlist, cb) {
+    try {
+      if (Array.isArray(qlist) === false || typeof cb !== 'function') {
+        throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+      }
+      var q, i, m;
+      var temp;
+      var allAgents = {};
+      var queues = astProxy.proxyLogic.getQueues();
+      for (q in queues) {
+        if (queues[q] === undefined) {
+          continue;
+        }
+        temp = queues[q].getAllMembers();
+        for (m in temp) {
+          if (!allAgents[temp[m].getName()]) {
+            allAgents[temp[m].getName()] = {};
+          }
+          allAgents[temp[m].getName()][q] = {
+            isInPause: temp[m].isInPause(),
+            isLoggedIn: temp[m].isLoggedIn()
+          };
+        }
+      }
+      var permittedAgents = {};
+      for (i = 0; i < qlist.length; i++) {
+        if (queues[qlist[i]] === undefined) {
+          continue;
+        }
+        temp = queues[qlist[i]].getAllMembers();
+        for (var m in temp) {
+          if (!permittedAgents[temp[m].getName()]) {
+            permittedAgents[temp[m].getName()] = true;
+          }
+        }
+      }
+      compDbconn.getAgentsStatsByList(allAgents, function (err1, result) {
+        for (var u in result) {
+          if (!permittedAgents[u]) {
+            delete result[u];
+          } else {
+            for (var q in result[u]) {
+              if (qlist.indexOf(q) === -1 && q !== 'incomingCalls' && q !== 'outgoingCalls' && q !== 'allCalls') {
+                delete result[u][q];
+              }
+            }
+          }
+        }
+        cb(err1, result);
+      });
+    } catch (error) {
+      logger.log.error(IDLOG, error.stack);
+      cb(error);
+    }
+  }
+
+  /**
+   * Return history of stasts of queues calls. Updates data once every half an hour.
+   *
+   * @method getQCallsStatsHist
+   * @param {function} cb The callback function
+   * @return {object} The JSON statistics about all queues.
+   */
+  function getQCallsStatsHist(cb) {
+    try {
+      if (typeof cb !== 'function') {
+        throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+      }
+      if (qCallsStatsHist.last) {
+        var now = moment();
+        var dd = now.format('DD');
+        var HH = now.format('HH');
+        var mm = now.format('mm');
+        mm = parseInt(mm/30)*30;
+        var newdate = dd + '-' + HH + ':' + mm;
+        if (qCallsStatsHist.last === newdate) {
+          logger.log.info(IDLOG, 'return cached history of queues calls stats');
+          cb(null, qCallsStatsHist.data, qCallsStatsHist.len);
+          return;
+        }
+      }
+      var nullCallPeriod = astProxy.proxyLogic.getNullCallPeriod();
+      compDbconn.getQCallsStatsHist(nullCallPeriod, function (err1, result, len) {
+        var now = moment();
+        var dd = now.format('DD');
+        var HH = now.format('HH');
+        var mm = now.format('mm');
+        mm = parseInt(mm/30)*30;
+        qCallsStatsHist.data = result;
+        qCallsStatsHist.len = len;
+        qCallsStatsHist.last = dd + '-' + HH + ':' + mm;
+        logger.log.info(IDLOG, 'return updated history of queues calls stats');
+        cb(err1, qCallsStatsHist.data, len);
+      });
+    } catch (error) {
+      logger.log.error(IDLOG, error.stack);
+      cb(error);
+    }
+  }
+
+  /**
+   * Get pin of extensions.
+   *
+   * @method getPinExtens
+   * @param {array} extens The extension list
+   * @param {function} cb The callback
+   */
+  function getPinExtens(extens, cb) {
+    try {
+      compDbconn.getPinExtens(extens, cb);
+    } catch (e) {
+      logger.log.error(IDLOG, e.stack);
+    }
+  }
+
+  /**
+   * Set pin for the extension.
+   *
+   * @method setPinExten
+   * @param {string} extension The extension identifier
+   * @param {string} pin The pin number to be set
+   * @param {boolean} enabled True if the pin has to be enabled on the phone
+   * @param {function} cb The callback
+   */
+  function setPinExten(extension, pin, enabled, cb) {
+    try {
+      compDbconn.setPinExten(extension, pin, enabled, cb);
+    } catch (e) {
+      logger.log.error(IDLOG, e.stack);
+    }
+  }
+
+  /**
+   * Returns the recall data about the queues.
+   *
+   * @method getRecallData
+   * @param {object} obj
+   *   @param {string} obj.hours The amount of hours of the current day to be searched
+   *   @param {array} obj.queues The queue identifiers
+   *   @param {type} obj.type It can be ("lost"|"done"|"all"). The type of call to be retrieved
+   *   @param {integer} obj.offset The results offset
+   *   @param {integer} obj.limit The results limit
+   * @param {function} cb The callback function
+   */
+  function getRecallData(obj, cb) {
+    try {
+      if (typeof obj !== 'object' || !obj.queues || !obj.type || !obj.hours) {
+        throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+      }
+      obj.agents = astProxy.proxyLogic.getAgentsOfQueues(obj.queues);
+      compDbconn.getRecall(obj, cb);
+    } catch (error) {
+      logger.log.error(IDLOG, error.stack);
+      cb(error);
+    }
+  }
+
+  /**
+   * Returns the details about the queue recall of the caller id.
+   *
+   * @method getQueueRecallInfo
+   * @param {string} hours The amount of hours of the current day to be searched
+   * @param {string} cid The caller identifier
+   * @param {string} qid The queue identifier
+   * @param {function} cb The callback function
+   */
+  function getQueueRecallInfo(hours, cid, qid, cb) {
+    try {
+      if (typeof cid !== 'string' ||
+        typeof cb !== 'function' ||
+        typeof qid !== 'string' ||
+        typeof hours !== 'string') {
+
+        throw new Error('wrong parameters');
+      }
+      compDbconn.getQueueRecallInfo({
+          hours: hours,
+          cid: cid,
+          qid: qid,
+          agents: astProxy.proxyLogic.getAgentsOfQueues([qid])
+        },
+        function (err, results) {
+          cb(err, results);
+        });
+    } catch (error) {
+      logger.log.error(IDLOG, error.stack);
+      callback(error);
+    }
+  }
+
   // public interface for other architect components
   register(null, {
     astProxy: {
@@ -41,7 +313,7 @@ module.exports = function(options, imports, register) {
       pickupQueueWaitingCaller: astProxy.proxyLogic.pickupQueueWaitingCaller,
       getEchoCallDestination: astProxy.proxyLogic.getEchoCallDestination,
       getMeetmeConfCode: astProxy.proxyLogic.getMeetmeConfCode,
-      isPinEnabledAtLeastOneRoute: astProxy.proxyLogic.isPinEnabledAtLeastOneRoute,
+      isPinEnabledAtLeastOneRoute: isPinEnabledAtLeastOneRoute,
       getUserExtenIdFromConf: astProxy.proxyLogic.getUserExtenIdFromConf,
       unmuteUserMeetmeConf: astProxy.proxyLogic.unmuteUserMeetmeConf,
       hangupUserMeetmeConf: astProxy.proxyLogic.hangupUserMeetmeConf,
@@ -87,7 +359,7 @@ module.exports = function(options, imports, register) {
       pickupConversation: astProxy.proxyLogic.pickupConversation,
       pickupParking: astProxy.proxyLogic.pickupParking,
       inoutDynQueues: astProxy.proxyLogic.inoutDynQueues,
-      getQCallsStatsHist: astProxy.proxyLogic.getQCallsStatsHist,
+      getQCallsStatsHist: getQCallsStatsHist,
       queueMemberPauseUnpause: astProxy.proxyLogic.queueMemberPauseUnpause,
       queueMemberAdd: astProxy.proxyLogic.queueMemberAdd,
       queueMemberRemove: astProxy.proxyLogic.queueMemberRemove,
@@ -97,14 +369,14 @@ module.exports = function(options, imports, register) {
       getJSONExtensions: astProxy.proxyLogic.getJSONExtensions,
       getJSONQueues: astProxy.proxyLogic.getJSONQueues,
       getJSONAllQueuesStats: astProxy.proxyLogic.getJSONAllQueuesStats,
-      getJSONAllAgentsStats: astProxy.proxyLogic.getJSONAllAgentsStats,
+      getJSONAllAgentsStats: getJSONAllAgentsStats,
       evtConversationHold: astProxy.proxyLogic.evtConversationHold,
       evtConversationUnhold: astProxy.proxyLogic.evtConversationUnhold,
-      getPinExtens: astProxy.proxyLogic.getPinExtens,
-      setPinExten: astProxy.proxyLogic.setPinExten,
+      getPinExtens: getPinExtens,
+      setPinExten: setPinExten,
       getQMAlarmsNotificationsStatus: astProxy.proxyLogic.getQMAlarmsNotificationsStatus,
       setQMAlarmsNotificationsStatus: astProxy.proxyLogic.setQMAlarmsNotificationsStatus,
-      getJSONQueueStats: astProxy.proxyLogic.getJSONQueueStats,
+      getJSONQueueStats: getJSONQueueStats,
       getJSONTrunks: astProxy.proxyLogic.getJSONTrunks,
       getTrunksList: astProxy.proxyLogic.getTrunksList,
       getExtensList: astProxy.proxyLogic.getExtensList,
@@ -117,7 +389,7 @@ module.exports = function(options, imports, register) {
       recordAudioFile: astProxy.proxyLogic.recordAudioFile,
       isExtenDynMemberQueue: astProxy.proxyLogic.isExtenDynMemberQueue,
       isDynMemberLoggedInQueue: astProxy.proxyLogic.isDynMemberLoggedInQueue,
-      CF_TYPES: require('./proxy_logic_13/util_call_forward_13').CF_TYPES,
+      CF_TYPES: astProxy.CF_TYPES,
       EVT_EXTEN_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CHANGED,
       EVT_EXTEN_HANGUP: astProxy.proxyLogic.EVT_EXTEN_HANGUP,
       EVT_NEW_CDR: astProxy.proxyLogic.EVT_NEW_CDR,
@@ -154,28 +426,61 @@ module.exports = function(options, imports, register) {
       inCallAudio: astProxy.proxyLogic.inCallAudio,
       isExtenDnd: astProxy.proxyLogic.isExtenDnd,
       isAutoC2CEnabled: astProxy.proxyLogic.isAutoC2CEnabled,
-      getRecallData: queueRecallingManager.getRecallData,
-      getQueueRecallInfo: queueRecallingManager.getQueueRecallInfo,
+      getC2CMode: astProxy.proxyLogic.getC2CMode,
+      getRecallData: getRecallData,
+      getQueueRecallInfo: getQueueRecallInfo,
       checkQueueRecallingStatus: queueRecallingManager.checkQueueRecallingStatus
     }
   });
 
   try {
-    // imports.dbconn.on(imports.dbconn.EVT_READY, function () {
-    astProxy.setLogger(logger.ctilog);
-    astProxy.config('/etc/nethcti/asterisk.json');
-    astProxy.configAstObjects('/etc/nethcti/ast_objects.json');
-    astProxy.configExtenNames('/etc/nethcti/users.json');
-    // astProxy.configRemoteSitesPrefixes('/etc/nethcti/remote_sites.json');
-    // astProxy.configSipWebrtc('/etc/nethcti/sip_webrtc.json');
-    astProxy.proxyLogic.setCompDbconn(imports.dbconn);
-    // astProxy.proxyLogic.setCompPhonebook(imports.phonebook);
-    // astProxy.proxyLogic.setCompCallerNote(imports.callerNote);
+    astProxy.setLogger(logger.log);
+
+    // asterisk configuration
+    const AST_CONF_FILEPATH = '/etc/nethcti/asterisk.json';
+    let json = JSON.parse(fs.readFileSync(AST_CONF_FILEPATH, 'utf8'));
+    if (typeof json.user !== 'string' ||
+      typeof json.auto_c2c !== 'string' ||
+      typeof json.null_call_period !== 'string' ||
+      typeof json.pass !== 'string' || typeof json.prefix !== 'string' ||
+      typeof json.host !== 'string' || typeof json.port !== 'string') {
+
+      throw new Error(AST_CONF_FILEPATH + ' wrong file format');
+    }
+    let astConf = {
+      port: json.port,
+      host: json.host,
+      username: json.user,
+      password: json.pass,
+      prefix: json.prefix,
+      qm_alarms_notifications: json.qm_alarms_notifications,
+      auto_c2c: json.auto_c2c,
+      null_call_period: json.null_call_period,
+      trunks_events: json.trunks_events,
+      reconnect: true, // do you want the ami to reconnect if the connection is dropped, default: false
+      reconnect_after: 3000 // how long to wait to reconnect, in miliseconds, default: 3000
+    };
+    astProxy.config(astConf);
+
+    // configure asterisk objects
+    const AST_OBJECTS_FILEPATH = '/etc/nethcti/ast_objects.json';
+    json = JSON.parse(fs.readFileSync(AST_OBJECTS_FILEPATH, 'utf8'));
+    if (typeof json.trunks !== 'object' || typeof json.queues !== 'object') {
+      throw new Error(AST_OBJECTS_FILEPATH + ' wrong file format');
+    }
+    astProxy.configAstObjects(json);
+
+    // configure extensions names
+    const USERS_CONF_FILEPATH = '/etc/nethcti/users.json';
+    json = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
+    if (typeof json !== 'object') {
+      throw new Error(USERS_CONF_FILEPATH + ' wrong file format');
+    }
+    astProxy.configExtenNames(json);
+
     astProxy.start();
-    queueRecallingManager.setLogger(logger.ctilog);
+    queueRecallingManager.setLogger(logger.log);
     queueRecallingManager.setCompAstProxy(astProxy);
-    queueRecallingManager.setCompDbconn(imports.dbconn);
-    // });
   } catch (err) {
     logger.ctilog.log.error(err.stack);
   }
