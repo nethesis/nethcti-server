@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.19.0
+Version: 3.19.1
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Jul 06 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.19.1-1
+- Add "linkedid" to "extenConvConnected" websocket event - nethesis/dev#5823
+
 * Fri May 29 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.19.0-1
 - Insert audio into a conversation - nethesis/dev#5808
 - Add call "uniqueid" into astproxy/call response - nethesis/dev#5806
