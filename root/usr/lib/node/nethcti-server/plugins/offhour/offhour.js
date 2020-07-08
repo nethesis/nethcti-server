@@ -901,6 +901,7 @@ function uploadAnnouncement(data, cb) {
     var mimeType = (datauri.split(';')[0]).split(':')[1];
     if (mimeType !== 'audio/mp3' &&
       mimeType !== 'audio/wav' &&
+      mimeType !== 'audio/mpeg' &&
       mimeType !== 'audio/wave' &&
       mimeType !== 'audio/x-wav') {
 
@@ -910,7 +911,7 @@ function uploadAnnouncement(data, cb) {
       return;
     }
 
-    if (mimeType === 'audio/mp3') {
+    if (mimeType === 'audio/mp3' || mimeType === 'audio/mpeg') {
       storeMp3Announcement(data, function (error, destPath) {
         if (error) {
           cb(error);
