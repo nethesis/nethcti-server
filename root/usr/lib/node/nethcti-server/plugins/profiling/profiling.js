@@ -56,6 +56,15 @@ var compComNethctiWs;
 var compComNethctiTcp;
 
 /**
+ * The configured hostname.
+ *
+ * @property hostname
+ * @type string
+ * @private
+ */
+var hostname;
+
+/**
  * Set the logger to be used.
  *
  * @method setLogger
@@ -133,6 +142,35 @@ function getProcMem() {
   } catch (err) {
     logger.log.error(err.stack);
     return {};
+  }
+}
+
+/**
+ * Read the server configurations:
+ *
+ * @method config
+ */
+function config () {
+  try {
+    // set hostname
+    hostname = (JSON.parse(fs.readFileSync('/etc/nethcti/nethcti.json', 'utf8'))).hostname;
+  } catch (err) {
+    logger.log.error(err.stack);
+  }
+}
+
+/**
+ * Returns the hostname:
+ *
+ * @method getHostname
+ * @return {string} The hostname of the server.
+ */
+function getHostname() {
+  try {
+    return hostname;
+  } catch (err) {
+    logger.log.error(err.stack);
+    return "";
   }
 }
 
@@ -241,8 +279,10 @@ function getProcessPid() {
 }
 
 // public interface
+exports.config = config;
 exports.setLogger = setLogger;
 exports.getProcMem = getProcMem;
+exports.getHostname = getHostname;
 exports.getProcessPid = getProcessPid;
 exports.getNodeVersion = getNodeVersion;
 exports.setCompComNethctiWs = setCompComNethctiWs;
