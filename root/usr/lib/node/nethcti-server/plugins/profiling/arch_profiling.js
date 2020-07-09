@@ -31,6 +31,7 @@ module.exports = function (options, imports, register) {
       logger = imports.logger;
     }
 
+    profiling.config();
     profiling.setLogger(logger.ctilog);
     profiling.setCompComNethctiWs(imports.com_nethcti_ws);
     profiling.setCompComNethctiTcp(imports.com_nethcti_tcp);
