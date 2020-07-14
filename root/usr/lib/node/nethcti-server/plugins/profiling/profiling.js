@@ -65,6 +65,29 @@ var compComNethctiTcp;
 var hostname;
 
 /**
+ * The current version of the installed cti client.
+ *
+ * @property currentCtiClientVersion
+ * @type string
+ * @private
+ */
+var currentCtiClientVersion;
+
+/**
+ * Fired when a cti client rpm update has been happened.
+ *
+ * @event clientUpdated
+ */
+/**
+ * The name of the client updated event.
+ *
+ * @property EVT_CLIENT_UPDATED
+ * @type string
+ * @default "clientUpdated"
+ */
+var EVT_CLIENT_UPDATED = 'clientUpdated';
+
+/**
  * Set the logger to be used.
  *
  * @method setLogger
@@ -278,6 +301,55 @@ function getProcessPid() {
   }
 }
 
+/**
+ * Starts the component.
+ *
+ * @method start
+ */
+function start() {
+  try {
+    startCheckCtiClientUpdate();
+  } catch (err) {
+    logger.log.error(err.stack);
+  }
+}
+
+/**
+ * Starts the interval to check rpm cti client update.
+ *
+ * @method startCheckCtiClientUpdate
+ */
+function startCheckCtiClientUpdate() {
+  try {
+    setInterval(() => {
+      getCtiPackageRelease((err, res) => {
+        if (err) {
+          logger.log.error(err.stack);
+          return;
+        }
+        if (res && res.nethcti3) {
+          let ver = res.nethcti3.split('-')[1];
+          if (!currentCtiClientVersion) { // first time
+            currentCtiClientVersion = ver;
+            return;
+          }
+          if (currentCtiClientVersion !== ver) { // update detected
+            logger.log.info(IDLOG, `check cti client version: update detected (old ${currentCtiClientVersion} - new ${ver})`);
+            compComNethctiWs.sendAll(EVT_CLIENT_UPDATED, { previousVer: currentCtiClientVersion, newVer: ver });
+            currentCtiClientVersion = ver;
+          } else {
+            logger.log.info(IDLOG, `check cti client version: no update detected (current ${currentCtiClientVersion})`);
+          }
+        } else {
+          logger.log.warn(IDLOG, `wrong data about cti rpm packages: ${JSON.stringify(res)}`);
+        }
+      });
+    }, 60000);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.config = config;
 exports.setLogger = setLogger;
@@ -290,3 +362,4 @@ exports.setCompComNethctiTcp = setCompComNethctiTcp;
 exports.getCtiPackageRelease = getCtiPackageRelease;
 exports.getWsNumConnectedClients = getWsNumConnectedClients;
 exports.getTcpNumConnectedClients = getTcpNumConnectedClients;
+exports.start = start;
