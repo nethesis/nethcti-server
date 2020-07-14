@@ -1283,6 +1283,29 @@ function sendEventToAllClients(evname, data, fn, fnData) {
 }
 
 /**
+ * It sends an event to all the local websocket clients.
+ *
+ * @method sendAll
+ * @param {string} evname The event name
+ * @param {object} data The event data object
+ */
+function sendAll(evname, data) {
+  try {
+    if (typeof evname !== 'string' || typeof data !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.info(IDLOG, 'emit event "' + evname + '" to all local clients with permission enabled');
+    for (let sockid in wsid) {
+      if (wsServer.sockets.sockets[sockid]) {
+        wsServer.sockets.sockets[sockid].emit(evname, data);
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Handler for the _extenChanged_ event emitted by _astproxy_
  * component. Something has changed in the extension, so notifies
  * all interested clients.
@@ -2558,3 +2581,4 @@ exports.EVT_WS_CLIENT_LOGGEDIN = EVT_WS_CLIENT_LOGGEDIN;
 exports.EVT_WS_CLIENT_CONNECTED = EVT_WS_CLIENT_CONNECTED;
 exports.sendAnswerWebrtcToClient = sendAnswerWebrtcToClient;
 exports.EVT_ALL_WS_CLIENT_DISCONNECTION = EVT_ALL_WS_CLIENT_DISCONNECTION;
+exports.sendAll = sendAll;
