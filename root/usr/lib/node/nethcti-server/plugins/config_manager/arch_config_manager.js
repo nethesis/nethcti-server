@@ -31,8 +31,8 @@ module.exports = function(options, imports, register) {
   }
 
   try {
+    configManager.setLogger(logger.ctilog);
     imports.user.on(imports.user.EVT_USERS_READY, function() {
-      configManager.setLogger(logger.ctilog);
       configManager.setCompUser(imports.user);
       configManager.setCompAstProxy(imports.astProxy);
       configManager.setCompAuthorization(imports.authorization);
