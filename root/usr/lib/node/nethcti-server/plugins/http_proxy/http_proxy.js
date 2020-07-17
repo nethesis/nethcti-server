@@ -391,6 +391,9 @@ function start() {
             else if (req.url.indexOf('/tancredi') === 0) {
               if (req.method === 'GET' || req.method === 'PATCH') {
                 let macToCheck = req.url.split('/').pop();
+                if (macToCheck.indexOf('?')) {
+                  macToCheck = macToCheck.split('?')[0];
+                }
                 let extenToCheck = compAstProxy.getExtenFromMac(macToCheck) || '';
                 if (compAuthorization.verifyUserEndpointExten(req.headers.authorization_user, extenToCheck) === true) {
                   delete req.headers.authorization;
