@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.19.1
+Version: 3.19.2
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,10 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Jul 27 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.19.2-1
+- Add capability to inherit to Tancredi API GET /phones/{mac} - Bug nethesis/dev#5845
+- MP3 audio files upload fails in offhour service - Bug nethesis/dev#5817
+
 * Mon Jul 06 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.19.1-1
 - Add "linkedid" to "extenConvConnected" websocket event - nethesis/dev#5823
 
