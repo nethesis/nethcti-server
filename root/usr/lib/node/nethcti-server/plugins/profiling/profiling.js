@@ -65,6 +65,15 @@ var compComNethctiTcp;
 var hostname;
 
 /**
+ * The configured publichost.
+ *
+ * @property publichost
+ * @type string
+ * @private
+ */
+var publichost;
+
+/**
  * The current version of the installed cti client.
  *
  * @property currentCtiClientVersion
@@ -175,8 +184,11 @@ function getProcMem() {
  */
 function config () {
   try {
+    var nethcticfg = JSON.parse(fs.readFileSync('/etc/nethcti/nethcti.json', 'utf8'))
     // set hostname
-    hostname = (JSON.parse(fs.readFileSync('/etc/nethcti/nethcti.json', 'utf8'))).hostname;
+    hostname = nethcticfg.hostname;
+    // set publichost
+    publichost = nethcticfg.publichost;
   } catch (err) {
     logger.log.error(err.stack);
   }
@@ -191,6 +203,21 @@ function config () {
 function getHostname() {
   try {
     return hostname;
+  } catch (err) {
+    logger.log.error(err.stack);
+    return "";
+  }
+}
+
+/**
+ * Returns the publichost:
+ *
+ * @method getPublichost
+ * @return {string} The publichost prop.
+ */
+function getPublichost() {
+  try {
+    return publichost;
   } catch (err) {
     logger.log.error(err.stack);
     return "";
@@ -355,6 +382,7 @@ exports.config = config;
 exports.setLogger = setLogger;
 exports.getProcMem = getProcMem;
 exports.getHostname = getHostname;
+exports.getPublichost = getPublichost;
 exports.getProcessPid = getProcessPid;
 exports.getNodeVersion = getNodeVersion;
 exports.setCompComNethctiWs = setCompComNethctiWs;

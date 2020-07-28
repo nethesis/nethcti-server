@@ -53,3 +53,14 @@ event_templates('trusted-networks-modify', qw(
 event_services('trusted-networks-modify', qw(
                nethcti-server reload
 ));
+
+#
+# publichost-modify
+#
+event_templates('publichost-modify', qw(
+                /etc/nethcti/nethcti.json
+));
+
+event_services('publichost-modify', qw(
+               nethcti-server reload
+));

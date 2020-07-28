@@ -1,10 +1,12 @@
 {
   my $hostname = "${SystemName}.${DomainName}" || die('Can not get the hostname !');
   my $loglevel = ${'nethcti-server'}{'LogLevel'} || "warn";
+  my $publichost = ${'nethvoice'}{'PublicHost'} || "";
 
   $OUT  = '{
   "logfile": "/var/log/asterisk/nethcti.log",
   "hostname": "' . $hostname . '",
+  "publichost": "' . $publichost . '",
   "loglevel": "' . $loglevel . '",
   "privacy_numbers": "xxx"
 }';
