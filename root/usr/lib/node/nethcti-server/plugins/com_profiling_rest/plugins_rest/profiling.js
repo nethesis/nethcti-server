@@ -332,7 +332,8 @@ function setCompUtil(comp) {
                   db_stats: compDbConn.getStats(),
                   tot_users: compConfigManager.getTotNumUsers(),
                   conn_clients: getConnectedClientsNum(),
-                  hostname: compProfiling.getHostname()
+                  hostname: compProfiling.getHostname(),
+                  publichost: compProfiling.getPublichost()
                 };
                 res.send(200, result);
               }
