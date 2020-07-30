@@ -13,6 +13,7 @@
 var fs = require('fs');
 var restify = require('restify');
 var plugins = require('jsplugs')().require('./plugins/com_customer_card_rest/plugins_rest');
+const corsMiddleware = require('restify-cors-middleware');
 
 /**
  * The module identifier used by the logger.
@@ -291,14 +292,20 @@ function start() {
     var server = restify.createServer();
 
     // set the middlewares to use
-    server.use(restify.acceptParser(server.acceptable));
-    server.use(restify.queryParser());
-    server.use(restify.bodyParser());
-    server.use(restify.CORS({
+    server.use(restify.plugins.acceptParser(server.acceptable));
+    server.use(restify.plugins.queryParser({ mapParams: true }));
+    server.use(restify.plugins.bodyParser({ mapParams: true }));
+    const cors = corsMiddleware({
       origins: ['*'],
-      credentials: true,
       headers: ['WWW-Authenticate']
-    }));
+    });
+    server.pre(cors.preflight);
+    server.use(cors.actual);
+    // server.use(restify.CORS({
+    //   origins: ['*'],
+    //   credentials: true,
+    //   headers: ['WWW-Authenticate']
+    // }));
 
     // load plugins
     for (p in plugins) {

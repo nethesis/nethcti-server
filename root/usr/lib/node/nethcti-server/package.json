@@ -19,7 +19,8 @@
     "node-static": "0.7.10",
     "pg": "6.1.6",
     "request": "2.88.0",
-    "restify": "4.3.4",
+    "restify": "^8.5.1",
+    "restify-cors-middleware": "^1.1.1",
     "sequelize": "3.34.0",
     "socket.io": "2.2.0",
     "winston": "2.3.1"

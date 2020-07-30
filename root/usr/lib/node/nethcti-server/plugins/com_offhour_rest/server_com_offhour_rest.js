@@ -258,9 +258,9 @@ function start() {
     var server = restify.createServer();
 
     // set the middlewares to use
-    server.use(restify.acceptParser(server.acceptable));
-    server.use(restify.queryParser());
-    server.use(restify.bodyParser());
+    server.use(restify.plugins.acceptParser(server.acceptable));
+    server.use(restify.plugins.queryParser({ mapParams: true }));
+    server.use(restify.plugins.bodyParser({ mapParams: true }));
 
     // load plugins
     for (p in plugins) {
