@@ -700,6 +700,57 @@ function checkAutoDndOffLogin(username) {
 }
 
 /**
+ * Unpause user from all queues where the pause status is active.
+ *
+ * @method queuesUnpauseAll
+ * @param {string} username The name of the user disonnected
+ * @param {function} cb The callback function
+ * @private
+ */
+function queuesUnpauseAll(username, cb) {
+  try {
+    let e = compUser.getEndpointMainExtension(username).getId();
+    let pausedUserQueues = compAstProxy.getPausedQueues(e);
+    if (pausedUserQueues.length > 0) {
+      let unpauseFuncts = [];
+      pausedUserQueues.forEach(kq => {
+        unpauseFuncts.push(unpauseQueue(e, kq));
+      });
+      async.series(unpauseFuncts,
+        function (err) {
+          if (err) {
+            logger.error(IDLOG, err);
+          }
+          if (cb) { cb(); }
+        }
+      );
+    } else {
+      cb();
+    }
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
+
+/**
+ * Unpause the extension from the specified queue.
+ *
+ * @method unpauseQueue
+ * @param {string} exten The extension identifier
+ * @param {string} qid The queue identifier
+ * @return {function} The function to be called
+ * @private
+ */
+function unpauseQueue(exten, qid) {
+  return function (callback) {
+    compAstProxy.queueMemberPauseUnpause(exten, qid, '', false, err => {
+      if (err) { console.error(err); }
+      callback(null);
+    });
+  };
+}
+
+/**
  * Checks the "queue automatic logout" setting of the user and if it is enabled it
  * does the logout of all dynamic extension of the user from their relative queues.
  *
@@ -709,7 +760,6 @@ function checkAutoDndOffLogin(username) {
  */
 function checkQueueAutoLogout(username) {
   try {
-    // check the event data
     if (typeof username !== 'string') {
       throw new Error('wrong username "' + username + '"');
     }
@@ -721,42 +771,51 @@ function checkQueueAutoLogout(username) {
       logger.log.info(IDLOG, 'no check for "queue auto logout": user "' + username + '" does not have "queue" permission');
       return;
     }
-
     if (userSettings[username]) {
       // get the prefence of the user: automatic logout from dynamic queues when logout from cti
       var queueAutoLogoutEnabled = userSettings[username][USER_CONFIG_KEYS.queue_auto_logout];
       if (queueAutoLogoutEnabled) {
-
-        var e = compUser.getEndpointMainExtension(username).getId();
-        var q, queueIds;
-        // get all queues to which the extension belongs
-        queueIds = compAstProxy.getQueueIdsOfExten(e);
-
-        // do the logout of the member from the queue only if it is a dynamic member
-        for (q in queueIds) {
-
-          if (compAstProxy.isExtenDynMemberQueue(e, q) && // check if the member is of dynamic type
-            compAstProxy.isDynMemberLoggedInQueue(e, q)) { // check if the member is logged into the queue
-
-            // remove dynamic queue member from the relative queue
-            logger.log.info(IDLOG, 'remove queue member "' + e + '" from queue "' + q + '" due to automatic logout setting');
-            compAstProxy.queueMemberRemove(e, q, function(err, resp) {
-              try {
-                if (err) {
-                  logger.log.warn(IDLOG, err);
-                } else {
-                  logger.log.info(IDLOG, 'removed dynamic extension "' + e + '" from queue "' + q + '" due to "queue auto logout" setting of user "' + username + '"');
-                }
-              } catch (err1) {
-                logger.log.error(IDLOG, err1.stack);
-              }
-            });
-          }
-        }
+        queuesUnpauseAll(username, () => {
+          logoutAgentFromAllQueues(username);
+        });
       }
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Logout agent from all of his queues.
+ *
+ * @method checkQueueAutoLogout
+ * @param {string} username The username
+ * @private
+ */
+function logoutAgentFromAllQueues(username) {
+  try {
+    let exten = compUser.getEndpointMainExtension(username).getId();
+    let queueIds = compAstProxy.getQueueIdsOfExten(exten); // all queues to which the extension belongs
+    for (let q in queueIds) {
+      // do the logout of the member from the queue only if it is a dynamic member
+      if (compAstProxy.isExtenDynMemberQueue(exten, q) && compAstProxy.isDynMemberLoggedInQueue(exten, q)) {
+        // remove dynamic queue member from the relative queue
+        logger.log.info(IDLOG, 'remove queue member "' + exten + '" from queue "' + q + '" due to automatic logout setting');
+        compAstProxy.queueMemberRemove(exten, q, function(err, resp) {
+          try {
+            if (err) {
+              logger.log.warn(IDLOG, err);
+            } else {
+              logger.log.info(IDLOG, 'removed dynamic extension "' + exten + '" from queue "' + q + '" due to "queue auto logout" setting of user "' + username + '"');
+            }
+          } catch (err1) {
+            logger.log.error(IDLOG, err1.stack);
+          }
+        });
+      }
+    }
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
   }
 }
 

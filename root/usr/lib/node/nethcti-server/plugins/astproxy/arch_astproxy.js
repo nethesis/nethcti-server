@@ -503,6 +503,7 @@ module.exports = function(options, imports, register) {
       EVT_EXTEN_CFU_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CFU_CHANGED,
       EVT_EXTEN_CFVM_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CFVM_CHANGED,
       setAsteriskPresence: astProxy.proxyLogic.setAsteriskPresence,
+      getPausedQueues: astProxy.proxyLogic.getPausedQueues,
       getExtenCfValue: astProxy.proxyLogic.getExtenCfValue,
       getExtenCfbValue: astProxy.proxyLogic.getExtenCfbValue,
       getExtenCfuValue: astProxy.proxyLogic.getExtenCfuValue,
