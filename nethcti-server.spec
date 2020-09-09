@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.19.2
+Version: 3.20.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,12 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Sep 09 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.0-1
+- Sometimes it happens that asterisk proxy can't get ready - Bug nethesis/dev#5855
+- Unstable QRcode parameters breaks mobile app notifications - Bug nethesis/dev#5816
+- Make the "astproxy" plugin an npm module - Bug nethesis/dev#5849
+- Refresh client app after a client rpm upgrade - nethesis/dev#5725
+
 * Mon Jul 27 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.19.2-1
 - Add capability to inherit to Tancredi API GET /phones/{mac} - Bug nethesis/dev#5845
 - MP3 audio files upload fails in offhour service - Bug nethesis/dev#5817
