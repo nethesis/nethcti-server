@@ -5959,12 +5959,12 @@ function asteriskCall(username, req, res) {
     if (req.params.endpointType === 'cellphone') {
       extenForContext = compConfigManager.getDefaultUserExtensionConf(username);
     }
-    compAstProxy.call(
-      req.params.endpointType,
-      req.params.endpointId,
-      req.params.number,
-      extenForContext,
-      function (err, data) {
+    compAstProxy.call({
+      endpointType: req.params.endpointType,
+      endpointId: req.params.endpointId,
+      to: req.params.number,
+      extenForContext: extenForContext,
+      cb: function (err, data) {
         try {
           if (err) {
             logger.log.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' ' +
@@ -5980,7 +5980,7 @@ function asteriskCall(username, req, res) {
           compUtil.net.sendHttp500(IDLOG, res, err1.toString());
         }
       }
-    );
+    });
   } catch (error) {
     logger.log.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
