@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.20.0
+Version: 3.20.1
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu Sep 10 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.1-1
+- Fix manual c2c to new simplified astproxy syntax- Bug nethesis/dev#5849
+
 * Wed Sep 09 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.0-1
 - Sometimes it happens that asterisk proxy can't get ready - Bug nethesis/dev#5855
 - Unstable QRcode parameters breaks mobile app notifications - Bug nethesis/dev#5816
