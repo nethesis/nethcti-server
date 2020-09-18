@@ -5,6 +5,7 @@
  * @submodule plugins
  */
 var mssql = require('mssql');
+const phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
 
 /**
  * The module identifier used by the logger.
@@ -94,6 +95,44 @@ function setLogger(log) {
 }
 
 /**
+ * Removes the international prefix from the phone number.
+ *
+ * @method removeInternationalPrefix
+ * @param {string} num The phone number
+ * @return {string} The cleaned phone number
+ * @private
+ */
+function removeInternationalPrefix(num) {
+  try {
+    num = num.replace(/^00/, '+');
+    if (num[0] === '+') {
+      let tempnum = phoneUtil.parseAndKeepRawInput(num);
+      let countryCode = tempnum.getCountryCode().toString();
+      num = num.substring(countryCode.length + 1, num.length);
+    }
+    return num;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Removes empty spaces from the phone number.
+ *
+ * @method removeEmptySpaces
+ * @param {string} num The phone number
+ * @return {string} The cleaned phone number
+ * @private
+ */
+function removeEmptySpaces(num) {
+  try {
+    return num.replace(/\s/g, '');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Get the customer card of the specified type.
  *
  * @method getCustomerCardByNum
@@ -132,9 +171,15 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
       num = compDbconnMain.dbConnCustCard[dbConnId].getQueryInterface().escape(num); // e.g. num = '123456'
       num = num.substring(1, num.length - 1); // remove external quote e.g. num = 123456
 
+      // if current customer card is a default one (identity or last_call), the phone number
+      // is cleaned from the international prefix and empty spaces
+      if (ccName === 'cc_identity' || ccName === 'cc_last_calls') {
+        num = removeEmptySpaces(num);
+        num = removeInternationalPrefix(num);
+      }
+
       // replace the key of the query with parameter
       query = compDbconnMain.getCustCardTemplatesData()[permissionId].query.replace(/\$NUMBER/g, num);
-
       compDbconnMain.dbConnCustCard[dbConnId].query(query).then(function(results) {
 
         logger.log.info(IDLOG, results[0].length + ' results by searching cust card "' + ccName +
