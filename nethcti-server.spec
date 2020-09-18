@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.20.1
+Version: 3.20.2
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Sep 18 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.2-1
+- Customer cards not always showed correctly - Bug nethesis/dev#5870
+
 * Thu Sep 10 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.1-1
 - Fix manual c2c to new simplified astproxy syntax- Bug nethesis/dev#5849
 
