@@ -29,3 +29,13 @@ EXISTS=$(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "SHOW KEYS FROM asteris
 if [[ $EXISTS == "" ]]; then
   $(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "ALTER TABLE asteriskcdrdb.queue_log ADD INDEX callid_idx(callid)");
 fi
+
+# Update SQL queries of default customer cards for issue #5870
+EXISTS=$(/usr/bin/mysql --defaults-file=/root/.my.cnf -se "SELECT query FROM nethcti3.customer_card WHERE name='Identity'");
+if [[ $EXISTS == "select * from phonebook where homephone like '%\$NUMBER' or workphone like '%\$NUMBER' or cellphone like '%\$NUMBER' or fax like '%\$NUMBER'" ]]; then
+  $(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "UPDATE nethcti3.customer_card SET query=\"select * from phonebook where REPLACE(homephone, ' ', '') like '%\$NUMBER' or REPLACE(workphone, ' ', '') like '%\$NUMBER' or REPLACE(cellphone, ' ', '') like '%\$NUMBER' or REPLACE(fax, ' ', '') like '%\$NUMBER'\" WHERE name='Identity'");
+fi
+EXISTS=$(/usr/bin/mysql --defaults-file=/root/.my.cnf -se "SELECT query FROM nethcti3.customer_card WHERE name='Last calls'");
+if [[ $EXISTS == "select DATE_FORMAT(calldate,'%d/%m/%Y') as date, DATE_FORMAT(calldate,'%H:%i:%S') as time, clid, src, dst, uniqueid,duration, time_format(billsec, '%H:%i:%S') as billsec, disposition,if(src='\$NUMBER','in','out') as direction from cdr where (src = '\$NUMBER' or dst = '\$NUMBER') and disposition = 'ANSWERED' order by calldate desc limit 0,10" ]]; then
+  $(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "UPDATE nethcti3.customer_card SET query=\"select DATE_FORMAT(calldate,'%d/%m/%Y') as date, DATE_FORMAT(calldate,'%H:%i:%S') as time, clid, src, dst, uniqueid,duration, time_format(billsec, '%H:%i:%S') as billsec, disposition,if(src='\$NUMBER','in','out') as direction from cdr where (src LIKE '%\$NUMBER' or dst LIKE '%\$NUMBER') and disposition = 'ANSWERED' order by calldate desc limit 0,10\" WHERE name='Last calls'");
+fi
