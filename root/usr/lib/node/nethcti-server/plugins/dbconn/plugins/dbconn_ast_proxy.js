@@ -1052,36 +1052,35 @@ function getAgentsStatsLoginLogout(agents) {
     }
     return function (callback) {
       try {
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
-          where: [
-            'event IN ("REMOVEMEMBER","ADDMEMBER") ' +
-            'AND ( (agent IN ("' + agents.join('","') + '") ' +
-            'AND data1="") || ' +
-            '(agent IN ("' + agents.join('","') + '") AND data1!="") ) '+
-            'GROUP BY queuename, agent, event ORDER BY time'
-          ],
-          attributes: [
-            ['MAX(time)', 'last_time'],
-            'id', 'callid', 'queuename', 'agent', 'event'
-          ]
-        }).then(function (results) {
+        let query = `
+SELECT
+  MAX(time) AS \`last_time\`,
+  id, callid, queuename, agent, event
+FROM queue_log
+WHERE event IN ("REMOVEMEMBER","ADDMEMBER")
+  AND ( (agent IN ("${agents.join('","')}")
+  AND data1="") || (agent IN ("${agents.join('","')}") AND data1!="") )
+  GROUP BY queuename, agent, event ORDER BY time`;
+        compDbconnMain.dbConn['queue_log'].query(
+          query,
+          (err, results, fields) => {
           try {
             if (results) {
               logger.log.info(IDLOG, 'get login/logout stats of queue agents "' + agents + '" has been successful');
               var values = {};
               var i;
               for (i = 0; i < results.length; i++) {
-                results[i].dataValues.last_time = Math.round(new Date(results[i].dataValues.last_time).getTime() / 1000);
-                if (!values[results[i].dataValues.agent]) {
-                  values[results[i].dataValues.agent] = {};
+                results[i].last_time = Math.round(new Date(results[i].last_time).getTime() / 1000);
+                if (!values[results[i].agent]) {
+                  values[results[i].agent] = {};
                 }
-                if (!values[results[i].dataValues.agent][results[i].dataValues.queuename]) {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename] = {};
+                if (!values[results[i].agent][results[i].queuename]) {
+                  values[results[i].agent][results[i].queuename] = {};
                 }
-                if (results[i].dataValues.event === 'ADDMEMBER') {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename].last_login_time = Math.floor(results[i].dataValues.last_time);
-                } else if (results[i].dataValues.event === 'REMOVEMEMBER') {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename].last_logout_time = Math.floor(results[i].dataValues.last_time);
+                if (results[i].event === 'ADDMEMBER') {
+                  values[results[i].agent][results[i].queuename].last_login_time = Math.floor(results[i].last_time);
+                } else if (results[i].event === 'REMOVEMEMBER') {
+                  values[results[i].agent][results[i].queuename].last_logout_time = Math.floor(results[i].last_time);
                 }
               }
               callback(null, values);
@@ -1093,9 +1092,6 @@ function getAgentsStatsLoginLogout(agents) {
             logger.log.error(IDLOG, error.stack);
             callback(error);
           }
-        }, function (err) {
-          logger.log.error(IDLOG, 'get login/logout stats of agents "' + agents + '": ' + err.toString());
-          callback(err.toString());
         });
         compDbconnMain.incNumExecQueries();
       } catch (err) {
