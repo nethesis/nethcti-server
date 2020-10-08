@@ -852,39 +852,39 @@ function getAgentsStatsCalls(agents) {
     }
     return function (callback) {
       try {
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
-          where: [
-            'event IN ("COMPLETEAGENT","COMPLETECALLER") AND agent IN ("' + agents.join('","') + '") GROUP BY agent, queuename'
-          ],
-          attributes: [
-            ['MAX(time)', 'last_call_time'],
-            ['COUNT(queuename)', 'calls_taken'],
-            ['SUM(data2)', 'duration_incoming'],
-            ['MAX(data2)', 'max_duration_incoming'],
-            ['MIN(data2)', 'min_duration_incoming'],
-            ['AVG(data2)', 'avg_duration_incoming'],
-            'queuename', 'agent'
-          ]
-        }).then(function (results) {
+        let query = `
+SELECT
+  MAX(time) AS \`last_call_time\`,
+  COUNT(queuename) AS \`calls_taken\`,
+  SUM(data2) AS \`duration_incoming\`,
+  MAX(data2) AS \`max_duration_incoming\`,
+  MIN(data2) AS \`min_duration_incoming\`,
+  AVG(data2) AS \`avg_duration_incoming\`,
+  \`queuename\`, \`agent\`
+FROM \`queue_log\`
+WHERE \`event\` IN ("COMPLETEAGENT","COMPLETECALLER") AND agent IN ("${agents.join('","')}") GROUP BY \`agent\`, \`queuename\``;
+        compDbconnMain.dbConn['queue_log'].query(
+          query,
+          (err, results, fields) => {
           try {
             if (results) {
               logger.log.info(IDLOG, 'get calls taken count stats of queue agents "' + agents + '" has been successful');
               var values = {};
               var i;
               for (i = 0; i < results.length; i++) {
-                results[i].dataValues.last_call_time = Math.round(new Date(results[i].dataValues.last_call_time).getTime() / 1000);
-                if (!values[results[i].dataValues.agent]) {
-                  values[results[i].dataValues.agent] = {};
+                results[i].last_call_time = Math.round(new Date(results[i].last_call_time).getTime() / 1000);
+                if (!values[results[i].agent]) {
+                  values[results[i].agent] = {};
                 }
-                if (!values[results[i].dataValues.agent][results[i].dataValues.queuename]) {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename] = {};
+                if (!values[results[i].agent][results[i].queuename]) {
+                  values[results[i].agent][results[i].queuename] = {};
                 }
-                values[results[i].dataValues.agent][results[i].dataValues.queuename].duration_incoming = results[i].dataValues.duration_incoming;
-                values[results[i].dataValues.agent][results[i].dataValues.queuename].calls_taken = results[i].dataValues.calls_taken;
-                values[results[i].dataValues.agent][results[i].dataValues.queuename].last_call_time = Math.floor(results[i].dataValues.last_call_time);
-                values[results[i].dataValues.agent][results[i].dataValues.queuename].max_duration_incoming = parseInt(results[i].dataValues.max_duration_incoming);
-                values[results[i].dataValues.agent][results[i].dataValues.queuename].min_duration_incoming = parseInt(results[i].dataValues.min_duration_incoming);
-                values[results[i].dataValues.agent][results[i].dataValues.queuename].avg_duration_incoming = Math.floor(results[i].dataValues.avg_duration_incoming);
+                values[results[i].agent][results[i].queuename].duration_incoming = results[i].duration_incoming;
+                values[results[i].agent][results[i].queuename].calls_taken = results[i].calls_taken;
+                values[results[i].agent][results[i].queuename].last_call_time = Math.floor(results[i].last_call_time);
+                values[results[i].agent][results[i].queuename].max_duration_incoming = parseInt(results[i].max_duration_incoming);
+                values[results[i].agent][results[i].queuename].min_duration_incoming = parseInt(results[i].min_duration_incoming);
+                values[results[i].agent][results[i].queuename].avg_duration_incoming = Math.floor(results[i].avg_duration_incoming);
               }
               callback(null, values);
             } else {
@@ -895,9 +895,6 @@ function getAgentsStatsCalls(agents) {
             logger.log.error(IDLOG, error.stack);
             callback(error);
           }
-        }, function (err) {
-          logger.log.error(IDLOG, 'get calls taken count stats of agents "' + agents + '": ' + err.toString());
-          callback(err.toString());
         });
         compDbconnMain.incNumExecQueries();
       } catch (err) {
