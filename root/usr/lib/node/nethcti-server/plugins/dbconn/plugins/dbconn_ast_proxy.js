@@ -440,55 +440,52 @@ function getQueueStats(qid, nullCallPeriod, sla, cb) {
       typeof nullCallPeriod !== 'number') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].find({
-      where: [
-        'event IN ("DID","ENTERQUEUE","COMPLETEAGENT","COMPLETECALLER","ABANDON","EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL") ' +
-        'AND queuename=?',
-        qid
-      ],
-      attributes: [
-        ['IFNULL(queuename, ' + qid + ')', 'queueman'],
-        ['COUNT(IF(event="DID", 1, NULL))', 'tot'],
-        ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER"), 1, NULL))', 'tot_processed'],
-        ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER") AND data1<' + sla + ', 1, NULL))', 'processed_less_sla'],
-        ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER") AND data1>=' + sla + ', 1, NULL))', 'processed_greater_sla'],
-        ['COUNT(IF(event="ABANDON" AND data3<' + nullCallPeriod + ', 1, NULL))', 'tot_null'],
-        ['COUNT(IF((event IN ("EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL")) OR (event="ABANDON" AND data3>=' + nullCallPeriod + '), 1, NULL))', 'tot_failed'],
-        ['COUNT(IF(event="EXITEMPTY", 1, NULL))', 'failed_inqueue_noagents'],
-        ['COUNT(IF(event="EXITWITHKEY", 1, NULL))', 'failed_withkey'],
-        ['COUNT(IF(event="EXITWITHTIMEOUT", 1, NULL))', 'failed_timeout'],
-        ['COUNT(IF((event="ABANDON" AND data3>=' + nullCallPeriod + '), 1, NULL))', 'failed_abandon'],
-        ['COUNT(IF(event="FULL", 1, NULL))', 'failed_full'],
-        ['COUNT(IF(event IN ("JOINEMPTY","JOINUNAVAIL"), 1, NULL))', 'failed_outqueue_noagents'],
-        ['IFNULL(MIN(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0)', 'min_duration'],
-        ['IFNULL(MAX(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0)', 'max_duration'],
-        ['IFNULL(ROUND(AVG(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0), 0)', 'avg_duration'],
-        ['IFNULL(MIN(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED), ' +
-          'IF(event="ABANDON" AND data3>=' + nullCallPeriod + ', CAST(data3 AS UNSIGNED), ' +
-          'IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL))' +
-          ')), 0)',
-          'min_wait'
-        ],
-        ['IFNULL(MAX(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED), ' +
-          'IF(event="ABANDON" AND data3>=' + nullCallPeriod + ', CAST(data3 AS UNSIGNED), ' +
-          'IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL))' +
-          ')), 0)',
-          'max_wait'
-        ],
-        ['IFNULL(ROUND(AVG(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED), ' +
-          'IF(event="ABANDON" AND data3>=' + nullCallPeriod + ', CAST(data3 AS UNSIGNED), ' +
-          'IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL))' +
-          ')), 0), 0)',
-          'avg_wait'
-        ]
-      ]
-    }).then(function (results) {
+    let query = `
+SELECT
+  IFNULL(queuename, ${qid}) AS \`queueman\`,
+  COUNT(IF(event="DID", 1, NULL)) AS \`tot\`,
+  COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER"), 1, NULL)) AS \`tot_processed\`,
+  COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER") AND data1<${sla}, 1, NULL)) AS \`processed_less_sla\`,
+  COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER") AND data1>=${sla}, 1, NULL)) AS \`processed_greater_sla\`,
+  COUNT(IF(event="ABANDON" AND data3<${nullCallPeriod}, 1, NULL)) AS \`tot_null\`,
+  COUNT(IF((event IN ("EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL")) OR (event="ABANDON" AND data3>=${nullCallPeriod}), 1, NULL)) AS \`tot_failed\`,
+  COUNT(IF(event="EXITEMPTY", 1, NULL)) AS \`failed_inqueue_noagents\`,
+  COUNT(IF(event="EXITWITHKEY", 1, NULL)) AS \`failed_withkey\`,
+  COUNT(IF(event="EXITWITHTIMEOUT", 1, NULL)) AS \`failed_timeout\`,
+  COUNT(IF((event="ABANDON" AND data3>=${nullCallPeriod}), 1, NULL)) AS \`failed_abandon\`,
+  COUNT(IF(event="FULL", 1, NULL)) AS \`failed_full\`,
+  COUNT(IF(event IN ("JOINEMPTY","JOINUNAVAIL"), 1, NULL)) AS \`failed_outqueue_noagents\`,
+  IFNULL(MIN(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0) AS \`min_duration\`,
+  IFNULL(MAX(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0) AS \`max_duration\`,
+  IFNULL(ROUND(AVG(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0), 0) AS \`avg_duration\`,
+  IFNULL(MIN(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED),
+    IF(event="ABANDON" AND data3>=${nullCallPeriod}, CAST(data3 AS UNSIGNED),
+    IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL)))), 0) AS \`min_wait\`,
+  IFNULL(MAX(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED),
+    IF(event="ABANDON" AND data3>=${nullCallPeriod}, CAST(data3 AS UNSIGNED),
+    IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL)))), 0) AS \`max_wait\`,
+  IFNULL(ROUND(AVG(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED),
+    IF(event="ABANDON" AND data3>=${nullCallPeriod}, CAST(data3 AS UNSIGNED),
+    IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL)))), 0), 0) AS \`avg_wait\`
+FROM \`queue_log\`
+WHERE event IN ("DID","ENTERQUEUE","COMPLETEAGENT","COMPLETECALLER","ABANDON","EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL") AND queuename=?`;
+    compDbconnMain.dbConn['queue_log'].query(
+      query,
+      [qid],
+      (err, results, fields) => {
       try {
-        if (results && results.dataValues) {
+        if (err) {
+          logger.log.info(IDLOG, 'get stats of queue "' + qid + '": not found');
+          cb(null, {});
+          return;
+        }
+        if (results && results[0]) {
           logger.log.info(IDLOG, 'get stats of queue "' + qid + '" has been successful');
-          results.dataValues.sla = parseInt(sla);
-          results.dataValues.nullCallPeriod = parseInt(nullCallPeriod);
-          cb(null, results.dataValues);
+          results = results[0];
+          results.sla = parseInt(sla);
+          results.nullCallPeriod = parseInt(nullCallPeriod);
+          cb(null, results);
+          console.log(results);
         } else {
           logger.log.info(IDLOG, 'get stats of queue "' + qid + '": not found');
           cb(null, {});
@@ -497,12 +494,8 @@ function getQueueStats(qid, nullCallPeriod, sla, cb) {
         logger.log.error(IDLOG, error.stack);
         cb(error);
       }
-    }, function (err) {
-      logger.log.error(IDLOG, 'get stats of queue "' + qid + '": ' + err.toString());
-      cb(err.toString());
     });
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
