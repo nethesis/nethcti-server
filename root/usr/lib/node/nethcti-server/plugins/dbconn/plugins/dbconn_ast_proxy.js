@@ -922,39 +922,42 @@ function getAgentsMissedCalls(agents) {
     }
     return function (callback) {
       try {
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
-          where: [
-            'event="RINGNOANSWER" AND agent IN ("' + agents.join('","') + '") GROUP BY queuename, agent ORDER BY agent'
-          ],
-          attributes: [
-            ['COUNT(event)', 'noanswercalls'], 'agent', 'queuename'
-          ]
-        }).then(function (results) {
+        let query = `
+SELECT
+  COUNT(event) AS \`noanswercalls\`,
+  agent, queuename
+FROM \`queue_log\`
+WHERE event="RINGNOANSWER" AND agent IN ("${agents.join('","')}") GROUP BY queuename, agent ORDER BY agent`;
+        compDbconnMain.dbConn['queue_log'].query(
+          query,
+          (err, results, fields) => {
           try {
-            if (results) {
-              logger.log.info(IDLOG, 'get missed calls count of queue agents "' + agents + '" has been successful');
-              var values = {};
-              for (var i = 0; i < results.length; i++) {
-                if (!values[results[i].dataValues.agent]) {
-                  values[results[i].dataValues.agent] = {};
+            try {
+              if (results) {
+                logger.log.info(IDLOG, 'get missed calls count of queue agents "' + agents + '" has been successful');
+                var values = {};
+                for (var i = 0; i < results.length; i++) {
+                  if (!values[results[i].agent]) {
+                    values[results[i].agent] = {};
+                  }
+                  if (!values[results[i].agent][results[i].queuename]) {
+                    values[results[i].agent][results[i].queuename] = {};
+                  }
+                  values[results[i].agent][results[i].queuename].noanswercalls = results[i].noanswercalls;
                 }
-                if (!values[results[i].dataValues.agent][results[i].dataValues.queuename]) {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename] = {};
-                }
-                values[results[i].dataValues.agent][results[i].dataValues.queuename].noanswercalls = results[i].dataValues.noanswercalls;
+                callback(null, values);
+              } else {
+                logger.log.info(IDLOG, 'get missed calls of agents "' + agents + '": not found');
+                callback(null, {});
               }
-              callback(null, values);
-            } else {
-              logger.log.info(IDLOG, 'get missed calls of agents "' + agents + '": not found');
-              callback(null, {});
+            } catch (error) {
+              logger.log.error(IDLOG, error.stack);
+              callback(error);
             }
           } catch (error) {
             logger.log.error(IDLOG, error.stack);
             callback(error);
           }
-        }, function (err) {
-          logger.log.error(IDLOG, 'get missed calls of agents "' + agents + '": ' + err.toString());
-          callback(err.toString());
         });
         compDbconnMain.incNumExecQueries();
       } catch (err) {
