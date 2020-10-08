@@ -638,7 +638,7 @@ function initConnections() {
       if (dbConfig[k].dbtype === 'mysql') {
         // migration from sequelize to mysql
         // https://github.com/nethesis/dev/issues/5883
-        if (k === 'ampusers' || k === 'pin_protected_routes') {
+        if (k === 'ampusers' || k === 'pin_protected_routes' || k === 'pin') {
           // use mysql2
           initMysqlConn(k);
         } else {

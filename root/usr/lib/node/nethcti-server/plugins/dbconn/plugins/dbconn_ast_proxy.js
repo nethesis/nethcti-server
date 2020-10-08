@@ -1490,17 +1490,23 @@ function setPinExten(extension, pin, enabled, cb) {
     if (typeof extension !== 'string' || typeof pin !== 'string' || typeof enabled !== 'boolean' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PIN].upsert({
-      extension: extension,
-      pin: pin,
-      enabled: enabled
-    }).then(function(result) {
-      logger.log.info(IDLOG, `set pin ${pin} for exten ${extension} with status enabled "${enabled}"`);
-      cb();
-    }, function(err) {
-      logger.log.error(IDLOG, `setting pin ${pin} for exten ${extension} with status enabled "${enabled}"`);
-      logger.log.error(IDLOG, err);
-      cb(err);
+    compDbconnMain.dbConn['pin'].execute(
+      'INSERT INTO `pin` (`extension`,`pin`,`enabled`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `extension`=?, `pin`=?, `enabled`=?', 
+      [extension, pin, enabled,extension, pin, enabled],
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, `setting pin ${pin} for exten ${extension} with status enabled "${enabled}"`);
+          logger.log.error(IDLOG, err.stack);
+          cb(err);
+          return;
+        }
+        logger.log.info(IDLOG, `set pin ${pin} for exten ${extension} with status enabled "${enabled}"`);
+        cb();
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
     });
     compDbconnMain.incNumExecQueries();
   } catch (err) {
