@@ -169,73 +169,6 @@ function getFpbxAdminSha1Pwd(cb) {
 }
 
 /**
- * Get call info of speciefied uniqueid. It searches the results into the
- * database specified into the key names of one of the _/etc/nethcti/dbstatic.json_
- * or _/etc/nethcti/dbdynamic.json_ files.
- *
- * @method getCallInfo
- * @param {string}   uniqueid   The call uniqueid
- * @param {string}   privacyStr The privacy string to be used to hide the phone numbers. It can be undefined
- * @param {function} cb         The callback function
- */
-function getCallInfo(uniqueid, privacyStr, cb) {
-  try {
-    // check parameters
-    if (typeof uniqueid !== 'string' || typeof cb !== 'function' || (typeof privacyStr !== 'string' && privacyStr !== undefined)) {
-
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    var attributes = ['eventtype', 'eventtime', 'context', 'channame'];
-
-    // if the privacy string is present, than hide the numbers
-    if (privacyStr) {
-      // the numbers are hidden
-      attributes.push(['CONCAT( SUBSTRING(exten,       1, LENGTH(exten)       - ' + privacyStr.length + '), "' + privacyStr + '")', 'exten']);
-      attributes.push(['CONCAT( SUBSTRING(accountcode, 1, LENGTH(accountcode) - ' + privacyStr.length + '), "' + privacyStr + '")', 'accountcode']);
-      var cidNumHidden = 'CONCAT( SUBSTRING(cid_num,     1, LENGTH(cid_num)     - ' + privacyStr.length + '), "' + privacyStr + '")';
-      attributes.push(['concat(cid_name, " ", ' + cidNumHidden + ')', 'cid']);
-
-    } else {
-      // the numbers are clear
-      attributes.push('exten');
-      attributes.push('accountcode');
-      attributes.push(['concat(cid_name, " ", cid_num)', 'cid']);
-    }
-
-    // search
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CEL].findAll({
-      where: [
-        'uniqueid=?', uniqueid
-      ],
-      attributes: attributes
-
-    }).success(function (results) {
-
-      // extract results to return in the callback function
-      var i;
-      for (i = 0; i < results.length; i++) {
-        results[i] = results[i].selectedValues;
-      }
-
-      logger.log.info(IDLOG, results.length + ' results searching CEL on uniqueid "' + uniqueid + '"');
-      cb(null, results);
-
-    }).error(function (err) { // manage the error
-
-      logger.log.error(IDLOG, 'searching CEL on uniqueid "' + uniqueid + '"');
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Gets the details about caller id from queue_recall db table.
  *
  * @method getQueueRecallInfo
@@ -1671,7 +1604,6 @@ function isPinEnabledAtLeastOneRoute(cb) {
 
 apiList.setPinExten = setPinExten;
 apiList.getPinExtens = getPinExtens;
-apiList.getCallInfo = getCallInfo;
 apiList.getCallTrace = getCallTrace;
 apiList.getQueueStats = getQueueStats;
 apiList.getRecall = getRecall;
