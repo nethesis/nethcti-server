@@ -1520,13 +1520,19 @@ function isPinEnabledAtLeastOneRoute(cb) {
     if (typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PIN_PROTECTED_ROUTES].count({
-      where: ['enabled=1']
-    }).then(function (result) {
-      cb(null, result > 0 ? true : false);
-    }, function (error) {
-      logger.log.error(IDLOG, 'getting pin activation status');
-      cb(error.toString());
+    compDbconnMain.dbConn['pin_protected_routes'].query(
+      'SELECT COUNT(*) AS `count` FROM `pin_protected_routes` WHERE enabled=1', (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, err.stack);
+          cb(err);
+          return;
+        }
+        cb(null, results[0].count > 0 ? true : false);
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
     });
     compDbconnMain.incNumExecQueries();
   } catch (err) {
