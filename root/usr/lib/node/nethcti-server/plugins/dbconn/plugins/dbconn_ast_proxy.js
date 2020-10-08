@@ -1433,6 +1433,12 @@ function getCallRecordingFileData(uniqueid, cb) {
   }
 }
 
+// setTimeout(() => {
+//   getPinExtens(['2001','2002'], (err, resp) => {
+//     console.log(err, resp);
+//   })
+// }, 2000);
+
 /**
  * Get pin of extensions.
  *
@@ -1445,28 +1451,36 @@ function getPinExtens(extens, cb) {
     if (!Array.isArray(extens) || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PIN].findAll({
-      where: [
-        'extension IN ("' + extens.join('","') + '")'
-      ],
-      attributes: [ 'extension', 'pin', 'enabled' ]
-    }).then(function (results) {
-      let retval = {};
-      if (results && results.length > 0) {
-        for (let i = 0; i < results.length; i++) {
-          retval[results[i].dataValues.extension] = results[i].dataValues;
-          retval[results[i].dataValues.extension].enabled = retval[results[i].dataValues.extension].enabled === 1;
+    if (extens.length === 0) {
+      cb(null, {});
+    }
+    compDbconnMain.dbConn['pin'].query(
+      'SELECT `extension`, `pin`, `enabled` FROM `pin` WHERE `extension` IN (?)',
+      [extens],
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'getting pin of extens ' + extens.toString());
+          logger.log.error(IDLOG, err.stack);
+          cb(err);
+          return;
         }
-        logger.log.info(IDLOG, 'found pin of extens ' + extens);
-        cb(null, retval);
-      } else {
-        logger.log.info(IDLOG, `no pin found for extens ${extens}`);
-        cb(null, []);
+        let retval = {};
+        if (results && results.length > 0) {
+          for (let i = 0; i < results.length; i++) {
+            retval[results[i].extension] = results[i];
+            retval[results[i].extension].enabled = retval[results[i].extension].enabled === 1;
+          }
+          logger.log.info(IDLOG, 'found pin of extens ' + extens);
+          cb(null, retval);
+        } else {
+          logger.log.info(IDLOG, `no pin found for extens ${extens}`);
+          cb(null, []);
+        }
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
       }
-    }, function (err) {
-      logger.log.error(IDLOG, 'getting pin of extens ' + extens.toString());
-      logger.log.error(IDLOG, err);
-      cb(err);
     });
     compDbconnMain.incNumExecQueries();
   } catch (err) {
