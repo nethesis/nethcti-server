@@ -528,20 +528,18 @@ function getQCallsStatsHist(nullCallPeriod, cb) {
       caseClause += 'WHEN TIME(time) >= "' + period[i] + ':00" AND TIME(time) < "' + period[i+1] + ':00" THEN DATE_FORMAT(time, "' + currday + '-' + period[i+1] + '") ';
     }
     caseClause += 'END';
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
-      where: [
-        'event IN ("DID","ENTERQUEUE","COMPLETEAGENT","COMPLETECALLER","ABANDON","EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL") ' +
-        'GROUP BY queuename, date'
-      ],
-      attributes: [
-        'queuename',
-        [caseClause, 'date'],
-        ['COUNT(IF(event="DID", 1, NULL))', 'total'],
-        ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER"), 1, NULL))', 'answered'],
-        ['COUNT(IF((event IN ("EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL")) OR (event="ABANDON" AND data3>=' + nullCallPeriod + '), 1, NULL))', 'failed'],
-        ['COUNT(IF(event="ABANDON" AND data3<' + nullCallPeriod + ', 1, NULL))', 'invalid']
-      ]
-    }).then(function (results) {
+    let query = `
+SELECT queuename,
+  ${caseClause} AS date,
+  COUNT(IF(event="DID", 1, NULL)) AS \`total\`,
+  COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER"), 1, NULL)) AS \`answered\`,
+  COUNT(IF((event IN ("EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL")) OR (event="ABANDON" AND data3>=${nullCallPeriod}), 1, NULL)) AS \`failed\`,
+  COUNT(IF(event="ABANDON" AND data3<${nullCallPeriod}, 1, NULL)) AS \`invalid\`
+FROM \`queue_log\`
+WHERE event IN ("DID","ENTERQUEUE","COMPLETEAGENT","COMPLETECALLER","ABANDON","EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL") GROUP BY \`queuename\`, \`date\``;
+    compDbconnMain.dbConn['queue_log'].query(
+      query,
+      (err, results, fields) => {
       try {
         let tempdate, i, tempval,
             min = Math.floor(day.minutes()/30)*30,
@@ -564,18 +562,18 @@ function getQCallsStatsHist(nullCallPeriod, cb) {
           logger.log.info(IDLOG, 'get hist queues calls stats has been successful');
           let values = {};
           for (i = 0; i < results.length; i++) {
-            if (!values[results[i].dataValues.queuename]) {
-              values[results[i].dataValues.queuename] = {
+            if (!values[results[i].queuename]) {
+              values[results[i].queuename] = {
                 totalTemp: JSON.parse(JSON.stringify(basevalues)),
                 answeredTemp: JSON.parse(JSON.stringify(basevalues)),
                 failedTemp: JSON.parse(JSON.stringify(basevalues)),
                 invalidTemp: JSON.parse(JSON.stringify(basevalues))
               };
             }
-            values[results[i].dataValues.queuename].totalTemp[results[i].dataValues.date].value = results[i].dataValues.total;
-            values[results[i].dataValues.queuename].answeredTemp[results[i].dataValues.date].value = results[i].dataValues.answered;
-            values[results[i].dataValues.queuename].failedTemp[results[i].dataValues.date].value = results[i].dataValues.failed;
-            values[results[i].dataValues.queuename].invalidTemp[results[i].dataValues.date].value = results[i].dataValues.invalid;
+            values[results[i].queuename].totalTemp[results[i].date].value = results[i].total;
+            values[results[i].queuename].answeredTemp[results[i].date].value = results[i].answered;
+            values[results[i].queuename].failedTemp[results[i].date].value = results[i].failed;
+            values[results[i].queuename].invalidTemp[results[i].date].value = results[i].invalid;
           }
           let q, entry;
           for (q in values) {
@@ -613,9 +611,6 @@ function getQCallsStatsHist(nullCallPeriod, cb) {
         logger.log.error(IDLOG, error.stack);
         cb(error);
       }
-    }, function (err) {
-      logger.log.error(IDLOG, 'get hist queues calls stats: ' + err.toString());
-      cb(err.toString());
     });
     compDbconnMain.incNumExecQueries();
   } catch (err) {
