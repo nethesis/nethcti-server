@@ -789,46 +789,42 @@ function getAgentsStatsPauseUnpause(agents) {
     }
     return function (callback) {
       try {
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
-          where: [
-            'event IN ("PAUSE","UNPAUSE") AND agent IN ("' + agents.join('","') + '") AND callid="NONE" GROUP BY queuename, agent, event ORDER BY time'
-          ],
-          attributes: [
-            ['MAX(time)', 'last_time'],
-            'id', 'callid', 'queuename', 'agent', 'event'
-          ]
-        }).then(function (results) {
-          try {
-            if (results) {
-              logger.log.info(IDLOG, 'get pause/unpause stats of queue agents "' + agents + '" has been successful');
-              var values = {};
-              var i;
-              for (i = 0; i < results.length; i++) {
-                results[i].dataValues.last_time = Math.round(new Date(results[i].dataValues.last_time).getTime() / 1000);
-                if (!values[results[i].dataValues.agent]) {
-                  values[results[i].dataValues.agent] = {};
+        let query = `
+SELECT
+  MAX(time) AS \`last_time\`,\`id\`,\`callid\`,\`queuename\`,\`agent\`,\`event\`
+FROM \`queue_log\`
+WHERE \`event\` IN ("PAUSE","UNPAUSE") AND agent IN ("${agents.join('","')}") AND callid="NONE" GROUP BY \`queuename\`, \`agent\`, \`event\` ORDER BY \`time\``;
+        compDbconnMain.dbConn['queue_log'].query(
+          query,
+          (err, results, fields) => {
+            try {
+              if (results) {
+                logger.log.info(IDLOG, 'get pause/unpause stats of queue agents "' + agents + '" has been successful');
+                var values = {};
+                var i;
+                for (i = 0; i < results.length; i++) {
+                  results[i].last_time = Math.round(new Date(results[i].last_time).getTime() / 1000);
+                  if (!values[results[i].agent]) {
+                    values[results[i].agent] = {};
+                  }
+                  if (!values[results[i].agent][results[i].queuename]) {
+                    values[results[i].agent][results[i].queuename] = {};
+                  }
+                  if (results[i].event === 'PAUSE') {
+                    values[results[i].agent][results[i].queuename].last_paused_time = Math.floor(results[i].last_time);
+                  } else if (results[i].event === 'UNPAUSE') {
+                    values[results[i].agent][results[i].queuename].last_unpaused_time = Math.floor(results[i].last_time);
+                  }
                 }
-                if (!values[results[i].dataValues.agent][results[i].dataValues.queuename]) {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename] = {};
-                }
-                if (results[i].dataValues.event === 'PAUSE') {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename].last_paused_time = Math.floor(results[i].dataValues.last_time);
-                } else if (results[i].dataValues.event === 'UNPAUSE') {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename].last_unpaused_time = Math.floor(results[i].dataValues.last_time);
-                }
+                callback(null, values);
+              } else {
+                logger.log.info(IDLOG, 'get pause/unpause stats of agents "' + agents + '": not found');
+                callback(null, {});
               }
-              callback(null, values);
-            } else {
-              logger.log.info(IDLOG, 'get pause/unpause stats of agents "' + agents + '": not found');
-              callback(null, {});
+            } catch (error) {
+              logger.log.error(IDLOG, error.stack);
+              cb(error);
             }
-          } catch (error) {
-            logger.log.error(IDLOG, error.stack);
-            callback(error);
-          }
-        }, function (err) {
-          logger.log.error(IDLOG, 'get pause/unpause stats of agents "' + agents + '": ' + err.toString());
-          callback(err.toString());
         });
         compDbconnMain.incNumExecQueries();
       } catch (err) {
