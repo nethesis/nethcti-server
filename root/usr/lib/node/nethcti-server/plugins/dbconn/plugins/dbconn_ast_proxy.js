@@ -142,29 +142,26 @@ function getFpbxAdminSha1Pwd(cb) {
     if (typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    var user = 'admin';
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.AMPUSERS].find({
-      where: ['username=?', user],
-      attributes: ['password_sha1']
-
-    }).then(function (result) {
-      // extract result to return in the callback function
-      if (result) {
-        logger.log.info(IDLOG, 'found sha1 password of freepbx admin user');
-        cb(null, result.password_sha1);
-
-      } else {
-        logger.log.info(IDLOG, 'no sha1 password of freepbx admin user has been found');
-        cb(null, false);
+    compDbconnMain.dbConn['ampusers'].query('SELECT `password_sha1` FROM `ampusers` WHERE username = "admin"', (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, err.stack);
+          cb(err);
+          return;
+        }
+        if (results[0] && results[0].password_sha1) {
+          logger.log.info(IDLOG, 'found sha1 password of freepbx admin user');
+          cb(null, results[0].password_sha1);
+        } else {
+          logger.log.info(IDLOG, 'no sha1 password of freepbx admin user has been found');
+          cb(null, false);
+        }
+      } catch (error) {
+        logger.log.error(IDLOG, 'getting sha1 password of freepbx admin user');
+        cb(error.toString());
       }
-
-    }, function (error) { // manage the error
-      logger.log.error(IDLOG, 'getting sha1 password of freepbx admin user');
-      cb(error.toString());
     });
-
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
