@@ -359,32 +359,32 @@ function getRecall(obj, cb) {
     if (obj.queues.length === 0) {
       return cb(null, []);
     }
-    const query = [
-      'SELECT cid, name, company, action, UNIX_TIMESTAMP(time) as time, direction, queuename, ',
-      ' IF (event = "", action, event) AS event ',
-      'FROM ', getAllQueueRecallQueryTable(obj.hours, obj.queues, obj.agents), ' ',
-      'GROUP BY cid, queuename ',
-      'ORDER BY time DESC;'
-    ].join('');
-
-    compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
+    const query = `
+SELECT
+  cid, name, company, action, UNIX_TIMESTAMP(time) as time, direction, queuename,
+  IF (event = "", action, event) AS event
+FROM ${getAllQueueRecallQueryTable(obj.hours, obj.queues, obj.agents)}
+GROUP BY cid, queuename
+ORDER BY time DESC`;
+    compDbconnMain.dbConn['queue_log'].query(
+      query,
+      (err, results, fields) => {
       try {
         logger.log.info(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours +
           ' hours has been successful: ' + results.length + ' results');
         if (obj.type === 'all') {
           if (obj.offset && obj.limit) {
-            cb(null, { count: results[0].length, rows: results[0].slice(parseInt(obj.offset), (parseInt(obj.offset) + parseInt(obj.limit))) });
+            cb(null, { count: results.length, rows: results.slice(parseInt(obj.offset), (parseInt(obj.offset) + parseInt(obj.limit))) });
           } else {
-            cb(null, { count: results[0].length, rows: results[0] });
+            cb(null, { count: results.length, rows: results });
           }
         }
         else if (obj.type === 'done') {
-
           let i;
           let done = [];
-          for (i = 0; i < results[0].length; i++) {
-            if (results[0][i].action === 'DONE') {
-              done.push(results[0][i]);
+          for (i = 0; i < results.length; i++) {
+            if (results[i].action === 'DONE') {
+              done.push(results[i]);
             }
           }
           if (obj.offset && obj.limit) {
@@ -394,12 +394,11 @@ function getRecall(obj, cb) {
           }
         }
         else if (obj.type === 'lost') {
-
           let i;
           let lost = [];
-          for (i = 0; i < results[0].length; i++) {
-            if (results[0][i].action !== 'DONE') {
-              lost.push(results[0][i]);
+          for (i = 0; i < results.length; i++) {
+            if (results[i].action !== 'DONE') {
+              lost.push(results[i]);
             }
           }
           if (obj.offset && obj.limit) {
@@ -408,13 +407,10 @@ function getRecall(obj, cb) {
             cb(null, { count: lost.length, rows: lost });
           }
         }
-      } catch (err2) {
-        logger.log.error(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours + ' hours: ' + err2.toString());
-        cb(err2, {});
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        callback(error);
       }
-    }, function (err1) {
-      logger.log.error(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours + ' hours: ' + err1.toString());
-      cb(err1, {});
     });
     compDbconnMain.incNumExecQueries();
   } catch (err) {
