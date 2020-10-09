@@ -188,27 +188,32 @@ function getQueueRecallInfo(data, cb) {
       typeof data.cid !== 'string' || !data.agents) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    const query = '\
-SELECT queuename,\
-  direction,\
-  action,\
-  UNIX_TIMESTAMP(time) as time,\
-  position,\
-  duration,\
-  hold,\
-  cid,\
-  agent,\
-  IF (event = "", action, event) AS event \
-FROM ' + getAllQueueRecallQueryTable(data.hours, [data.qid], data.agents) + ' \
-WHERE cid="' + data.cid + '" AND queuename="' + data.qid + '"\
-  ORDER BY time ASC';
-
-    compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
-      logger.log.info(IDLOG, results.length + ' results searching details about queue recall on cid "' + data.cid + '"');
-      cb(null, results[0]);
-    }, function (err1) {
-      logger.log.error(IDLOG, 'searching details about queue recall on cid "' + data.cid + '"');
-      cb(err1.toString(), {});
+    const query = `
+SELECT
+  queuename,
+  direction,
+  action,
+  UNIX_TIMESTAMP(time) AS time,
+  position,
+  duration,
+  hold,
+  cid,
+  agent,
+  IF (event = "", action, event) AS event
+FROM ${getAllQueueRecallQueryTable(data.hours, [data.qid], data.agents)}
+WHERE cid=? AND queuename=?
+  ORDER BY time ASC`;
+    compDbconnMain.dbConn['queue_log'].query(
+      query,
+      [ data.cid, data.qid ],
+      (err, results, fields) => {
+      try {
+        logger.log.info(IDLOG, results.length + ' results searching details about queue recall on cid "' + data.cid + '"');
+        cb(null, results);
+      } catch (error) {
+        logger.log.error(IDLOG, 'searching details about queue recall on cid "' + data.cid + '"');
+        cb(error.toString(), {});
+      }
     });
     compDbconnMain.incNumExecQueries();
   } catch (err) {
@@ -409,7 +414,7 @@ ORDER BY time DESC`;
         }
       } catch (error) {
         logger.log.error(IDLOG, error.stack);
-        callback(error);
+        cb(error);
       }
     });
     compDbconnMain.incNumExecQueries();
@@ -753,7 +758,6 @@ GROUP BY agent, queue, a.time`;
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
-    cb(err);
   }
 }
 
@@ -805,7 +809,7 @@ WHERE \`event\` IN ("PAUSE","UNPAUSE") AND agent IN ("${agents.join('","')}") AN
               }
             } catch (error) {
               logger.log.error(IDLOG, error.stack);
-              cb(error);
+              callback(error);
             }
         });
         compDbconnMain.incNumExecQueries();
@@ -816,7 +820,6 @@ WHERE \`event\` IN ("PAUSE","UNPAUSE") AND agent IN ("${agents.join('","')}") AN
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
-    cb(err);
   }
 }
 
@@ -886,7 +889,6 @@ WHERE \`event\` IN ("COMPLETEAGENT","COMPLETECALLER") AND agent IN ("${agents.jo
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
-    cb(err);
   }
 }
 
@@ -949,7 +951,6 @@ WHERE event="RINGNOANSWER" AND agent IN ("${agents.join('","')}") GROUP BY queue
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
-    cb(err);
   }
 }
 
@@ -1083,7 +1084,6 @@ WHERE event IN ("REMOVEMEMBER","ADDMEMBER")
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
-    cb(err);
   }
 }
 
