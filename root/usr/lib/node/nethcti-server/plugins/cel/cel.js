@@ -66,60 +66,6 @@ function setLogger(log) {
   }
 }
 
-
-/**
- * Get call trace from linkedid.
- *
- * @method getCallTrace
- * @param {string}   linkedid   The call identifier
- * @param {string}   privacyStr The privacy string to be used to hide the phone numbers. It can be undefined
- * @param {function} cb         The callback function
- */
-function getCallTrace(linkedid, privacyStr, cb) {
-  try {
-    // check parameters
-    if (typeof linkedid !== 'string' || typeof cb !== 'function' || (typeof privacyStr !== 'string' && privacyStr !== undefined)) {
-
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    logger.log.info(IDLOG, 'search cel for linkedid "' + linkedid + '"');
-    compDbconn.getCallTrace(linkedid, privacyStr, cb);
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
- * Get call information from uniqueid.
- *
- * @method getCallInfo
- * @param {string}   uniqueid   The call identifier
- * @param {string}   privacyStr The privacy string to be used to hide the phone numbers. It can be undefined
- * @param {function} cb         The callback function
- */
-function getCallInfo(uniqueid, privacyStr, cb) {
-  try {
-    // check parameters
-    if (typeof uniqueid !== 'string' ||
-      typeof cb !== 'function' ||
-      (typeof privacyStr !== 'string' && privacyStr !== undefined)) {
-
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    logger.log.info(IDLOG, 'search cel for uniqueid "' + uniqueid + '"');
-    compDbconn.getCallInfo(uniqueid, privacyStr, cb);
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-
 /**
  * Sets the database architect component.
  *
@@ -137,6 +83,4 @@ function setCompDbconn(comp) {
 
 // public interface
 exports.setLogger = setLogger;
-exports.getCallInfo = getCallInfo;
-exports.getCallTrace = getCallTrace;
 exports.setCompDbconn = setCompDbconn;

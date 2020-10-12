@@ -142,96 +142,26 @@ function getFpbxAdminSha1Pwd(cb) {
     if (typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    var user = 'admin';
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.AMPUSERS].find({
-      where: ['username=?', user],
-      attributes: ['password_sha1']
-
-    }).then(function (result) {
-      // extract result to return in the callback function
-      if (result) {
-        logger.log.info(IDLOG, 'found sha1 password of freepbx admin user');
-        cb(null, result.password_sha1);
-
-      } else {
-        logger.log.info(IDLOG, 'no sha1 password of freepbx admin user has been found');
-        cb(null, false);
+    compDbconnMain.dbConn['ampusers'].query('SELECT `password_sha1` FROM `ampusers` WHERE username = "admin"', (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, err.stack);
+          cb(err);
+          return;
+        }
+        if (results[0] && results[0].password_sha1) {
+          logger.log.info(IDLOG, 'found sha1 password of freepbx admin user');
+          cb(null, results[0].password_sha1);
+        } else {
+          logger.log.info(IDLOG, 'no sha1 password of freepbx admin user has been found');
+          cb(null, false);
+        }
+      } catch (error) {
+        logger.log.error(IDLOG, 'getting sha1 password of freepbx admin user');
+        cb(error.toString());
       }
-
-    }, function (error) { // manage the error
-      logger.log.error(IDLOG, 'getting sha1 password of freepbx admin user');
-      cb(error.toString());
     });
-
     compDbconnMain.incNumExecQueries();
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
- * Get call info of speciefied uniqueid. It searches the results into the
- * database specified into the key names of one of the _/etc/nethcti/dbstatic.json_
- * or _/etc/nethcti/dbdynamic.json_ files.
- *
- * @method getCallInfo
- * @param {string}   uniqueid   The call uniqueid
- * @param {string}   privacyStr The privacy string to be used to hide the phone numbers. It can be undefined
- * @param {function} cb         The callback function
- */
-function getCallInfo(uniqueid, privacyStr, cb) {
-  try {
-    // check parameters
-    if (typeof uniqueid !== 'string' || typeof cb !== 'function' || (typeof privacyStr !== 'string' && privacyStr !== undefined)) {
-
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    var attributes = ['eventtype', 'eventtime', 'context', 'channame'];
-
-    // if the privacy string is present, than hide the numbers
-    if (privacyStr) {
-      // the numbers are hidden
-      attributes.push(['CONCAT( SUBSTRING(exten,       1, LENGTH(exten)       - ' + privacyStr.length + '), "' + privacyStr + '")', 'exten']);
-      attributes.push(['CONCAT( SUBSTRING(accountcode, 1, LENGTH(accountcode) - ' + privacyStr.length + '), "' + privacyStr + '")', 'accountcode']);
-      var cidNumHidden = 'CONCAT( SUBSTRING(cid_num,     1, LENGTH(cid_num)     - ' + privacyStr.length + '), "' + privacyStr + '")';
-      attributes.push(['concat(cid_name, " ", ' + cidNumHidden + ')', 'cid']);
-
-    } else {
-      // the numbers are clear
-      attributes.push('exten');
-      attributes.push('accountcode');
-      attributes.push(['concat(cid_name, " ", cid_num)', 'cid']);
-    }
-
-    // search
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CEL].findAll({
-      where: [
-        'uniqueid=?', uniqueid
-      ],
-      attributes: attributes
-
-    }).success(function (results) {
-
-      // extract results to return in the callback function
-      var i;
-      for (i = 0; i < results.length; i++) {
-        results[i] = results[i].selectedValues;
-      }
-
-      logger.log.info(IDLOG, results.length + ' results searching CEL on uniqueid "' + uniqueid + '"');
-      cb(null, results);
-
-    }).error(function (err) { // manage the error
-
-      logger.log.error(IDLOG, 'searching CEL on uniqueid "' + uniqueid + '"');
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -258,27 +188,32 @@ function getQueueRecallInfo(data, cb) {
       typeof data.cid !== 'string' || !data.agents) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    const query = '\
-SELECT queuename,\
-  direction,\
-  action,\
-  UNIX_TIMESTAMP(time) as time,\
-  position,\
-  duration,\
-  hold,\
-  cid,\
-  agent,\
-  IF (event = "", action, event) AS event \
-FROM ' + getAllQueueRecallQueryTable(data.hours, [data.qid], data.agents) + ' \
-WHERE cid="' + data.cid + '" AND queuename="' + data.qid + '"\
-  ORDER BY time ASC';
-
-    compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
-      logger.log.info(IDLOG, results.length + ' results searching details about queue recall on cid "' + data.cid + '"');
-      cb(null, results[0]);
-    }, function (err1) {
-      logger.log.error(IDLOG, 'searching details about queue recall on cid "' + data.cid + '"');
-      cb(err1.toString(), {});
+    const query = `
+SELECT
+  queuename,
+  direction,
+  action,
+  UNIX_TIMESTAMP(time) AS time,
+  position,
+  duration,
+  hold,
+  cid,
+  agent,
+  IF (event = "", action, event) AS event
+FROM ${getAllQueueRecallQueryTable(data.hours, [data.qid], data.agents)}
+WHERE cid=? AND queuename=?
+  ORDER BY time ASC`;
+    compDbconnMain.dbConn['queue_log'].query(
+      query,
+      [ data.cid, data.qid ],
+      (err, results, fields) => {
+      try {
+        logger.log.info(IDLOG, results.length + ' results searching details about queue recall on cid "' + data.cid + '"');
+        cb(null, results);
+      } catch (error) {
+        logger.log.error(IDLOG, 'searching details about queue recall on cid "' + data.cid + '"');
+        cb(error.toString(), {});
+      }
     });
     compDbconnMain.incNumExecQueries();
   } catch (err) {
@@ -429,32 +364,32 @@ function getRecall(obj, cb) {
     if (obj.queues.length === 0) {
       return cb(null, []);
     }
-    const query = [
-      'SELECT cid, name, company, action, UNIX_TIMESTAMP(time) as time, direction, queuename, ',
-      ' IF (event = "", action, event) AS event ',
-      'FROM ', getAllQueueRecallQueryTable(obj.hours, obj.queues, obj.agents), ' ',
-      'GROUP BY cid, queuename ',
-      'ORDER BY time DESC;'
-    ].join('');
-
-    compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
+    const query = `
+SELECT
+  cid, name, company, action, UNIX_TIMESTAMP(time) as time, direction, queuename,
+  IF (event = "", action, event) AS event
+FROM ${getAllQueueRecallQueryTable(obj.hours, obj.queues, obj.agents)}
+GROUP BY cid, queuename
+ORDER BY time DESC`;
+    compDbconnMain.dbConn['queue_log'].query(
+      query,
+      (err, results, fields) => {
       try {
         logger.log.info(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours +
           ' hours has been successful: ' + results.length + ' results');
         if (obj.type === 'all') {
           if (obj.offset && obj.limit) {
-            cb(null, { count: results[0].length, rows: results[0].slice(parseInt(obj.offset), (parseInt(obj.offset) + parseInt(obj.limit))) });
+            cb(null, { count: results.length, rows: results.slice(parseInt(obj.offset), (parseInt(obj.offset) + parseInt(obj.limit))) });
           } else {
-            cb(null, { count: results[0].length, rows: results[0] });
+            cb(null, { count: results.length, rows: results });
           }
         }
         else if (obj.type === 'done') {
-
           let i;
           let done = [];
-          for (i = 0; i < results[0].length; i++) {
-            if (results[0][i].action === 'DONE') {
-              done.push(results[0][i]);
+          for (i = 0; i < results.length; i++) {
+            if (results[i].action === 'DONE') {
+              done.push(results[i]);
             }
           }
           if (obj.offset && obj.limit) {
@@ -464,12 +399,11 @@ function getRecall(obj, cb) {
           }
         }
         else if (obj.type === 'lost') {
-
           let i;
           let lost = [];
-          for (i = 0; i < results[0].length; i++) {
-            if (results[0][i].action !== 'DONE') {
-              lost.push(results[0][i]);
+          for (i = 0; i < results.length; i++) {
+            if (results[i].action !== 'DONE') {
+              lost.push(results[i]);
             }
           }
           if (obj.offset && obj.limit) {
@@ -478,82 +412,12 @@ function getRecall(obj, cb) {
             cb(null, { count: lost.length, rows: lost });
           }
         }
-      } catch (err2) {
-        logger.log.error(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours + ' hours: ' + err2.toString());
-        cb(err2, {});
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
       }
-    }, function (err1) {
-      logger.log.error(IDLOG, 'get queues ' + obj.queues + ' recall of last ' + obj.hours + ' hours: ' + err1.toString());
-      cb(err1, {});
     });
     compDbconnMain.incNumExecQueries();
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
- * Get call trace of speciefied linkedid. It searches the results into the
- * database specified into the key names of one of the _/etc/nethcti/dbstatic.json_
- * or _/etc/nethcti/dbdynamic.json_ files.
- *
- * @method getCallTrace
- * @param {string}   link       The call linkedid
- * @param {string}   privacyStr The privacy string to be used to hide the phone numbers. It can be undefined
- * @param {function} cb         The callback function
- */
-function getCallTrace(linkedid, privacyStr, cb) {
-  try {
-    // check parameters
-    if (typeof linkedid !== 'string' || typeof cb !== 'function' || (typeof privacyStr !== 'string' && privacyStr !== undefined)) {
-
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    var attributes = ['eventtype', 'eventtime', 'context', 'channame'];
-
-    // if the privacy string is present, than hide the numbers
-    if (privacyStr) {
-      // the numbers are hidden
-      attributes.push(['CONCAT( SUBSTRING(exten,       1, LENGTH(exten)       - ' + privacyStr.length + '), "' + privacyStr + '")', 'exten']);
-      attributes.push(['CONCAT( SUBSTRING(accountcode, 1, LENGTH(accountcode) - ' + privacyStr.length + '), "' + privacyStr + '")', 'accountcode']);
-      var cidNumHidden = 'CONCAT( SUBSTRING(cid_num,     1, LENGTH(cid_num)     - ' + privacyStr.length + '), "' + privacyStr + '")';
-      attributes.push(['concat(cid_name, " ", ' + cidNumHidden + ')', 'cid']);
-
-    } else {
-      // the numbers are clear
-      attributes.push('exten');
-      attributes.push('accountcode');
-      attributes.push(['concat(cid_name, " ", cid_num)', 'cid']);
-    }
-
-    // search
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CEL].findAll({
-      where: [
-        'linkedid=?', linkedid
-      ],
-      attributes: attributes
-
-    }).success(function (results) {
-
-      // extract results to return in the callback function
-      var i;
-      for (i = 0; i < results.length; i++) {
-        results[i] = results[i].selectedValues;
-      }
-
-      logger.log.info(IDLOG, results.length + ' results searching CEL on linkedid "' + linkedid + '"');
-      cb(null, results);
-
-    }).error(function (err) { // manage the error
-
-      logger.log.error(IDLOG, 'searching CEL on linkedid "' + linkedid + '"');
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -577,55 +441,51 @@ function getQueueStats(qid, nullCallPeriod, sla, cb) {
       typeof nullCallPeriod !== 'number') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].find({
-      where: [
-        'event IN ("DID","ENTERQUEUE","COMPLETEAGENT","COMPLETECALLER","ABANDON","EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL") ' +
-        'AND queuename=?',
-        qid
-      ],
-      attributes: [
-        ['IFNULL(queuename, ' + qid + ')', 'queueman'],
-        ['COUNT(IF(event="DID", 1, NULL))', 'tot'],
-        ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER"), 1, NULL))', 'tot_processed'],
-        ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER") AND data1<' + sla + ', 1, NULL))', 'processed_less_sla'],
-        ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER") AND data1>=' + sla + ', 1, NULL))', 'processed_greater_sla'],
-        ['COUNT(IF(event="ABANDON" AND data3<' + nullCallPeriod + ', 1, NULL))', 'tot_null'],
-        ['COUNT(IF((event IN ("EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL")) OR (event="ABANDON" AND data3>=' + nullCallPeriod + '), 1, NULL))', 'tot_failed'],
-        ['COUNT(IF(event="EXITEMPTY", 1, NULL))', 'failed_inqueue_noagents'],
-        ['COUNT(IF(event="EXITWITHKEY", 1, NULL))', 'failed_withkey'],
-        ['COUNT(IF(event="EXITWITHTIMEOUT", 1, NULL))', 'failed_timeout'],
-        ['COUNT(IF((event="ABANDON" AND data3>=' + nullCallPeriod + '), 1, NULL))', 'failed_abandon'],
-        ['COUNT(IF(event="FULL", 1, NULL))', 'failed_full'],
-        ['COUNT(IF(event IN ("JOINEMPTY","JOINUNAVAIL"), 1, NULL))', 'failed_outqueue_noagents'],
-        ['IFNULL(MIN(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0)', 'min_duration'],
-        ['IFNULL(MAX(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0)', 'max_duration'],
-        ['IFNULL(ROUND(AVG(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0), 0)', 'avg_duration'],
-        ['IFNULL(MIN(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED), ' +
-          'IF(event="ABANDON" AND data3>=' + nullCallPeriod + ', CAST(data3 AS UNSIGNED), ' +
-          'IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL))' +
-          ')), 0)',
-          'min_wait'
-        ],
-        ['IFNULL(MAX(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED), ' +
-          'IF(event="ABANDON" AND data3>=' + nullCallPeriod + ', CAST(data3 AS UNSIGNED), ' +
-          'IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL))' +
-          ')), 0)',
-          'max_wait'
-        ],
-        ['IFNULL(ROUND(AVG(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED), ' +
-          'IF(event="ABANDON" AND data3>=' + nullCallPeriod + ', CAST(data3 AS UNSIGNED), ' +
-          'IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL))' +
-          ')), 0), 0)',
-          'avg_wait'
-        ]
-      ]
-    }).then(function (results) {
+    let query = `
+SELECT
+  IFNULL(queuename, ${qid}) AS \`queueman\`,
+  COUNT(IF(event="DID", 1, NULL)) AS \`tot\`,
+  COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER"), 1, NULL)) AS \`tot_processed\`,
+  COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER") AND data1<${sla}, 1, NULL)) AS \`processed_less_sla\`,
+  COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER") AND data1>=${sla}, 1, NULL)) AS \`processed_greater_sla\`,
+  COUNT(IF(event="ABANDON" AND data3<${nullCallPeriod}, 1, NULL)) AS \`tot_null\`,
+  COUNT(IF((event IN ("EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL")) OR (event="ABANDON" AND data3>=${nullCallPeriod}), 1, NULL)) AS \`tot_failed\`,
+  COUNT(IF(event="EXITEMPTY", 1, NULL)) AS \`failed_inqueue_noagents\`,
+  COUNT(IF(event="EXITWITHKEY", 1, NULL)) AS \`failed_withkey\`,
+  COUNT(IF(event="EXITWITHTIMEOUT", 1, NULL)) AS \`failed_timeout\`,
+  COUNT(IF((event="ABANDON" AND data3>=${nullCallPeriod}), 1, NULL)) AS \`failed_abandon\`,
+  COUNT(IF(event="FULL", 1, NULL)) AS \`failed_full\`,
+  COUNT(IF(event IN ("JOINEMPTY","JOINUNAVAIL"), 1, NULL)) AS \`failed_outqueue_noagents\`,
+  IFNULL(MIN(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0) AS \`min_duration\`,
+  IFNULL(MAX(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0) AS \`max_duration\`,
+  IFNULL(ROUND(AVG(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data2 AS UNSIGNED), NULL)), 0), 0) AS \`avg_duration\`,
+  IFNULL(MIN(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED),
+    IF(event="ABANDON" AND data3>=${nullCallPeriod}, CAST(data3 AS UNSIGNED),
+    IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL)))), 0) AS \`min_wait\`,
+  IFNULL(MAX(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED),
+    IF(event="ABANDON" AND data3>=${nullCallPeriod}, CAST(data3 AS UNSIGNED),
+    IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL)))), 0) AS \`max_wait\`,
+  IFNULL(ROUND(AVG(IF(event IN ("COMPLETECALLER","COMPLETEAGENT"), CAST(data1 AS UNSIGNED),
+    IF(event="ABANDON" AND data3>=${nullCallPeriod}, CAST(data3 AS UNSIGNED),
+    IF(event IN ("EXITWITHTIMEOUT","EXITEMPTY","EXITWITHKEY"), CAST(data3 AS UNSIGNED), NULL)))), 0), 0) AS \`avg_wait\`
+FROM \`queue_log\`
+WHERE event IN ("DID","ENTERQUEUE","COMPLETEAGENT","COMPLETECALLER","ABANDON","EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL") AND queuename=?`;
+    compDbconnMain.dbConn['queue_log'].query(
+      query,
+      [qid],
+      (err, results, fields) => {
       try {
-        if (results && results.dataValues) {
+        if (err) {
+          logger.log.info(IDLOG, 'get stats of queue "' + qid + '": not found');
+          cb(null, {});
+          return;
+        }
+        if (results && results[0]) {
           logger.log.info(IDLOG, 'get stats of queue "' + qid + '" has been successful');
-          results.dataValues.sla = parseInt(sla);
-          results.dataValues.nullCallPeriod = parseInt(nullCallPeriod);
-          cb(null, results.dataValues);
+          results = results[0];
+          results.sla = parseInt(sla);
+          results.nullCallPeriod = parseInt(nullCallPeriod);
+          cb(null, results);
         } else {
           logger.log.info(IDLOG, 'get stats of queue "' + qid + '": not found');
           cb(null, {});
@@ -634,12 +494,8 @@ function getQueueStats(qid, nullCallPeriod, sla, cb) {
         logger.log.error(IDLOG, error.stack);
         cb(error);
       }
-    }, function (err) {
-      logger.log.error(IDLOG, 'get stats of queue "' + qid + '": ' + err.toString());
-      cb(err.toString());
     });
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -672,20 +528,18 @@ function getQCallsStatsHist(nullCallPeriod, cb) {
       caseClause += 'WHEN TIME(time) >= "' + period[i] + ':00" AND TIME(time) < "' + period[i+1] + ':00" THEN DATE_FORMAT(time, "' + currday + '-' + period[i+1] + '") ';
     }
     caseClause += 'END';
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
-      where: [
-        'event IN ("DID","ENTERQUEUE","COMPLETEAGENT","COMPLETECALLER","ABANDON","EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL") ' +
-        'GROUP BY queuename, date'
-      ],
-      attributes: [
-        'queuename',
-        [caseClause, 'date'],
-        ['COUNT(IF(event="DID", 1, NULL))', 'total'],
-        ['COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER"), 1, NULL))', 'answered'],
-        ['COUNT(IF((event IN ("EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL")) OR (event="ABANDON" AND data3>=' + nullCallPeriod + '), 1, NULL))', 'failed'],
-        ['COUNT(IF(event="ABANDON" AND data3<' + nullCallPeriod + ', 1, NULL))', 'invalid']
-      ]
-    }).then(function (results) {
+    let query = `
+SELECT queuename,
+  ${caseClause} AS date,
+  COUNT(IF(event="DID", 1, NULL)) AS \`total\`,
+  COUNT(IF(event IN ("COMPLETEAGENT","COMPLETECALLER"), 1, NULL)) AS \`answered\`,
+  COUNT(IF((event IN ("EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL")) OR (event="ABANDON" AND data3>=${nullCallPeriod}), 1, NULL)) AS \`failed\`,
+  COUNT(IF(event="ABANDON" AND data3<${nullCallPeriod}, 1, NULL)) AS \`invalid\`
+FROM \`queue_log\`
+WHERE event IN ("DID","ENTERQUEUE","COMPLETEAGENT","COMPLETECALLER","ABANDON","EXITEMPTY","EXITWITHKEY","EXITWITHTIMEOUT","FULL","JOINEMPTY","JOINUNAVAIL") GROUP BY \`queuename\`, \`date\``;
+    compDbconnMain.dbConn['queue_log'].query(
+      query,
+      (err, results, fields) => {
       try {
         let tempdate, i, tempval,
             min = Math.floor(day.minutes()/30)*30,
@@ -708,18 +562,18 @@ function getQCallsStatsHist(nullCallPeriod, cb) {
           logger.log.info(IDLOG, 'get hist queues calls stats has been successful');
           let values = {};
           for (i = 0; i < results.length; i++) {
-            if (!values[results[i].dataValues.queuename]) {
-              values[results[i].dataValues.queuename] = {
+            if (!values[results[i].queuename]) {
+              values[results[i].queuename] = {
                 totalTemp: JSON.parse(JSON.stringify(basevalues)),
                 answeredTemp: JSON.parse(JSON.stringify(basevalues)),
                 failedTemp: JSON.parse(JSON.stringify(basevalues)),
                 invalidTemp: JSON.parse(JSON.stringify(basevalues))
               };
             }
-            values[results[i].dataValues.queuename].totalTemp[results[i].dataValues.date].value = results[i].dataValues.total;
-            values[results[i].dataValues.queuename].answeredTemp[results[i].dataValues.date].value = results[i].dataValues.answered;
-            values[results[i].dataValues.queuename].failedTemp[results[i].dataValues.date].value = results[i].dataValues.failed;
-            values[results[i].dataValues.queuename].invalidTemp[results[i].dataValues.date].value = results[i].dataValues.invalid;
+            values[results[i].queuename].totalTemp[results[i].date].value = results[i].total;
+            values[results[i].queuename].answeredTemp[results[i].date].value = results[i].answered;
+            values[results[i].queuename].failedTemp[results[i].date].value = results[i].failed;
+            values[results[i].queuename].invalidTemp[results[i].date].value = results[i].invalid;
           }
           let q, entry;
           for (q in values) {
@@ -757,9 +611,6 @@ function getQCallsStatsHist(nullCallPeriod, cb) {
         logger.log.error(IDLOG, error.stack);
         cb(error);
       }
-    }, function (err) {
-      logger.log.error(IDLOG, 'get hist queues calls stats: ' + err.toString());
-      cb(err.toString());
     });
     compDbconnMain.incNumExecQueries();
   } catch (err) {
@@ -782,47 +633,43 @@ function getAgentsPauseDurations(agents) {
     }
     return function (callback) {
       try {
-        var query = [
-          'SELECT a.agent AS agent,',
-            'a.queuename AS queue,',
-            'UNIX_TIMESTAMP(MIN(b.time))-UNIX_TIMESTAMP(a.time) AS secs',
-          'FROM asteriskcdrdb.queue_log a',
-          'LEFT JOIN asteriskcdrdb.queue_log b',
-            'ON b.agent = a.agent',
-            'AND b.queuename = a.queuename',
-            'AND b.time > a.time',
-            'AND b.event = "UNPAUSE"',
-            'AND b.callid = "NONE"',
-          'WHERE a.event = "PAUSE"',
-            'AND a.callid = "NONE"',
-            'AND a.agent IN ("' + agents.join('","') + '")',
-          'GROUP BY agent, queue, a.time'
-        ].join(' ');
-        compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
+        var query = `
+SELECT a.agent AS agent,
+  a.queuename AS queue,
+  UNIX_TIMESTAMP(MIN(b.time)) - UNIX_TIMESTAMP(a.time) AS secs
+FROM asteriskcdrdb.queue_log a LEFT JOIN asteriskcdrdb.queue_log b
+  ON b.agent = a.agent
+  AND b.queuename = a.queuename
+  AND b.time > a.time
+  AND b.event = "UNPAUSE"
+  AND b.callid = "NONE"
+WHERE a.event = "PAUSE"
+  AND a.callid = "NONE"
+  AND a.agent IN ("${agents.join('","')}")
+GROUP BY agent, queue, a.time`;
+        compDbconnMain.dbConn['queue_log'].query(
+          query,
+          (err, results, fields) => {
           try {
-            if (results && results[0]) {
-
+            if (results.length !== 0) {
               logger.log.info(IDLOG, 'get pause duration of queue agents "' + agents + '" has been successful');
-              results = results[0];
-              var i, u, q;
-              var resdata = {};
-              for (i = 0; i < results.length; i++) {
+              let resdata = {};
+              for (let i = 0; i < results.length; i++) {
                 if (!resdata[results[i].agent]) {
                   resdata[results[i].agent] = {};
                 }
                 if (!resdata[results[i].agent][results[i].queue]) {
-                  resdata[results[i].agent][results[i].queue] = results[i].secs;
+                  resdata[results[i].agent][results[i].queue] = parseFloat(results[i].secs);
                 } else {
-                  resdata[results[i].agent][results[i].queue] += results[i].secs;
+                  resdata[results[i].agent][results[i].queue] += parseFloat(results[i].secs);
                 }
               }
-              for (u in resdata) {
-                for (q in resdata[u]) {
+              for (let u in resdata) {
+                for (let q in resdata[u]) {
                   resdata[u][q] = Math.round(resdata[u][q]);
                 }
               }
               callback(null, resdata);
-
             } else {
               logger.log.info(IDLOG, 'get pause duration of agents "' + agents + '": not found');
               callback(null, {});
@@ -831,9 +678,6 @@ function getAgentsPauseDurations(agents) {
             logger.log.error(IDLOG, error.stack);
             callback(error);
           }
-        }, function (err) {
-          logger.log.error(IDLOG, 'get pause duration of agents "' + agents + '": ' + err.toString());
-          callback(err.toString());
         });
         compDbconnMain.incNumExecQueries();
       } catch (err) {
@@ -861,45 +705,42 @@ function getAgentsLogonDurations(agents) {
     }
     return function (callback) {
       try {
-        var query = [
-          'SELECT a.agent AS agent,',
-            'a.queuename AS queue,',
-            'UNIX_TIMESTAMP(MIN(b.time))-UNIX_TIMESTAMP(a.time) AS secs',
-          'FROM asteriskcdrdb.queue_log a',
-          'LEFT JOIN asteriskcdrdb.queue_log b',
-            'ON b.agent = a.agent',
-            'AND b.queuename = a.queuename',
-            'AND b.time > a.time',
-            'AND b.event = "REMOVEMEMBER"',
-          'WHERE a.event = "ADDMEMBER"',
-            'AND a.agent IN ("' + agents.join('","') + '")',
-          'GROUP BY agent, queue, a.time'
-        ].join(' ');
-        compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).then(function (results) {
+        let query = `
+SELECT
+  a.agent AS agent,
+  a.queuename AS queue,
+  UNIX_TIMESTAMP(MIN(b.time)) - UNIX_TIMESTAMP(a.time) AS secs
+FROM asteriskcdrdb.queue_log a LEFT JOIN asteriskcdrdb.queue_log b
+  ON b.agent = a.agent
+  AND b.queuename = a.queuename
+  AND b.time > a.time
+  AND b.event = "REMOVEMEMBER"
+WHERE a.event = "ADDMEMBER"
+  AND a.agent IN ("${agents.join('","')}")
+GROUP BY agent, queue, a.time`;
+        compDbconnMain.dbConn['queue_log'].query(
+          query,
+          (err, results, fields) => {
           try {
-            if (results && results[0]) {
-
+            if (results.length !== 0) {
               logger.log.info(IDLOG, 'get logon duration of queue agents "' + agents + '" has been successful');
-              results = results[0];
-              var i, u, q;
-              var resdata = {};
-              for (i = 0; i < results.length; i++) {
+              let resdata = {};
+              for (let i = 0; i < results.length; i++) {
                 if (!resdata[results[i].agent]) {
                   resdata[results[i].agent] = {};
                 }
                 if (!resdata[results[i].agent][results[i].queue]) {
-                  resdata[results[i].agent][results[i].queue] = results[i].secs;
+                  resdata[results[i].agent][results[i].queue] = parseFloat(results[i].secs);
                 } else {
-                  resdata[results[i].agent][results[i].queue] += results[i].secs;
+                  resdata[results[i].agent][results[i].queue] += parseFloat(results[i].secs);
                 }
               }
-              for (u in resdata) {
-                for (q in resdata[u]) {
+              for (let u in resdata) {
+                for (let q in resdata[u]) {
                   resdata[u][q] = Math.round(resdata[u][q]);
                 }
               }
               callback(null, resdata);
-
             } else {
               logger.log.info(IDLOG, 'get logon duration of agents "' + agents + '": not found');
               callback(null, {});
@@ -908,9 +749,6 @@ function getAgentsLogonDurations(agents) {
             logger.log.error(IDLOG, error.stack);
             callback(error);
           }
-        }, function (err) {
-          logger.log.error(IDLOG, 'get logon duration of agents "' + agents + '": ' + err.toString());
-          callback(err.toString());
         });
         compDbconnMain.incNumExecQueries();
       } catch (err) {
@@ -920,7 +758,6 @@ function getAgentsLogonDurations(agents) {
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
-    cb(err);
   }
 }
 
@@ -938,46 +775,42 @@ function getAgentsStatsPauseUnpause(agents) {
     }
     return function (callback) {
       try {
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
-          where: [
-            'event IN ("PAUSE","UNPAUSE") AND agent IN ("' + agents.join('","') + '") AND callid="NONE" GROUP BY queuename, agent, event ORDER BY time'
-          ],
-          attributes: [
-            ['MAX(time)', 'last_time'],
-            'id', 'callid', 'queuename', 'agent', 'event'
-          ]
-        }).then(function (results) {
-          try {
-            if (results) {
-              logger.log.info(IDLOG, 'get pause/unpause stats of queue agents "' + agents + '" has been successful');
-              var values = {};
-              var i;
-              for (i = 0; i < results.length; i++) {
-                results[i].dataValues.last_time = Math.round(new Date(results[i].dataValues.last_time).getTime() / 1000);
-                if (!values[results[i].dataValues.agent]) {
-                  values[results[i].dataValues.agent] = {};
+        let query = `
+SELECT
+  MAX(time) AS \`last_time\`,\`id\`,\`callid\`,\`queuename\`,\`agent\`,\`event\`
+FROM \`queue_log\`
+WHERE \`event\` IN ("PAUSE","UNPAUSE") AND agent IN ("${agents.join('","')}") AND callid="NONE" GROUP BY \`queuename\`, \`agent\`, \`event\` ORDER BY \`time\``;
+        compDbconnMain.dbConn['queue_log'].query(
+          query,
+          (err, results, fields) => {
+            try {
+              if (results) {
+                logger.log.info(IDLOG, 'get pause/unpause stats of queue agents "' + agents + '" has been successful');
+                var values = {};
+                var i;
+                for (i = 0; i < results.length; i++) {
+                  results[i].last_time = Math.round(new Date(results[i].last_time).getTime() / 1000);
+                  if (!values[results[i].agent]) {
+                    values[results[i].agent] = {};
+                  }
+                  if (!values[results[i].agent][results[i].queuename]) {
+                    values[results[i].agent][results[i].queuename] = {};
+                  }
+                  if (results[i].event === 'PAUSE') {
+                    values[results[i].agent][results[i].queuename].last_paused_time = Math.floor(results[i].last_time);
+                  } else if (results[i].event === 'UNPAUSE') {
+                    values[results[i].agent][results[i].queuename].last_unpaused_time = Math.floor(results[i].last_time);
+                  }
                 }
-                if (!values[results[i].dataValues.agent][results[i].dataValues.queuename]) {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename] = {};
-                }
-                if (results[i].dataValues.event === 'PAUSE') {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename].last_paused_time = Math.floor(results[i].dataValues.last_time);
-                } else if (results[i].dataValues.event === 'UNPAUSE') {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename].last_unpaused_time = Math.floor(results[i].dataValues.last_time);
-                }
+                callback(null, values);
+              } else {
+                logger.log.info(IDLOG, 'get pause/unpause stats of agents "' + agents + '": not found');
+                callback(null, {});
               }
-              callback(null, values);
-            } else {
-              logger.log.info(IDLOG, 'get pause/unpause stats of agents "' + agents + '": not found');
-              callback(null, {});
+            } catch (error) {
+              logger.log.error(IDLOG, error.stack);
+              callback(error);
             }
-          } catch (error) {
-            logger.log.error(IDLOG, error.stack);
-            callback(error);
-          }
-        }, function (err) {
-          logger.log.error(IDLOG, 'get pause/unpause stats of agents "' + agents + '": ' + err.toString());
-          callback(err.toString());
         });
         compDbconnMain.incNumExecQueries();
       } catch (err) {
@@ -987,7 +820,6 @@ function getAgentsStatsPauseUnpause(agents) {
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
-    cb(err);
   }
 }
 
@@ -1005,39 +837,39 @@ function getAgentsStatsCalls(agents) {
     }
     return function (callback) {
       try {
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
-          where: [
-            'event IN ("COMPLETEAGENT","COMPLETECALLER") AND agent IN ("' + agents.join('","') + '") GROUP BY agent, queuename'
-          ],
-          attributes: [
-            ['MAX(time)', 'last_call_time'],
-            ['COUNT(queuename)', 'calls_taken'],
-            ['SUM(data2)', 'duration_incoming'],
-            ['MAX(data2)', 'max_duration_incoming'],
-            ['MIN(data2)', 'min_duration_incoming'],
-            ['AVG(data2)', 'avg_duration_incoming'],
-            'queuename', 'agent'
-          ]
-        }).then(function (results) {
+        let query = `
+SELECT
+  MAX(time) AS \`last_call_time\`,
+  COUNT(queuename) AS \`calls_taken\`,
+  SUM(data2) AS \`duration_incoming\`,
+  MAX(data2) AS \`max_duration_incoming\`,
+  MIN(data2) AS \`min_duration_incoming\`,
+  AVG(data2) AS \`avg_duration_incoming\`,
+  \`queuename\`, \`agent\`
+FROM \`queue_log\`
+WHERE \`event\` IN ("COMPLETEAGENT","COMPLETECALLER") AND agent IN ("${agents.join('","')}") GROUP BY \`agent\`, \`queuename\``;
+        compDbconnMain.dbConn['queue_log'].query(
+          query,
+          (err, results, fields) => {
           try {
             if (results) {
               logger.log.info(IDLOG, 'get calls taken count stats of queue agents "' + agents + '" has been successful');
               var values = {};
               var i;
               for (i = 0; i < results.length; i++) {
-                results[i].dataValues.last_call_time = Math.round(new Date(results[i].dataValues.last_call_time).getTime() / 1000);
-                if (!values[results[i].dataValues.agent]) {
-                  values[results[i].dataValues.agent] = {};
+                results[i].last_call_time = Math.round(new Date(results[i].last_call_time).getTime() / 1000);
+                if (!values[results[i].agent]) {
+                  values[results[i].agent] = {};
                 }
-                if (!values[results[i].dataValues.agent][results[i].dataValues.queuename]) {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename] = {};
+                if (!values[results[i].agent][results[i].queuename]) {
+                  values[results[i].agent][results[i].queuename] = {};
                 }
-                values[results[i].dataValues.agent][results[i].dataValues.queuename].duration_incoming = results[i].dataValues.duration_incoming;
-                values[results[i].dataValues.agent][results[i].dataValues.queuename].calls_taken = results[i].dataValues.calls_taken;
-                values[results[i].dataValues.agent][results[i].dataValues.queuename].last_call_time = Math.floor(results[i].dataValues.last_call_time);
-                values[results[i].dataValues.agent][results[i].dataValues.queuename].max_duration_incoming = parseInt(results[i].dataValues.max_duration_incoming);
-                values[results[i].dataValues.agent][results[i].dataValues.queuename].min_duration_incoming = parseInt(results[i].dataValues.min_duration_incoming);
-                values[results[i].dataValues.agent][results[i].dataValues.queuename].avg_duration_incoming = Math.floor(results[i].dataValues.avg_duration_incoming);
+                values[results[i].agent][results[i].queuename].duration_incoming = results[i].duration_incoming;
+                values[results[i].agent][results[i].queuename].calls_taken = results[i].calls_taken;
+                values[results[i].agent][results[i].queuename].last_call_time = Math.floor(results[i].last_call_time);
+                values[results[i].agent][results[i].queuename].max_duration_incoming = parseInt(results[i].max_duration_incoming);
+                values[results[i].agent][results[i].queuename].min_duration_incoming = parseInt(results[i].min_duration_incoming);
+                values[results[i].agent][results[i].queuename].avg_duration_incoming = Math.floor(results[i].avg_duration_incoming);
               }
               callback(null, values);
             } else {
@@ -1048,9 +880,6 @@ function getAgentsStatsCalls(agents) {
             logger.log.error(IDLOG, error.stack);
             callback(error);
           }
-        }, function (err) {
-          logger.log.error(IDLOG, 'get calls taken count stats of agents "' + agents + '": ' + err.toString());
-          callback(err.toString());
         });
         compDbconnMain.incNumExecQueries();
       } catch (err) {
@@ -1060,7 +889,6 @@ function getAgentsStatsCalls(agents) {
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
-    cb(err);
   }
 }
 
@@ -1078,39 +906,42 @@ function getAgentsMissedCalls(agents) {
     }
     return function (callback) {
       try {
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
-          where: [
-            'event="RINGNOANSWER" AND agent IN ("' + agents.join('","') + '") GROUP BY queuename, agent ORDER BY agent'
-          ],
-          attributes: [
-            ['COUNT(event)', 'noanswercalls'], 'agent', 'queuename'
-          ]
-        }).then(function (results) {
+        let query = `
+SELECT
+  COUNT(event) AS \`noanswercalls\`,
+  agent, queuename
+FROM \`queue_log\`
+WHERE event="RINGNOANSWER" AND agent IN ("${agents.join('","')}") GROUP BY queuename, agent ORDER BY agent`;
+        compDbconnMain.dbConn['queue_log'].query(
+          query,
+          (err, results, fields) => {
           try {
-            if (results) {
-              logger.log.info(IDLOG, 'get missed calls count of queue agents "' + agents + '" has been successful');
-              var values = {};
-              for (var i = 0; i < results.length; i++) {
-                if (!values[results[i].dataValues.agent]) {
-                  values[results[i].dataValues.agent] = {};
+            try {
+              if (results) {
+                logger.log.info(IDLOG, 'get missed calls count of queue agents "' + agents + '" has been successful');
+                var values = {};
+                for (var i = 0; i < results.length; i++) {
+                  if (!values[results[i].agent]) {
+                    values[results[i].agent] = {};
+                  }
+                  if (!values[results[i].agent][results[i].queuename]) {
+                    values[results[i].agent][results[i].queuename] = {};
+                  }
+                  values[results[i].agent][results[i].queuename].noanswercalls = results[i].noanswercalls;
                 }
-                if (!values[results[i].dataValues.agent][results[i].dataValues.queuename]) {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename] = {};
-                }
-                values[results[i].dataValues.agent][results[i].dataValues.queuename].noanswercalls = results[i].dataValues.noanswercalls;
+                callback(null, values);
+              } else {
+                logger.log.info(IDLOG, 'get missed calls of agents "' + agents + '": not found');
+                callback(null, {});
               }
-              callback(null, values);
-            } else {
-              logger.log.info(IDLOG, 'get missed calls of agents "' + agents + '": not found');
-              callback(null, {});
+            } catch (error) {
+              logger.log.error(IDLOG, error.stack);
+              callback(error);
             }
           } catch (error) {
             logger.log.error(IDLOG, error.stack);
             callback(error);
           }
-        }, function (err) {
-          logger.log.error(IDLOG, 'get missed calls of agents "' + agents + '": ' + err.toString());
-          callback(err.toString());
         });
         compDbconnMain.incNumExecQueries();
       } catch (err) {
@@ -1120,7 +951,6 @@ function getAgentsMissedCalls(agents) {
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
-    cb(err);
   }
 }
 
@@ -1205,36 +1035,35 @@ function getAgentsStatsLoginLogout(agents) {
     }
     return function (callback) {
       try {
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].findAll({
-          where: [
-            'event IN ("REMOVEMEMBER","ADDMEMBER") ' +
-            'AND ( (agent IN ("' + agents.join('","') + '") ' +
-            'AND data1="") || ' +
-            '(agent IN ("' + agents.join('","') + '") AND data1!="") ) '+
-            'GROUP BY queuename, agent, event ORDER BY time'
-          ],
-          attributes: [
-            ['MAX(time)', 'last_time'],
-            'id', 'callid', 'queuename', 'agent', 'event'
-          ]
-        }).then(function (results) {
+        let query = `
+SELECT
+  MAX(time) AS \`last_time\`,
+  id, callid, queuename, agent, event
+FROM queue_log
+WHERE event IN ("REMOVEMEMBER","ADDMEMBER")
+  AND ( (agent IN ("${agents.join('","')}")
+  AND data1="") || (agent IN ("${agents.join('","')}") AND data1!="") )
+  GROUP BY queuename, agent, event ORDER BY time`;
+        compDbconnMain.dbConn['queue_log'].query(
+          query,
+          (err, results, fields) => {
           try {
             if (results) {
               logger.log.info(IDLOG, 'get login/logout stats of queue agents "' + agents + '" has been successful');
               var values = {};
               var i;
               for (i = 0; i < results.length; i++) {
-                results[i].dataValues.last_time = Math.round(new Date(results[i].dataValues.last_time).getTime() / 1000);
-                if (!values[results[i].dataValues.agent]) {
-                  values[results[i].dataValues.agent] = {};
+                results[i].last_time = Math.round(new Date(results[i].last_time).getTime() / 1000);
+                if (!values[results[i].agent]) {
+                  values[results[i].agent] = {};
                 }
-                if (!values[results[i].dataValues.agent][results[i].dataValues.queuename]) {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename] = {};
+                if (!values[results[i].agent][results[i].queuename]) {
+                  values[results[i].agent][results[i].queuename] = {};
                 }
-                if (results[i].dataValues.event === 'ADDMEMBER') {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename].last_login_time = Math.floor(results[i].dataValues.last_time);
-                } else if (results[i].dataValues.event === 'REMOVEMEMBER') {
-                  values[results[i].dataValues.agent][results[i].dataValues.queuename].last_logout_time = Math.floor(results[i].dataValues.last_time);
+                if (results[i].event === 'ADDMEMBER') {
+                  values[results[i].agent][results[i].queuename].last_login_time = Math.floor(results[i].last_time);
+                } else if (results[i].event === 'REMOVEMEMBER') {
+                  values[results[i].agent][results[i].queuename].last_logout_time = Math.floor(results[i].last_time);
                 }
               }
               callback(null, values);
@@ -1246,9 +1075,6 @@ function getAgentsStatsLoginLogout(agents) {
             logger.log.error(IDLOG, error.stack);
             callback(error);
           }
-        }, function (err) {
-          logger.log.error(IDLOG, 'get login/logout stats of agents "' + agents + '": ' + err.toString());
-          callback(err.toString());
         });
         compDbconnMain.incNumExecQueries();
       } catch (err) {
@@ -1258,7 +1084,6 @@ function getAgentsStatsLoginLogout(agents) {
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
-    cb(err);
   }
 }
 
@@ -1582,28 +1407,36 @@ function getPinExtens(extens, cb) {
     if (!Array.isArray(extens) || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PIN].findAll({
-      where: [
-        'extension IN ("' + extens.join('","') + '")'
-      ],
-      attributes: [ 'extension', 'pin', 'enabled' ]
-    }).then(function (results) {
-      let retval = {};
-      if (results && results.length > 0) {
-        for (let i = 0; i < results.length; i++) {
-          retval[results[i].dataValues.extension] = results[i].dataValues;
-          retval[results[i].dataValues.extension].enabled = retval[results[i].dataValues.extension].enabled === 1;
+    if (extens.length === 0) {
+      cb(null, {});
+    }
+    compDbconnMain.dbConn['pin'].query(
+      'SELECT `extension`, `pin`, `enabled` FROM `pin` WHERE `extension` IN (?)',
+      [extens],
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'getting pin of extens ' + extens.toString());
+          logger.log.error(IDLOG, err.stack);
+          cb(err);
+          return;
         }
-        logger.log.info(IDLOG, 'found pin of extens ' + extens);
-        cb(null, retval);
-      } else {
-        logger.log.info(IDLOG, `no pin found for extens ${extens}`);
-        cb(null, []);
+        let retval = {};
+        if (results && results.length > 0) {
+          for (let i = 0; i < results.length; i++) {
+            retval[results[i].extension] = results[i];
+            retval[results[i].extension].enabled = retval[results[i].extension].enabled === 1;
+          }
+          logger.log.info(IDLOG, 'found pin of extens ' + extens);
+          cb(null, retval);
+        } else {
+          logger.log.info(IDLOG, `no pin found for extens ${extens}`);
+          cb(null, []);
+        }
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
       }
-    }, function (err) {
-      logger.log.error(IDLOG, 'getting pin of extens ' + extens.toString());
-      logger.log.error(IDLOG, err);
-      cb(err);
     });
     compDbconnMain.incNumExecQueries();
   } catch (err) {
@@ -1627,17 +1460,23 @@ function setPinExten(extension, pin, enabled, cb) {
     if (typeof extension !== 'string' || typeof pin !== 'string' || typeof enabled !== 'boolean' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PIN].upsert({
-      extension: extension,
-      pin: pin,
-      enabled: enabled
-    }).then(function(result) {
-      logger.log.info(IDLOG, `set pin ${pin} for exten ${extension} with status enabled "${enabled}"`);
-      cb();
-    }, function(err) {
-      logger.log.error(IDLOG, `setting pin ${pin} for exten ${extension} with status enabled "${enabled}"`);
-      logger.log.error(IDLOG, err);
-      cb(err);
+    compDbconnMain.dbConn['pin'].execute(
+      'INSERT INTO `pin` (`extension`,`pin`,`enabled`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `extension`=?, `pin`=?, `enabled`=?', 
+      [extension, pin, enabled,extension, pin, enabled],
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, `setting pin ${pin} for exten ${extension} with status enabled "${enabled}"`);
+          logger.log.error(IDLOG, err.stack);
+          cb(err);
+          return;
+        }
+        logger.log.info(IDLOG, `set pin ${pin} for exten ${extension} with status enabled "${enabled}"`);
+        cb();
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
     });
     compDbconnMain.incNumExecQueries();
   } catch (err) {
@@ -1657,13 +1496,19 @@ function isPinEnabledAtLeastOneRoute(cb) {
     if (typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PIN_PROTECTED_ROUTES].count({
-      where: ['enabled=1']
-    }).then(function (result) {
-      cb(null, result > 0 ? true : false);
-    }, function (error) {
-      logger.log.error(IDLOG, 'getting pin activation status');
-      cb(error.toString());
+    compDbconnMain.dbConn['pin_protected_routes'].query(
+      'SELECT COUNT(*) AS `count` FROM `pin_protected_routes` WHERE enabled=1', (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, err.stack);
+          cb(err);
+          return;
+        }
+        cb(null, results[0].count > 0 ? true : false);
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
     });
     compDbconnMain.incNumExecQueries();
   } catch (err) {
@@ -1674,8 +1519,6 @@ function isPinEnabledAtLeastOneRoute(cb) {
 
 apiList.setPinExten = setPinExten;
 apiList.getPinExtens = getPinExtens;
-apiList.getCallInfo = getCallInfo;
-apiList.getCallTrace = getCallTrace;
 apiList.getQueueStats = getQueueStats;
 apiList.getRecall = getRecall;
 apiList.getQueueRecallInfo = getQueueRecallInfo;

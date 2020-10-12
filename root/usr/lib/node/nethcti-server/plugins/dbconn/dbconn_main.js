@@ -18,6 +18,7 @@ var async = require('async');
 var mssql = require('mssql');
 var Sequelize = require("sequelize");
 var EventEmitter = require('events').EventEmitter;
+const mysql2 = require('mysql2');
 
 /**
  * The module identifier used by the logger.
@@ -635,26 +636,33 @@ function initConnections() {
     var k, sequelize;
     for (k in dbConfig) {
       if (dbConfig[k].dbtype === 'mysql') {
-        var config = {
-          port: dbConfig[k].dbport,
-          host: dbConfig[k].dbhost,
-          define: {
-            charset: 'utf8',
-            timestamps: false,
-            freezeTableName: true
-          },
-          dialect: dbConfig[k].dbtype
-        };
-        if (!logSequelize) {
-          config.logging = false;
+        // migration from sequelize to mysql
+        // https://github.com/nethesis/dev/issues/5883
+        if (k === 'ampusers' || k === 'pin_protected_routes' || k === 'pin' || k === 'queue_log') {
+          // use mysql2
+          initMysqlConn(k);
         } else {
-          config.logging = logger.log.info;
+          // use sequelize
+          var config = {
+            port: dbConfig[k].dbport,
+            host: dbConfig[k].dbhost,
+            define: {
+              charset: 'utf8',
+              timestamps: false,
+              freezeTableName: true
+            },
+            dialect: dbConfig[k].dbtype
+          };
+          if (!logSequelize) {
+            config.logging = false;
+          } else {
+            config.logging = logger.log.info;
+          }
+          sequelize = new Sequelize(dbConfig[k].dbname, dbConfig[k].dbuser, dbConfig[k].dbpassword, config);
+          sequelize.db_type = 'mysql';
+          dbConn[k] = sequelize;
+          logger.log.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
         }
-        sequelize = new Sequelize(dbConfig[k].dbname, dbConfig[k].dbuser, dbConfig[k].dbpassword, config);
-        sequelize.db_type = 'mysql';
-        dbConn[k] = sequelize;
-        logger.log.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
-
       } else if (dbConfig[k].dbtype === 'postgres') {
         initPostgresConn(k);
 
@@ -665,6 +673,40 @@ function initConnections() {
     if (ready) {
       emit(EVT_RELOADED);
     }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Initialize a MySQL connection.
+ *
+ * @method initMysqlConn
+ * @param {string} name The table name
+ * @private
+ */
+function initMysqlConn(name) {
+  try {
+    const connection = mysql2.createConnection({
+      host: dbConfig[name].dbhost,
+      port: dbConfig[name].dbport,
+      user: dbConfig[name].dbuser,
+      password: dbConfig[name].dbpassword,
+      database: dbConfig[name].dbname,
+      debug: logSequelize,
+      charset: 'utf8'
+    });
+    connection.connect(err => {
+      if (err) {
+        logger.log.error(IDLOG, JSON.stringify(err, 2, null));
+        return;
+      }
+      logger.log.info(IDLOG, `${dbConfig[name].dbtype} db conn ${dbConfig[name].dbname} ${dbConfig[name].dbhost}:${dbConfig[name].dbport} initialized`);
+    });
+    connection.on('error', function(err) {
+      logger.log.error(IDLOG, JSON.stringify(err, 2, null));
+    });
+    dbConn[name] = connection;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
