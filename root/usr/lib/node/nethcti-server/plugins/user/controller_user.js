@@ -317,6 +317,25 @@ function setExtensionsUsernameAssociation() {
 }
 
 /**
+ * Reset the component.
+ *
+ * @method reset
+ * @private
+ */
+function reset() {
+  try {
+    for (let u in users) {
+      delete users[u];
+    }
+    users = undefined;
+    users = {};
+    logger.log.info(IDLOG, 'reset');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Reload the component.
  *
  * @method reload
@@ -325,8 +344,9 @@ function setExtensionsUsernameAssociation() {
 function reload() {
   try {
     reloading = true;
-    logger.log.warn(IDLOG, 'reloaded');
+    reset();
     config(USERS_CONF_FILEPATH);
+    logger.log.warn(IDLOG, 'reloaded');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
