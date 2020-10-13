@@ -64,3 +64,10 @@ event_templates('publichost-modify', qw(
 event_services('publichost-modify', qw(
                nethcti-server reload
 ));
+
+#
+# post-restore-config: avoid early service startup
+#
+event_actions('post-restore-config', qw(
+    nethcti-server-maskunit 10
+));

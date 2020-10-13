@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# Ensure the systemd unit is no longer masked during the post-restore-config event
+systemctl unmask nethcti-server
+
 /usr/bin/mysql --defaults-file=/root/.my.cnf < /usr/lib/node/nethcti-server/sql/db_tables/nethcti3.sql
 PASS=$(perl -e 'use NethServer::Password; my $ctidb_pwd = NethServer::Password::store("CTIDBPasswd"); print ($ctidb_pwd);')
 /usr/bin/mysql --defaults-file=/root/.my.cnf -e "GRANT ALL ON nethcti3.* TO nethcti@localhost  IDENTIFIED BY '$PASS';FLUSH PRIVILEGES;"
