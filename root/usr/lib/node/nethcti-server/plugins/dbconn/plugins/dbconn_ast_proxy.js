@@ -236,14 +236,14 @@ const queryLostCalls = '\
       WHERE z.event = "ENTERQUEUE" AND z.callid=a.callid\
     ) AS cid,\
     (\
-      SELECT DISTINCT(cdr.cnam)\
-      FROM asteriskcdrdb.cdr cdr\
-      WHERE cdr.uniqueid = a.callid GROUP BY cdr.uniqueid\
+      SELECT DISTINCT(daily_cdr.cnam)\
+      FROM asteriskcdrdb.daily_cdr daily_cdr\
+      WHERE daily_cdr.uniqueid = a.callid GROUP BY daily_cdr.uniqueid\
     ) AS name,\
     (\
-      SELECT DISTINCT(cdr.ccompany)\
-      FROM asteriskcdrdb.cdr cdr\
-      WHERE cdr.uniqueid = a.callid GROUP BY cdr.uniqueid\
+      SELECT DISTINCT(daily_cdr.ccompany)\
+      FROM asteriskcdrdb.daily_cdr daily_cdr\
+      WHERE daily_cdr.uniqueid = a.callid GROUP BY daily_cdr.uniqueid\
     ) AS company,\
     agent,\
     event \
@@ -266,14 +266,14 @@ const queryDoneCalls = '\
       WHERE z.event="ENTERQUEUE" AND z.callid=a.callid\
     ) AS cid,\
     (\
-      SELECT DISTINCT(cdr.cnam)\
-      FROM asteriskcdrdb.cdr cdr\
-      WHERE cdr.uniqueid = a.callid GROUP BY cdr.uniqueid\
+      SELECT DISTINCT(daily_cdr.cnam)\
+      FROM asteriskcdrdb.daily_cdr daily_cdr\
+      WHERE daily_cdr.uniqueid = a.callid GROUP BY daily_cdr.uniqueid\
     ) AS name,\
     (\
-      SELECT DISTINCT(cdr.ccompany)\
-      FROM asteriskcdrdb.cdr cdr\
-      WHERE cdr.uniqueid = a.callid GROUP BY cdr.uniqueid\
+      SELECT DISTINCT(daily_cdr.ccompany)\
+      FROM asteriskcdrdb.daily_cdr daily_cdr\
+      WHERE daily_cdr.uniqueid = a.callid GROUP BY daily_cdr.uniqueid\
     ) AS company,\
     agent,\
     event \
@@ -295,7 +295,7 @@ const queryCdrCalls = '\
     ccompany AS company,\
     accountcode AS agent,\
     "" \
-  FROM cdr c\
+  FROM daily_cdr c\
     INNER JOIN asteriskcdrdb.queue_log l ON c.dst=l.data2\
       AND c.accountcode IN (<REPLACE_LOST_AGENTS>)\
   WHERE l.event="ENTERQUEUE"\
