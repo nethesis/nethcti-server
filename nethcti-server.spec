@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.20.2
+Version: 3.20.3
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,11 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Tue Oct 20 2020 Davide Principi <davide.principi@nethesis.it> - 3.20.3-1
+- NethVoice restore config fails in new systems - Bug nethesis/dev#5885
+- Removing a user from nethserver manager doesn't reflect in the nethcti - Bug nethesis/dev#5884
+- Sequelize migration to mysql - Bug nethesis/dev#5883
+
 * Fri Sep 18 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.2-1
 - Customer cards not always showed correctly - Bug nethesis/dev#5870
 
