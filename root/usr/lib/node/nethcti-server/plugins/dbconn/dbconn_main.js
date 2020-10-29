@@ -701,6 +701,7 @@ function initMysqlConn(name) {
         logger.log.error(IDLOG, JSON.stringify(err, 2, null));
         return;
       }
+      connection.db_type = 'mysql';
       logger.log.info(IDLOG, `${dbConfig[name].dbtype} db conn ${dbConfig[name].dbname} ${dbConfig[name].dbhost}:${dbConfig[name].dbport} initialized`);
     });
     connection.on('error', function(err) {
@@ -1041,6 +1042,12 @@ function reset() {
     // close db connection
     Object.keys(dbConn).forEach(function(k) {
       if (dbConn[k].db_type === 'mysql') {
+        // migration from sequelize to mysql
+        // https://github.com/nethesis/dev/issues/5883
+        if (k === 'ampusers' || k === 'pin_protected_routes' || k === 'pin' || k === 'queue_log') {
+          logger.log.info(IDLOG, `destroy mysql connection for "${k}"`);
+          dbConn[k].destroy();
+        }
         delete dbConn[k];
       } else if (dbConn[k].db_type === 'postgres') {
         (function(id) {
