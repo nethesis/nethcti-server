@@ -1040,6 +1040,8 @@ function getCustCardTemplatesData() {
 function reset() {
   try {
     // close db connection
+    sequelize.close();
+    logger.log.info(IDLOG, `sequelize connections closed`);
     Object.keys(dbConn).forEach(function(k) {
       if (dbConn[k].db_type === 'mysql') {
         // migration from sequelize to mysql
