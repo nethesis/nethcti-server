@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.20.3
+Version: 3.20.4
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Oct 30 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.4-1
+- Server reload duplicate MySQL connections - Bug nethesis/dev#5898
+
 * Tue Oct 20 2020 Davide Principi <davide.principi@nethesis.it> - 3.20.3-1
 - NethVoice restore config fails in new systems - Bug nethesis/dev#5885
 - Removing a user from nethserver manager doesn't reflect in the nethcti - Bug nethesis/dev#5884
