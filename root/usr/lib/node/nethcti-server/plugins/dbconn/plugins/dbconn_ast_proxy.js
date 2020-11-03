@@ -558,7 +558,7 @@ WHERE event IN ("DID","ENTERQUEUE","COMPLETEAGENT","COMPLETECALLER","ABANDON","E
             emptyValues[tempdate] = tempval;
           }
         }
-        if (results.length > 0) {
+        if (results && results.length > 0) {
           logger.log.info(IDLOG, 'get hist queues calls stats has been successful');
           let values = {};
           for (i = 0; i < results.length; i++) {
@@ -651,7 +651,7 @@ GROUP BY agent, queue, a.time`;
           query,
           (err, results, fields) => {
           try {
-            if (results.length !== 0) {
+            if (results && results.length !== 0) {
               logger.log.info(IDLOG, 'get pause duration of queue agents "' + agents + '" has been successful');
               let resdata = {};
               for (let i = 0; i < results.length; i++) {
@@ -659,9 +659,9 @@ GROUP BY agent, queue, a.time`;
                   resdata[results[i].agent] = {};
                 }
                 if (!resdata[results[i].agent][results[i].queue]) {
-                  resdata[results[i].agent][results[i].queue] = parseFloat(results[i].secs);
+                  resdata[results[i].agent][results[i].queue] = results[i].secs;
                 } else {
-                  resdata[results[i].agent][results[i].queue] += parseFloat(results[i].secs);
+                  resdata[results[i].agent][results[i].queue] += results[i].secs;
                 }
               }
               for (let u in resdata) {
@@ -722,7 +722,7 @@ GROUP BY agent, queue, a.time`;
           query,
           (err, results, fields) => {
           try {
-            if (results.length !== 0) {
+            if (results && results.length !== 0) {
               logger.log.info(IDLOG, 'get logon duration of queue agents "' + agents + '" has been successful');
               let resdata = {};
               for (let i = 0; i < results.length; i++) {
@@ -730,9 +730,9 @@ GROUP BY agent, queue, a.time`;
                   resdata[results[i].agent] = {};
                 }
                 if (!resdata[results[i].agent][results[i].queue]) {
-                  resdata[results[i].agent][results[i].queue] = parseFloat(results[i].secs);
+                  resdata[results[i].agent][results[i].queue] = results[i].secs;
                 } else {
-                  resdata[results[i].agent][results[i].queue] += parseFloat(results[i].secs);
+                  resdata[results[i].agent][results[i].queue] += results[i].secs;
                 }
               }
               for (let u in resdata) {
