@@ -8,7 +8,7 @@ Source0: %{name}-%{version}.tar.gz
 BuildRequires: nethserver-devtools
 BuildRequires: nodejs >= 6.16.0
 Requires: rh-nodejs10
-Requires: nethserver-nethvoice14
+Requires: nethserver-nethvoice14 >= 14.7.3
 Requires: nethserver-janus
 Requires: sox
 Requires: mpg123
