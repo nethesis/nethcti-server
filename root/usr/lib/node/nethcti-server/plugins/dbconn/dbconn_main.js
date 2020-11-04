@@ -706,6 +706,20 @@ function initMysqlConn(name) {
     });
     connection.on('error', function(err) {
       logger.log.error(IDLOG, JSON.stringify(err, 2, null));
+      // Connection to the MySQL server is usually
+      // lost due to either server restart, or a
+      // connnection idle timeout (the wait_timeout
+      // server variable configures this)
+      if(err.code === 'PROTOCOL_CONNECTION_LOST') {
+        if (connection.destroy) {
+          connection.destroy();
+        }
+        if (dbConn[name]) {
+          delete dbConn[name];
+        }
+        logger.log.info(IDLOG, 'reconnecting to mysql ' + name);
+        initMysqlConn(name);
+      }
     });
     dbConn[name] = connection;
   } catch (err) {
