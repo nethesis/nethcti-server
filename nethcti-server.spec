@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.20.4
+Version: 3.20.5
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,10 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Nov 06 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.5-1
+- Poor performance on lost calls list on queues and qmanager - Bug nethesis/dev#5889
+- After a period of inactivity, QManager does not show some information - Bug nethesis/dev#5900
+
 * Fri Oct 30 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.4-1
 - Server reload duplicate MySQL connections - Bug nethesis/dev#5898
 
