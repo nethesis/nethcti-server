@@ -8,6 +8,7 @@
   "hostname": "' . $hostname . '",
   "publichost": "' . $publichost . '",
   "loglevel": "' . $loglevel . '",
-  "privacy_numbers": "xxx"
+  "privacy_numbers": "xxx",
+  "proxy_port": 6062
 }';
 }
