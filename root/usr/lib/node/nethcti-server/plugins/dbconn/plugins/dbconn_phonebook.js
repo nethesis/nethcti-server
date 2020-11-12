@@ -215,57 +215,6 @@ function saveCtiPbContact(data, cb) {
 }
 
 /**
- * Gets the phonebook contacts from the centralized address book.
- * It searches the number in the fields: _workphone, homephone_ and _cellphone_.
- * It orders the results by _name_ and _company_ ascending.
- * The centralized address book is the mysql _phonebook.phonebook_.
- *
- * @method getPbContactsByNum
- * @param {string}   number The phone number term to search
- * @param {function} cb     The callback function
- */
-function getPbContactsByNum(number, cb) {
-  try {
-    // check parameters
-    if (typeof number !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].findAll({
-      where: [
-        '(' +
-        'workphone=? ' +
-        'OR homephone=? ' +
-        'OR cellphone=?' +
-        ') AND (' +
-        'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
-        ')',
-        number, number, number
-      ],
-      order: 'name ASC, company ASC'
-
-    }).then(function(results) {
-      // extract results to return in the callback function
-      var i;
-      for (i = 0; i < results.length; i++) {
-        results[i] = results[i].dataValues;
-      }
-
-      logger.log.info(IDLOG, results.length + ' results by searching centralized phonebook contacts by number ' + number);
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching centralized phonebook contacts by number ' + number + ': ' + err.toString());
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Delete the specified phonebook contact from the _cti\_phonebook_ database table.
  *
  * @method deleteAllUserSpeeddials
@@ -1148,7 +1097,6 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
 apiList.getPbContact = getPbContact;
 apiList.getCtiPbContact = getCtiPbContact;
 apiList.saveCtiPbContact = saveCtiPbContact;
-apiList.getPbContactsByNum = getPbContactsByNum;
 apiList.deleteCtiPbContact = deleteCtiPbContact;
 apiList.modifyCtiPbContact = modifyCtiPbContact;
 apiList.getPbContactsContains = getPbContactsContains;
