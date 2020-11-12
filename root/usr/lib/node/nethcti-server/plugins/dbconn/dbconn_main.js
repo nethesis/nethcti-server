@@ -638,7 +638,7 @@ function initConnections() {
       if (dbConfig[k].dbtype === 'mysql') {
         // migration from sequelize to mysql
         // https://github.com/nethesis/dev/issues/5883
-        if (k === 'ampusers' || k === 'pin_protected_routes' || k === 'pin' || k === 'queue_log') {
+        if (k === 'ampusers' || k === 'pin_protected_routes' || k === 'pin' || k === 'queue_log' || k === 'phonebook') {
           // use mysql2
           initMysqlConn(k);
         } else {
@@ -1060,7 +1060,7 @@ function reset() {
       if (dbConn[k].db_type === 'mysql') {
         // migration from sequelize to mysql
         // https://github.com/nethesis/dev/issues/5883
-        if (k === 'ampusers' || k === 'pin_protected_routes' || k === 'pin' || k === 'queue_log') {
+        if (k === 'ampusers' || k === 'pin_protected_routes' || k === 'pin' || k === 'queue_log' || k === 'phonebook') {
           logger.log.info(IDLOG, `destroy mysql connection for "${k}"`);
           dbConn[k].destroy();
         }
