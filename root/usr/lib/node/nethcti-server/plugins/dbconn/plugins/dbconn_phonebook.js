@@ -877,33 +877,33 @@ function getCtiPbContact(id, cb) {
  */
 function getPbContact(id, cb) {
   try {
-    // check parameters
     if (typeof id !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    var attributes = Object.keys(compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].attributes);
-    attributes.push([compDbconnMain.Sequelize.literal('"centralized"'), 'source']);
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].find({
-      where: ['id=?', id],
-      attributes: attributes
-
-    }).then(function(result) {
-      if (result && result.dataValues) {
-        logger.log.info(IDLOG, 'search centralized phonebook contact with id "' + id + '" has been successful');
-        cb(null, result.dataValues);
-      } else {
-        logger.log.info(IDLOG, 'search centralized phonebook contact with id "' + id + '": not found');
-        cb(null, {});
+    let query = 'SELECT `id`, `owner_id`, `type`, `homeemail`, `workemail`, `homephone`, `workphone`, `cellphone`, `fax`, `title`, `company`, `notes`, `name`, `homestreet`, `homepob`, `homecity`, `homeprovince`, `homepostalcode`, `homecountry`, `workstreet`, `workpob`, `workcity`, `workprovince`, `workpostalcode`, `workcountry`, `url`, "centralized" AS `source` FROM `phonebook`WHERE id=?';
+    compDbconnMain.dbConn['phonebook'].query(
+      query,
+      [id],
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'search centralized phonebook contact with db id "' + id + '" failed: ' + err.toString());
+          cb(err.toString());
+          return;
+        }
+        if (results && results.length > 0) {
+          logger.log.info(IDLOG, 'search centralized phonebook contact with id "' + id + '" has been successful');
+          cb(null, results[0]);
+        } else {
+          logger.log.info(IDLOG, 'search centralized phonebook contact with id "' + id + '": not found');
+          cb(null, {});
+        }
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
       }
-    }, function(err1) { // manage the error
-      logger.log.error(IDLOG, 'search centralized phonebook contact with db id "' + id + '" failed: ' + err1.toString());
-      cb(err1.toString());
     });
-
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
