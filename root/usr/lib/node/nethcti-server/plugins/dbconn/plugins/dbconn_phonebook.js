@@ -426,59 +426,6 @@ function getAllContactsContains(term, username, view, offset, limit, cb) {
 }
 
 /**
- * Gets the phonebook contacts from the centralized address book.
- * At the end of the specified term is added the '%' character,
- * so it searches the entries whose fields _name_ and _company_
- * starts with the term. It orders the results by _name_ and _company_ ascending.
- * The centralized address book is the mysql _phonebook.phonebook_.
- *
- * @method getPbContactsStartsWith
- * @param {string} term The term to search. It can be a name or a number. It
- *   will ended with '%' character to search any contacts with names that starts
- *   with the term.
- * @param {integer}  [offset]  The offset results start from
- * @param {integer}  [limit]   The results limit
- * @param {function} cb The callback function
- */
-function getPbContactsStartsWith(term, offset, limit, cb) {
-  try {
-    // check parameters
-    if (typeof term !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    // add '%' to search all terms with any number of characters, even zero characters
-    term = term + '%';
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].findAndCountAll({
-      where: [
-        '(' +
-        'name LIKE ? ' +
-        'OR company LIKE ?' +
-        ') AND (' +
-        'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
-        ')',
-        term, term
-      ],
-      order: 'company ASC, name ASC',
-      offset: (offset ? parseInt(offset) : 0),
-      limit: (limit ? parseInt(limit) : null)
-    }).then(function(results) {
-      logger.log.info(IDLOG, results.length + ' results by searching centralized phonebook contacts with names starts with "' + term + '"');
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching centralized phonebook contacts whose names starts with "' + term + '": ' + err.toString());
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Gets the phonebook contacts from the centralized and nethcti address book.
  * At the end of the specified term is added the '%' character,
  * so it searches the entries whose fields _name_ and _company_
@@ -1046,7 +993,6 @@ apiList.deleteCtiPbContact = deleteCtiPbContact;
 apiList.modifyCtiPbContact = modifyCtiPbContact;
 apiList.getCtiPbContactsByNum = getCtiPbContactsByNum;
 apiList.getAllContactsContains = getAllContactsContains;
-apiList.getPbContactsStartsWith = getPbContactsStartsWith;
 apiList.getCtiPbContactsContains = getCtiPbContactsContains;
 apiList.getCtiPbSpeeddialContacts = getCtiPbSpeeddialContacts;
 apiList.getCtiPbContactsStartsWith = getCtiPbContactsStartsWith;
