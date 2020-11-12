@@ -355,61 +355,6 @@ function modifyCtiPbContact(data, cb) {
 }
 
 /**
- * Gets the phonebook contacts from the centralized address book.
- * The specified term is wrapped with '%' characters, so it search any
- * occurrences of the term in the fields: _name, company, workphone, homephone_
- * and _cellphone_. It orders the results by _name_ and _company_ ascending.
- * The centralized address book is the mysql _phonebook.phonebook_.
- *
- * @method getPbContactsContains
- * @param {string} term The term to search. It can be a name or a number. It will wrapped
- *                      with '%' characters to search any occurrences of the term in the database fields.
- * @param {integer} [offset] The offset results start from
- * @param {integer} [limit] The results limit
- * @param {function} cb The callback function
- */
-function getPbContactsContains(term, offset, limit, cb) {
-  try {
-    // check parameters
-    if (typeof term !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    // add '%' to search all terms with any number of characters, even zero characters
-    term = '%' + term + '%';
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].findAndCountAll({
-      where: [
-        '(' +
-        'name LIKE ? ' +
-        'OR company LIKE ? ' +
-        'OR workphone LIKE ? ' +
-        'OR homephone LIKE ? ' +
-        'OR cellphone LIKE ?' +
-        ') AND (' +
-        'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
-        ')',
-        term, term, term, term, term
-      ],
-      order: 'company ASC, name ASC',
-      offset: (offset ? parseInt(offset) : 0),
-      limit: (limit ? parseInt(limit) : null)
-    }).then(function(results) {
-      logger.log.info(IDLOG, results.length + ' results by searching centralized phonebook contacts that contains "' + term + '"');
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching centralized phonebook contacts that contains "' + term + '": ' + err.toString());
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Gets the phonebook contacts searching in the NethCTI and centralized phonebook databases.
  * The specified term is wrapped with '%' characters, so it searches
  * any occurrences of the term in the following fields: _name, company, workphone,
@@ -1099,7 +1044,6 @@ apiList.getCtiPbContact = getCtiPbContact;
 apiList.saveCtiPbContact = saveCtiPbContact;
 apiList.deleteCtiPbContact = deleteCtiPbContact;
 apiList.modifyCtiPbContact = modifyCtiPbContact;
-apiList.getPbContactsContains = getPbContactsContains;
 apiList.getCtiPbContactsByNum = getCtiPbContactsByNum;
 apiList.getAllContactsContains = getAllContactsContains;
 apiList.getPbContactsStartsWith = getPbContactsStartsWith;
