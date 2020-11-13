@@ -446,35 +446,28 @@ function getAllContactsStartsWith(term, username, view, offset, limit, cb) {
  */
 function getCtiPbSpeeddialContacts(username, cb) {
   try {
-    // check parameters
     if (typeof username !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAll({
-      where: [
-        'owner_id=? AND type="speeddial"',
-        username
-      ],
-      order: 'name ASC, company ASC'
-
-    }).then(function(results) {
-      // extract results to return in the callback function
-      var i;
-      for (i = 0; i < results.length; i++) {
-        results[i] = results[i].dataValues;
+    let query = 'SELECT `id`, `owner_id`, `type`, `homeemail`, `workemail`, `homephone`, `workphone`, `cellphone`, `fax`, `title`, `company`, `notes`, `name`, `homestreet`, `homepob`, `homecity`, `homeprovince`, `homepostalcode`, `homecountry`, `workstreet`, `workpob`, `workcity`, `workprovince`, `workpostalcode`, `workcountry`, `url`, `extension`, `speeddial_num` FROM `cti_phonebook` WHERE owner_id=? AND type="speeddial" ORDER BY name ASC, company ASC';
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      query,
+      [username],
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'searching cti phonebook speeddial contacts of the user "' + username + '": ' + err.toString());
+          cb(err.toString());
+          return;
+        }
+        logger.log.info(IDLOG, results.length + ' results by searching cti phonebook speeddial contacts of the user "' + username + '"');
+        cb(null, results);
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
       }
-
-      logger.log.info(IDLOG, results.length + ' results by searching cti phonebook speeddial contacts of the user "' + username + '"');
-      cb(null, results);
-
-    }, function(err) { // manage the error
-
-      logger.log.error(IDLOG, 'searching cti phonebook speeddial contacts of the user "' + username + '": ' + err.toString());
-      cb(err.toString());
     });
-
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
