@@ -563,56 +563,6 @@ function getAllContactsStartsWithDigit(username, view, offset, limit, cb) {
 }
 
 /**
- * Gets the phonebook contacts searching in the NethCTI phonebook database.
- * At the end of the specified term is added the '%' character, so it searches
- * the entries whose fields _name_ and _company_ starts with the term.
- * It orders the results by _name_ and _company_ ascending. The NethCTI phonebook
- * is the mysql _cti\_phonebook_.
- *
- * @method getCtiPbContactsStartsWith
- * @param {string}   term     The term to search. It can be a name or a number
- * @param {string}   username The name of the user used to search contacts
- * @param {integer}  [offset] The offset results start from
- * @param {integer}  [limit]  The results limit
- * @param {function} cb       The callback function
- */
-function getCtiPbContactsStartsWith(term, username, offset, limit, cb) {
-  try {
-    // check parameters
-    if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    // add '%' to search all contacts whose names starts with the term
-    term = term + '%';
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAndCountAll({
-      where: [
-        '(owner_id=? OR type="public") ' +
-        'AND ' +
-        '(name LIKE ? OR company LIKE ?)',
-        username, term, term
-      ],
-      order: 'company ASC, name ASC',
-      offset: (offset ? parseInt(offset) : 0),
-      limit: (limit ? parseInt(limit) : null)
-    }).then(function(results) {
-      logger.log.info(IDLOG, results.length + ' results by searching cti phonebook contacts whose names starts with "' + term + '"');
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching cti phonebook contacts whose names starts with "' + term + '": ' + err.toString());
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Returns the cti phonebook contact. It searches the _id_ field in the
  * _cti\_phonebook_ database table.
  *
@@ -834,7 +784,6 @@ apiList.deleteCtiPbContact = deleteCtiPbContact;
 apiList.modifyCtiPbContact = modifyCtiPbContact;
 apiList.getAllContactsContains = getAllContactsContains;
 apiList.getCtiPbSpeeddialContacts = getCtiPbSpeeddialContacts;
-apiList.getCtiPbContactsStartsWith = getCtiPbContactsStartsWith;
 apiList.getAllContactsStartsWith = getAllContactsStartsWith;
 apiList.getCtiPbContactsStartsWithDigit = getCtiPbContactsStartsWithDigit;
 apiList.getAllContactsStartsWithDigit = getAllContactsStartsWithDigit;
