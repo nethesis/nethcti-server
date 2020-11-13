@@ -675,52 +675,6 @@ function getAllContactsStartsWithDigit(username, view, offset, limit, cb) {
 }
 
 /**
- * Gets the phonebook contacts from the centralized address book.
- * It searches the entries whose fields _name_ and _company_
- * starts with a digit. It orders the results by _name_ and _company_
- * ascending. The centralized address book is the mysql _phonebook.phonebook_.
- *
- * @method getPbContactsStartsWithDigit
- * @param {integer} [offset] The offset results start from
- * @param {integer} [limit] The results limit
- * @param {function} cb The callback function
- */
-function getPbContactsStartsWithDigit(offset, limit, cb) {
-  try {
-    // check parameters
-    if (typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].findAndCountAll({
-      where: [
-        '(' +
-        'name REGEXP "^[0-9]" ' +
-        'OR company REGEXP "^[0-9]"' +
-        ') AND (' +
-        'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
-        ')'
-      ],
-      order: 'company ASC, name ASC',
-      offset: (offset ? parseInt(offset) : 0),
-      limit: (limit ? parseInt(limit) : null)
-    }).then(function(results) {
-      logger.log.info(IDLOG, results.length + ' results by searching centralized phonebook contacts with names starts with a digit');
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching centralized phonebook contacts whose names starts with a digit: ' + err.toString());
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Gets the phonebook contacts searching in the NethCTI phonebook database.
  * At the end of the specified term is added the '%' character, so it searches
  * the entries whose fields _name_ and _company_ starts with the term.
@@ -997,7 +951,6 @@ apiList.getCtiPbContactsContains = getCtiPbContactsContains;
 apiList.getCtiPbSpeeddialContacts = getCtiPbSpeeddialContacts;
 apiList.getCtiPbContactsStartsWith = getCtiPbContactsStartsWith;
 apiList.getAllContactsStartsWith = getAllContactsStartsWith;
-apiList.getPbContactsStartsWithDigit = getPbContactsStartsWithDigit;
 apiList.getCtiPbContactsStartsWithDigit = getCtiPbContactsStartsWithDigit;
 apiList.getAllContactsStartsWithDigit = getAllContactsStartsWithDigit;
 apiList.deleteAllUserSpeeddials = deleteAllUserSpeeddials;
