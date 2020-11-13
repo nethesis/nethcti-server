@@ -434,62 +434,6 @@ function getAllContactsStartsWith(term, username, view, offset, limit, cb) {
 }
 
 /**
- * Gets the phonebook contacts searching in the NethCTI phonebook database.
- * The specified term is wrapped with '%' characters, so it searches
- * any occurrences of the term in the following fields: _name, company, workphone,
- * homephone, cellphone and extension_. It orders the results by _name_ and _company_
- * ascending. The NethCTI phonebook is the mysql _cti\_phonebook_.
- *
- * @method getCtiPbContactsContains
- * @param {string}   term     The term to search. It can be a name or a number
- * @param {string}   username The name of the user used to search contacts
- * @param {integer}  [offset]  The offset results start from
- * @param {integer}  [limit]   The results limit
- * @param {function} cb       The callback function
- */
-function getCtiPbContactsContains(term, username, offset, limit, cb) {
-  try {
-    // check parameters
-    if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    // add '%' to search all terms with any number of characters, even zero characters
-    term = '%' + term + '%';
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAndCountAll({
-      where: [
-        '(owner_id=? OR type="public") ' +
-        'AND ' +
-        '(' +
-        'name LIKE ? ' +
-        'OR company LIKE ? ' +
-        'OR workphone LIKE ? ' +
-        'OR homephone LIKE ? ' +
-        'OR cellphone LIKE ? ' +
-        'OR extension LIKE ?' +
-        ')',
-        username, term, term, term, term, term, term
-      ],
-      order: 'company ASC, name ASC',
-      offset: (offset ? parseInt(offset) : 0),
-      limit: (limit ? parseInt(limit) : null)
-    }).then(function(results) {
-      logger.log.info(IDLOG, results.count + ' results by searching cti phonebook contacts that contains "' + term + '"');
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching cti phonebook contacts that contains "' + term + '": ' + err.toString());
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Gets all the speeddial contacts of the specified user searching in
  * the NethCTI phonebook database. It searches all entries of he user
  * where _type_ field is equal to "speeddial". It orders the results by
@@ -896,7 +840,6 @@ apiList.saveCtiPbContact = saveCtiPbContact;
 apiList.deleteCtiPbContact = deleteCtiPbContact;
 apiList.modifyCtiPbContact = modifyCtiPbContact;
 apiList.getAllContactsContains = getAllContactsContains;
-apiList.getCtiPbContactsContains = getCtiPbContactsContains;
 apiList.getCtiPbSpeeddialContacts = getCtiPbSpeeddialContacts;
 apiList.getCtiPbContactsStartsWith = getCtiPbContactsStartsWith;
 apiList.getAllContactsStartsWith = getAllContactsStartsWith;
