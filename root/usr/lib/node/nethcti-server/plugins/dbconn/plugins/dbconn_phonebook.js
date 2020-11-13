@@ -100,55 +100,6 @@ function setLogger(log) {
 }
 
 /**
- * Gets the phonebook contacts from the cti address book.
- * It searches the number in the fields: _workphone, homephone, cellphone_
- * and _extension_. It orders the results by _name_ and _company_ ascending.
- * The cti address book is the mysql _cti\_phonebook_.
- *
- * @method getCtiPbContactsByNum
- * @param {string}   number The phone number term to search
- * @param {function} cb     The callback function
- */
-function getCtiPbContactsByNum(number, cb) {
-  try {
-    // check parameters
-    if (typeof number !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAll({
-      where: [
-        'workphone=? ' +
-        'OR homephone=? ' +
-        'OR cellphone=? ' +
-        'OR extension=?',
-        number, number, number, number
-      ],
-      order: 'name ASC, company ASC'
-
-    }).then(function(results) {
-      // extract results to return in the callback function
-      var i;
-      for (i = 0; i < results.length; i++) {
-        results[i] = results[i].dataValues;
-      }
-
-      logger.log.info(IDLOG, results.length + ' results by searching cti phonebook contacts by number ' + number);
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching cti phonebook contacts by number ' + number + ': ' + err.toString());
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Saves the new contact in the NethCTI phonebook that is in the
  * _cti\_phonebook_ database table.
  *
@@ -944,7 +895,6 @@ apiList.getCtiPbContact = getCtiPbContact;
 apiList.saveCtiPbContact = saveCtiPbContact;
 apiList.deleteCtiPbContact = deleteCtiPbContact;
 apiList.modifyCtiPbContact = modifyCtiPbContact;
-apiList.getCtiPbContactsByNum = getCtiPbContactsByNum;
 apiList.getAllContactsContains = getAllContactsContains;
 apiList.getCtiPbContactsContains = getCtiPbContactsContains;
 apiList.getCtiPbSpeeddialContacts = getCtiPbSpeeddialContacts;
