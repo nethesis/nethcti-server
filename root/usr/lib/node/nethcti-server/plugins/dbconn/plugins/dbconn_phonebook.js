@@ -475,51 +475,6 @@ function getCtiPbSpeeddialContacts(username, cb) {
 }
 
 /**
- * Gets the phonebook contacts searching in the NethCTI phonebook database.
- * Tt searches the entries whose fields _name_ and _company_ starts with a digit.
- * It orders the results by _name_ and _company_ ascending. The NethCTI
- * phonebook is the mysql _cti\_phonebook_.
- *
- * @method getCtiPbContactsStartsWithDigit
- * @param {string}   username The name of the user used to search contacts
- * @param {integer}  [offset]  The offset results start from
- * @param {integer}  [limit]   The results limit
- * @param {function} cb       The callback function
- */
-function getCtiPbContactsStartsWithDigit(username, offset, limit, cb) {
-  try {
-    // check parameters
-    if (typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAndCountAll({
-      where: [
-        '(owner_id=? OR type="public") ' +
-        'AND ' +
-        '(name REGEXP "^[0-9]" OR company REGEXP "^[0-9]")',
-        username
-      ],
-      order: 'company ASC, name ASC',
-      offset: (offset ? parseInt(offset) : 0),
-      limit: (limit ? parseInt(limit) : null)
-    }).then(function(results) {
-      logger.log.info(IDLOG, results.length + ' results by searching cti phonebook contacts whose names starts with a digit');
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching cti phonebook contacts whose names starts with a digit: ' + err.toString());
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Gets the phonebook and nethcti contacts searching in the NethCTI phonebook database.
  * Tt searches the entries whose fields _name_ and _company_ starts with a digit.
  * It orders the results by _name_ and _company_ ascending. The NethCTI
@@ -785,7 +740,6 @@ apiList.modifyCtiPbContact = modifyCtiPbContact;
 apiList.getAllContactsContains = getAllContactsContains;
 apiList.getCtiPbSpeeddialContacts = getCtiPbSpeeddialContacts;
 apiList.getAllContactsStartsWith = getAllContactsStartsWith;
-apiList.getCtiPbContactsStartsWithDigit = getCtiPbContactsStartsWithDigit;
 apiList.getAllContactsStartsWithDigit = getAllContactsStartsWithDigit;
 apiList.deleteAllUserSpeeddials = deleteAllUserSpeeddials;
 
