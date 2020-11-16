@@ -218,33 +218,28 @@ function deleteAllUserSpeeddials(username, cb) {
  */
 function deleteCtiPbContact(id, cb) {
   try {
-    // check parameters
     if (typeof id !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].find({
-      where: ['id=?', id]
-
-    }).then(function(task) {
-      if (task) {
-        task.destroy().then(function() {
-          logger.log.info(IDLOG, 'cti phonebook contact with db id "' + id + '" has been deleted successfully');
-          cb();
-        });
-      } else {
-        var str = 'deleting cti phonebook contact with db id "' + id + '": entry not found';
-        logger.log.warn(IDLOG, str);
-        cb(str);
+    let query = 'DELETE FROM `cti_phonebook` WHERE id=?';
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      query,
+      [id],
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'searching cti phonebook contact with db id "' + id + '" to delete: ' + err.toString());
+          cb(err.toString());
+          return;
+        }
+        logger.log.info(IDLOG, 'cti phonebook contact with db id "' + id + '" has been deleted successfully');
+        cb();
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
       }
-    }, function(err1) { // manage the error
-
-      logger.log.error(IDLOG, 'searching cti phonebook contact with db id "' + id + '" to delete: ' + err1.toString());
-      cb(err1.toString());
     });
-
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
