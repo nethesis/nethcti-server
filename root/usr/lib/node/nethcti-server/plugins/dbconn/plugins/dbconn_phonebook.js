@@ -282,33 +282,40 @@ function deleteCtiPbContact(id, cb) {
  */
 function modifyCtiPbContact(data, cb) {
   try {
-    // check parameters
     if (typeof data !== 'object' || typeof data.id !== 'string' || typeof cb !== 'function') {
-
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].find({
-      where: ['id=?', data.id]
-
-    }).then(function(task) {
-      if (task) {
-        task.updateAttributes(data).then(function() {
-          logger.log.info(IDLOG, 'cti phonebook contact with db id "' + data.id + '" has been modified successfully');
-          cb();
-        });
-      } else {
-        var str = 'modify cti phonebook contact with db id "' + data.id + '": entry not found';
-        logger.log.warn(IDLOG, str);
-        cb(str);
+    let columns = ['type','name','homeemail','workemail','homephone','workphone','cellphone','fax','title','company','notes','homestreet','homepob','homecity','homeprovince','homepostalcode','homecountry','workstreet','workpob','workcity','workprovince','workpostalcode','workcountry','url','extension','speeddial_num'];
+    let set = '';
+    let values = [];
+    for (let i = 0; i < columns.length; i++) {
+      if (data[columns[i]]) {
+        set += columns[i] + '=?,';
+        values.push(data[columns[i]]);
       }
-    }, function(err1) { // manage the error
-      logger.log.error(IDLOG, 'searching cti phonebook contact with db id "' + data.id + '" to modify: ' + err1.toString());
-      cb(err1.toString());
+    }
+    set = set.substring(0, set.length - 1);
+    values.push(data.id);
+    let query = 'UPDATE `cti_phonebook` SET ' + set + ' WHERE id=?';
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      query,
+      values,
+      (err, results, fields) => {
+      try {
+        if (err) {
+          var str = 'modify cti phonebook contact with db id "' + data.id + '": entry not found';
+          logger.log.warn(IDLOG, str);
+          cb(err);
+          return;
+        }
+        logger.log.info(IDLOG, 'cti phonebook contact with db id "' + data.id + '" has been modified successfully');
+        cb();
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
     });
-
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
