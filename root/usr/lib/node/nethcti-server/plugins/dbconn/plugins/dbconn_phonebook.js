@@ -136,29 +136,44 @@ function setLogger(log) {
  */
 function saveCtiPbContact(data, cb) {
   try {
-    // check parameters
     if (typeof data !== 'object' || typeof cb !== 'function' ||
       typeof data.type !== 'string' || data.type === '' ||
       typeof data.owner_id !== 'string' || data.owner_id === '') {
 
       throw new Error('wrong parameter');
     }
-
-    // get the sequelize model already loaded
-    var contact = compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].build(data);
-
-    // save the model into the database
-    contact.save()
-      .then(function() { // the save was successful
+    let column = ['owner_id','type','name','homeemail','workemail','homephone','workphone','cellphone','fax','title','company','notes','homestreet','homepob','homecity','homeprovince','homepostalcode','homecountry','workstreet','workpob','workcity','workprovince','workpostalcode','workcountry','url','extension','speeddial_num'];
+    let attributes = '';
+    let valuesPlaceholder = '';
+    let values = [];
+    for (let i = 0; i < column.length; i++) {
+      if (data[column[i]]) {
+        attributes += '`' + column[i] + '`,';
+        valuesPlaceholder += '?,';
+        values.push(data[column[i]]);
+      }
+    }
+    attributes = attributes.substring(0, attributes.length - 1);
+    valuesPlaceholder = valuesPlaceholder.substring(0, valuesPlaceholder.length - 1);
+    let query = 'INSERT INTO `cti_phonebook` (' + attributes + ') VALUES (' + valuesPlaceholder + ')';
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      query,
+      values,
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'saving cti phonebook contact: ' + err.toString());
+          cb(err.toString());
+          return;
+        }
         logger.log.info(IDLOG, 'cti phonebook contact saved successfully');
         cb();
-
-      }, function(err) { // manage the error
-        logger.log.error(IDLOG, 'saving cti phonebook contact: ' + err.toString());
-        cb(err.toString());
-      });
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
+    });
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
