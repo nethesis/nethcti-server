@@ -724,33 +724,59 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       ') t'
     ].join('');
 
-    compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
-      'SET @@group_concat_max_len = 65535').then(function() { //TODO TD: workaround
-      compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
-        view === 'company' ? queryCompany : query, {
-          replacements: replacements
-        }).then(function(results) {
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      'SET @@group_concat_max_len = 65535',
+      (err, results, fields) => {
+      try {
         compDbconnMain.incNumExecQueries();
-        compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
-          view === 'company' ? queryCompanyCount : queryCount, {
-            replacements: replacements
-          }).then(function(resultsCount) {
-          compDbconnMain.incNumExecQueries();
-          cb(null, {
-            count: resultsCount[0][0].total,
-            rows: results[0]
-          });
-        }, function(err) {
+        if (err) {
           cb(err, null);
-        });
-      }, function(err) {
-        cb(err, null);
-      });
-    }, function(err) {
-      cb(err, null);
-    });
-    compDbconnMain.incNumExecQueries();
+          return;
+        }
+        //
+        compDbconnMain.dbConn['cti_phonebook'].query(
+          view === 'company' ? queryCompany : query,
+          replacements,
+          (err1, results1, fields1) => {
+          try {
+            compDbconnMain.incNumExecQueries();
+            if (err1) {
+              cb(err1, null);
+              return;
+            }
+            //
+            compDbconnMain.dbConn['cti_phonebook'].query(
+              view === 'company' ? queryCompanyCount : queryCount,
+              replacements,
+              (err2, resultsCount, fields2) => {
+              try {
+                compDbconnMain.incNumExecQueries();
+                if (err2) {
+                  cb(err2, null);
+                  return;
+                }
+                cb(null, {
+                  count: resultsCount[0].total,
+                  rows: results1
+                });
+                
+              } catch (error) {
+                logger.log.error(IDLOG, error.stack);
+                cb(error);
+              }
+            });
 
+          } catch (error) {
+            logger.log.error(IDLOG, error.stack);
+            cb(error);
+          }
+        });
+        
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
+    });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
