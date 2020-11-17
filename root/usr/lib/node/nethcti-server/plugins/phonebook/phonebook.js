@@ -108,81 +108,6 @@ function getPbContactsContains(term, username, view, offset, limit, cb) {
 }
 
 /**
- * Gets the phonebook contacts searching the phone number in the centralized or
- * NethCTI phonebook databases.
- *
- * @method getPbContactsByNum
- * @param {string}   number The phone number to search
- * @param {function} cb     The callback function
- */
-function getPbContactsByNum(number, cb) { //TODO: add source param and paging
-  try {
-    // check parameters
-    if (typeof number !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    // object with all results
-    var obj = {
-      'centralized': [],
-      'nethcti': []
-    };
-
-    async.parallel([
-
-      function(callback) {
-        logger.log.info(IDLOG, 'search centralized phonebook contacts by number ' + number + ' using dbconn module');
-        dbconn.getPbContactsByNum(number, function(err, results) {
-          try {
-            if (err) { // some error in the query
-              logger.log.error(IDLOG, err);
-
-            } else { // add the result
-              obj.centralized = results;
-            }
-            callback();
-
-          } catch (error) {
-            logger.log.error(IDLOG, error.stack);
-            callback();
-          }
-        });
-      },
-      function(callback) {
-        logger.log.info(IDLOG, 'search cti phonebook contacts by number ' + number + ' using dbconn module');
-        dbconn.getCtiPbContactsByNum(number, function(err, results) {
-          try {
-            if (err) { // some error in the query
-              logger.log.error(IDLOG, err);
-
-            } else { // add the result
-              obj.nethcti = results;
-            }
-            callback();
-
-          } catch (error) {
-            logger.log.error(IDLOG, error.stack);
-            callback();
-          }
-        });
-      }
-
-    ], function(err) {
-      if (err) {
-        logger.log.error(IDLOG, err);
-      }
-
-      logger.log.info(IDLOG, 'found ' + obj.centralized.length + ' contacts in centralized phonebook and ' +
-        obj.nethcti.length + ' contacts in cti phonebook searching contacts by number ' + number);
-      cb(err, obj);
-    });
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err.toString());
-  }
-}
-
-/**
  * Returns the cti phonebook contact.
  *
  * @method getCtiPbContact
@@ -608,7 +533,6 @@ exports.getCtiPbContact = getCtiPbContact;
 exports.saveCtiPbContact = saveCtiPbContact;
 exports.deleteCtiPbContact = deleteCtiPbContact;
 exports.modifyCtiPbContact = modifyCtiPbContact;
-exports.getPbContactsByNum = getPbContactsByNum;
 exports.getPbContactsContains = getPbContactsContains;
 exports.getPbSpeeddialContacts = getPbSpeeddialContacts;
 exports.getPbContactsStartsWith = getPbContactsStartsWith;

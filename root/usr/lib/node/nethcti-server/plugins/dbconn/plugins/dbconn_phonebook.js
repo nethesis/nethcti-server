@@ -100,55 +100,6 @@ function setLogger(log) {
 }
 
 /**
- * Gets the phonebook contacts from the cti address book.
- * It searches the number in the fields: _workphone, homephone, cellphone_
- * and _extension_. It orders the results by _name_ and _company_ ascending.
- * The cti address book is the mysql _cti\_phonebook_.
- *
- * @method getCtiPbContactsByNum
- * @param {string}   number The phone number term to search
- * @param {function} cb     The callback function
- */
-function getCtiPbContactsByNum(number, cb) {
-  try {
-    // check parameters
-    if (typeof number !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAll({
-      where: [
-        'workphone=? ' +
-        'OR homephone=? ' +
-        'OR cellphone=? ' +
-        'OR extension=?',
-        number, number, number, number
-      ],
-      order: 'name ASC, company ASC'
-
-    }).then(function(results) {
-      // extract results to return in the callback function
-      var i;
-      for (i = 0; i < results.length; i++) {
-        results[i] = results[i].dataValues;
-      }
-
-      logger.log.info(IDLOG, results.length + ' results by searching cti phonebook contacts by number ' + number);
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching cti phonebook contacts by number ' + number + ': ' + err.toString());
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Saves the new contact in the NethCTI phonebook that is in the
  * _cti\_phonebook_ database table.
  *
@@ -185,79 +136,43 @@ function getCtiPbContactsByNum(number, cb) {
  */
 function saveCtiPbContact(data, cb) {
   try {
-    // check parameters
     if (typeof data !== 'object' || typeof cb !== 'function' ||
       typeof data.type !== 'string' || data.type === '' ||
       typeof data.owner_id !== 'string' || data.owner_id === '') {
 
       throw new Error('wrong parameter');
     }
-
-    // get the sequelize model already loaded
-    var contact = compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].build(data);
-
-    // save the model into the database
-    contact.save()
-      .then(function() { // the save was successful
+    let column = ['owner_id','type','name','homeemail','workemail','homephone','workphone','cellphone','fax','title','company','notes','homestreet','homepob','homecity','homeprovince','homepostalcode','homecountry','workstreet','workpob','workcity','workprovince','workpostalcode','workcountry','url','extension','speeddial_num'];
+    let attributes = '';
+    let valuesPlaceholder = '';
+    let values = [];
+    for (let i = 0; i < column.length; i++) {
+      if (data[column[i]]) {
+        attributes += '`' + column[i] + '`,';
+        valuesPlaceholder += '?,';
+        values.push(data[column[i]]);
+      }
+    }
+    attributes = attributes.substring(0, attributes.length - 1);
+    valuesPlaceholder = valuesPlaceholder.substring(0, valuesPlaceholder.length - 1);
+    let query = 'INSERT INTO `cti_phonebook` (' + attributes + ') VALUES (' + valuesPlaceholder + ')';
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      query,
+      values,
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'saving cti phonebook contact: ' + err.toString());
+          cb(err.toString());
+          return;
+        }
         logger.log.info(IDLOG, 'cti phonebook contact saved successfully');
         cb();
-
-      }, function(err) { // manage the error
-        logger.log.error(IDLOG, 'saving cti phonebook contact: ' + err.toString());
-        cb(err.toString());
-      });
-    compDbconnMain.incNumExecQueries();
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
- * Gets the phonebook contacts from the centralized address book.
- * It searches the number in the fields: _workphone, homephone_ and _cellphone_.
- * It orders the results by _name_ and _company_ ascending.
- * The centralized address book is the mysql _phonebook.phonebook_.
- *
- * @method getPbContactsByNum
- * @param {string}   number The phone number term to search
- * @param {function} cb     The callback function
- */
-function getPbContactsByNum(number, cb) {
-  try {
-    // check parameters
-    if (typeof number !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].findAll({
-      where: [
-        '(' +
-        'workphone=? ' +
-        'OR homephone=? ' +
-        'OR cellphone=?' +
-        ') AND (' +
-        'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
-        ')',
-        number, number, number
-      ],
-      order: 'name ASC, company ASC'
-
-    }).then(function(results) {
-      // extract results to return in the callback function
-      var i;
-      for (i = 0; i < results.length; i++) {
-        results[i] = results[i].dataValues;
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
       }
-
-      logger.log.info(IDLOG, results.length + ' results by searching centralized phonebook contacts by number ' + number);
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching centralized phonebook contacts by number ' + number + ': ' + err.toString());
-      cb(err.toString());
     });
-
     compDbconnMain.incNumExecQueries();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -277,17 +192,25 @@ function deleteAllUserSpeeddials(username, cb) {
     if (typeof username !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].destroy({
-      where: ['owner_id=? AND type=?', username, 'speeddial']
-    }).then(function(num) {
-      logger.log.info(IDLOG, ' deleted all speed dial (#' + num + ') of user "' + username + '"');
-      cb(null, num);
-    }, function(err) {
-      logger.log.error(IDLOG, 'searching cti phonebook speeddial contacts of the user "' + username + '": ' + err.toString());
-      cb(err.toString());
+    let query = 'DELETE FROM `cti_phonebook` WHERE owner_id=? AND type="speeddial"';
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      query,
+      [username],
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'deleting cti phonebook speeddial contacts of the user "' + username + '": ' + err.toString());
+          cb(err.toString());
+          return;
+        }
+        logger.log.info(IDLOG, ' deleted all speed dial (#' + results.affectedRows + ') of user "' + username + '"');
+        cb(null, results.affectedRows);
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
     });
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -303,33 +226,28 @@ function deleteAllUserSpeeddials(username, cb) {
  */
 function deleteCtiPbContact(id, cb) {
   try {
-    // check parameters
     if (typeof id !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].find({
-      where: ['id=?', id]
-
-    }).then(function(task) {
-      if (task) {
-        task.destroy().then(function() {
-          logger.log.info(IDLOG, 'cti phonebook contact with db id "' + id + '" has been deleted successfully');
-          cb();
-        });
-      } else {
-        var str = 'deleting cti phonebook contact with db id "' + id + '": entry not found';
-        logger.log.warn(IDLOG, str);
-        cb(str);
+    let query = 'DELETE FROM `cti_phonebook` WHERE id=?';
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      query,
+      [id],
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'searching cti phonebook contact with db id "' + id + '" to delete: ' + err.toString());
+          cb(err.toString());
+          return;
+        }
+        logger.log.info(IDLOG, 'cti phonebook contact with db id "' + id + '" has been deleted successfully');
+        cb();
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
       }
-    }, function(err1) { // manage the error
-
-      logger.log.error(IDLOG, 'searching cti phonebook contact with db id "' + id + '" to delete: ' + err1.toString());
-      cb(err1.toString());
     });
-
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -372,87 +290,39 @@ function deleteCtiPbContact(id, cb) {
  */
 function modifyCtiPbContact(data, cb) {
   try {
-    // check parameters
     if (typeof data !== 'object' || typeof data.id !== 'string' || typeof cb !== 'function') {
-
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].find({
-      where: ['id=?', data.id]
-
-    }).then(function(task) {
-      if (task) {
-        task.updateAttributes(data).then(function() {
-          logger.log.info(IDLOG, 'cti phonebook contact with db id "' + data.id + '" has been modified successfully');
-          cb();
-        });
-      } else {
-        var str = 'modify cti phonebook contact with db id "' + data.id + '": entry not found';
-        logger.log.warn(IDLOG, str);
-        cb(str);
+    let columns = ['type','name','homeemail','workemail','homephone','workphone','cellphone','fax','title','company','notes','homestreet','homepob','homecity','homeprovince','homepostalcode','homecountry','workstreet','workpob','workcity','workprovince','workpostalcode','workcountry','url','extension','speeddial_num'];
+    let set = '';
+    let values = [];
+    for (let i = 0; i < columns.length; i++) {
+      if (data[columns[i]]) {
+        set += columns[i] + '=?,';
+        values.push(data[columns[i]]);
       }
-    }, function(err1) { // manage the error
-      logger.log.error(IDLOG, 'searching cti phonebook contact with db id "' + data.id + '" to modify: ' + err1.toString());
-      cb(err1.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
- * Gets the phonebook contacts from the centralized address book.
- * The specified term is wrapped with '%' characters, so it search any
- * occurrences of the term in the fields: _name, company, workphone, homephone_
- * and _cellphone_. It orders the results by _name_ and _company_ ascending.
- * The centralized address book is the mysql _phonebook.phonebook_.
- *
- * @method getPbContactsContains
- * @param {string} term The term to search. It can be a name or a number. It will wrapped
- *                      with '%' characters to search any occurrences of the term in the database fields.
- * @param {integer} [offset] The offset results start from
- * @param {integer} [limit] The results limit
- * @param {function} cb The callback function
- */
-function getPbContactsContains(term, offset, limit, cb) {
-  try {
-    // check parameters
-    if (typeof term !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    // add '%' to search all terms with any number of characters, even zero characters
-    term = '%' + term + '%';
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].findAndCountAll({
-      where: [
-        '(' +
-        'name LIKE ? ' +
-        'OR company LIKE ? ' +
-        'OR workphone LIKE ? ' +
-        'OR homephone LIKE ? ' +
-        'OR cellphone LIKE ?' +
-        ') AND (' +
-        'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
-        ')',
-        term, term, term, term, term
-      ],
-      order: 'company ASC, name ASC',
-      offset: (offset ? parseInt(offset) : 0),
-      limit: (limit ? parseInt(limit) : null)
-    }).then(function(results) {
-      logger.log.info(IDLOG, results.length + ' results by searching centralized phonebook contacts that contains "' + term + '"');
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching centralized phonebook contacts that contains "' + term + '": ' + err.toString());
-      cb(err.toString());
+    set = set.substring(0, set.length - 1);
+    values.push(data.id);
+    let query = 'UPDATE `cti_phonebook` SET ' + set + ' WHERE id=?';
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      query,
+      values,
+      (err, results, fields) => {
+      try {
+        if (err) {
+          var str = 'modify cti phonebook contact with db id "' + data.id + '": entry not found';
+          logger.log.warn(IDLOG, str);
+          cb(err);
+          return;
+        }
+        logger.log.info(IDLOG, 'cti phonebook contact with db id "' + data.id + '" has been modified successfully');
+        cb();
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
     });
-
     compDbconnMain.incNumExecQueries();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -532,59 +402,6 @@ function getAllContactsContains(term, username, view, offset, limit, cb) {
 }
 
 /**
- * Gets the phonebook contacts from the centralized address book.
- * At the end of the specified term is added the '%' character,
- * so it searches the entries whose fields _name_ and _company_
- * starts with the term. It orders the results by _name_ and _company_ ascending.
- * The centralized address book is the mysql _phonebook.phonebook_.
- *
- * @method getPbContactsStartsWith
- * @param {string} term The term to search. It can be a name or a number. It
- *   will ended with '%' character to search any contacts with names that starts
- *   with the term.
- * @param {integer}  [offset]  The offset results start from
- * @param {integer}  [limit]   The results limit
- * @param {function} cb The callback function
- */
-function getPbContactsStartsWith(term, offset, limit, cb) {
-  try {
-    // check parameters
-    if (typeof term !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    // add '%' to search all terms with any number of characters, even zero characters
-    term = term + '%';
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].findAndCountAll({
-      where: [
-        '(' +
-        'name LIKE ? ' +
-        'OR company LIKE ?' +
-        ') AND (' +
-        'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
-        ')',
-        term, term
-      ],
-      order: 'company ASC, name ASC',
-      offset: (offset ? parseInt(offset) : 0),
-      limit: (limit ? parseInt(limit) : null)
-    }).then(function(results) {
-      logger.log.info(IDLOG, results.length + ' results by searching centralized phonebook contacts with names starts with "' + term + '"');
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching centralized phonebook contacts whose names starts with "' + term + '": ' + err.toString());
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Gets the phonebook contacts from the centralized and nethcti address book.
  * At the end of the specified term is added the '%' character,
  * so it searches the entries whose fields _name_ and _company_
@@ -642,62 +459,6 @@ function getAllContactsStartsWith(term, username, view, offset, limit, cb) {
 }
 
 /**
- * Gets the phonebook contacts searching in the NethCTI phonebook database.
- * The specified term is wrapped with '%' characters, so it searches
- * any occurrences of the term in the following fields: _name, company, workphone,
- * homephone, cellphone and extension_. It orders the results by _name_ and _company_
- * ascending. The NethCTI phonebook is the mysql _cti\_phonebook_.
- *
- * @method getCtiPbContactsContains
- * @param {string}   term     The term to search. It can be a name or a number
- * @param {string}   username The name of the user used to search contacts
- * @param {integer}  [offset]  The offset results start from
- * @param {integer}  [limit]   The results limit
- * @param {function} cb       The callback function
- */
-function getCtiPbContactsContains(term, username, offset, limit, cb) {
-  try {
-    // check parameters
-    if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    // add '%' to search all terms with any number of characters, even zero characters
-    term = '%' + term + '%';
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAndCountAll({
-      where: [
-        '(owner_id=? OR type="public") ' +
-        'AND ' +
-        '(' +
-        'name LIKE ? ' +
-        'OR company LIKE ? ' +
-        'OR workphone LIKE ? ' +
-        'OR homephone LIKE ? ' +
-        'OR cellphone LIKE ? ' +
-        'OR extension LIKE ?' +
-        ')',
-        username, term, term, term, term, term, term
-      ],
-      order: 'company ASC, name ASC',
-      offset: (offset ? parseInt(offset) : 0),
-      limit: (limit ? parseInt(limit) : null)
-    }).then(function(results) {
-      logger.log.info(IDLOG, results.count + ' results by searching cti phonebook contacts that contains "' + term + '"');
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching cti phonebook contacts that contains "' + term + '": ' + err.toString());
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Gets all the speeddial contacts of the specified user searching in
  * the NethCTI phonebook database. It searches all entries of he user
  * where _type_ field is equal to "speeddial". It orders the results by
@@ -710,80 +471,28 @@ function getCtiPbContactsContains(term, username, offset, limit, cb) {
  */
 function getCtiPbSpeeddialContacts(username, cb) {
   try {
-    // check parameters
     if (typeof username !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAll({
-      where: [
-        'owner_id=? AND type="speeddial"',
-        username
-      ],
-      order: 'name ASC, company ASC'
-
-    }).then(function(results) {
-      // extract results to return in the callback function
-      var i;
-      for (i = 0; i < results.length; i++) {
-        results[i] = results[i].dataValues;
+    let query = 'SELECT `id`, `owner_id`, `type`, `homeemail`, `workemail`, `homephone`, `workphone`, `cellphone`, `fax`, `title`, `company`, `notes`, `name`, `homestreet`, `homepob`, `homecity`, `homeprovince`, `homepostalcode`, `homecountry`, `workstreet`, `workpob`, `workcity`, `workprovince`, `workpostalcode`, `workcountry`, `url`, `extension`, `speeddial_num` FROM `cti_phonebook` WHERE owner_id=? AND type="speeddial" ORDER BY name ASC, company ASC';
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      query,
+      [username],
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'searching cti phonebook speeddial contacts of the user "' + username + '": ' + err.toString());
+          cb(err.toString());
+          return;
+        }
+        logger.log.info(IDLOG, results.length + ' results by searching cti phonebook speeddial contacts of the user "' + username + '"');
+        cb(null, results);
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
       }
-
-      logger.log.info(IDLOG, results.length + ' results by searching cti phonebook speeddial contacts of the user "' + username + '"');
-      cb(null, results);
-
-    }, function(err) { // manage the error
-
-      logger.log.error(IDLOG, 'searching cti phonebook speeddial contacts of the user "' + username + '": ' + err.toString());
-      cb(err.toString());
     });
-
     compDbconnMain.incNumExecQueries();
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
- * Gets the phonebook contacts searching in the NethCTI phonebook database.
- * Tt searches the entries whose fields _name_ and _company_ starts with a digit.
- * It orders the results by _name_ and _company_ ascending. The NethCTI
- * phonebook is the mysql _cti\_phonebook_.
- *
- * @method getCtiPbContactsStartsWithDigit
- * @param {string}   username The name of the user used to search contacts
- * @param {integer}  [offset]  The offset results start from
- * @param {integer}  [limit]   The results limit
- * @param {function} cb       The callback function
- */
-function getCtiPbContactsStartsWithDigit(username, offset, limit, cb) {
-  try {
-    // check parameters
-    if (typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAndCountAll({
-      where: [
-        '(owner_id=? OR type="public") ' +
-        'AND ' +
-        '(name REGEXP "^[0-9]" OR company REGEXP "^[0-9]")',
-        username
-      ],
-      order: 'company ASC, name ASC',
-      offset: (offset ? parseInt(offset) : 0),
-      limit: (limit ? parseInt(limit) : null)
-    }).then(function(results) {
-      logger.log.info(IDLOG, results.length + ' results by searching cti phonebook contacts whose names starts with a digit');
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching cti phonebook contacts whose names starts with a digit: ' + err.toString());
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -834,102 +543,6 @@ function getAllContactsStartsWithDigit(username, view, offset, limit, cb) {
 }
 
 /**
- * Gets the phonebook contacts from the centralized address book.
- * It searches the entries whose fields _name_ and _company_
- * starts with a digit. It orders the results by _name_ and _company_
- * ascending. The centralized address book is the mysql _phonebook.phonebook_.
- *
- * @method getPbContactsStartsWithDigit
- * @param {integer} [offset] The offset results start from
- * @param {integer} [limit] The results limit
- * @param {function} cb The callback function
- */
-function getPbContactsStartsWithDigit(offset, limit, cb) {
-  try {
-    // check parameters
-    if (typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].findAndCountAll({
-      where: [
-        '(' +
-        'name REGEXP "^[0-9]" ' +
-        'OR company REGEXP "^[0-9]"' +
-        ') AND (' +
-        'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
-        ')'
-      ],
-      order: 'company ASC, name ASC',
-      offset: (offset ? parseInt(offset) : 0),
-      limit: (limit ? parseInt(limit) : null)
-    }).then(function(results) {
-      logger.log.info(IDLOG, results.length + ' results by searching centralized phonebook contacts with names starts with a digit');
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching centralized phonebook contacts whose names starts with a digit: ' + err.toString());
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
- * Gets the phonebook contacts searching in the NethCTI phonebook database.
- * At the end of the specified term is added the '%' character, so it searches
- * the entries whose fields _name_ and _company_ starts with the term.
- * It orders the results by _name_ and _company_ ascending. The NethCTI phonebook
- * is the mysql _cti\_phonebook_.
- *
- * @method getCtiPbContactsStartsWith
- * @param {string}   term     The term to search. It can be a name or a number
- * @param {string}   username The name of the user used to search contacts
- * @param {integer}  [offset] The offset results start from
- * @param {integer}  [limit]  The results limit
- * @param {function} cb       The callback function
- */
-function getCtiPbContactsStartsWith(term, username, offset, limit, cb) {
-  try {
-    // check parameters
-    if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-
-    // add '%' to search all contacts whose names starts with the term
-    term = term + '%';
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAndCountAll({
-      where: [
-        '(owner_id=? OR type="public") ' +
-        'AND ' +
-        '(name LIKE ? OR company LIKE ?)',
-        username, term, term
-      ],
-      order: 'company ASC, name ASC',
-      offset: (offset ? parseInt(offset) : 0),
-      limit: (limit ? parseInt(limit) : null)
-    }).then(function(results) {
-      logger.log.info(IDLOG, results.length + ' results by searching cti phonebook contacts whose names starts with "' + term + '"');
-      cb(null, results);
-    }, function(err) { // manage the error
-      logger.log.error(IDLOG, 'searching cti phonebook contacts whose names starts with "' + term + '": ' + err.toString());
-      cb(err.toString());
-    });
-
-    compDbconnMain.incNumExecQueries();
-
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Returns the cti phonebook contact. It searches the _id_ field in the
  * _cti\_phonebook_ database table.
  *
@@ -939,34 +552,33 @@ function getCtiPbContactsStartsWith(term, username, offset, limit, cb) {
  */
 function getCtiPbContact(id, cb) {
   try {
-    // check parameters
     if (typeof id !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    var attributes = Object.keys(compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].attributes);
-    attributes.push([compDbconnMain.Sequelize.literal('"cti"'), 'source']);
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].find({
-      where: ['id=?', id],
-      attributes: attributes
-
-    }).then(function(result) {
-      if (result && result.dataValues) {
-        logger.log.info(IDLOG, 'search cti phonebook contact with db id "' + id + '" has been successful');
-        cb(null, result.dataValues);
-
-      } else {
-        logger.log.info(IDLOG, 'search cti phonebook contact with db id "' + id + '": not found');
-        cb(null, {});
+    let query = 'SELECT `id`, `owner_id`, `type`, `homeemail`, `workemail`, `homephone`, `workphone`, `cellphone`, `fax`, `title`, `company`, `notes`, `name`, `homestreet`, `homepob`, `homecity`, `homeprovince`, `homepostalcode`, `homecountry`, `workstreet`, `workpob`, `workcity`, `workprovince`, `workpostalcode`, `workcountry`, `url`, `extension`, `speeddial_num`, "cti" AS `source` FROM `cti_phonebook` WHERE id=?';
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      query,
+      [id],
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'search cti phonebook contact with db id "' + id + '" failed: ' + err.toString());
+          cb(err.toString());
+          return;
+        }
+        if (results && results.length > 0) {
+          logger.log.info(IDLOG, 'search cti phonebook contact with db id "' + id + '" has been successful');
+          cb(null, results[0]);
+        } else {
+          logger.log.info(IDLOG, 'search cti phonebook contact with db id "' + id + '": not found');
+          cb(null, {});
+        }
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
       }
-    }, function(err1) { // manage the error
-      logger.log.error(IDLOG, 'search cti phonebook contact with db id "' + id + '" failed: ' + err1.toString());
-      cb(err1.toString());
     });
-
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -983,33 +595,33 @@ function getCtiPbContact(id, cb) {
  */
 function getPbContact(id, cb) {
   try {
-    // check parameters
     if (typeof id !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
-    var attributes = Object.keys(compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].attributes);
-    attributes.push([compDbconnMain.Sequelize.literal('"centralized"'), 'source']);
-
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].find({
-      where: ['id=?', id],
-      attributes: attributes
-
-    }).then(function(result) {
-      if (result && result.dataValues) {
-        logger.log.info(IDLOG, 'search centralized phonebook contact with id "' + id + '" has been successful');
-        cb(null, result.dataValues);
-      } else {
-        logger.log.info(IDLOG, 'search centralized phonebook contact with id "' + id + '": not found');
-        cb(null, {});
+    let query = 'SELECT `id`, `owner_id`, `type`, `homeemail`, `workemail`, `homephone`, `workphone`, `cellphone`, `fax`, `title`, `company`, `notes`, `name`, `homestreet`, `homepob`, `homecity`, `homeprovince`, `homepostalcode`, `homecountry`, `workstreet`, `workpob`, `workcity`, `workprovince`, `workpostalcode`, `workcountry`, `url`, "centralized" AS `source` FROM `phonebook`WHERE id=?';
+    compDbconnMain.dbConn['phonebook'].query(
+      query,
+      [id],
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'search centralized phonebook contact with db id "' + id + '" failed: ' + err.toString());
+          cb(err.toString());
+          return;
+        }
+        if (results && results.length > 0) {
+          logger.log.info(IDLOG, 'search centralized phonebook contact with id "' + id + '" has been successful');
+          cb(null, results[0]);
+        } else {
+          logger.log.info(IDLOG, 'search centralized phonebook contact with id "' + id + '": not found');
+          cb(null, {});
+        }
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
       }
-    }, function(err1) { // manage the error
-      logger.log.error(IDLOG, 'search centralized phonebook contact with db id "' + id + '" failed: ' + err1.toString());
-      cb(err1.toString());
     });
-
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -1112,33 +724,59 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       ') t'
     ].join('');
 
-    compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
-      'SET @@group_concat_max_len = 65535').then(function() { //TODO TD: workaround
-      compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
-        view === 'company' ? queryCompany : query, {
-          replacements: replacements
-        }).then(function(results) {
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      'SET @@group_concat_max_len = 65535',
+      (err, results, fields) => {
+      try {
         compDbconnMain.incNumExecQueries();
-        compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
-          view === 'company' ? queryCompanyCount : queryCount, {
-            replacements: replacements
-          }).then(function(resultsCount) {
-          compDbconnMain.incNumExecQueries();
-          cb(null, {
-            count: resultsCount[0][0].total,
-            rows: results[0]
-          });
-        }, function(err) {
+        if (err) {
           cb(err, null);
-        });
-      }, function(err) {
-        cb(err, null);
-      });
-    }, function(err) {
-      cb(err, null);
-    });
-    compDbconnMain.incNumExecQueries();
+          return;
+        }
+        //
+        compDbconnMain.dbConn['cti_phonebook'].query(
+          view === 'company' ? queryCompany : query,
+          replacements,
+          (err1, results1, fields1) => {
+          try {
+            compDbconnMain.incNumExecQueries();
+            if (err1) {
+              cb(err1, null);
+              return;
+            }
+            //
+            compDbconnMain.dbConn['cti_phonebook'].query(
+              view === 'company' ? queryCompanyCount : queryCount,
+              replacements,
+              (err2, resultsCount, fields2) => {
+              try {
+                compDbconnMain.incNumExecQueries();
+                if (err2) {
+                  cb(err2, null);
+                  return;
+                }
+                cb(null, {
+                  count: resultsCount[0].total,
+                  rows: results1
+                });
+                
+              } catch (error) {
+                logger.log.error(IDLOG, error.stack);
+                cb(error);
+              }
+            });
 
+          } catch (error) {
+            logger.log.error(IDLOG, error.stack);
+            cb(error);
+          }
+        });
+        
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
+    });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -1148,19 +786,11 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
 apiList.getPbContact = getPbContact;
 apiList.getCtiPbContact = getCtiPbContact;
 apiList.saveCtiPbContact = saveCtiPbContact;
-apiList.getPbContactsByNum = getPbContactsByNum;
 apiList.deleteCtiPbContact = deleteCtiPbContact;
 apiList.modifyCtiPbContact = modifyCtiPbContact;
-apiList.getPbContactsContains = getPbContactsContains;
-apiList.getCtiPbContactsByNum = getCtiPbContactsByNum;
 apiList.getAllContactsContains = getAllContactsContains;
-apiList.getPbContactsStartsWith = getPbContactsStartsWith;
-apiList.getCtiPbContactsContains = getCtiPbContactsContains;
 apiList.getCtiPbSpeeddialContacts = getCtiPbSpeeddialContacts;
-apiList.getCtiPbContactsStartsWith = getCtiPbContactsStartsWith;
 apiList.getAllContactsStartsWith = getAllContactsStartsWith;
-apiList.getPbContactsStartsWithDigit = getPbContactsStartsWithDigit;
-apiList.getCtiPbContactsStartsWithDigit = getCtiPbContactsStartsWithDigit;
 apiList.getAllContactsStartsWithDigit = getAllContactsStartsWithDigit;
 apiList.deleteAllUserSpeeddials = deleteAllUserSpeeddials;
 
