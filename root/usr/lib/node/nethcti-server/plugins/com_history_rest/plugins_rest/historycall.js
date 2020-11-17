@@ -234,7 +234,7 @@ function setCompAuthorization(ca) {
         * * `target: the extension identifier or the username`
         * * `from: the start date in YYYYMMDD format`
         * * `to: the end date in YYYYMMDD format`
-        * * `[direction]: ("in" | "out") the direction of the calls`
+        * * `[direction]: ("in" | "out" | "lost") the direction of the calls`
         *
         * The results will be the history calls of the single extension or the history calls of all the extensions of the user.
         * If an error occurs an HTTP 500 response is returned. Supports the pagination with the limit and offset parameters and sorting.
