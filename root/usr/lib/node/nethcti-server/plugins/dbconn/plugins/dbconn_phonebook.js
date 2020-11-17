@@ -192,17 +192,25 @@ function deleteAllUserSpeeddials(username, cb) {
     if (typeof username !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].destroy({
-      where: ['owner_id=? AND type=?', username, 'speeddial']
-    }).then(function(num) {
-      logger.log.info(IDLOG, ' deleted all speed dial (#' + num + ') of user "' + username + '"');
-      cb(null, num);
-    }, function(err) {
-      logger.log.error(IDLOG, 'searching cti phonebook speeddial contacts of the user "' + username + '": ' + err.toString());
-      cb(err.toString());
+    let query = 'DELETE FROM `cti_phonebook` WHERE owner_id=? AND type="speeddial"';
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      query,
+      [username],
+      (err, results, fields) => {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'deleting cti phonebook speeddial contacts of the user "' + username + '": ' + err.toString());
+          cb(err.toString());
+          return;
+        }
+        logger.log.info(IDLOG, ' deleted all speed dial (#' + results.affectedRows + ') of user "' + username + '"');
+        cb(null, results.affectedRows);
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
     });
     compDbconnMain.incNumExecQueries();
-
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
