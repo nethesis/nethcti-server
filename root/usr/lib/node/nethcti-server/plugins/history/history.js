@@ -128,7 +128,7 @@ function setCompAstProxy(comp) {
  *   @param {integer} [offset]       The results offset
  *   @param {integer} [limit]        The results limit
  *   @param {string}  [sort]         The sort parameter
- *   @param {string}  [direction]    The call direction ("in" | "out")
+ *   @param {string}  [direction]    The call direction ("in" | "out" | "lost")
  * @param {function}  cb The callback function
  */
 function getHistoryCallInterval(data, cb) {
@@ -141,7 +141,7 @@ function getHistoryCallInterval(data, cb) {
       typeof data.from !== 'string' ||
       !(data.endpoints instanceof Array) ||
       (typeof data.filter !== 'string' && data.filter !== undefined) ||
-      (data.direction && data.direction !== 'in' && data.direction !== 'out')) {
+      (data.direction && data.direction !== 'in' && data.direction !== 'out' && data.direction !== 'lost')) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
@@ -172,7 +172,7 @@ function getHistoryCallInterval(data, cb) {
  *   @param {integer} [data.offset]     The results offset
  *   @param {integer} [data.limit]      The results limit
  *   @param {integer} [data.sort]       The sort parameter
- *   @param {string}  [data.type]       The calls type ("in" | "out" | "internal"). If it is through a trunk`
+ *   @param {string}  [data.type]       The calls type ("in" | "out" | "internal" | "lost"). If it is through a trunk`
  * @param {function} cb The callback function
  */
 function getHistorySwitchCallInterval(data, cb) {
@@ -185,7 +185,7 @@ function getHistorySwitchCallInterval(data, cb) {
       typeof data.from !== 'string' ||
       (typeof data.filter !== 'string' && data.filter !== undefined) ||
       (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined) ||
-      (data.type && data.type !== 'in' && data.type !== 'out' && data.type !== 'internal')) {
+      (data.type && data.type !== 'in' && data.type !== 'out' && data.type !== 'internal' && data.type !== 'lost')) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }

@@ -148,7 +148,7 @@ function getHistoryCallInterval(data, cb) {
       !(data.endpoints instanceof Array) ||
       (typeof data.filter !== 'string' && data.filter !== undefined) ||
       (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined) ||
-      (data.direction && data.direction !== 'in' && data.direction !== 'out')) {
+      (data.direction && data.direction !== 'in' && data.direction !== 'out' && data.direction !== 'lost')) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
@@ -188,7 +188,7 @@ function getHistoryCallInterval(data, cb) {
       attributes.push('clid');
     }
 
-    // add "direction" ("in" | "out" | "") based on data.endpoints presence on "src" and "dst"
+    // add "direction" ("in" | "out" | "lost" | "") based on data.endpoints presence on "src" and "dst"
     var extens = data.endpoints.map(function(el) {
       return '"' + el + '"';
     });
@@ -225,6 +225,18 @@ function getHistoryCallInterval(data, cb) {
         '(cnum IN (?) AND dst NOT IN (?)) AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)',
+        data.endpoints, data.endpoints,
+        data.from, data.to,
+        "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
+      ];
+
+    } else if (data.direction && data.direction === 'lost') {
+
+      whereClause = [
+        '(cnum NOT IN (?) AND dst IN (?)) AND ' +
+        '(calldate>=? AND calldate<=?) AND ' +
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?) AND ' +
+        'disposition IN ("NO ANSWER","BUSY","FAILED")',
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -293,7 +305,7 @@ function getHistoryCallInterval(data, cb) {
  *   @param {integer} [data.offset]     The results offset
  *   @param {integer} [data.limit]      The results limit
  *   @param {string}  [data.sort]       The sort field
- *   @param {string}  [data.type]       The call type ("in" | "out" | "internal")
+ *   @param {string}  [data.type]       The call type ("in" | "out" | "internal" | "lost")
  * @param {function} cb The callback function
  */
 function getHistorySwitchCallInterval(data, cb) {
@@ -307,7 +319,7 @@ function getHistorySwitchCallInterval(data, cb) {
       (data.trunks && !(data.trunks instanceof Array)) ||
       (typeof data.filter !== 'string' && data.filter !== undefined) ||
       (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined) ||
-      (data.type && data.type !== 'in' && data.type !== 'out' && data.type !== 'internal')) {
+      (data.type && data.type !== 'in' && data.type !== 'out' && data.type !== 'internal' && data.type !== 'lost')) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
@@ -418,6 +430,28 @@ function getHistorySwitchCallInterval(data, cb) {
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
         "%" + data.filter + "%", "%" + data.filter + "%"
+      ];
+
+    }  else if (data.type === 'lost') {
+
+      whereClause = [
+        '(' +
+          'channel REGEXP ? OR ' +
+          // include attended transfered calls
+          '(' +
+            'channel LIKE "Local/%;2" AND ' + // "Local/207@from-internal-000001f5;1"
+            'cnum IN ' + data.extens + ' AND ' +
+            'dst IN ' + data.extens + ' AND ' +
+            'src NOT IN ' + data.extens +
+          ')' +
+          // end include attended transfered calls
+        ') AND ' +
+        '(calldate>=? AND calldate<=?) AND ' +
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?) AND ' +
+        'disposition IN ("NO ANSWER","BUSY","FAILED")',
+        data.trunks,
+        data.from, data.to,
+        "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
       ];
 
     } else {

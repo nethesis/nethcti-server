@@ -151,7 +151,7 @@ function setCompAuthorization(ca) {
         *
         * * `from: the start date in YYYYMMDD format`
         * * `to: the end date in YYYYMMDD format`
-        * * `[type]: ("in" | "out" | "internal") the type of the calls. If it is through a trunk`
+        * * `[type]: ("in" | "out" | "internal" | "lost") the type of the calls. If it is through a trunk`
         *
         * If an error occurs an HTTP 500 response is returned. It supports pagination with limit and offset parameters and sorting.
         *
