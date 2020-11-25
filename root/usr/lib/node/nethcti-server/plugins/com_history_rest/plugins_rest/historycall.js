@@ -749,6 +749,9 @@ function setCompAuthorization(ca) {
           if (req.params.direction) {
             obj.direction = req.params.direction;
           }
+          if (req.params.removeLostCalls) {
+            obj.removeLostCalls = req.params.removeLostCalls;
+          }
 
           // use the history component
           compHistory.getHistoryCallInterval(obj, function(err1, results) {

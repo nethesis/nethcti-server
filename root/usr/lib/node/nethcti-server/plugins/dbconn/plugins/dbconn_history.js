@@ -135,6 +135,7 @@ function getAllUserHistorySmsInterval(data, cb) {
  *   @param {integer} [data.limit]      The results limit
  *   @param {string}  [data.sort]       The sort field
  *   @param {string}  [data.direction]  The call direction
+ *   @param {boolean} [removeLostCalls] True if you want to remove lost calls from the results
  * @param {function} cb The callback function
  */
 function getHistoryCallInterval(data, cb) {
@@ -213,7 +214,8 @@ function getHistoryCallInterval(data, cb) {
       whereClause = [
         '(cnum NOT IN (?) AND dst IN (?)) AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)' +
+        (data.removeLostCalls ? ' AND disposition NOT IN ("NO ANSWER","BUSY","FAILED")' : ''),
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -306,6 +308,7 @@ function getHistoryCallInterval(data, cb) {
  *   @param {integer} [data.limit]      The results limit
  *   @param {string}  [data.sort]       The sort field
  *   @param {string}  [data.type]       The call type ("in" | "out" | "internal" | "lost")
+ *   @param {boolean} [removeLostCalls] True if you want to remove lost calls from the results
  * @param {function} cb The callback function
  */
 function getHistorySwitchCallInterval(data, cb) {
@@ -398,7 +401,8 @@ function getHistorySwitchCallInterval(data, cb) {
           // end include attended transfered calls
         ') AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)' +
+        (data.removeLostCalls ? ' AND disposition NOT IN ("NO ANSWER","BUSY","FAILED")' : ''),
         data.trunks,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
