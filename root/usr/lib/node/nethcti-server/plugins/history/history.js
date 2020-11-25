@@ -129,6 +129,7 @@ function setCompAstProxy(comp) {
  *   @param {integer} [limit]        The results limit
  *   @param {string}  [sort]         The sort parameter
  *   @param {string}  [direction]    The call direction ("in" | "out" | "lost")
+ *   @param {boolean} [removeLostCalls] True if you want to remove lost calls from the results
  * @param {function}  cb The callback function
  */
 function getHistoryCallInterval(data, cb) {
@@ -173,6 +174,7 @@ function getHistoryCallInterval(data, cb) {
  *   @param {integer} [data.limit]      The results limit
  *   @param {integer} [data.sort]       The sort parameter
  *   @param {string}  [data.type]       The calls type ("in" | "out" | "internal" | "lost"). If it is through a trunk`
+ *   @param {boolean} [removeLostCalls] True if you want to remove lost calls from the results
  * @param {function} cb The callback function
  */
 function getHistorySwitchCallInterval(data, cb) {
