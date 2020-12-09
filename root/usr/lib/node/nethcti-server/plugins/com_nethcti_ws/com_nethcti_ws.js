@@ -1008,8 +1008,8 @@ function updateNewVoiceMessagesListener(data) {
           old: data.countOld
         };
 
-        if (wsServer.sockets.sockets[socketId]) {
-          wsServer.sockets.sockets[socketId].emit('updateNewVoiceMessages', obj);
+        if (wsServer.sockets.sockets.has(socketId)) {
+          wsServer.sockets.sockets.get(socketId).emit('updateNewVoiceMessages', obj);
         }
       }
     }
@@ -1022,8 +1022,8 @@ function updateNewVoiceMessagesListener(data) {
       // emits the event "newVoiceMessageCounter" with the number of new voice messages of the user
       logger.log.info(IDLOG, 'emit event "newVoiceMessageCounter" ' + data.countNew + ' to user "' + username + '"');
 
-      if (wsServer.sockets.sockets[socketId]) {
-        wsServer.sockets.sockets[socketId].emit('newVoiceMessageCounter', {
+      if (wsServer.sockets.sockets.has(socketId)) {
+        wsServer.sockets.sockets.get(socketId).emit('newVoiceMessageCounter', {
           voicemail: data.voicemail,
           counter: data.countNew
         });
@@ -1059,8 +1059,8 @@ function updateNewPostitListener(recipient, list) {
         // emits the event with the list of all new post-it messages of the user
         logger.log.info(IDLOG, 'emit event "updateNewPostit" to the recipient user "' + recipient + '"');
 
-        if (wsServer.sockets.sockets[socketId]) {
-          wsServer.sockets.sockets[socketId].emit('updateNewPostit', list);
+        if (wsServer.sockets.sockets.has(socketId)) {
+          wsServer.sockets.sockets.get(socketId).emit('updateNewPostit', list);
         }
       }
     }
@@ -1072,8 +1072,8 @@ function updateNewPostitListener(recipient, list) {
       // emits the event with the number of new post-it of the recipient user
       logger.log.info(IDLOG, 'emit event "newPostitCounter" ' + list.length + ' to recipient user "' + username + '"');
 
-      if (wsServer.sockets.sockets[socketId]) {
-        wsServer.sockets.sockets[socketId].emit('newPostitCounter', {
+      if (wsServer.sockets.sockets.has(socketId)) {
+        wsServer.sockets.sockets.get(socketId).emit('newPostitCounter', {
           user: recipient,
           counter: list.length
         });
@@ -1112,7 +1112,7 @@ function evtUserPresenceChanged(evt) {
     // emits the event to all users
     var sockid;
     for (sockid in wsid) {
-      wsServer.sockets.sockets[sockid].emit(EVT_USER_PRESENCE_UPDATE, evt);
+      wsServer.sockets.sockets.get(sockid).emit(EVT_USER_PRESENCE_UPDATE, evt);
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1140,7 +1140,7 @@ function evtUserProfileAvatarChanged(evt) {
     // emits the event to all users
     var sockid;
     for (sockid in wsid) {
-      wsServer.sockets.sockets[sockid].emit(EVT_USER_PROFILE_AVATAR_UPDATE, evt);
+      wsServer.sockets.sockets.get(sockid).emit(EVT_USER_PROFILE_AVATAR_UPDATE, evt);
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1198,7 +1198,7 @@ function evtStreamingSourceSubscribed(evt) {
       username = wsid[socketId].username;
 
       if (username === evt.streaming.username) {
-        wsServer.sockets.sockets[socketId].join(WS_ROOM[room_name]);
+        wsServer.sockets.sockets.get(socketId).join(WS_ROOM[room_name]);
       }
     }
   } catch (err) {
@@ -1229,7 +1229,7 @@ function evtStreamingSourceUnsubscribed(evt) {
       username = wsid[socketId].username;
 
       if (username === evt.streaming.username) {
-        wsServer.sockets.sockets[socketId].leave(WS_ROOM[room_name]);
+        wsServer.sockets.sockets.get(socketId).leave(WS_ROOM[room_name]);
       }
     }
   } catch (err) {
@@ -1272,8 +1272,8 @@ function sendEventToAllClients(evname, data, fn, fnData) {
         if (fnData) {
           copyData.data = fnData(username, copyData.data);
         }
-        if (wsServer.sockets.sockets[sockid]) {
-          wsServer.sockets.sockets[sockid].emit(evname, copyData);
+        if (wsServer.sockets.sockets.has(sockid)) {
+          wsServer.sockets.sockets.get(sockid).emit(evname, copyData);
         }
       }
     }
@@ -1296,8 +1296,8 @@ function sendAll(evname, data) {
     }
     logger.log.info(IDLOG, 'emit event "' + evname + '" to all local clients with permission enabled');
     for (let sockid in wsid) {
-      if (wsServer.sockets.sockets[sockid]) {
-        wsServer.sockets.sockets[sockid].emit(evname, data);
+      if (wsServer.sockets.sockets.has(sockid)) {
+        wsServer.sockets.sockets.get(sockid).emit(evname, data);
       }
     }
   } catch (err) {
@@ -1337,22 +1337,22 @@ function extenChanged(exten) {
       if (compAuthorization.isPrivacyEnabled(username) === true &&
         compAuthorization.authorizeAdminQueuesUser(username) === false &&
         compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
-        wsServer.sockets.sockets[sockid]) {
+        wsServer.sockets.sockets.has(sockid)) {
 
         extJson = exten.toJSON(privacyStrReplace, privacyStrReplace);
 
       } else if (compAuthorization.isPrivacyEnabled(username) === true &&
         compAuthorization.authorizeAdminQueuesUser(username) === true &&
         compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
-        wsServer.sockets.sockets[sockid]) {
+        wsServer.sockets.sockets.has(sockid)) {
 
         extJson = exten.toJSON(privacyStrReplace);
 
-      } else if (wsServer.sockets.sockets[sockid]) {
+      } else if (wsServer.sockets.sockets.has(sockid)) {
         extJson = exten.toJSON();
       }
-      if (wsServer.sockets.sockets[sockid]) {
-        wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, extJson);
+      if (wsServer.sockets.sockets.has(sockid)) {
+        wsServer.sockets.sockets.get(sockid).emit(EVT_EXTEN_UPDATE, extJson);
       }
     }
   } catch (err) {
@@ -1384,8 +1384,8 @@ function extenHangup(data) {
         // emits the event with the hangup data
         logger.log.info(IDLOG, 'emit event "' + astProxy.EVT_EXTEN_HANGUP + '" for extension ' + data.channelExten + ' to user "' + username + '"');
 
-        if (wsServer.sockets.sockets[socketId]) {
-          wsServer.sockets.sockets[socketId].emit(astProxy.EVT_EXTEN_HANGUP, data);
+        if (wsServer.sockets.sockets.has(socketId)) {
+          wsServer.sockets.sockets.get(socketId).emit(astProxy.EVT_EXTEN_HANGUP, data);
         }
       }
     }
@@ -1622,8 +1622,8 @@ function sendAnswerWebrtcToClient(username, extenId) {
       if (wsid[socketId].username === username) {
         logger.log.info(IDLOG, 'emit event "' + EVT_ANSWER_WEBRTC + '" for webrtc extension ' + extenId + ' to user "' + username + '"');
 
-        if (wsServer.sockets.sockets[socketId]) {
-          wsServer.sockets.sockets[socketId].emit(EVT_ANSWER_WEBRTC, extenId);
+        if (wsServer.sockets.sockets.has(socketId)) {
+          wsServer.sockets.sockets.get(socketId).emit(EVT_ANSWER_WEBRTC, extenId);
         }
       }
     }
@@ -1651,8 +1651,8 @@ function sendCallWebrtcToClient(username, to) {
       if (wsid[socketId].username === username) {
         logger.log.info(IDLOG, 'emit event "' + EVT_CALL_WEBRTC + '" to number ' + to + ' to user "' + username + '"');
 
-        if (wsServer.sockets.sockets[socketId]) {
-          wsServer.sockets.sockets[socketId].emit(EVT_CALL_WEBRTC, to);
+        if (wsServer.sockets.sockets.has(socketId)) {
+          wsServer.sockets.sockets.get(socketId).emit(EVT_CALL_WEBRTC, to);
         }
       }
     }
@@ -1671,8 +1671,8 @@ function sendAllCompReloaded() {
     var socketId;
     logger.log.info(IDLOG, 'emit event "' + EVT_SERVER_RELOADED + '" to all clients');
     for (socketId in wsid) {
-      if (wsServer.sockets.sockets[socketId]) {
-        wsServer.sockets.sockets[socketId].emit(EVT_SERVER_RELOADED);
+      if (wsServer.sockets.sockets.has(socketId)) {
+        wsServer.sockets.sockets.get(socketId).emit(EVT_SERVER_RELOADED);
       }
     }
   } catch (err) {
@@ -1722,8 +1722,8 @@ function extenDialing(data) {
         // emits the event with the caller identity data
         logger.log.info(IDLOG, 'emit event extenRinging for extension ' + data.dialingExten + ' to user "' + username + '" with the caller identity');
 
-        if (wsServer.sockets.sockets[socketId]) {
-          wsServer.sockets.sockets[socketId].emit('extenRinging', filteredCallerIdentity);
+        if (wsServer.sockets.sockets.has(socketId)) {
+          wsServer.sockets.sockets.get(socketId).emit('extenRinging', filteredCallerIdentity);
         }
       }
     }
@@ -1756,13 +1756,13 @@ function extenConnected(data) {
     for (socketId in wsid) {
       username = wsid[socketId].username;
       // the user is associated with the connected data.num1 extension and is logged in, so send to notification event
-      if (user === username && wsServer.sockets.sockets[socketId]) {
+      if (user === username && wsServer.sockets.sockets.has(socketId)) {
         logger.log.info(IDLOG, 'emit event "' + EVT_EXTEN_CONNECTED + '" between "' + data.num1 + '" and ' +
-          '"' + data.num2 + '" to "' + wsServer.sockets.sockets[socketId].nethcti.username + '" with socket.id ' + wsServer.sockets.sockets[socketId].id);
+          '"' + data.num2 + '" to "' + wsServer.sockets.sockets.get(socketId).nethcti.username + '" with socket.id ' + wsServer.sockets.sockets.get(socketId).id);
         var o = {};
         o[EVT_EXTEN_CONNECTED] = data.num1;
-        wsServer.sockets.sockets[socketId].emit(EVT_EXTEN_CONNECTED, o);
-        wsServer.sockets.sockets[socketId].emit(EVT_EXTEN_CONV_CONNECTED, {
+        wsServer.sockets.sockets.get(socketId).emit(EVT_EXTEN_CONNECTED, o);
+        wsServer.sockets.sockets.get(socketId).emit(EVT_EXTEN_CONV_CONNECTED, {
           num1: data.num1,
           num2: data.num2,
           direction: data.direction,
@@ -1993,6 +1993,11 @@ function wsConnHdlr(socket) {
     emitter.emit(EVT_WS_CLIENT_CONNECTED, socket);
     logger.log.warn(IDLOG, 'new ws connection from ' + getWebsocketEndpoint(socket) + ' (sid: ' + socket.id + ')');
     // set the listeners for the new http socket connection
+    socket.on('ping', (cb) => {
+      if (typeof cb === 'function') {
+        cb();
+      }
+    });
     socket.on('login', function(data) {
       loginHdlr(socket, data);
     });
@@ -2017,8 +2022,8 @@ function wsConnHdlr(socket) {
         }
         for (let socketId in wsid) {
           if (data.destUser === wsid[socketId].username) {
-            if (wsServer.sockets.sockets[socketId]) {
-              wsServer.sockets.sockets[socketId].emit('message', data);
+            if (wsServer.sockets.sockets.get(socketId)) {
+              wsServer.sockets.sockets.get(socketId).emit('message', data);
             }
           }
         }
@@ -2139,23 +2144,23 @@ function loginHdlr(socket, obj) {
       if (obj.uaType) {
         for (var sid in wsid) {
           if (wsServer.sockets &&
-            wsServer.sockets.sockets[sid] &&
-            wsServer.sockets.sockets[sid].nethcti &&
-            wsServer.sockets.sockets[sid].nethcti.username === obj.accessKeyId &&
-            wsServer.sockets.sockets[sid].nethcti.uaType === obj.uaType) {
+            wsServer.sockets.sockets.has(sid) &&
+            wsServer.sockets.sockets.get(sid).nethcti &&
+            wsServer.sockets.sockets.get(sid).nethcti.username === obj.accessKeyId &&
+            wsServer.sockets.sockets.get(sid).nethcti.uaType === obj.uaType) {
 
               takeOvered = true;
-              logger.log.warn(IDLOG, `double login by user "${obj.accessKeyId}" (${getWebsocketEndpoint(wsServer.sockets.sockets[sid])}): do takeOver procedure`);
+              logger.log.warn(IDLOG, `double login by user "${obj.accessKeyId}" (${getWebsocketEndpoint(wsServer.sockets.sockets.get(sid))}): do takeOver procedure`);
 
-              wsServer.sockets.sockets[sid].on('takeOverAck', function () {
+              wsServer.sockets.sockets.get(sid).on('takeOverAck', function () {
                 try {
-                  logger.log.warn(IDLOG, `recv ack for login takeOver procedure by user "${obj.accessKeyId}" (${getWebsocketEndpoint(wsServer.sockets.sockets[sid])})`);
+                  logger.log.warn(IDLOG, `recv ack for login takeOver procedure by user "${obj.accessKeyId}" (${getWebsocketEndpoint(wsServer.sockets.sockets.get(sid))})`);
                   if (wsServer.takeOverTimeouts[sid]) {
                     clearTimeout(wsServer.takeOverTimeouts[sid]);
                     delete wsServer.takeOverTimeouts[sid];
                   }
-                  if (wsServer.sockets.sockets[sid]) {
-                    wsServer.sockets.sockets[sid].removeAllListeners('takeOverAck');
+                  if (wsServer.sockets.sockets.has(sid)) {
+                    wsServer.sockets.sockets.get(sid).removeAllListeners('takeOverAck');
                   }
                   doLogin(socket, obj);
 
@@ -2165,7 +2170,7 @@ function loginHdlr(socket, obj) {
                 }
               });
 
-              wsServer.sockets.sockets[sid].emit('takeOver');
+              wsServer.sockets.sockets.get(sid).emit('takeOver');
 
               // in case takeOverAck event never arrives
               if (!wsServer.takeOverTimeouts) {
@@ -2173,9 +2178,9 @@ function loginHdlr(socket, obj) {
               }
               wsServer.takeOverTimeouts[sid] = setTimeout(function () {
                 try {
-                  logger.log.warn(IDLOG, `no ack for login takeOver procedure recv by user "${obj.accessKeyId}" (${getWebsocketEndpoint(wsServer.sockets.sockets[sid])})`);
-                  if (wsServer.sockets.sockets[sid]) {
-                    wsServer.sockets.sockets[sid].removeAllListeners('takeOverAck');
+                  logger.log.warn(IDLOG, `no ack for login takeOver procedure recv by user "${obj.accessKeyId}" (${getWebsocketEndpoint(wsServer.sockets.sockets.get(sid))})`);
+                  if (wsServer.sockets.sockets.has(sid)) {
+                    wsServer.sockets.sockets.get(sid).removeAllListeners('takeOverAck');
                   }
                   doLogin(socket, obj);
                   delete wsServer.takeOverTimeouts[sid];
@@ -2327,9 +2332,9 @@ function disconnHdlr(socket, reason) {
 
       // count the number of cti sockets for the user from both websocket secure and not
       for (sid in wsServer.sockets.sockets) {
-        if (wsServer.sockets.sockets[sid].nethcti &&
-          wsServer.sockets.sockets[sid].nethcti.username === username &&
-          wsServer.sockets.sockets[sid].nethcti.userAgent === USER_AGENT) {
+        if (wsServer.sockets.sockets.get(sid).nethcti &&
+          wsServer.sockets.sockets.get(sid).nethcti.username === username &&
+          wsServer.sockets.sockets.get(sid).nethcti.userAgent === USER_AGENT) {
 
           count += 1;
         }
@@ -2362,7 +2367,7 @@ function disconnHdlr(socket, reason) {
  */
 let logWsNumber = () => {
   try {
-    logger.log.warn(IDLOG, `ws conn ${Object.keys(wsServer.sockets.sockets).length} - wsid conn ${getNumConnectedClients()}`);
+    logger.log.warn(IDLOG, `ws conn ${wsServer.sockets.sockets.size} - wsid conn ${getNumConnectedClients()}`);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2400,7 +2405,7 @@ function removeWebsocketId(socketId) {
  */
 function addWebsocketId(user, token, socketId) {
   try {
-    if (wsServer.sockets.sockets[socketId]) {
+    if (wsServer.sockets.sockets.has(socketId)) {
       wsid[socketId] = {
         username: user,
         token: token
@@ -2533,15 +2538,15 @@ function reload() {
 let dump = () => {
   try {
     let wsServerSockets = {};
-    for (let sid in wsServer.sockets.sockets) {
+    for (let [sid, socketValue] of wsServer.sockets.sockets) {
       wsServerSockets[sid] = {
-        rooms: wsServer.sockets.sockets[sid].rooms,
-        headers: wsServer.sockets.sockets[sid].handshake.headers,
-        nethcti: wsServer.sockets.sockets[sid].nethcti,
-        connected: wsServer.sockets.sockets[sid].connected,
-        disconnected: wsServer.sockets.sockets[sid].disconnected,
-        url: wsServer.sockets.sockets[sid].handshake.url,
-        query: wsServer.sockets.sockets[sid].handshake.query
+        rooms: socketValue.rooms,
+        headers: socketValue.handshake.headers,
+        nethcti: socketValue.nethcti,
+        connected: socketValue.connected,
+        disconnected: socketValue.disconnected,
+        url: socketValue.handshake.url,
+        query: socketValue.handshake.query
       };
     }
     return {
