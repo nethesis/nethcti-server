@@ -174,6 +174,15 @@ function config(obj) {
     // initialize mapping between user and authorization profile
     var u;
     mapUserProfile = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
+    // this is to support client login using the extension number, so mapUserProfile
+    // contains usernames and main extensions as keys
+    let tempMainExten;
+    for (u in mapUserProfile) {
+      if (mapUserProfile[u].endpoints && mapUserProfile[u].endpoints.mainextension) {
+        tempMainExten = Object.keys(mapUserProfile[u].endpoints.mainextension)[0];
+        mapUserProfile[tempMainExten] = { profile_id: mapUserProfile[u].profile_id };
+      }
+    }
     for (u in mapUserProfile) {
       delete mapUserProfile[u].name;
       delete mapUserProfile[u].endpoints;
@@ -814,6 +823,10 @@ function isPrivacyEnabled(username) {
       throw new Error('wrong parameter: ' + username);
     }
     var profid = getUserProfileId(username);
+
+    if (profid === undefined) {
+      return true;
+    }
 
     return (
       profiles[profid] !== undefined &&
