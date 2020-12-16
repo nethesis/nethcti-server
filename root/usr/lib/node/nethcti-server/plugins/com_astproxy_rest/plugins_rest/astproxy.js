@@ -59,6 +59,15 @@ var dtmfTonesPermitted = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*',
 var compComNethctiWs;
 
 /**
+ * The architect component to be used for tcp communication.
+ *
+ * @property compNethctiTcp
+ * @type object
+ * @private
+ */
+let compNethctiTcp;
+
+/**
  * The architect component to be used for alarm.
  *
  * @property compAlarm
@@ -5305,6 +5314,7 @@ var compConfigManager;
     exports.queuemember_unpause = astproxy.queuemember_unpause;
     exports.blindtransfer_queue = astproxy.blindtransfer_queue;
     exports.setCompComNethctiWs = setCompComNethctiWs;
+    exports.setCompNethctiTcp = setCompNethctiTcp;
     exports.setCompAuthorization = setCompAuthorization;
     exports.setCompConfigManager = setCompConfigManager;
     exports.blindtransfer_parking = astproxy.blindtransfer_parking;
@@ -5458,6 +5468,9 @@ function call(username, req, res) {
       }
     } else if (isSupported && compAstProxy.isAutoC2CEnabled()) {
       ajaxPhoneCall(username, req, res);
+    } else if (isSupported && compAstProxy.isC2CModeCloud()) {
+      sendPhoneCallToTcp(username, req, res);
+      compUtil.net.sendHttp200(IDLOG, res); // to evaluate
     } else {
       asteriskCall(username, req, res);
     }
@@ -5791,6 +5804,49 @@ function ajaxPhoneCall(username, req, res) {
     fallbackAjaxPhoneCall(username, req, res);
   }
 }
+/**
+ * Send the request to originate a new phone call through an http get
+ * request to a connected tcp client. The tcp client will do the request
+ * to the final physical supported phone.
+ *
+ * @method sendPhoneCallToTcp
+ * @param {string} username The username that originate the call
+ * @param {object} req The client request
+ * @param {object} res The client response
+ */
+function sendPhoneCallToTcp(username, req, res) {
+  try {
+    if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    let to = compAstProxy.addPrefix(req.params.number);
+    let exten = req.params.endpointId;
+    let extenIp = compAstProxy.getExtensionIp(exten);
+    let extenAgent = compAstProxy.getExtensionAgent(exten);
+    let serverHostname = compConfigManager.getServerHostname();
+    // get the url to call to originate the new call. If the url is an empty
+    // string, the phone is not supported, so the call fails
+    let url = compConfigManager.getCallUrlFromAgent(extenAgent);
+
+    if (typeof url === 'string' && url !== '') {
+      let phoneUser = compUser.getPhoneWebUser(username, exten);
+      let phonePass = compUser.getPhoneWebPass(username, exten);
+      url = url.replace(/\$SERVER/g, serverHostname);
+      url = url.replace(/\$NUMBER/g, to);
+      url = url.replace(/\$ACCOUNT/g, exten);
+      url = url.replace(/\$PHONE_IP/g, extenIp);
+      url = url.replace(/\$PHONE_USER/g, phoneUser);
+      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      compNethctiTcp.sendPhoneCallRequest(username, url);
+    } else {
+      logger.log.warn(IDLOG, `failed call to ${to} via TCP request by the user "${username}": extenAgent is not supported`);
+      fallbackAjaxPhoneCall(username, req, res);
+    }
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+    fallbackAjaxPhoneCall(username, req, res);
+  }
+}
 
 /**
  * Answer to call from the extension sending an HTTP GET request to the phone device.
@@ -6094,6 +6150,25 @@ function setCompComNethctiWs(comp) {
     compComNethctiWs = comp;
     logger.log.info(IDLOG, 'websocket communication component has been set');
 
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the tcp communication architect component.
+ *
+ * @method setCompNethctiTcp
+ * @param {object} comp The architect tcp communication component
+ * @static
+ */
+function setCompNethctiTcp(comp) {
+  try {
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameter');
+    }
+    compNethctiTcp = comp;
+    logger.log.info(IDLOG, 'tcp communication component has been set');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }

@@ -38,6 +38,7 @@ module.exports = function(options, imports, register) {
     serverRest.setCompAuthorization(imports.authorization);
     serverRest.setCompConfigManager(imports.configManager);
     serverRest.setCompComNethctiWs(imports.com_nethcti_ws);
+    serverRest.setCompNethctiTcp(imports.com_nethcti_tcp);
     serverRest.setCompAlarm(imports.alarm);
     serverRest.start();
   } catch (err) {
