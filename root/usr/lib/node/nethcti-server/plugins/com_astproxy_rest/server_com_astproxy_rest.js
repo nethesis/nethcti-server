@@ -165,6 +165,28 @@ function setCompComNethctiWs(comp) {
 }
 
 /**
+ * Sets the component that communicates with clients using tcp.
+ *
+ * @method setCompNethctiTcp
+ * @param {object} comp The tcp communication architect component.
+ */
+function setCompNethctiTcp(comp) {
+  try {
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameter');
+    }
+    for (let key in plugins) {
+      if (typeof plugins[key].setCompNethctiTcp === 'function') {
+        plugins[key].setCompNethctiTcp(comp);
+        logger.log.info(IDLOG, `tcp communication component has been set for rest plugin ${key}`);
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Sets the component.
  *
  * @method setCompAlarm
@@ -616,5 +638,6 @@ exports.setCompOperator = setCompOperator;
 exports.setCompAstProxy = setCompAstProxy;
 exports.setCompAlarm = setCompAlarm;
 exports.setCompComNethctiWs = setCompComNethctiWs;
+exports.setCompNethctiTcp = setCompNethctiTcp;
 exports.setCompAuthorization = setCompAuthorization;
 exports.setCompConfigManager = setCompConfigManager;
