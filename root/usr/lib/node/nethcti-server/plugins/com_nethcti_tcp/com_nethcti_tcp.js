@@ -953,6 +953,38 @@ function sendCallNotificationEvent(username, data, socket) {
 }
 
 /**
+ * Send the event to open a desktop notification popup about an incoming call.
+ *
+ * @method sendPhoneCallRequest
+ * @param {string} username The username of the client
+ * @param {string} url The URL of the phone to be invocated by the tcp client
+ */
+function sendPhoneCallRequest(username, url) {
+  try {
+      if (typeof username !== 'string' || typeof url !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.info(IDLOG, `received send phone call request to be send to tcp client ${username} with phone url ${url}`);
+    let data = {
+      action: 'sendurl',
+      url: url
+    };
+    for (let sockId in sockets) {
+      // "sockets[sockId]" is a socket object that contains the "username", "token"
+      // and "id" properties added by "connHdlr" and "loginHdlr" methods
+      socketUsername = sockets[sockId].username;
+      if (username === socketUsername) {
+        socketSend(sockets[sockId], data, function () {
+          logger.log.info(IDLOG, 'sent phoneCallRequest evt to originate a new phone call throught an http get req to ' + socket.username + ' with socket.id ' + socket.id + ' - url to be invoked: ' + data);
+        });
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Send the color to be set in nethifier led.
  *
  * @method sendColorLed
@@ -1663,3 +1695,4 @@ exports.setCompStreaming = setCompStreaming;
 exports.setCompConfigManager = setCompConfigManager;
 exports.setCompAuthorization = setCompAuthorization;
 exports.getNumConnectedClients = getNumConnectedClients;
+exports.sendPhoneCallRequest = sendPhoneCallRequest;

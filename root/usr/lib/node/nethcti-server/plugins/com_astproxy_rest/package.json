@@ -12,6 +12,7 @@
       "operator",
       "authorization",
       "com_nethcti_ws",
+      "com_nethcti_tcp",
       "configManager"
     ],
     "provides": []
