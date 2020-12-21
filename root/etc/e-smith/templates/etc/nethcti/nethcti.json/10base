@@ -1,19 +1,20 @@
 {
+  use JSON;
   my $hostname = "${SystemName}.${DomainName}" || die('Can not get the hostname !');
   my $loglevel = ${'nethcti-server'}{'LogLevel'} || "warn";
   my $publichost = ${'nethvoice'}{'PublicHost'} || "";
   my $proxy_status = ${'flexisip-proxy'}{'status'} || "disabled";
-  my $proxy_port = null;
+  my $proxy_port = undef;
   if ($proxy_port eq 'enabled') {
       $proxy_port = ${'flexisip-proxy'}{'TCPPorts'} || "6061";
   }
 
-  $OUT  = '{
-  "logfile": "/var/log/asterisk/nethcti.log",
-  "hostname": "' . $hostname . '",
-  "publichost": "' . $publichost . '",
-  "loglevel": "' . $loglevel . '",
-  "privacy_numbers": "xxx",
-  "proxy_port": ' . $proxy_port . '
-}';
+  $OUT = encode_json({
+      'logfile' => '/var/log/asterisk/nethcti.log',
+      'hostname' => $hostname,
+      'publichost' => $publichost,
+      'loglevel' => $loglevel,
+      'privacy_numbers' => 'xxx',
+      'proxy_port' => $proxy_port
+  });
 }
