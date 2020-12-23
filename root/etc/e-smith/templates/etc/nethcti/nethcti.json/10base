@@ -5,7 +5,7 @@
   my $publichost = ${'nethvoice'}{'PublicHost'} || "";
   my $proxy_status = ${'flexisip-proxy'}{'status'} || "disabled";
   my $proxy_port = undef;
-  if ($proxy_port eq 'enabled') {
+  if ($proxy_status eq 'enabled') {
       $proxy_port = ${'flexisip-proxy'}{'TCPPorts'} || "6061";
   }
 
