@@ -370,20 +370,22 @@ function getAllContactsContains(term, username, view, offset, limit, cb) {
       'OR workphone LIKE ? ' +
       'OR homephone LIKE ? ' +
       'OR cellphone LIKE ? ' +
-      'OR extension LIKE ?' +
+      'OR extension LIKE ? ' +
+      'OR notes LIKE ?' +
       ')';
 
     var pbBounds = '(' + sview +
       'OR workphone LIKE ? ' +
       'OR homephone LIKE ? ' +
-      'OR cellphone LIKE ?' +
+      'OR cellphone LIKE ? ' +
+      'OR notes LIKE ?' +
       ') AND (' +
       'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
       ')';
 
     getAllContacts(
       ctiPbBounds,
-      pbBounds, [username, term, term, term, term, term, term, term, term, term, term, term],
+      pbBounds, [username, term, term, term, term, term, term, term, term, term, term, term, term, term],
       view,
       offset, limit,
       function(err, res) {
