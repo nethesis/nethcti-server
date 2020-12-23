@@ -9,7 +9,9 @@
       $proxy_port = ${'flexisip-proxy'}{'TCPPorts'} || "6061";
   }
 
-  $OUT = encode_json({
+  my $json = JSON->new;
+  $json->pretty();
+  $OUT = $json->encode({
       'logfile' => '/var/log/asterisk/nethcti.log',
       'hostname' => $hostname,
       'publichost' => $publichost,
@@ -17,4 +19,7 @@
       'privacy_numbers' => 'xxx',
       'proxy_port' => $proxy_port
   });
+
+  # remove trailing newline
+  $OUT =~ s/\s+$//g;
 }
