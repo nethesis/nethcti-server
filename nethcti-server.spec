@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.20.6
+Version: 3.20.7
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,12 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Jan 04 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.7-1
+- Change phonebook search to search on all fields - nethesis/dev#5925
+- Privacy problem using extension number to login - Bug nethesis/dev#5936
+- Some sporadic login failures - Bug nethesis/dev#5933
+- Parameterized URL opens also for internal calls - Bug nethesis/dev#5927
+
 * Fri Nov 27 2020 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.6-1
 - Add lost calls list to the history calls - nethesis/dev#5912
 - Show Brand & Model into own device list - Bug nethesis/dev#5910
