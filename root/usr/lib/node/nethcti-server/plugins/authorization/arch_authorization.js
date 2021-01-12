@@ -36,7 +36,8 @@ module.exports = function(options, imports, register) {
     authorization.setCompUser(imports.user);
     authorization.config({
       users: '/etc/nethcti/users.json',
-      profiles: '/etc/nethcti/profiles.json'
+      profiles: '/etc/nethcti/profiles.json',
+      nethcti: '/etc/nethcti/nethcti.json'
     });
     // authorization.configRemoteOperators('/etc/nethcti/remote_operators.json');
   } catch (err) {
