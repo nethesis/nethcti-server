@@ -68,6 +68,15 @@ var USERS_CONF_FILEPATH;
 var PROFILES_CONF_FILEPATH;
 
 /**
+ * The configuration file path of the nethcti.
+ *
+ * @property NETHCTI_CONF_FILEPATH
+ * @type string
+ * @private
+ */
+let NETHCTI_CONF_FILEPATH;
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -105,6 +114,15 @@ var mapUserProfile;
  * @private
  */
 var profiles = {};
+
+/**
+ * Domain name.
+ *
+ * @property domain
+ * @type string
+ * @private
+ */
+let domain = '';
 
 /**
  * The permission to view local operator panel groups for each remote site.
@@ -169,8 +187,17 @@ function config(obj) {
     if (!fs.existsSync(obj.profiles)) {
       throw new Error(obj.profiles + ' does not exist');
     }
+    if (!fs.existsSync(obj.nethcti)) {
+      throw new Error(obj.nethcti + ' does not exist');
+    }
     USERS_CONF_FILEPATH = obj.users;
     PROFILES_CONF_FILEPATH = obj.profiles;
+    NETHCTI_CONF_FILEPATH = obj.nethcti;
+    //
+    let nethcti = JSON.parse(fs.readFileSync(NETHCTI_CONF_FILEPATH, 'utf8'));
+    domain = nethcti.hostname.split('.');
+    domain.shift();
+    domain = domain.join('.');
     // initialize mapping between user and authorization profile
     var u;
     mapUserProfile = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
@@ -182,6 +209,7 @@ function config(obj) {
         tempMainExten = Object.keys(mapUserProfile[u].endpoints.mainextension)[0];
         mapUserProfile[tempMainExten] = { profile_id: mapUserProfile[u].profile_id };
       }
+      mapUserProfile[u + '@' + domain] = { profile_id: mapUserProfile[u].profile_id };
     }
     for (u in mapUserProfile) {
       delete mapUserProfile[u].name;
@@ -2033,7 +2061,8 @@ function reload() {
     reset();
     config({
       users: USERS_CONF_FILEPATH,
-      profiles: PROFILES_CONF_FILEPATH
+      profiles: PROFILES_CONF_FILEPATH,
+      nethcti: NETHCTI_CONF_FILEPATH
     });
     logger.log.info(IDLOG, 'emit event "' + EVT_RELOADED + '"');
     emitter.emit(EVT_RELOADED);
