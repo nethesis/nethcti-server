@@ -5,7 +5,8 @@
   "plugin": {
     "consumes": [
       "logger",
-      "com_nethcti_ws"
+      "com_nethcti_ws",
+      "com_nethcti_tcp"
     ],
     "provides": [
       "comIpc"
