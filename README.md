@@ -152,3 +152,15 @@ The daemon logs on
 ```
 /var/log/asterisk/nethcti.log
 ```
+
+## NethCTI CLI
+
+`root/usr/lib/node/nethcti-server/nethcti-cli.js` it's a command line interface to communicate with the nethcti-server.
+
+It uses the `/run/nethvoice/nethcti.sock` IPC to communicate.
+
+To show the command's help message, execute the script without arugments:
+
+```bash
+scl enable rh-nodejs10 'node /usr/lib/node/nethcti-server/nethcti-cli'
+```
