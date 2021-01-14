@@ -30,6 +30,7 @@ module.exports = function(options, imports, register) {
   try {
     server.setLogger(logger.ctilog);
     server.setCompComNethctiWs(imports.com_nethcti_ws);
+    server.setCompComNethctiTcp(imports.com_nethcti_tcp);
     server.start();
   } catch (err) {
     logger.ctilog.log.error(IDLOG, err.stack);
