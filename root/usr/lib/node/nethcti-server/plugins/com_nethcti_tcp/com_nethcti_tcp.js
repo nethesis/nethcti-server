@@ -953,6 +953,41 @@ function sendCallNotificationEvent(username, data, socket) {
 }
 
 /**
+ * Send the event to enable nethifier debug.
+ *
+ * @method setNethifierLog
+ * @param {string} username The username of the client
+ * @param {string} state ("on" | "off") Enable/Disable nethifier debug
+ */
+function setNethifierLog(username, state) {
+  try {
+    if (typeof username !== 'string' || typeof state !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.info(IDLOG, `received setNethifierLog request to be send to tcp client ${username} to "${state}" the nethifier debug`);
+    let data = state === 'on' ? { action: 'debug' } : { action: 'debug-off' };
+    let found = false;
+    for (let sockId in sockets) {
+      // "sockets[sockId]" is a socket object that contains the "username", "token"
+      // and "id" properties added by "connHdlr" and "loginHdlr" methods
+      socketUsername = sockets[sockId].username;
+      if (username === socketUsername) {
+        found = true;
+        socketSend(sockets[sockId], data, function () {
+          logger.log.info(IDLOG, `sent "debug" evt to ${state === 'on' ? 'enable' : 'disable'} nethifier debug to ${socket.username} with socket.id ${socket.id}`);
+        });
+      }
+    }
+    if (found === false) {
+      logger.log.warn(IDLOG, 'no tcp user found to send nethifier "debug" msg');
+    }
+    return found;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Send the event to open a desktop notification popup about an incoming call.
  *
  * @method sendPhoneCallRequest
@@ -1696,3 +1731,4 @@ exports.setCompConfigManager = setCompConfigManager;
 exports.setCompAuthorization = setCompAuthorization;
 exports.getNumConnectedClients = getNumConnectedClients;
 exports.sendPhoneCallRequest = sendPhoneCallRequest;
+exports.setNethifierLog = setNethifierLog;
