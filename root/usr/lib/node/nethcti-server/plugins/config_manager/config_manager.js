@@ -576,8 +576,8 @@ function config(path) {
     serverHostname = json.hostname;
 
     // set proxy port
-    if (typeof json.proxy_port == "number") {
-        proxyPort = json.proxy_port;
+    if (json.proxy_port && !Number.isNaN(json.proxy_port)) {
+      proxyPort = Number(json.proxy_port);
     }
 
     logger.log.info(IDLOG, 'configuration done by ' + CONFIG_FILEPATH);
