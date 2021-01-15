@@ -2,7 +2,6 @@
     my $prefix = ${'nethcti-server'}{'Prefix'} || "";
     my $autoc2c = ${'nethcti-server'}{'AutoC2C'} || "enabled";
     my $trunksEvents = ${'nethcti-server'}{'TrunksEvents'} || "enabled";
-    my $nullCallPeriod = ${'nethcti-server'}{'NullCallPeriod'} || "5";
     my $alertstatus = ${'nethvoice-alerts'}{'status'} || "false";
 
     my $QMAlarmsNotificationsStatus = '';
@@ -27,7 +26,6 @@
         "prefix": "' . $prefix . '",
         "auto_c2c": "' . $autoc2c . '",
         "trunks_events": "' . $trunksEvents . '",
-        "null_call_period": "'. $nullCallPeriod . '",
         "qm_alarms_notifications": ' . $QMAlarmsNotificationsStatus . '
     }';
 }
