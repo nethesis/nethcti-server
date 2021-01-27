@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.20.7
+Version: 3.20.8
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,11 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Jan 27 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.8-1
+- Privacy problem using username@domain to login - Bug nethesis/dev#5946
+- README.md: add nethcti cli doc section - Bug nethesis/dev#5948
+- nethcti.json template: fix field type (#207)
+
 * Mon Jan 04 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.7-1
 - Change phonebook search to search on all fields - nethesis/dev#5925
 - Privacy problem using extension number to login - Bug nethesis/dev#5936
