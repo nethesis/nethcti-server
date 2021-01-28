@@ -974,7 +974,7 @@ function setNethifierLog(username, state) {
       if (username === socketUsername) {
         found = true;
         socketSend(sockets[sockId], data, function () {
-          logger.log.info(IDLOG, `sent "debug" evt to ${state === 'on' ? 'enable' : 'disable'} nethifier debug to ${socket.username} with socket.id ${socket.id}`);
+          logger.log.info(IDLOG, `sent "debug" evt to ${state === 'on' ? 'enable' : 'disable'} nethifier debug to ${sockets[sockId].username} with socket id ${sockets[sockId].id}`);
         });
       }
     }
@@ -1010,7 +1010,7 @@ function sendPhoneCallRequest(username, url) {
       socketUsername = sockets[sockId].username;
       if (username === socketUsername) {
         socketSend(sockets[sockId], data, function () {
-          logger.log.info(IDLOG, 'sent phoneCallRequest evt to originate a new phone call throught an http get req to ' + socket.username + ' with socket.id ' + socket.id + ' - url to be invoked: ' + data);
+          logger.log.info(IDLOG, 'sent phoneCallRequest evt to originate a new phone call throught an http get req to ' + sockets[sockId].username + ' with socket id ' + sockets[sockId].id + ' - url to be invoked: ' + data);
         });
       }
     }
