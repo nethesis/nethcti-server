@@ -297,9 +297,11 @@ function modifyCtiPbContact(data, cb) {
     let set = '';
     let values = [];
     for (let i = 0; i < columns.length; i++) {
-      if (data[columns[i]]) {
+      if (columns[i] in data) {
         set += columns[i] + '=?,';
         values.push(data[columns[i]]);
+      } else {
+        values.push("");
       }
     }
     set = set.substring(0, set.length - 1);
