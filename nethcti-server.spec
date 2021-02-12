@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.20.8
+Version: 3.20.9
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,11 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Feb 12 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.9-1
+- Fix values validation on phonebook contact modify - nethesis/dev#5945
+- Update Yealink call action URL (#210)
+- Change Fanvil call action url (#211)
+
 * Wed Jan 27 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.8-1
 - Privacy problem using username@domain to login - Bug nethesis/dev#5946
 - README.md: add nethcti cli doc section - Bug nethesis/dev#5948
