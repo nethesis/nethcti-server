@@ -92,29 +92,31 @@ function setLogger(log) {
  * @param {object} data
  *   @param {string} data.user The username
  *   @param {string} data.token The authentication token
- * @param {function} cb The callback function
+ * @return {Promise} The promise function.
  */
-function saveAuthToken(data, cb) {
+function saveAuthToken(data) {
   try {
-    let query = 'REPLACE INTO `auth` (`user`, `token`) VALUES (?,?)';
-    compDbconnMain.dbConn['auth'].query(
-      query,
-      [data.user, data.token],
-      (err, results, fields) => {
-      try {
-        if (err) {
-          logger.log.error(IDLOG, `saving auth token: ${err.toString()}`);
-          cb(err.toString());
-          return;
+    return new Promise((resolve, reject) => {
+      let query = 'REPLACE INTO `auth` (`user`, `token`) VALUES (?,?)';
+      compDbconnMain.dbConn['auth'].query(
+        query,
+        [data.user, data.token],
+        (err, results, fields) => {
+        try {
+          if (err) {
+            logger.log.error(IDLOG, `saving auth token: ${err.toString()}`);
+            reject(err.toString());
+            return;
+          }
+          logger.log.info(IDLOG, 'auth token saved successfully');
+          resolve(results.insertId ? results.insertId : undefined);
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          reject(error);
         }
-        logger.log.info(IDLOG, 'auth token saved successfully');
-        cb();
-      } catch (error) {
-        logger.log.error(IDLOG, error.stack);
-        cb(error);
-      }
+      });
+      compDbconnMain.incNumExecQueries();
     });
-    compDbconnMain.incNumExecQueries();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -125,34 +127,75 @@ function saveAuthToken(data, cb) {
  * Returns all the authentication tokens.
  *
  * @method getAllTokens
- * @param {function} cb The callback function
+ * @return {Promise} The promise function.
  */
-function getAllTokens(cb) {
+function getAllTokens() {
   try {
-    let query = 'SELECT * FROM `auth`';
-    compDbconnMain.dbConn['auth'].query(
-      query,
-      (err, results, fields) => {
-      try {
-        if (err) {
-          logger.log.error(IDLOG, `getting all auth tokens failed: ${err.toString()}`);
-          cb(err.toString());
-          return;
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT * FROM `auth`';
+      compDbconnMain.dbConn['auth'].query(
+        query,
+        (err, results, fields) => {
+        try {
+          if (err) {
+            logger.log.error(IDLOG, `getting all auth tokens failed: ${err.toString()}`);
+            reject(err.toString());
+            return;
+          }
+          logger.log.info(IDLOG, `get #${results.length} auth tokens`);
+          resolve(results);
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          reject(error);
         }
-        logger.log.info(IDLOG, `get #${results.length} auth tokens`);
-        cb(null, results);
-      } catch (error) {
-        logger.log.error(IDLOG, error.stack);
-        cb(error);
-      }
+      });
+      compDbconnMain.incNumExecQueries();
     });
-    compDbconnMain.incNumExecQueries();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
   }
 }
 
+/**
+ * Return a token.
+ *
+ * @method getToken
+ * @param {string} id The identifier of the token in the db
+ * @return {Promise} The promise function.
+ */
+function getToken(id) {
+  try {
+    return new Promise((resolve, reject) => {
+      const query = 'SELECT * FROM `auth` WHERE id=?';
+      compDbconnMain.dbConn['auth'].query(
+        query,
+        [id],
+        (err, results, fields) => {
+        try {
+          console.log(results);
+          if (err) {
+            logger.log.error(IDLOG, `getting token id "${id}" failed: ${err.toString()}`);
+            reject(err.toString());
+            return;
+          }
+          logger.log.info(IDLOG, `get token id "${id}"`);
+          console.log(IDLOG, `get token id "${id}"`);
+          resolve(results);
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          reject(error);
+        }
+      });
+      compDbconnMain.incNumExecQueries();
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+apiList.getToken = getToken;
 apiList.getAllTokens = getAllTokens;
 apiList.saveAuthToken = saveAuthToken;
 exports.apiList = apiList;
