@@ -124,6 +124,43 @@ function saveAuthToken(data) {
 }
 
 /**
+ * Delete an authentication token.
+ *
+ * @method deleteAuthToken
+ * @param {object} data
+ *   @param {string} data.user The username
+ * @return {Promise} The promise function.
+ */
+function deleteAuthToken(data) {
+  try {
+    return new Promise((resolve, reject) => {
+      let query = 'DELETE FROM `auth` WHERE user=?';
+      compDbconnMain.dbConn['auth'].query(
+        query,
+        [data.user],
+        (err, results, fields) => {
+        try {
+          if (err) {
+            logger.log.error(IDLOG, `deleting auth token: ${err.toString()}`);
+            reject(err.toString());
+            return;
+          }
+          logger.log.info(IDLOG, 'auth token deleted successfully');
+          resolve(results);
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          reject(error);
+        }
+      });
+      compDbconnMain.incNumExecQueries();
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Returns all the authentication tokens.
  *
  * @method getAllTokens
@@ -198,6 +235,7 @@ function getToken(id) {
 apiList.getToken = getToken;
 apiList.getAllTokens = getAllTokens;
 apiList.saveAuthToken = saveAuthToken;
+apiList.deleteAuthToken = deleteAuthToken;
 exports.apiList = apiList;
 exports.setLogger = setLogger;
 exports.setCompDbconnMain = setCompDbconnMain;

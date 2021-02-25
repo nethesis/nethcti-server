@@ -767,8 +767,35 @@ async function newPersistentToken(username, password, nonce) {
     const hashToken = getHashToken(token);
     const id = await compDbconn.saveAuthToken({ user: username, token: hashToken });
     const insToken = await compDbconn.getToken(id);
-    persistentTokens.set(username, insToken);
+    persistentTokens.set(username, insToken[0]);
     logger.log.info(IDLOG, `created persistent token for user "${username}"`);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Remove the persistent token of the user.
+ *
+ * @method removePersistentToken
+ * @param  {string} username The access key
+ * @param  {string} token The token
+ * @return {boolean} True if the grant removing has been successful.
+ */
+function removePersistentToken(username, token) {
+  try {
+    // check the parameters
+    if (typeof username !== 'string' || typeof token !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    // delete the persistent token
+    compDbconn.deleteAuthToken({ user: username });
+    persistentTokens.delete(username);
+    logger.log.info(IDLOG, 'removed token "' + token + '" for user ' + username);
+    if (!persistentTokens.has(username)) {
+      return true;
+    }
+    return false;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -1330,12 +1357,15 @@ exports.getAdminSecretKey = getAdminSecretKey;
 exports.updateTokenExpires = updateTokenExpires;
 exports.removeShibbolethMap = removeShibbolethMap;
 exports.isUnautheCallEnabled = isUnautheCallEnabled;
+exports.removePersistentToken = removePersistentToken;
+exports.verifyPersistentToken = verifyPersistentToken;
 exports.getShibbolethUsername = getShibbolethUsername;
 exports.isUnautheCallIPEnabled = isUnautheCallIPEnabled;
 exports.authenticateRemoteSite = authenticateRemoteSite;
 exports.isAutoUpdateTokenExpires = isAutoUpdateTokenExpires;
 exports.authenticateFreepbxAdmin = authenticateFreepbxAdmin;
 exports.getTokenExpirationTimeout = getTokenExpirationTimeout;
+exports.getNonceForPersistentToken = getNonceForPersistentToken;
 exports.configRemoteAuthentications = configRemoteAuthentications;
 exports.isRemoteSiteAlreadyLoggedIn = isRemoteSiteAlreadyLoggedIn;
 exports.initFreepbxAdminAuthentication = initFreepbxAdminAuthentication;
