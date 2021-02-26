@@ -639,6 +639,7 @@ function setCompUtil(comp) {
          *
          *   @param {string} speeddials To get all the speeddial contacts of the user from the _NethCTI_ phonebook
          *   @param {string} search/:term[?view=company&limit=n&offset=n] To get the centralized and cti phonebook contacts that contains the term
+         *   @param {string} getall/[?limit=n&offset=n] To get the centralized and cti phonebook contacts sorted alphabetically
          *   @param {string} contact/:id To get the the details of the contact that is in the centralized phonebook
          *   @param {string} cticontact/:id To get the the details of the contact that is in the cti phonebook
          *   @param {string} searchstartswith/:term[?view=company&limit=n&offset=n] To get the centralized and cti phonebook contacts whose name starts with the specified term
@@ -647,6 +648,7 @@ function setCompUtil(comp) {
         'get': [
           'speeddials',
           'search/:term',
+          'getall/:term',
           'contact/:id',
           'cticontact/:id',
           'searchstartswith/:term',
@@ -733,6 +735,44 @@ function setCompUtil(comp) {
             req.params.term,
             username,
             req.params.view,
+            req.params.offset,
+            req.params.limit,
+            function(err, results) {
+              try {
+                if (err) {
+                  throw err;
+                } else {
+                  logger.log.info(IDLOG, 'send ' + results.count + ' (centralized + cti) phonebook contacts to user "' + username + '"');
+                  res.send(200, results);
+                }
+              } catch (err1) {
+                logger.log.error(IDLOG, err1.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+              }
+            });
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * It returns all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks.
+       * Returns all database entries. It supports pagination with limit and offset. It offers
+       * a view where results are ordered alphabetically.
+       *
+       *     getall/[?limit=n&offset=n]
+       *
+       * @method getall
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       */
+      getall: function(req, res) {
+        try {
+          var username = req.headers.authorization_user;
+          // use phonebook component
+          compPhonebook.getAllPbContacts(
+            username,
             req.params.offset,
             req.params.limit,
             function(err, results) {
@@ -1180,6 +1220,7 @@ function setCompUtil(comp) {
     };
     exports.api = phonebook.api;
     exports.search = phonebook.search;
+    exports.getall = phonebook.getall;
     exports.create = phonebook.create;
     exports.setLogger = setLogger;
     exports.speeddials = phonebook.speeddials;

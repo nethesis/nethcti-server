@@ -108,6 +108,43 @@ function getPbContactsContains(term, username, view, offset, limit, cb) {
 }
 
 /**
+ * Gets the phonebook contacts from the centralized and
+ * NethCTI phonebook databases.
+ *
+ * @method getAllPbContacts
+ * @param {string} username The name of the user used to search contacts in the cti phonebook
+ * @param {integer} [offset] The results offset
+ * @param {integer} [limit] The results limit
+ * @param {function} cb The callback function
+ */
+function getAllPbContacts(username, offset, limit, cb) {
+  try {
+    // check parameters
+    if (typeof username !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    dbconn.getAllContactsAlphabetically(username, offset, limit, function(err, results) {
+      try {
+        if (err) { // some error in the query
+          logger.log.error(IDLOG, err);
+        } else { // add the result
+          logger.log.info(IDLOG, 'found ' + results.length + ' contacts in centralized and cti phonebooks ordered alphabetically');
+        }
+        cb(err, results);
+
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err.toString());
+  }
+}
+
+/**
  * Returns the cti phonebook contact.
  *
  * @method getCtiPbContact
@@ -539,3 +576,4 @@ exports.getPbContactsStartsWith = getPbContactsStartsWith;
 exports.getPbContactsStartsWithDigit = getPbContactsStartsWithDigit;
 exports.importCsvSpeedDial = importCsvSpeedDial;
 exports.deleteAllUserSpeeddials = deleteAllUserSpeeddials;
+exports.getAllPbContacts = getAllPbContacts;
