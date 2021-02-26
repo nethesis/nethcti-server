@@ -47,11 +47,14 @@ module.exports = function(options, imports, register) {
       removeShibbolethMap: authentication.removeShibbolethMap,
       isUnautheCallEnabled: authentication.isUnautheCallEnabled,
       getShibbolethUsername: authentication.getShibbolethUsername,
+      removePersistentToken: authentication.removePersistentToken,
+      verifyPersistentToken: authentication.verifyPersistentToken,
       isUnautheCallIPEnabled: authentication.isUnautheCallIPEnabled,
       authenticateRemoteSite: authentication.authenticateRemoteSite,
       isAutoUpdateTokenExpires: authentication.isAutoUpdateTokenExpires,
       authenticateFreepbxAdmin: authentication.authenticateFreepbxAdmin,
       getTokenExpirationTimeout: authentication.getTokenExpirationTimeout,
+      getNonceForPersistentToken: authentication.getNonceForPersistentToken,
       configRemoteAuthentications: authentication.configRemoteAuthentications,
       isRemoteSiteAlreadyLoggedIn: authentication.isRemoteSiteAlreadyLoggedIn,
       initFreepbxAdminAuthentication: authentication.initFreepbxAdminAuthentication
@@ -62,9 +65,9 @@ module.exports = function(options, imports, register) {
     imports.dbconn.on(imports.dbconn.EVT_READY, function() {
       authentication.setLogger(logger.ctilog);
       authentication.setCompDbconn(imports.dbconn);
-      // authentication.configRemoteAuthentications('/etc/nethcti/remote_authentications.json');
       authentication.config('/etc/nethcti/authentication.json');
       authentication.initFreepbxAdminAuthentication();
+      authentication.start();
     });
     imports.dbconn.on(imports.dbconn.EVT_RELOADED, function() {
       authentication.reload();

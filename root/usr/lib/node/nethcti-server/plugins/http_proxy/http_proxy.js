@@ -350,7 +350,10 @@ function start() {
         // check authentication
         else if (req.headers.authorization) {
           var arr = req.headers.authorization.split(':');
-          if (compAuthentication.verifyToken(arr[0], arr[1]) === true) {
+          var authExpiration = req.headers["auth-exp"];
+          // check if the authentication token is valid
+          var isValidToken = (authExpiration === "no-exp") ? (compAuthentication.verifyPersistentToken(arr[0], arr[1]) === true) : (compAuthentication.verifyToken(arr[0], arr[1]) === true);
+          if (isValidToken) {
             // add header used by the authorization module
             if (compAuthentication.isShibbolethUser(arr[0])) {
               // this is to support login with shibboleth headers

@@ -633,14 +633,23 @@ function readCustomerCard(cb) {
  */
 function initConnections() {
   try {
+    // list of tables that use mysql2
+    let migratedTables = [
+      'auth',
+      'ampusers',
+      'pin_protected_routes',
+      'pin',
+      'queue_log',
+      'phonebook',
+      'cti_phonebook'
+    ];
     var k, sequelize;
     for (k in dbConfig) {
       if (dbConfig[k].dbtype === 'mysql') {
         // migration from sequelize to mysql
         // https://github.com/nethesis/dev/issues/5883
-        if (k === 'ampusers' || k === 'pin_protected_routes' || k === 'pin' || k === 'queue_log' || k === 'phonebook' || k === 'cti_phonebook') {
-          // use mysql2
-          initMysqlConn(k);
+        if (migratedTables.includes(k)) {
+          initMysqlConn(k); // use mysql2
         } else {
           // use sequelize
           var config = {
