@@ -1469,14 +1469,9 @@ function meetmeConfEnd(confId) {
  */
 function sendEvtToUserWithExtenId(evtName, evtObj, extenId) {
   try {
-    var socketsList = wsServer.sockets.sockets;
-    var key;
-    for (key in socketsList) {
-      if (socketsList[key] &&
-        socketsList[key].nethcti &&
-        compAuthorization.verifyUserEndpointExten(socketsList[key].nethcti.username, extenId) === true) {
-
-        socketsList[key].emit(evtName, evtObj);
+    for (let socket of wsServer.sockets.sockets.values()) {
+      if (socket.nethcti && compAuthorization.verifyUserEndpointExten(socket.nethcti.username, extenId) === true) {
+        socket.emit(evtName, evtObj);
       }
     }
   } catch (err) {
