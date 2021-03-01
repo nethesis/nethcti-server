@@ -1469,14 +1469,9 @@ function meetmeConfEnd(confId) {
  */
 function sendEvtToUserWithExtenId(evtName, evtObj, extenId) {
   try {
-    var socketsList = wsServer.sockets.sockets;
-    var key;
-    for (key in socketsList) {
-      if (socketsList[key] &&
-        socketsList[key].nethcti &&
-        compAuthorization.verifyUserEndpointExten(socketsList[key].nethcti.username, extenId) === true) {
-
-        socketsList[key].emit(evtName, evtObj);
+    for (let socket of wsServer.sockets.sockets.values()) {
+      if (socket.nethcti && compAuthorization.verifyUserEndpointExten(socket.nethcti.username, extenId) === true) {
+        socket.emit(evtName, evtObj);
       }
     }
   } catch (err) {
@@ -2331,10 +2326,10 @@ function disconnHdlr(socket, reason) {
       username = wsid[socket.id].username;
 
       // count the number of cti sockets for the user from both websocket secure and not
-      for (sid in wsServer.sockets.sockets) {
-        if (wsServer.sockets.sockets.get(sid).nethcti &&
-          wsServer.sockets.sockets.get(sid).nethcti.username === username &&
-          wsServer.sockets.sockets.get(sid).nethcti.userAgent === USER_AGENT) {
+      for (let tempSock of wsServer.sockets.sockets.values()) {
+        if (tempSock.nethcti &&
+            tempSock.nethcti.username === username &&
+            tempSock.nethcti.userAgent === USER_AGENT) {
 
           count += 1;
         }
