@@ -406,6 +406,102 @@ function getAllContactsContains(term, username, view, offset, limit, cb) {
 }
 
 /**
+ * Gets the phonebook contacts from the NethCTI and centralized phonebook databases.
+ * The specified term is wrapped with '%' characters. It orders the results by alphabetically.
+ * The NethCTI phonebook is the mysql _cti\_phonebook_.
+ *
+ * @method getAllContactsAlphabetically
+ * @param {string}   username The name of the user used to search contacts
+ * @param {integer}  [offset] The offset results start from
+ * @param {integer}  [limit]  The results limit
+ * @param {function} cb       The callback function
+ */
+function getAllContactsAlphabetically(username, offset, limit, cb) {
+  try {
+    // check parameters
+    if (typeof username !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    var fields = [
+      'id',
+      'owner_id',
+      'type',
+      'homeemail',
+      'workemail',
+      'homephone',
+      'workphone',
+      'cellphone',
+      'company',
+      'fax',
+      'title',
+      'notes',
+      'name',
+      'homestreet',
+      'homepob',
+      'homecity',
+      'homeprovince',
+      'homepostalcode',
+      'homecountry',
+      'workstreet',
+      'workpob',
+      'workcity',
+      'workprovince',
+      'workpostalcode',
+      'workcountry',
+      'url'
+    ].join(',');
+
+    var query = [
+      '(SELECT ', fields, ', extension, speeddial_num, name AS n',
+      ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
+      ' WHERE name IS NOT NULL AND name != "")',
+      ' UNION ',
+      '(SELECT ', fields, ', "" AS extension, "" AS speeddial_num, name AS n',
+      ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
+      ' WHERE name IS NOT NULL AND name != "")',
+      ' UNION ',
+      '(SELECT ', fields, ', extension, speeddial_num, company AS n',
+      ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
+      ' WHERE name IS NULL OR name = "" AND company IS NOT NULL AND company != "")',
+      ' UNION ',
+      '(SELECT ', fields, ', "" AS extension, "" AS speeddial_num, company AS n',
+      ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
+      ' WHERE name IS NULL OR name = "" AND company IS NOT NULL AND company != "")',
+      ' ORDER BY n',
+      (offset && limit ? ' LIMIT ?,?' : '')
+    ].join('');
+
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      query,
+      [parseInt(offset), parseInt(limit)],
+      (err, results) => {
+      try {
+        compDbconnMain.incNumExecQueries();
+        if (err) {
+          cb(err, null);
+          return;
+        }
+        var rows = results.map((row) => {
+          delete row.n;
+          return row;
+        });
+        cb(null, {
+          rows: rows
+        });
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+
+}
+
+/**
  * Gets the phonebook contacts from the centralized and nethcti address book.
  * At the end of the specified term is added the '%' character,
  * so it searches the entries whose fields _name_ and _company_
@@ -797,6 +893,7 @@ apiList.getCtiPbSpeeddialContacts = getCtiPbSpeeddialContacts;
 apiList.getAllContactsStartsWith = getAllContactsStartsWith;
 apiList.getAllContactsStartsWithDigit = getAllContactsStartsWithDigit;
 apiList.deleteAllUserSpeeddials = deleteAllUserSpeeddials;
+apiList.getAllContactsAlphabetically = getAllContactsAlphabetically;
 
 // public interface
 exports.apiList = apiList;
