@@ -2326,10 +2326,10 @@ function disconnHdlr(socket, reason) {
       username = wsid[socket.id].username;
 
       // count the number of cti sockets for the user from both websocket secure and not
-      for (sid in wsServer.sockets.sockets) {
-        if (wsServer.sockets.sockets.get(sid).nethcti &&
-          wsServer.sockets.sockets.get(sid).nethcti.username === username &&
-          wsServer.sockets.sockets.get(sid).nethcti.userAgent === USER_AGENT) {
+      for (let tempSock of wsServer.sockets.sockets.values()) {
+        if (tempSock.nethcti &&
+            tempSock.nethcti.username === username &&
+            tempSock.nethcti.userAgent === USER_AGENT) {
 
           count += 1;
         }
