@@ -407,7 +407,7 @@ function getAllContactsContains(term, username, view, offset, limit, cb) {
 
 /**
  * Gets the phonebook contacts from the NethCTI and centralized phonebook databases.
- * The specified term is wrapped with '%' characters. It orders the results by alphabetically.
+ * It orders the results alphabetically.
  * The NethCTI phonebook is the mysql _cti\_phonebook_.
  *
  * @method getAllContactsAlphabetically
@@ -455,26 +455,30 @@ function getAllContactsAlphabetically(username, offset, limit, cb) {
     var query = [
       '(SELECT ', fields, ', extension, speeddial_num, name AS n',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-      ' WHERE name IS NOT NULL AND name != "")',
+      ' WHERE name IS NOT NULL AND name != "" AND (owner_id=? OR type="public"))',
       ' UNION ',
       '(SELECT ', fields, ', "" AS extension, "" AS speeddial_num, name AS n',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
-      ' WHERE name IS NOT NULL AND name != "")',
+      ' WHERE name IS NOT NULL AND name != "" AND type != "nethcti")',
       ' UNION ',
       '(SELECT ', fields, ', extension, speeddial_num, company AS n',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-      ' WHERE name IS NULL OR name = "" AND company IS NOT NULL AND company != "")',
+      ' WHERE name IS NULL OR name = "" AND company IS NOT NULL AND company != "" AND (owner_id=? OR type="public"))',
       ' UNION ',
       '(SELECT ', fields, ', "" AS extension, "" AS speeddial_num, company AS n',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
-      ' WHERE name IS NULL OR name = "" AND company IS NOT NULL AND company != "")',
+      ' WHERE name IS NULL OR name = "" AND company IS NOT NULL AND company != "" AND type != "nethcti")',
       ' ORDER BY n',
       (offset && limit ? ' LIMIT ?,?' : '')
     ].join('');
 
+    // ensure limit and offset to be int
+    offset = parseInt(offset)
+    limit = parseInt(limit)
+
     compDbconnMain.dbConn['cti_phonebook'].query(
       query,
-      [parseInt(offset), parseInt(limit)],
+      [username, username, offset, limit],
       (err, results) => {
       try {
         compDbconnMain.incNumExecQueries();
