@@ -990,11 +990,11 @@ function setNethifierLog(username, state) {
 /**
  * Send the event to open a desktop notification popup about an incoming call.
  *
- * @method sendPhoneCallRequest
+ * @method sendPhoneRequest
  * @param {string} username The username of the client
  * @param {string} url The URL of the phone to be invocated by the tcp client
  */
-function sendPhoneCallRequest(username, url) {
+function sendPhoneRequest(username, url) {
   try {
       if (typeof username !== 'string' || typeof url !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -1730,5 +1730,5 @@ exports.setCompStreaming = setCompStreaming;
 exports.setCompConfigManager = setCompConfigManager;
 exports.setCompAuthorization = setCompAuthorization;
 exports.getNumConnectedClients = getNumConnectedClients;
-exports.sendPhoneCallRequest = sendPhoneCallRequest;
+exports.sendPhoneRequest = sendPhoneRequest;
 exports.setNethifierLog = setNethifierLog;
