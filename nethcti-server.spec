@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.20.9
+Version: 3.23.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -87,6 +87,13 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Mar 10 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.23.0-1
+- Automatic Click2Call support for cloud installation - nethesis/dev#5916
+- Add new authentication token for the mobile apps - nethesis/dev#5962
+- NethCTI Conference doesn't update events  - Bug nethesis/dev#5957
+- Add api to return phonebook contacts sorted alphabetically - nethesis/dev#5964
+- Add support to enable Nethifier log - nethesis/dev#5948
+
 * Fri Feb 12 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.9-1
 - Fix values validation on phonebook contact modify - nethesis/dev#5945
 - Update Yealink call action URL (#210)
