@@ -5518,7 +5518,7 @@ function ajaxPhoneDtmf(username, req, res) {
       (extenAgent.toLowerCase().indexOf('yealink') > -1 || extenAgent.toLowerCase().indexOf('sangoma') > -1)) {
 
       tone = 'POUND';
-    } else if (tone === '#' && extenAgent.toLowerCase().indexOf('snom') > -1) {
+    } else if (tone === '#') {
       tone = '%23';
     }
     // get the url to call to originate the new call. If the url is an empty
@@ -5941,9 +5941,17 @@ function sendPhoneDtmfToTcp(username, req, res) {
     if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+    let tone = req.params.tone;
     const exten = req.params.endpointId;
     const extenIp = compAstProxy.getExtensionIp(exten);
     const extenAgent = compAstProxy.getExtensionAgent(exten);
+    // adapt "#" tone based on phone user agent
+    if (tone === '#' &&
+      (extenAgent.toLowerCase().indexOf('yealink') > -1 || extenAgent.toLowerCase().indexOf('sangoma') > -1)) {
+      tone = 'POUND';
+    } else if (tone === '#') {
+      tone = '%23';
+    }
     let url = compConfigManager.getDtmfUrlFromAgent(extenAgent);
     if (typeof url === 'string' && url !== '') {
       const phoneUser = compUser.getPhoneWebUser(username, exten);
@@ -5951,6 +5959,7 @@ function sendPhoneDtmfToTcp(username, req, res) {
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
+      url = url.replace(/\$TONE/g, tone);
       compNethctiTcp.sendPhoneRequest(username, url);
     } else {
       logger.log.warn(IDLOG, `failed DTMF via TCP request by the user "${username}": extenAgent is not supported`);
