@@ -5518,7 +5518,7 @@ function ajaxPhoneDtmf(username, req, res) {
       (extenAgent.toLowerCase().indexOf('yealink') > -1 || extenAgent.toLowerCase().indexOf('sangoma') > -1)) {
 
       tone = 'POUND';
-    } else if (tone === '#' && extenAgent.toLowerCase().indexOf('snom') > -1) {
+    } else if (tone === '#') {
       tone = '%23';
     }
     // get the url to call to originate the new call. If the url is an empty
@@ -5949,7 +5949,7 @@ function sendPhoneDtmfToTcp(username, req, res) {
     if (tone === '#' &&
       (extenAgent.toLowerCase().indexOf('yealink') > -1 || extenAgent.toLowerCase().indexOf('sangoma') > -1)) {
       tone = 'POUND';
-    } else if (tone === '#' && extenAgent.toLowerCase().indexOf('snom') > -1) {
+    } else if (tone === '#') {
       tone = '%23';
     }
     let url = compConfigManager.getDtmfUrlFromAgent(extenAgent);
