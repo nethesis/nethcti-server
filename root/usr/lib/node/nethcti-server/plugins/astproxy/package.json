@@ -5,7 +5,8 @@
   "plugin": {
     "consumes": [
       "dbconn",
-      "logger"
+      "logger",
+      "authentication"
     ],
     "provides": [
       "astProxy"
