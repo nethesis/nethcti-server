@@ -71,3 +71,14 @@ event_services('publichost-modify', qw(
 event_actions('post-restore-config', qw(
     nethcti-server-maskunit 10
 ));
+
+#
+# nethserver-conference-save
+#
+event_templates('nethserver-conference-save', qw(
+                /etc/nethcti/video_conf.json
+));
+
+event_services('nethserver-conference-save', qw(
+               nethcti-server reload
+));
