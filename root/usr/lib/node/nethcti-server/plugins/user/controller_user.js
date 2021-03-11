@@ -1409,7 +1409,10 @@ function setPresence(param, cb) {
       var arr = [];
       var mainExtId = getEndpointMainExtension(param.username).getId();
       var allext = getAllUserExtensions(param.username);
-
+      let allextObj = {};
+      allext.forEach(el => {
+        allextObj[el] = '';
+      });
       // set presence to online
       if (param.status === userPresence.STATUS.online) {
 
@@ -1433,6 +1436,7 @@ function setPresence(param, cb) {
               logger.log.error(IDLOG, err);
             } else {
               logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.online + '" to user "' + param.username + '"');
+              compAstProxy.reloadPhysicalPhoneConfig(allextObj);
             }
           }
         );
@@ -1459,6 +1463,7 @@ function setPresence(param, cb) {
               logger.log.error(IDLOG, err);
             } else {
               logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.dnd + '" to user "' + param.username + '"');
+              compAstProxy.reloadPhysicalPhoneConfig(allextObj);
             }
           }
         );
@@ -1484,6 +1489,7 @@ function setPresence(param, cb) {
               logger.log.error(IDLOG, err);
             } else {
               logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.cellphone + '" to user "' + param.username + '"');
+              compAstProxy.reloadPhysicalPhoneConfig(allextObj);
             }
           }
         );
@@ -1509,6 +1515,7 @@ function setPresence(param, cb) {
               logger.log.error(IDLOG, err);
             } else {
               logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.voicemail + '" to user "' + param.username + '"');
+              compAstProxy.reloadPhysicalPhoneConfig(allextObj);
             }
           }
         );
@@ -1534,6 +1541,7 @@ function setPresence(param, cb) {
               logger.log.error(IDLOG, err);
             } else {
               logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.callforward + '" to "' + param.destination + '" to user "' + param.username + '"');
+              compAstProxy.reloadPhysicalPhoneConfig(allextObj);
             }
           }
         );
