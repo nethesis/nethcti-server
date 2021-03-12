@@ -39,11 +39,11 @@ var logger = console;
 /**
  * The base URL of the video conf platform.
  *
- * @property baseUrl
+ * @property baseURL
  * @type string
  * @private
  */
-let baseUrl;
+let baseURL;
 
 /**
  * Set the logger to be used.
@@ -81,7 +81,7 @@ function config(path) {
     }
     const json = JSON.parse(fs.readFileSync(path, 'utf8'));
     if (json && json.jitsi && json.jitsi.url) {
-      baseUrl = json.jitsi.url;
+      baseURL = json.jitsi.url;
     } else {
       logger.log.warn(IDLOG, 'wrong config file ' + path);
     }
@@ -98,7 +98,7 @@ function config(path) {
  * @return {string} The base URL of the video conf platform
  */
 function getBaseUrl() {
-  return baseUrl;
+  return baseURL;
 }
 
 /**
@@ -113,7 +113,7 @@ function getNewRoomUrl() {
       return null;
     }
     const id = uuidv4();
-    const url = baseUrl + '/' + id;
+    const url = (new URL(baseURL)).href + id;
     logger.log.info(IDLOG, `created new URL for vc room ${url}`);
     return {
       id: id,
