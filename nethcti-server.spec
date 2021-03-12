@@ -10,6 +10,7 @@ BuildRequires: nodejs >= 6.16.0
 Requires: rh-nodejs10
 Requires: nethserver-nethvoice14 >= 14.7.3
 Requires: nethserver-janus
+Requires: nethserver-conference
 Requires: sox
 Requires: mpg123
 Conflicts: nethcti-server
