@@ -5,6 +5,7 @@
   "plugin": {
     "consumes": [
       "util",
+      "user",
       "logger",
       "videoconf",
       "authorization"

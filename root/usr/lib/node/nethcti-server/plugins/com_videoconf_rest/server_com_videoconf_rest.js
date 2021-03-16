@@ -209,6 +209,30 @@ function setCompVideoconf(compVideoconf) {
 }
 
 /**
+ * Set the user architect component to be used by REST plugins.
+ *
+ * @method setCompUser
+ * @param {object} compUser The architect user component
+ * @static
+ */
+function setCompUser(compUser) {
+  try {
+    if (typeof compUser !== 'object') {
+      throw new Error('wrong parameter');
+    }
+
+    var p;
+    // set videoconf architect component to all REST plugins
+    for (p in plugins) {
+      plugins[p].setCompUser(compUser);
+    }
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Set the authorization architect component.
  *
  * @method setCompAuthorization
@@ -362,4 +386,5 @@ exports.config = config;
 exports.setLogger = setLogger;
 exports.setCompUtil = setCompUtil;
 exports.setCompVideoconf = setCompVideoconf;
+exports.setCompUser = setCompUser;
 exports.setCompAuthorization = setCompAuthorization;

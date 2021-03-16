@@ -37,6 +37,15 @@ var logger = console;
 var compVideoconf;
 
 /**
+ * The user architect component used for videoconf functions.
+ *
+ * @property compUser
+ * @type object
+ * @private
+ */
+var compUser;
+
+/**
  * The architect component to be used for authorization.
  *
  * @property compAuthorization
@@ -87,6 +96,21 @@ function setCompVideoconf(cp) {
   try {
     compVideoconf = cp;
     logger.log.info(IDLOG, 'set videoconf architect component');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set user architect component used by videoconf functions.
+ *
+ * @method setCompUser
+ * @param {object} cp The user architect component.
+ */
+function setCompUser(cp) {
+  try {
+    compUser = cp;
+    logger.log.info(IDLOG, 'set user architect component');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -198,7 +222,8 @@ function setCompUtil(comp) {
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
-          const result = compVideoconf.getNewRoomUrl();
+          const name = compUser.getUserInfoJSON(username).name || 'unknown';
+          const result = compVideoconf.getNewRoomUrl(username, name);
           if (result === null) {
             logger.log.warn(IDLOG, 'no vc room URL configured: send null to "' + username + '"');
           } else {
@@ -216,6 +241,7 @@ function setCompUtil(comp) {
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;
     exports.setCompVideoconf = setCompVideoconf;
+    exports.setCompUser = setCompUser;
     exports.setCompAuthorization = setCompAuthorization;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);

@@ -33,6 +33,7 @@ module.exports = function(options, imports, register) {
     serverRest.setCompUtil(imports.util);
     serverRest.setCompAuthorization(imports.authorization);
     serverRest.setCompVideoconf(imports.videoconf);
+    serverRest.setCompUser(imports.user);
     serverRest.start();
   } catch (err) {
     logger.ctilog.log.error(IDLOG, err.stack);
