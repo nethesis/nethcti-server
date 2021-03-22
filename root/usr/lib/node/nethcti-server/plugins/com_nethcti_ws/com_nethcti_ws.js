@@ -2130,6 +2130,10 @@ function loginHdlr(socket, obj) {
       return;
     }
 
+    if (compAuthe.isShibbolethUser(obj.accessKeyId)) {
+      obj.accessKeyId = compAuthe.getShibbolethUsername(obj.accessKeyId);
+    }
+
     if (compAuthe.verifyToken(obj.accessKeyId, obj.token, false) === true) { // user successfully authenticated
       logger.log.info(IDLOG, 'user "' + obj.accessKeyId + '" successfully authenticated from ' + getWebsocketEndpoint(socket) +
         ' with socket id ' + socket.id);
@@ -2230,6 +2234,7 @@ function doLogin(socket, obj) {
     }
     socket.nethcti.uaType = obj.uaType;
     socket.nethcti.username = obj.accessKeyId;
+
     // send authenticated successfully response
     sendAutheSuccess(socket);
     var username = astProxy.isExten(obj.accessKeyId) ? compUser.getUserUsingEndpointExtension(obj.accessKeyId) : obj.accessKeyId;
