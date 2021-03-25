@@ -137,6 +137,7 @@ function setCompUtil(comp) {
         * # GET requests
         *
         * 1. [`phonebook/search/:term[?view=company&limit=n&offset=n]`](#searchget)
+        * 1. [`phonebook/searchemail/:term(#searchemailget)
         * 1. [`phonebook/speeddials`](#speeddialsget)
         * 1. [`phonebook/contact/:id`](#contactget)
         * 1. [`phonebook/cticontact/:id`](#cticontactget)
@@ -167,6 +168,38 @@ function setCompUtil(comp) {
                 "company": "",
                 "workstreet": "",
                 "workcity": "",
+                "workprovince": "",
+                "workcountry": "",
+                "url": "",
+                "contacts": "[{\"id\": 5946,\"name\": \"\", \"source\": \"centralized\"}]"
+            },
+            ...
+        ]
+     }
+        *
+        * ---
+        *
+        * ### <a id="searchemailget">**`phonebook/searchemail`**</a>
+        *
+        * The client receives all phonebook contacts found in the _centralized_ or _NethCTI_ phonebooks
+        * that contains at least one email address.
+        *
+        * It returns all database entries that contain the specified _term_ in the fields _name, company,
+        * workphone, homephone_ and _cellphone_.
+        *
+        * Example JSON response:
+        *
+        * * ```phonebook/search/net```
+        *
+        *
+        *     {
+        "count": 353,
+        "rows": [
+            {
+                "id": 5946,
+                "company": "",
+                "workstreet": "",
+                "workemail": "some@info.it",
                 "workprovince": "",
                 "workcountry": "",
                 "url": "",
@@ -639,6 +672,7 @@ function setCompUtil(comp) {
          *
          *   @param {string} speeddials To get all the speeddial contacts of the user from the _NethCTI_ phonebook
          *   @param {string} search/:term[?view=company&limit=n&offset=n] To get the centralized and cti phonebook contacts that contains the term
+         *   @param {string} searchemail/:term To get the centralized and cti phonebook contacts that contains the term and at least one email address
          *   @param {string} getall/[?limit=n&offset=n] To get the centralized and cti phonebook contacts sorted alphabetically
          *   @param {string} contact/:id To get the the details of the contact that is in the centralized phonebook
          *   @param {string} cticontact/:id To get the the details of the contact that is in the cti phonebook
@@ -648,6 +682,7 @@ function setCompUtil(comp) {
         'get': [
           'speeddials',
           'search/:term',
+          'searchemail/:term',
           'getall/:term',
           'contact/:id',
           'cticontact/:id',
@@ -743,6 +778,44 @@ function setCompUtil(comp) {
                   throw err;
                 } else {
                   logger.log.info(IDLOG, 'send ' + results.count + ' (centralized + cti) phonebook contacts to user "' + username + '"');
+                  res.send(200, results);
+                }
+              } catch (err1) {
+                logger.log.error(IDLOG, err1.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+              }
+            });
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * It searches all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks that contains
+       * at least one email address.
+       * Returns all database entries that contain the specified _term_ in the fields _name, company,
+       * workphone, homephone_ and _cellphone_.
+       *
+       *     searchemail/:term
+       *
+       * @method searchemail
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      searchemail: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          compPhonebook.getEmailPbContactsContains(
+            req.params.term,
+            username,
+            function(err, results) {
+              try {
+                if (err) {
+                  throw err;
+                } else {
+                  logger.log.info(IDLOG, 'send ' + results.count + ' (centralized + cti) email phonebook contacts to user "' + username + '"');
                   res.send(200, results);
                 }
               } catch (err1) {
@@ -1220,6 +1293,7 @@ function setCompUtil(comp) {
     };
     exports.api = phonebook.api;
     exports.search = phonebook.search;
+    exports.searchemail = phonebook.searchemail;
     exports.getall = phonebook.getall;
     exports.create = phonebook.create;
     exports.setLogger = setLogger;

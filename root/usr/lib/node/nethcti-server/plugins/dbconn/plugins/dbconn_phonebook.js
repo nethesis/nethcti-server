@@ -406,6 +406,83 @@ function getAllContactsContains(term, username, view, offset, limit, cb) {
 }
 
 /**
+ * Gets the phonebook contacts searching in the NethCTI and centralized phonebook databases that
+ * contain at least one email address.
+ * The specified term is wrapped with '%' characters, so it searches
+ * any occurrences of the term in the following fields: _name, company, workphone,
+ * homephone, cellphone and extension_. It orders the results by _name_ and _company_
+ * ascending. The NethCTI phonebook is the mysql _cti\_phonebook_.
+ *
+ * @method getEmailAllContactsContains
+ * @param {string}   term     The term to search. It can be a name or a number
+ * @param {string}   username The name of the user used to search contacts
+ * @param {function} cb       The callback function
+ */
+function getEmailAllContactsContains(term, username, cb) {
+  try {
+    if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    term = '%' + term + '%';
+
+    // if (view === 'person') {
+    //   var sview = 'name LIKE ? ';
+    // } else if (view === 'company') {
+    //   var sview = 'company LIKE ? ';
+    // } else {
+    //   var sview = 'name LIKE ? OR company LIKE ? ';
+    // }
+
+    var ctiPbBounds = '(owner_id=? OR type="public") ' +
+      'AND ' +
+      // '(' + sview +
+      '(' +
+        'name LIKE ? OR company LIKE ? ' +
+        'OR workemail LIKE ? ' +
+        'OR homeemail LIKE ? ' +
+        'OR workphone LIKE ? ' +
+        'OR homephone LIKE ? ' +
+        'OR cellphone LIKE ? ' +
+        'OR extension LIKE ? ' +
+        'OR notes LIKE ?' +
+      ') AND ' +
+      '(workemail > "" OR homeemail > "")';
+
+    // var pbBounds = '(' + sview +
+    var pbBounds = '(name LIKE ? OR company LIKE ? ' +
+      'OR workemail LIKE ? ' +
+      'OR homeemail LIKE ? ' +
+      'OR workphone LIKE ? ' +
+      'OR homephone LIKE ? ' +
+      'OR cellphone LIKE ? ' +
+      'OR notes LIKE ?' +
+    ') AND (' +
+      'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
+    ') AND ' +
+    '(workemail > "" OR homeemail > "")';
+
+    getEmailAllContacts(
+      ctiPbBounds,
+      pbBounds,
+      [username, term, term, term, term, term, term, term, term, term, term, term, term, term, term, term, term, term],
+      // view,
+      // offset, limit,
+      function(err, res) {
+        if (err) {
+          logger.log.error(IDLOG, 'searching cti and centralized phonebooks email contacts that contains "' + term + '": ' + err.toString());
+          cb(err.toString());
+        } else {
+          logger.log.info(IDLOG, res.count + ' results by searching cti and centralized phonebooks email contacts that contains "' + term + '"');
+          cb(null, res);
+        }
+      });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Gets the phonebook contacts from the NethCTI and centralized phonebook databases.
  * It orders the results alphabetically.
  * The NethCTI phonebook is the mysql _cti\_phonebook_.
@@ -887,12 +964,167 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
   }
 }
 
+/**
+ * Utility private function
+ * Execute a query (with count) on both cti and centralize phonebooks
+ * through a union searching for contacts that contain at least one email address.
+ *
+ * @method getEmailAllContacts
+ * @param {string}   ctiPbBounds Cti phonebook query of union bounds
+ * @param {string}   pbBounds Centralized phonebook query of union bounds
+ * @param {array}    replacements Replacements for queries
+ * @param {function} cb The callback function
+ * @private
+ */
+function getEmailAllContacts(ctiPbBounds, pbBounds, replacements, cb) {
+  try {
+    var fields = [
+      'id,',
+      'owner_id,',
+      'type,',
+      'homeemail,',
+      'workemail,',
+      'homephone,',
+      'workphone,',
+      'cellphone,',
+      'fax,',
+      'title,',
+      'company,',
+      'notes,',
+      'name,',
+      'homestreet,',
+      'homepob,',
+      'homecity,',
+      'homeprovince,',
+      'homepostalcode,',
+      'homecountry,',
+      'workstreet,',
+      'workpob,',
+      'workcity,',
+      'workprovince,',
+      'workpostalcode,',
+      'workcountry,',
+      'url'
+    ].join('');
+
+    var query = [
+      '(SELECT ', fields, ', extension, speeddial_num, \'cti\' AS source',
+      ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
+      ' WHERE ', ctiPbBounds, ')',
+      ' UNION ',
+      '(SELECT ', fields, ', \'\' AS extension, \'\' AS speeddial_num, \'centralized\' AS source',
+      ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
+      ' WHERE ', pbBounds, ')',
+      ' ORDER BY company ASC, name ASC'
+      // (offset && limit ? ' LIMIT ' + offset + ',' + limit : '')
+    ].join('');
+
+    // var companyXFields = 'owner_id, workstreet, workcity, workprovince, workcountry, workphone, homephone, cellphone, url, type, title, notes ';
+    // var queryCompany = [
+    //   'SELECT id, company, ', companyXFields, ', CONCAT(\'[\', ',
+    //   'GROUP_CONCAT(\'{\', \'"id": \', id, \',\', \'"name": "\', name, \'", \', \'"source": "\', source, \'"}\'), \']\') AS contacts',
+    //   ' FROM (',
+    //   '(SELECT id, name, company, ', companyXFields, ', \'cti\' AS source',
+    //   ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
+    //   ' WHERE ', ctiPbBounds, ')',
+    //   ' UNION ',
+    //   '(SELECT id, name, company, ', companyXFields, ', \'centralized\' AS source',
+    //   ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
+    //   ' WHERE ', pbBounds, ')',
+    //   ') t',
+    //   ' GROUP BY company',
+    //   ' ORDER BY company ASC, name ASC'
+    //   // (offset && limit ? ' LIMIT ' + offset + ',' + limit : '')
+    // ].join('');
+
+    var queryCount = [
+      'SELECT COUNT(*) AS total FROM ',
+      '(SELECT id FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK, ' WHERE ', ctiPbBounds,
+      ' UNION ALL',
+      ' SELECT id FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK, ' WHERE ', pbBounds, ') s'
+    ].join('');
+
+    // var queryCompanyCount = [
+    //   'SELECT COUNT(DISTINCT company) AS total',
+    //   ' FROM (',
+    //   '(SELECT id, name, company',
+    //   ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
+    //   ' WHERE ', ctiPbBounds, ')',
+    //   ' UNION ',
+    //   '(SELECT id, name, company',
+    //   ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
+    //   ' WHERE ', pbBounds, ')',
+    //   ') t'
+    // ].join('');
+
+    compDbconnMain.dbConn['cti_phonebook'].query(
+      'SET @@group_concat_max_len = 65535',
+      (err, results, fields) => {
+      try {
+        compDbconnMain.incNumExecQueries();
+        if (err) {
+          cb(err, null);
+          return;
+        }
+        //
+        compDbconnMain.dbConn['cti_phonebook'].query(
+          // view === 'company' ? queryCompany : query,
+          query,
+          replacements,
+          (err1, results1, fields1) => {
+          try {
+            compDbconnMain.incNumExecQueries();
+            if (err1) {
+              cb(err1, null);
+              return;
+            }
+            //
+            compDbconnMain.dbConn['cti_phonebook'].query(
+              queryCount,
+              // view === 'company' ? queryCompanyCount : queryCount,
+              replacements,
+              (err2, resultsCount, fields2) => {
+              try {
+                compDbconnMain.incNumExecQueries();
+                if (err2) {
+                  cb(err2, null);
+                  return;
+                }
+                cb(null, {
+                  count: resultsCount[0].total,
+                  rows: results1
+                });
+                
+              } catch (error) {
+                logger.log.error(IDLOG, error.stack);
+                cb(error);
+              }
+            });
+
+          } catch (error) {
+            logger.log.error(IDLOG, error.stack);
+            cb(error);
+          }
+        });
+        
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        cb(error);
+      }
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
 apiList.getPbContact = getPbContact;
 apiList.getCtiPbContact = getCtiPbContact;
 apiList.saveCtiPbContact = saveCtiPbContact;
 apiList.deleteCtiPbContact = deleteCtiPbContact;
 apiList.modifyCtiPbContact = modifyCtiPbContact;
 apiList.getAllContactsContains = getAllContactsContains;
+apiList.getEmailAllContactsContains = getEmailAllContactsContains;
 apiList.getCtiPbSpeeddialContacts = getCtiPbSpeeddialContacts;
 apiList.getAllContactsStartsWith = getAllContactsStartsWith;
 apiList.getAllContactsStartsWithDigit = getAllContactsStartsWithDigit;
