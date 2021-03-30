@@ -1944,7 +1944,7 @@ function startWsServer() {
     wsServer = io(httpServer, {
       'transports': ['websocket'],
       'pingInterval': 25000, // default
-      'pingTimeout': 20000,
+      'pingTimeout': 10000000,
       'allowUpgrades': false
     });
     wsServer.on('connection', wsConnHdlr);
