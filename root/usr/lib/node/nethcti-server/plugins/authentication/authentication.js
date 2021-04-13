@@ -1157,14 +1157,15 @@ function isAutoUpdateTokenExpires() {
 }
 
 /**
- * Verify the persistent token.
+ * Check token inside persistent tokens.
  *
- * @method verifyPersistentToken
+ * @method inPersistentTokens
  * @param {string} username The username used to retrieve the token
  * @param {string} token The token to be checked
- * @return {boolean} True if the user has been authenticated succesfully.
+ * @return {boolean} True if the token is present inside persistent tokens.
+ * @private
  */
-function verifyPersistentToken(username, token) {
+ function inPersistentTokens(username, token) {
   try {
     if (persistentTokens.has(username)) {
       const pToken = persistentTokens.get(username).token;
@@ -1173,7 +1174,7 @@ function verifyPersistentToken(username, token) {
         return true;
       }
     }
-    return false;
+    return false
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     return false;
@@ -1201,30 +1202,31 @@ function verifyToken(username, token, isRemote) {
     if (typeof username !== 'string' || typeof token !== 'string' || typeof isRemote !== 'boolean') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+
     // check the grant presence
-    if (!grants[username]) {
+    if (!grants[username] && !persistentTokens.has(username)) {
       logger.log.warn(IDLOG, 'authentication failed for ' + (isRemote ? 'remote site ' : 'local ') + 'username: "' + username + '": no grant is present');
       return false;
     }
 
     // check if the user has the token
-    var userTokens = grants[username]; // all token of the user
-    if (!userTokens[token] ||
-      (userTokens[token] && userTokens[token].remoteSite !== isRemote)) {
+    const userTokens = grants[username]; // all token of the user
+    if ((!userTokens[token] || (userTokens[token] && userTokens[token].remoteSite !== isRemote)) &&
+      !inPersistentTokens(username, token)) {
 
       logger.log.warn(IDLOG, 'authentication failed for ' + (isRemote ? 'remote site ' : 'local ') + 'username "' + username + '": wrong token');
       return false;
     }
 
-    // check the token expiration
-    if ((new Date()).getTime() > userTokens[token].expires) {
+    // check the token expiration when not persistent token
+    if (userTokens[token] && (new Date()).getTime() > userTokens[token].expires) {
       removeToken(username, token); // remove the token
       logger.log.info(IDLOG, 'the token "' + token + '" has expired for ' + (isRemote ? 'remote site ' : 'local ') + 'username ' + username);
       return false;
     }
 
-    // check whether update token expiration value
-    if (autoUpdateTokenExpires) {
+    // check whether update token expiration value when not persistent token
+    if (userTokens[token] && autoUpdateTokenExpires) {
       updateTokenExpires(username, token);
     }
 
@@ -1358,7 +1360,6 @@ exports.updateTokenExpires = updateTokenExpires;
 exports.removeShibbolethMap = removeShibbolethMap;
 exports.isUnautheCallEnabled = isUnautheCallEnabled;
 exports.removePersistentToken = removePersistentToken;
-exports.verifyPersistentToken = verifyPersistentToken;
 exports.getShibbolethUsername = getShibbolethUsername;
 exports.isUnautheCallIPEnabled = isUnautheCallIPEnabled;
 exports.authenticateRemoteSite = authenticateRemoteSite;
