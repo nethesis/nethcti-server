@@ -34,6 +34,7 @@ module.exports = function(options, imports, register) {
     serverRest.setCompAuthorization(imports.authorization);
     serverRest.setCompVideoconf(imports.videoconf);
     serverRest.setCompUser(imports.user);
+    serverRest.setCompMailer(imports.mailer);
     serverRest.start();
   } catch (err) {
     logger.ctilog.log.error(IDLOG, err.stack);

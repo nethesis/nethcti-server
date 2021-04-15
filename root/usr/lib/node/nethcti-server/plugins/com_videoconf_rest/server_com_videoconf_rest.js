@@ -233,6 +233,27 @@ function setCompUser(compUser) {
 }
 
 /**
+ * Set the mailer architect component to be used by REST plugins.
+ *
+ * @method setCompMailer
+ * @param {object} comp The architect mailer component
+ * @static
+ */
+function setCompMailer(comp) {
+  try {
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameter');
+    }
+    var p;
+    for (p in plugins) {
+      plugins[p].setCompMailer(comp);
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Set the authorization architect component.
  *
  * @method setCompAuthorization
@@ -387,4 +408,5 @@ exports.setLogger = setLogger;
 exports.setCompUtil = setCompUtil;
 exports.setCompVideoconf = setCompVideoconf;
 exports.setCompUser = setCompUser;
+exports.setCompMailer = setCompMailer;
 exports.setCompAuthorization = setCompAuthorization;
