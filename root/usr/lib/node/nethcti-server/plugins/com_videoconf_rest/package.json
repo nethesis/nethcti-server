@@ -5,7 +5,9 @@
   "plugin": {
     "consumes": [
       "util",
+      "user",
       "logger",
+      "mailer",
       "videoconf",
       "authorization"
     ],

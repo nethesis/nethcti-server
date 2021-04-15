@@ -12,7 +12,6 @@
  */
 const fs = require('fs');
 const https = require('https');
-const uuidv4 = require('uuid').v4;
 const EventEmitter = require('events').EventEmitter;
 
 /**
@@ -139,15 +138,17 @@ function getBaseUrl() {
  * Returns an URL to be used for a new room.
  *
  * @method getNewRoomUrl
+ * @param {string} username The username to be addede to the URL
+ * @param {string} name The fullname of the user
  * @return {string} The url for the new room.
  */
-function getNewRoomUrl() {
+function getNewRoomUrl(username, name) {
   try {
-    if (typeof baseURL !== 'string' || baseURL === '') {
+    if (typeof baseURL !== 'string' || baseURL === '' || typeof username !== 'string' || typeof name !== 'string') {
       return null;
     }
-    const id = uuidv4();
-    const url = (new URL(baseURL)).href + id;
+    const id = username + '-' + new Date().getTime();
+    const url = (new URL(baseURL)).href + id + '#config.callDisplayName=' + escape(`"${name}"`);
     logger.log.info(IDLOG, `created new URL for vc room ${url}`);
     return {
       id: id,

@@ -37,6 +37,24 @@ var logger = console;
 var compVideoconf;
 
 /**
+ * The user architect component used for videoconf functions.
+ *
+ * @property compUser
+ * @type object
+ * @private
+ */
+var compUser;
+
+/**
+ * The mailer architect component used for videoconf functions.
+ *
+ * @property compMailer
+ * @type object
+ * @private
+ */
+var compMailer;
+
+/**
  * The architect component to be used for authorization.
  *
  * @property compAuthorization
@@ -93,6 +111,36 @@ function setCompVideoconf(cp) {
 }
 
 /**
+ * Set user architect component used by videoconf functions.
+ *
+ * @method setCompUser
+ * @param {object} cp The user architect component.
+ */
+function setCompUser(cp) {
+  try {
+    compUser = cp;
+    logger.log.info(IDLOG, 'set user architect component');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set mailer architect component used by videoconf functions.
+ *
+ * @method setCompMailer
+ * @param {object} cp The mailer architect component.
+ */
+function setCompMailer(cp) {
+  try {
+    compMailer = cp;
+    logger.log.info(IDLOG, 'set mailer architect component');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Set the authorization architect component.
  *
  * @method setCompAuthorization
@@ -143,14 +191,51 @@ function setCompUtil(comp) {
     *
     * ### <a id="newroompost">**`videoconf/newroom`**</a>
     *
-    * Creates a new room in the NethCTI videoconf. The members to be invited have to be
-    * specified in the POST request in JSON format:
+    * Creates a new room in the NethCTI videoconf
     *
-    * * `members`: the list of the members to be invited
+    * ---
+    *
+    * 1. [`videoconf/send_emails`](#send_emailspost)
+    *
+    * ---
+    *
+    * ### <a id="send_emailspost">**`videoconf/send_emails`**</a>
+    *
+    * Send email invitations about a video conference. The following parameters are needed:
+    *
+    * * `list`: array list of email addresses to be invited. Keys are email address and values are the language to be used for the invite ("it", "en", "es")
+    * * `email`: object formatted like the following {
+              "subject": {
+                "it": "subject in italian language",
+                "en": "subject in english language",
+                "es": "subject in spanish language"
+              },
+              "body": {
+                "it":"body in italian language"
+                "en":"body in english language"
+                "es":"body in spanish language"
+              }
+            }
     *
     * Example JSON request parameters:
     *
-    *     { "members": { "john": { "email": "john@john.com" }, ... } }
+    *     { "list": {
+              "name@domain.com": "it",
+              "name2@domain.com": "en"
+            },
+            "email": {
+              "subject": {
+                "it": "subject in italian language",
+                "en": "subject in english language",
+                "es": "subject in spanish language"
+              },
+              "body": {
+                "it":"body in italian language"
+                "en":"body in english language"
+                "es":"body in spanish language"
+              }
+            }
+          }
     *
     * 
     * @class plugin_rest_videoconf
@@ -168,9 +253,11 @@ function setCompUtil(comp) {
          * @type {array}
          *
          *   @param {string} newroom Creates a room
+         *   @param {string} send_emails Send vc invitations to email addresses
          */
         'post': [
-          'newroom'
+          'newroom',
+          'send_emails'
         ],
         'head': [],
         'del': []
@@ -178,7 +265,7 @@ function setCompUtil(comp) {
       /**
        * Create a room in the videoconf platform with the following REST API:
        *
-       *     create
+       *     newroom
        *
        * @method newroom
        * @param {object} req The client request
@@ -187,18 +274,14 @@ function setCompUtil(comp) {
        */
       newroom: function(req, res, next) {
         try {
-          const data = req.params;
-          if (typeof data !== 'object' || typeof data.members !== 'object') {
-            compUtil.net.sendHttp400(IDLOG, res);
-            return;
-          }
           const username = req.headers.authorization_user;
           if (compAuthorization.authorizeVideoconf(username) === false) {
             logger.log.warn(IDLOG, 'creating new video conf room: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
-          const result = compVideoconf.getNewRoomUrl();
+          const name = compUser.getUserInfoJSON(username).name || 'unknown';
+          const result = compVideoconf.getNewRoomUrl(username, name);
           if (result === null) {
             logger.log.warn(IDLOG, 'no vc room URL configured: send null to "' + username + '"');
           } else {
@@ -209,13 +292,60 @@ function setCompUtil(comp) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
+      },
+
+      /**
+       * Send email invitations about a video conference with the following REST API:
+       *
+       *     send_emails
+       *
+       * @method send_emails
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      send_emails: async function(req, res, next) {
+        try {
+          if (typeof req.params !== 'object' || !req.params.list || !req.params.email) {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+          const username = req.headers.authorization_user;
+          if (compAuthorization.authorizeVideoconf(username) === false) {
+            logger.log.warn(IDLOG, 'sending vc email invitations: authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          const list = req.params.list;
+          const email = req.params.email;
+          let data = {};
+          let lang, subject, body;
+          for (let address in list) {
+            address = address.toLowerCase();
+            lang = list[address];
+            subject = email.subject[lang];
+            body = email.body[lang];
+            data[address] = {
+              subject: subject,
+              body: body
+            };
+          }
+          let result = await compMailer.sendToList(data);
+          res.send(200, result);
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
       }
     };
     exports.api = videoconf.api;
     exports.newroom = videoconf.newroom;
+    exports.send_emails = videoconf.send_emails;
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;
+    exports.setCompMailer = setCompMailer;
     exports.setCompVideoconf = setCompVideoconf;
+    exports.setCompUser = setCompUser;
     exports.setCompAuthorization = setCompAuthorization;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
