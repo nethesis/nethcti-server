@@ -13,6 +13,7 @@ event_templates('nethcti-server3-update', qw(
                 /etc/nethcti/exec_script.json
                 /etc/nethcti/services.json
                 /etc/nethcti/win_popup.json
+                /etc/nethcti/mailer.json
                 /etc/nethcti/nethcti.json
                 /etc/nethcti/chat.json
                 /etc/nethcti/phone_urls.json
