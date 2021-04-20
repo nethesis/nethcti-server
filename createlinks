@@ -14,6 +14,7 @@ event_templates('nethcti-server3-update', qw(
                 /etc/nethcti/services.json
                 /etc/nethcti/win_popup.json
                 /etc/nethcti/mailer.json
+                /etc/nethcti/video_conf.json
                 /etc/nethcti/nethcti.json
                 /etc/nethcti/chat.json
                 /etc/nethcti/phone_urls.json
