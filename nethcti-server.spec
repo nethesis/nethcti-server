@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.23.0
+Version: 3.24.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -88,6 +88,15 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu Apr 22 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.24.0-1
+- Jitsi instant video conference integration - nethesis/dev#5966
+- Privacy issue into the operator panel for call forward option - Bug nethesis/dev#5990
+- The authentication fallback makes the log file incomprehensible - Bug nethesis/dev#5983
+- WebSocket disconnection with reason "ping timeout" - Bug nethesis/dev#5977
+- Privacy problem with Shibboleth authentication - Bug nethesis/dev#5980
+- DND and CF status not syncronized from NethCTI to phones - Bug nethesis/dev#5960
+- Automatic Click2Call support for cloud installation - nethesis/dev#5916
+
 * Wed Mar 10 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.23.0-1
 - Automatic Click2Call support for cloud installation - nethesis/dev#5916
 - Add new authentication token for the mobile apps - nethesis/dev#5962
