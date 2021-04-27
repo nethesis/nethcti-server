@@ -5849,7 +5849,7 @@ function sendPhoneCallToTcp(username, req, res) {
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
-      compNethctiTcp.sendPhoneCallRequest(username, url);
+      compNethctiTcp.sendPhoneRequest(username, url);
     } else {
       logger.log.warn(IDLOG, `failed call to ${to} via TCP request by the user "${username}": extenAgent is not supported`);
       fallbackAjaxPhoneCall(username, req, res);
