@@ -5816,49 +5816,6 @@ function ajaxPhoneCall(username, req, res) {
     fallbackAjaxPhoneCall(username, req, res);
   }
 }
-/**
- * Send the request to originate a new phone call through an http get
- * request to a connected tcp client. The tcp client will do the request
- * to the final physical supported phone.
- *
- * @method sendPhoneCallToTcp
- * @param {string} username The username that originate the call
- * @param {object} req The client request
- * @param {object} res The client response
- */
-function sendPhoneCallToTcp(username, req, res) {
-  try {
-    if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-    let to = compAstProxy.addPrefix(req.params.number);
-    let exten = req.params.endpointId;
-    let extenIp = compAstProxy.getExtensionIp(exten);
-    let extenAgent = compAstProxy.getExtensionAgent(exten);
-    let serverHostname = compConfigManager.getServerHostname();
-    // get the url to call to originate the new call. If the url is an empty
-    // string, the phone is not supported, so the call fails
-    let url = compConfigManager.getCallUrlFromAgent(extenAgent);
-
-    if (typeof url === 'string' && url !== '') {
-      let phoneUser = compUser.getPhoneWebUser(username, exten);
-      let phonePass = compUser.getPhoneWebPass(username, exten);
-      url = url.replace(/\$SERVER/g, serverHostname);
-      url = url.replace(/\$NUMBER/g, to);
-      url = url.replace(/\$ACCOUNT/g, exten);
-      url = url.replace(/\$PHONE_IP/g, extenIp);
-      url = url.replace(/\$PHONE_USER/g, phoneUser);
-      url = url.replace(/\$PHONE_PASS/g, phonePass);
-      compNethctiTcp.sendPhoneRequest(username, url);
-    } else {
-      logger.log.warn(IDLOG, `failed call to ${to} via TCP request by the user "${username}": extenAgent is not supported`);
-      fallbackAjaxPhoneCall(username, req, res);
-    }
-  } catch (error) {
-    logger.log.error(IDLOG, error.stack);
-    fallbackAjaxPhoneCall(username, req, res);
-  }
-}
 
 /**
  * Send the request to originate a new phone call through an http get
