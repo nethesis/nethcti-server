@@ -1762,10 +1762,13 @@ var compConfigManager;
           var userExtensions = compUser.getAllEndpointsExtension(username);
           var e, extensions;
 
+          if (username === 'admin') {
+            extensions = compAstProxy.getJSONExtensions();
+          }
           // checks if the user has the privacy enabled. In case the user has the "privacy" and
           // "admin queues" permission enabled, then the privacy is bypassed for all the calls
           // that pass through a queue, otherwise all the calls are obfuscated
-          if (compAuthorization.isPrivacyEnabled(username) === true &&
+          else if (compAuthorization.isPrivacyEnabled(username) === true &&
             compAuthorization.authorizeAdminQueuesUser(username) === false) {
 
             // all the calls are obfuscated, without regard of passing through a queue
