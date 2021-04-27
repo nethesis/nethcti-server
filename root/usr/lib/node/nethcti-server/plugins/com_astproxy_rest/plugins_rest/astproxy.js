@@ -5531,8 +5531,8 @@ function ajaxPhoneDtmf(username, req, res) {
     if (typeof url === 'string' && url !== '') {
 
       // the credential to access the phone via url
-      var phoneUser = compUser.getPhoneWebUser(username, exten);
-      var phonePass = compUser.getPhoneWebPass(username, exten);
+      var phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      var phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
 
       // replace the parameters of the url template
       url = url.replace(/\$SERVER/g, serverHostname);
@@ -5607,8 +5607,8 @@ function ajaxPhoneHoldUnhold(username, req, res) {
     if (typeof url === 'string' && url !== '') {
 
       // the credential to access the phone via url
-      var phoneUser = compUser.getPhoneWebUser(username, exten);
-      var phonePass = compUser.getPhoneWebPass(username, exten);
+      var phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      var phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
 
       // replace the parameters of the url template
       url = url.replace(/\$SERVER/g, serverHostname);
@@ -5706,8 +5706,8 @@ function ajaxPhoneCall(username, req, res) {
     if (typeof url === 'string' && url !== '') {
 
       // the credential to access the phone via url
-      var phoneUser = compUser.getPhoneWebUser(username, exten);
-      var phonePass = compUser.getPhoneWebPass(username, exten);
+      var phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      var phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
 
       // replace the parameters of the url template
       url = url.replace(/\$SERVER/g, serverHostname);
@@ -5845,8 +5845,8 @@ function sendPhoneCallToTcp(username, req, res) {
     let url = compConfigManager.getCallUrlFromAgent(extenAgent);
 
     if (typeof url === 'string' && url !== '') {
-      let phoneUser = compUser.getPhoneWebUser(username, exten);
-      let phonePass = compUser.getPhoneWebPass(username, exten);
+      let phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      let phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
       url = url.replace(/\$SERVER/g, serverHostname);
       url = url.replace(/\$NUMBER/g, to);
       url = url.replace(/\$ACCOUNT/g, exten);
@@ -5883,8 +5883,8 @@ function sendPhoneAnswerToTcp(username, req, res) {
     const extenAgent = compAstProxy.getExtensionAgent(exten);
     let url = compConfigManager.getAnswerUrlFromAgent(extenAgent);
     if (typeof url === 'string' && url !== '') {
-      const phoneUser = compUser.getPhoneWebUser(username, exten);
-      const phonePass = compUser.getPhoneWebPass(username, exten);
+      const phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      const phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
@@ -5916,8 +5916,8 @@ function sendPhoneHoldToTcp(username, req, res) {
     const extenAgent = compAstProxy.getExtensionAgent(exten);
     let url = compConfigManager.getHoldUnholdUrlFromAgent(extenAgent);
     if (typeof url === 'string' && url !== '') {
-      const phoneUser = compUser.getPhoneWebUser(username, exten);
-      const phonePass = compUser.getPhoneWebPass(username, exten);
+      const phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      const phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
@@ -5957,8 +5957,8 @@ function sendPhoneDtmfToTcp(username, req, res) {
     }
     let url = compConfigManager.getDtmfUrlFromAgent(extenAgent);
     if (typeof url === 'string' && url !== '') {
-      const phoneUser = compUser.getPhoneWebUser(username, exten);
-      const phonePass = compUser.getPhoneWebPass(username, exten);
+      const phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      const phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
@@ -5998,8 +5998,8 @@ function ajaxPhoneAnswer(username, req, res) {
     if (typeof url === 'string' && url !== '') {
 
       // the credential to access the phone via url
-      var phoneUser = compUser.getPhoneWebUser(username, exten);
-      var phonePass = compUser.getPhoneWebPass(username, exten);
+      var phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      var phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
 
       // replace the parameters of the url template
       url = url.replace(/\$PHONE_IP/g, extenIp);
