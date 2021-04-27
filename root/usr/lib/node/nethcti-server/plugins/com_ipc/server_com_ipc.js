@@ -55,6 +55,15 @@ let logger = console;
 let compComNethctiWs;
 
 /**
+ * The ws component.
+ *
+ * @property compComNethctiTcp
+ * @type object
+ * @private
+ */
+let compComNethctiTcp;
+
+/**
  * The event emitter.
  *
  * @property emitter
@@ -114,6 +123,21 @@ let setCompComNethctiWs = comp => {
 }
 
 /**
+ * Set ws component.
+ *
+ * @method setCompComNethctiTcp
+ * @param {object} comp The component
+ * @static
+ */
+let setCompComNethctiTcp = comp => {
+  try {
+    compComNethctiTcp = comp;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Start the server.
  *
  * @method start
@@ -153,6 +177,9 @@ let start = () => {
                 queue: o.notification.type_instance.replace('Queue','')
               }
             );
+          } else if (o.type === 'message' && o.data === 'nethifier_log') {
+            let result = compComNethctiTcp.setNethifierLog(o.username, o.state);
+            ipc.server.emit(socket, JSON.stringify({ type: 'nethifier_log', result: result === true ? 'ok' : 'failed' }));
           } else {
             logger.log.warn(IDLOG, 'received unknown event: ' + JSON.stringify(o));
           }
@@ -190,3 +217,4 @@ exports.EVT_ALARM = EVT_ALARM;
 exports.start = start;
 exports.setLogger = setLogger;
 exports.setCompComNethctiWs = setCompComNethctiWs;
+exports.setCompComNethctiTcp = setCompComNethctiTcp;

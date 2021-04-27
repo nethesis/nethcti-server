@@ -112,6 +112,23 @@ var EVT_READY = 'ready';
 var logSequelize = false;
 
 /**
+ * List of the database table migrated to use mysql2 instead of sequelize.
+ *
+ * @property migratedTables
+ * @type {array}
+ * @private
+ */
+const migratedTables = [
+  'auth',
+  'ampusers',
+  'pin_protected_routes',
+  'pin',
+  'queue_log',
+  'phonebook',
+  'cti_phonebook'
+];
+
+/**
 * The key names of the JSON files that contains database
 * connection information.
 *
@@ -638,9 +655,8 @@ function initConnections() {
       if (dbConfig[k].dbtype === 'mysql') {
         // migration from sequelize to mysql
         // https://github.com/nethesis/dev/issues/5883
-        if (k === 'ampusers' || k === 'pin_protected_routes' || k === 'pin' || k === 'queue_log' || k === 'phonebook' || k === 'cti_phonebook') {
-          // use mysql2
-          initMysqlConn(k);
+        if (migratedTables.includes(k)) {
+          initMysqlConn(k); // use mysql2
         } else {
           // use sequelize
           var config = {
@@ -1057,13 +1073,9 @@ function reset() {
     sequelize.close();
     logger.log.info(IDLOG, `sequelize connections closed`);
     Object.keys(dbConn).forEach(function(k) {
-      if (dbConn[k].db_type === 'mysql') {
-        // migration from sequelize to mysql
-        // https://github.com/nethesis/dev/issues/5883
-        if (k === 'ampusers' || k === 'pin_protected_routes' || k === 'pin' || k === 'queue_log' || k === 'phonebook' || k === 'cti_phonebook') {
-          logger.log.info(IDLOG, `destroy mysql connection for "${k}"`);
-          dbConn[k].destroy();
-        }
+      if (dbConn[k].db_type === 'mysql' && migratedTables.includes(k)) {
+        logger.log.info(IDLOG, `destroy mysql connection for "${k}"`);
+        dbConn[k].end();
         delete dbConn[k];
       } else if (dbConn[k].db_type === 'postgres') {
         (function(id) {

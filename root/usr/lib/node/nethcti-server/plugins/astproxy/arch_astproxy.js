@@ -4,6 +4,8 @@
  * @class arch_astproxy
  */
 const fs = require('fs');
+const http = require('http');
+const https = require('https');
 const moment = require('moment');
 const astProxy = require('astproxy');
 var queueRecallingManager = astProxy.queueRecallingManager;
@@ -19,6 +21,18 @@ var queueRecallingManager = astProxy.queueRecallingManager;
  * @default [arch_astproxy]
  */
 var IDLOG = '[arch_astproxy]';
+
+/**
+ * The interval time to update nullCallPeriod.
+ *
+ * @property INTERVAL_UPDATE_NULLCALLPERIOD
+ * @type number
+ * @private
+ * @final
+ * @readOnly
+ * @default 60000
+ */
+const INTERVAL_UPDATE_NULLCALLPERIOD = 60000;
 
 /**
  * The database component.
@@ -38,6 +52,26 @@ var compDbconn;
  */
 var qCallsStatsHist = {};
 
+/**
+ * NethVoice report configurations.
+ *
+ * @property nvReportConf
+ * @type object
+ * @private
+ */
+let nvReportConf;
+
+/**
+ * Null Call Period value used by stats.
+ *
+ * @property nullCallPeriod
+ * @type number
+ * @private
+ */
+let nullCallPeriod = 5;
+
+var compAuthentication;
+
 module.exports = function(options, imports, register) {
 
   var logger = console;
@@ -45,6 +79,7 @@ module.exports = function(options, imports, register) {
     logger = imports.logger.ctilog;
   }
   compDbconn = imports.dbconn;
+  compAuthentication = imports.authentication;
 
   /**
    * Return true if the PIN has been enabled on at least one outbound route.
@@ -88,7 +123,6 @@ module.exports = function(options, imports, register) {
         cb(msg);
         return;
       }
-      var nullCallPeriod = astProxy.proxyLogic.getNullCallPeriod();
       compDbconn.getQueueStats(qid, nullCallPeriod, staticDataQueues[qid].sla, function (err1, result) {
         cb(err1, result);
       });
@@ -187,7 +221,6 @@ module.exports = function(options, imports, register) {
           return;
         }
       }
-      var nullCallPeriod = astProxy.proxyLogic.getNullCallPeriod();
       compDbconn.getQCallsStatsHist(nullCallPeriod, function (err1, result, len) {
         var now = moment();
         var dd = now.format('DD');
@@ -305,6 +338,7 @@ module.exports = function(options, imports, register) {
     try {
       astProxy.proxyLogic.setReloading(true);
       astProxy.reset();
+      nethvoiceReportConfig();
       asteriskConfiguration();
       asteriskObjectsConfiguration();
       extenNamesConfiguration();
@@ -352,6 +386,170 @@ module.exports = function(options, imports, register) {
   }
 
   /**
+   * NethVoice report configuration.
+   *
+   * @method nethvoiceReportConfig
+   */
+  function nethvoiceReportConfig() {
+    try {
+      const NVREPORT_CONF_FILEPATH = '/opt/nethvoice-report/api/conf.json';
+      let json = JSON.parse(fs.readFileSync(NVREPORT_CONF_FILEPATH, 'utf8'));
+      if (typeof json.api_key !== 'string' || typeof json.api_endpoint !== 'string') {
+        throw new Error(NVREPORT_CONF_FILEPATH + ' wrong file format');
+      }
+      nvReportConf = {
+        api_key: json.api_key,
+        api_endpoint: json.api_endpoint,
+      };
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+    }
+  }
+
+  /**
+   * Read nullCallPeriod value from NethVoice report configuration every minute.
+   *
+   * @method startReadingNullCallPeriod
+   */
+  async function startReadingNullCallPeriod() {
+    try {
+      logger.log.info(IDLOG, `starting default value nullCallPeriod is: ${nullCallPeriod}`);
+      getNullCallPeriod();
+      setInterval(getNullCallPeriod, INTERVAL_UPDATE_NULLCALLPERIOD);
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+    }
+  }
+
+  /**
+   * Read nullCallPeriod value from NethVoice report configuration.
+   *
+   * @method getNullCallPeriod
+   */
+  function getNullCallPeriod() {
+    try {
+      (async function exec() {
+        if (nvReportConf.token === undefined) {
+          try {
+            const token = await makeNVReportLogin();
+            nvReportConf.token = token;
+          } catch (error) {
+            logger.log.warn(IDLOG, error);
+            nvReportConf.token = undefined;
+          }
+        }
+        if (nvReportConf.token !== undefined) {
+          try {
+            nullCallPeriod = await getNVReportSettings();
+            logger.log.info(IDLOG, `nullCallPeriod updated getting it from nethvoice-report: ${nullCallPeriod}`);
+          } catch (error) {
+            logger.log.warn(IDLOG, error);
+            nvReportConf.token = undefined;
+          }
+        }
+      })(); 
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+    }
+  }
+
+  /**
+   * Make login on NethVoice report.
+   *
+   * @method makeNVReportLogin
+   */
+  function makeNVReportLogin() {
+    try {
+      return new Promise((resolve, reject) => {
+        if (nvReportConf.api_endpoint && typeof nvReportConf.api_endpoint === 'string' && nvReportConf.api_endpoint !== '') {
+          let url = new URL(nvReportConf.api_endpoint);
+          const options = {
+            hostname: url.hostname,
+            port: url.port,
+            path: url.pathname + '/login',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          };
+          const req = http.request(options, (res) => {
+            let data = '';
+            res.setEncoding('utf8');
+            res.on('data', (chunk) => {
+              data += chunk;
+            });
+            res.on('end', () => {
+              data = JSON.parse(data);
+              if (data.code === 200) {
+                resolve(data.token);
+              } else {
+                reject(`logging-in to nethvoice-report - resp code: ${res.statusCode} - req: ${JSON.stringify(options)}`);
+              }
+            });
+          });
+          req.on('error', (e) => {
+            reject(`problem logging in to nethvoice report with request: ${e.message}`);
+          });
+          req.write(JSON.stringify({ username: 'X', password: nvReportConf.api_key }));
+          req.end(); 
+        } else {
+          reject('wrong configuration to login to nethvoice report: ' + JSON.stringify(nvReportConf));
+        }
+      });
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+    }
+  }
+
+  /**
+   * Get NethVoice report settings to read NullCallPeriod.
+   *
+   * @method getNVReportSettings
+   */
+  function getNVReportSettings() {
+    try {
+      return new Promise((resolve, reject) => {
+        if (nvReportConf.token && typeof nvReportConf.token === 'string' && nvReportConf.token !== '') {
+          let url = new URL(nvReportConf.api_endpoint);
+          const options = {
+            hostname: url.hostname,
+            port: url.port,
+            path: url.pathname + '/settings',
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${nvReportConf.token}`
+            }
+          };
+          const req = http.request(options, (res) => {
+            let data = '';
+            res.setEncoding('utf8');
+            res.on('data', (chunk) => {
+              data += chunk;
+            });
+            res.on('end', () => {
+              data = JSON.parse(data);
+              if (data && data.settings && data.settings.null_call_time && data.settings.null_call_time !== '') {
+                resolve(parseInt(data.settings.null_call_time));
+              } else {
+                reject('wrong nullCallPeriod from nethvoice report: ' + JSON.stringify(data) + ' for req ' + JSON.stringify(options));
+              }
+            });
+          });
+          req.on('error', (e) => {
+            reject(`problem getting nullCallPeriod from nethvoice report with request: ${e.message}`);
+          });
+          req.end(); 
+        } else {
+          reject(`problem getting nullCallPeriod from nethvoice report: ${nvReportConf}`);
+        }
+      });
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+    }
+  }
+
+  /**
    * Asterisk objects configuration.
    *
    * @method asteriskObjectsConfiguration
@@ -384,6 +582,48 @@ module.exports = function(options, imports, register) {
       astProxy.configExtenNames(json);
     } catch (err) {
       logger.log.error(IDLOG, err.stack);
+    }
+  }
+
+  /**
+   * Reload the configuration of physical phones using freepbx api.
+   *
+   * @method reloadPhysicalPhoneConfig
+   * @param {object} extens Keys are extensions
+   */
+  function reloadPhysicalPhoneConfig(extens) {
+    try {
+      logger.log.info(IDLOG, `reload config of physical phones ${Object.keys(extens)}`);
+      const secretKey = compAuthentication.getAdminSecretKey();
+      const options = {
+        hostname: 'localhost',
+        port: 443,
+        path: '',
+        method: 'POST',
+        rejectUnauthorized: false,
+        headers: {
+          'User': 'admin',
+          'Secretkey': secretKey,
+          'Content-Type': 'application/json'
+        }
+      }
+      let req;
+      for (let eid in extens) {
+        options.path = '/freepbx/rest/devices/phones/reload/' + eid;
+        req = https.request(options, res => {
+          if (res && res.statusCode === 202) {
+            logger.log.info(IDLOG, `sent HTTP POST req to reload config of physical phone "${eid}"`);
+          } else if (res.statusCode !== 403 && res.statusCode !== 501) {
+            logger.log.warn(IDLOG, `error sending HTTP POST req to reload config of physical phone "${eid}": ${res.statusCode}`);
+          }
+        });
+        req.on('error', error => {
+          logger.log.error(IDLOG, `error sending HTTP POST req to reload config of physical phone "${eid}": ${error.toString()}`);
+        })
+        req.end();
+      }
+    } catch (e) {
+      logger.log.error(IDLOG, e.stack);
     }
   }
 
@@ -503,6 +743,7 @@ module.exports = function(options, imports, register) {
       EVT_EXTEN_CFU_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CFU_CHANGED,
       EVT_EXTEN_CFVM_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CFVM_CHANGED,
       setAsteriskPresence: astProxy.proxyLogic.setAsteriskPresence,
+      reloadPhysicalPhoneConfig: reloadPhysicalPhoneConfig,
       getPausedQueues: astProxy.proxyLogic.getPausedQueues,
       getExtenCfValue: astProxy.proxyLogic.getExtenCfValue,
       getExtenCfbValue: astProxy.proxyLogic.getExtenCfbValue,
@@ -528,6 +769,8 @@ module.exports = function(options, imports, register) {
 
   try {
     astProxy.setLogger(logger.log);
+    nethvoiceReportConfig();
+    startReadingNullCallPeriod();
     asteriskConfiguration();
     asteriskObjectsConfiguration();
     extenNamesConfiguration();

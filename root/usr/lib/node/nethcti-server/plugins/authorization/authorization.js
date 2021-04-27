@@ -2113,6 +2113,30 @@ function authorizeScreenSharing(username) {
   }
 }
 
+/**
+ * Returns true if the specified user has the video conference authorization.
+ *
+ * @method authorizeVideoconf
+ * @param {string} username The username
+ * @return {boolean} True if the user has the permission.
+ */
+function authorizeVideoconf(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var profid = getUserProfileId(username);
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.settings.value === true &&
+      profiles[profid].macro_permissions.settings.permissions.video_conference.value === true
+    );
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
 exports.on = on;
 exports.config = config;
 exports.reload = reload;
@@ -2179,4 +2203,5 @@ exports.getAuthorizedRemoteOperatorGroups = getAuthorizedRemoteOperatorGroups;
 exports.getUserProfileId = getUserProfileId;
 exports.userHasProfile = userHasProfile;
 exports.authorizeScreenSharing = authorizeScreenSharing;
+exports.authorizeVideoconf = authorizeVideoconf;
 exports.authorizePhoneButtonsUser = authorizePhoneButtonsUser;

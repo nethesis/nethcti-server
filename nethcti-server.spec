@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.20.7
+Version: 3.24.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -11,6 +11,7 @@ Requires: rh-nodejs10
 Requires: nethserver-nethvoice14 >= 14.7.3
 Requires: nethserver-janus
 Requires: nethvoice-report
+Requires: nethserver-conference
 Requires: sox
 Requires: mpg123
 Conflicts: nethcti-server
@@ -88,6 +89,32 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu Apr 22 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.24.0-1
+- Jitsi instant video conference integration - nethesis/dev#5966
+- Privacy issue into the operator panel for call forward option - Bug nethesis/dev#5990
+- The authentication fallback makes the log file incomprehensible - Bug nethesis/dev#5983
+- WebSocket disconnection with reason "ping timeout" - Bug nethesis/dev#5977
+- Privacy problem with Shibboleth authentication - Bug nethesis/dev#5980
+- DND and CF status not syncronized from NethCTI to phones - Bug nethesis/dev#5960
+- Automatic Click2Call support for cloud installation - nethesis/dev#5916
+
+* Wed Mar 10 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.23.0-1
+- Automatic Click2Call support for cloud installation - nethesis/dev#5916
+- Add new authentication token for the mobile apps - nethesis/dev#5962
+- NethCTI Conference doesn't update events  - Bug nethesis/dev#5957
+- Add api to return phonebook contacts sorted alphabetically - nethesis/dev#5964
+- Add support to enable Nethifier log - nethesis/dev#5948
+
+* Fri Feb 12 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.9-1
+- Fix values validation on phonebook contact modify - nethesis/dev#5945
+- Update Yealink call action URL (#210)
+- Change Fanvil call action url (#211)
+
+* Wed Jan 27 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.8-1
+- Privacy problem using username@domain to login - Bug nethesis/dev#5946
+- README.md: add nethcti cli doc section - Bug nethesis/dev#5948
+- nethcti.json template: fix field type (#207)
+
 * Mon Jan 04 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.20.7-1
 - Change phonebook search to search on all fields - nethesis/dev#5925
 - Privacy problem using extension number to login - Bug nethesis/dev#5936

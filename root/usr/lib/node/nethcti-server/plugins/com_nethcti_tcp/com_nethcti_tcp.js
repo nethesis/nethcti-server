@@ -953,13 +953,48 @@ function sendCallNotificationEvent(username, data, socket) {
 }
 
 /**
+ * Send the event to enable nethifier debug.
+ *
+ * @method setNethifierLog
+ * @param {string} username The username of the client
+ * @param {string} state ("on" | "off") Enable/Disable nethifier debug
+ */
+function setNethifierLog(username, state) {
+  try {
+    if (typeof username !== 'string' || typeof state !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.info(IDLOG, `received setNethifierLog request to be send to tcp client ${username} to "${state}" the nethifier debug`);
+    let data = state === 'on' ? { action: 'debug' } : { action: 'debug-off' };
+    let found = false;
+    for (let sockId in sockets) {
+      // "sockets[sockId]" is a socket object that contains the "username", "token"
+      // and "id" properties added by "connHdlr" and "loginHdlr" methods
+      socketUsername = sockets[sockId].username;
+      if (username === socketUsername) {
+        found = true;
+        socketSend(sockets[sockId], data, function () {
+          logger.log.info(IDLOG, `sent "debug" evt to ${state === 'on' ? 'enable' : 'disable'} nethifier debug to ${sockets[sockId].username} with socket id ${sockets[sockId].id}`);
+        });
+      }
+    }
+    if (found === false) {
+      logger.log.warn(IDLOG, 'no tcp user found to send nethifier "debug" msg');
+    }
+    return found;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Send the event to open a desktop notification popup about an incoming call.
  *
- * @method sendPhoneCallRequest
+ * @method sendPhoneRequest
  * @param {string} username The username of the client
  * @param {string} url The URL of the phone to be invocated by the tcp client
  */
-function sendPhoneCallRequest(username, url) {
+function sendPhoneRequest(username, url) {
   try {
       if (typeof username !== 'string' || typeof url !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -975,7 +1010,7 @@ function sendPhoneCallRequest(username, url) {
       socketUsername = sockets[sockId].username;
       if (username === socketUsername) {
         socketSend(sockets[sockId], data, function () {
-          logger.log.info(IDLOG, 'sent phoneCallRequest evt to originate a new phone call throught an http get req to ' + socket.username + ' with socket.id ' + socket.id + ' - url to be invoked: ' + data);
+          logger.log.info(IDLOG, 'sent phoneCallRequest evt to originate a new phone call throught an http get req to ' + sockets[sockId].username + ' with socket id ' + sockets[sockId].id + ' - url to be invoked: ' + data);
         });
       }
     }
@@ -1695,4 +1730,5 @@ exports.setCompStreaming = setCompStreaming;
 exports.setCompConfigManager = setCompConfigManager;
 exports.setCompAuthorization = setCompAuthorization;
 exports.getNumConnectedClients = getNumConnectedClients;
-exports.sendPhoneCallRequest = sendPhoneCallRequest;
+exports.sendPhoneRequest = sendPhoneRequest;
+exports.setNethifierLog = setNethifierLog;

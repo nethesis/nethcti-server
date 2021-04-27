@@ -316,14 +316,18 @@ function setCompUser(comp) {
                 logger.log.warn(IDLOG, 'authentication failed for user "' + username + '"');
                 compUtil.net.sendHttp401(IDLOG, res);
                 return;
-
               } else {
                 if (useShibboleth === true) {
                   res.header('shibcookie', req.headers.cookie);
                   compAuthe.addShibbolethMap(req.headers.cookie, username);
                 }
                 logger.log.info(IDLOG, 'user "' + username + '" successfully authenticated');
-                var nonce = compAuthe.getNonce((useShibboleth ? req.headers.cookie : extension ? extension : username), password, false);
+                var authExpiration = req.headers["auth-exp"];
+                if (authExpiration === "no-exp") {
+                  var nonce = compAuthe.getNonceForPersistentToken((extension ? extension : username), password);
+                } else {
+                  var nonce = compAuthe.getNonce((useShibboleth ? req.headers.cookie : extension ? extension : username), password, false);
+                }
                 compUtil.net.sendHttp401Nonce(IDLOG, res, nonce);
               }
             } catch (error) {
@@ -351,8 +355,9 @@ function setCompUser(comp) {
         try {
           var token = req.headers.authorization_token;
           var username = req.headers.authorization_user;
-
-          if (compAuthe.removeToken(username, token) === true) {
+          var authExpiration = req.headers["auth-exp"];
+          var isLoggedOut = (authExpiration === "no-exp") ? (compAuthe.removePersistentToken(username, token) === true) : (compAuthe.removeToken(username, token) === true);
+          if (isLoggedOut) {
             logger.log.info(IDLOG, 'user "' + username + '" successfully logged out');
             compUtil.net.sendHttp200(IDLOG, res);
           } else {

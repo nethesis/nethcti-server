@@ -246,6 +246,15 @@ var autoUpdateTokenExpires = true;
 var grants = {};
 
 /**
+ * Persistent storage for authentication tokens.
+ *
+ * @constant persistentTokens
+ * @type {Map}
+ * @private
+ */
+const persistentTokens = new Map();
+
+/**
  * Set the logger to be used.
  *
  * @method setLogger
@@ -410,6 +419,22 @@ function config(path) {
 }
 
 /**
+ * Starts the component.
+ *
+ * @method start
+ */
+async function start() {
+  try {
+    const list = await compDbconn.getAllTokens();
+    list.forEach(token => {
+      persistentTokens.set(token.user, token);
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Reset the component.
  *
  * @method reset
@@ -419,6 +444,7 @@ function reset() {
   try {
     clearInterval(intervalRemoveExpiredTokens);
     intervalRemoveExpiredTokens = null;
+    persistentTokens.clear();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -434,6 +460,7 @@ function reload() {
     reset();
     config(CONFIG_FILEPATH);
     initFreepbxAdminAuthentication();
+    start();
     logger.log.warn(IDLOG, 'reloaded');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -710,6 +737,71 @@ function newToken(username, password, nonce, isRemoteSite) {
 }
 
 /**
+ * Create the hash value of the token using SHA256 function.
+ *
+ * @method getHashToken
+ * @param {string} token The token
+ * @return {string} The SHA256 value of the token.
+ * @private
+ */
+function getHashToken(token) {
+  try {
+    return crypto.createHash('sha256').update(token).digest('base64');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Creates a new persistent token.
+ *
+ * @method newPersistentToken
+ * @param {string} username The username
+ * @param {string} password The password of the account
+ * @param {string} nonce It is used to create the HMAC-SHA1 token
+ * @private
+ */
+async function newPersistentToken(username, password, nonce) {
+  try {
+    const token = calculateToken(username, password, nonce);
+    const hashToken = getHashToken(token);
+    const id = await compDbconn.saveAuthToken({ user: username, token: hashToken });
+    const insToken = await compDbconn.getToken(id);
+    persistentTokens.set(username, insToken[0]);
+    logger.log.info(IDLOG, `created persistent token for user "${username}"`);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Remove the persistent token of the user.
+ *
+ * @method removePersistentToken
+ * @param  {string} username The access key
+ * @param  {string} token The token
+ * @return {boolean} True if the grant removing has been successful.
+ */
+function removePersistentToken(username, token) {
+  try {
+    // check the parameters
+    if (typeof username !== 'string' || typeof token !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    // delete the persistent token
+    compDbconn.deleteAuthToken({ user: username });
+    persistentTokens.delete(username);
+    logger.log.info(IDLOG, 'removed token "' + token + '" for user ' + username);
+    if (!persistentTokens.has(username)) {
+      return true;
+    }
+    return false;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Checks if the remote username has already been logged in.
  *
  * @method isRemoteSiteAlreadyLoggedIn
@@ -775,6 +867,27 @@ function getNonce(username, password, isRemoteSite) {
     logger.log.info(IDLOG, 'nonce has been generated for username ' + username);
     return nonce;
 
+  } catch (err) {
+    logger.log.error(err.stack);
+  }
+}
+
+/**
+ * Creates an SHA1 nonce to be used in the authentication with persistent tokens.
+ *
+ * @method getNonceForPersistentToken
+ * @param {string} username The username used to create the token.
+ * @param {string} password The password of the account
+ * @return {string} The SHA1 nonce.
+ */
+function getNonceForPersistentToken(username, password) {
+  try {
+    const random = crypto.randomBytes(256) + (new Date()).getTime();
+    const shasum = crypto.createHash('sha1');
+    const nonce = shasum.update(random).digest('hex');
+    newPersistentToken(username, password, nonce);
+    logger.log.info(IDLOG, `nonce for persistent token has been generated for user "${username}"`);
+    return nonce;
   } catch (err) {
     logger.log.error(err.stack);
   }
@@ -1044,6 +1157,31 @@ function isAutoUpdateTokenExpires() {
 }
 
 /**
+ * Check token inside persistent tokens.
+ *
+ * @method inPersistentTokens
+ * @param {string} username The username used to retrieve the token
+ * @param {string} token The token to be checked
+ * @return {boolean} True if the token is present inside persistent tokens.
+ * @private
+ */
+ function inPersistentTokens(username, token) {
+  try {
+    if (persistentTokens.has(username)) {
+      const pToken = persistentTokens.get(username).token;
+      const hashToken = getHashToken(token);
+      if (pToken === hashToken) {
+        return true;
+      }
+    }
+    return false
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
  * Authenticates the user through checking the token with the one
  * that must be present in the _grants_ object. The _getNonce_ method
  * must be used before this.
@@ -1064,30 +1202,31 @@ function verifyToken(username, token, isRemote) {
     if (typeof username !== 'string' || typeof token !== 'string' || typeof isRemote !== 'boolean') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+
     // check the grant presence
-    if (!grants[username]) {
+    if (!grants[username] && !persistentTokens.has(username)) {
       logger.log.warn(IDLOG, 'authentication failed for ' + (isRemote ? 'remote site ' : 'local ') + 'username: "' + username + '": no grant is present');
       return false;
     }
 
     // check if the user has the token
-    var userTokens = grants[username]; // all token of the user
-    if (!userTokens[token] ||
-      (userTokens[token] && userTokens[token].remoteSite !== isRemote)) {
+    const userTokens = grants[username]; // all token of the user
+    if ((!userTokens[token] || (userTokens[token] && userTokens[token].remoteSite !== isRemote)) &&
+      !inPersistentTokens(username, token)) {
 
       logger.log.warn(IDLOG, 'authentication failed for ' + (isRemote ? 'remote site ' : 'local ') + 'username "' + username + '": wrong token');
       return false;
     }
 
-    // check the token expiration
-    if ((new Date()).getTime() > userTokens[token].expires) {
+    // check the token expiration when not persistent token
+    if (userTokens[token] && (new Date()).getTime() > userTokens[token].expires) {
       removeToken(username, token); // remove the token
       logger.log.info(IDLOG, 'the token "' + token + '" has expired for ' + (isRemote ? 'remote site ' : 'local ') + 'username ' + username);
       return false;
     }
 
-    // check whether update token expiration value
-    if (autoUpdateTokenExpires) {
+    // check whether update token expiration value when not persistent token
+    if (userTokens[token] && autoUpdateTokenExpires) {
       updateTokenExpires(username, token);
     }
 
@@ -1201,6 +1340,7 @@ function isShibbolethUser(username) {
 
 // public interface
 exports.on = on;
+exports.start = start;
 exports.config = config;
 exports.reload = reload;
 exports.getNonce = getNonce;
@@ -1219,12 +1359,14 @@ exports.getAdminSecretKey = getAdminSecretKey;
 exports.updateTokenExpires = updateTokenExpires;
 exports.removeShibbolethMap = removeShibbolethMap;
 exports.isUnautheCallEnabled = isUnautheCallEnabled;
+exports.removePersistentToken = removePersistentToken;
 exports.getShibbolethUsername = getShibbolethUsername;
 exports.isUnautheCallIPEnabled = isUnautheCallIPEnabled;
 exports.authenticateRemoteSite = authenticateRemoteSite;
 exports.isAutoUpdateTokenExpires = isAutoUpdateTokenExpires;
 exports.authenticateFreepbxAdmin = authenticateFreepbxAdmin;
 exports.getTokenExpirationTimeout = getTokenExpirationTimeout;
+exports.getNonceForPersistentToken = getNonceForPersistentToken;
 exports.configRemoteAuthentications = configRemoteAuthentications;
 exports.isRemoteSiteAlreadyLoggedIn = isRemoteSiteAlreadyLoggedIn;
 exports.initFreepbxAdminAuthentication = initFreepbxAdminAuthentication;
