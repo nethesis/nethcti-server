@@ -1820,7 +1820,7 @@ var compConfigManager;
           }
           var extension;
           // check if the user has the privacy enabled
-          if (compAuthorization.isPrivacyEnabled(username) === false) {
+          if (username === 'admin' || compAuthorization.isPrivacyEnabled(username) === false) {
             extension = compAstProxy.getJSONExtension(req.params.id);
           }
           // checks if the user has the privacy enabled. In case the user has the "privacy" and
