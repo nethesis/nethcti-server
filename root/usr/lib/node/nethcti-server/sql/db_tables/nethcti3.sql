@@ -129,3 +129,12 @@ CREATE TABLE IF NOT EXISTS `offhour_files` (
   KEY `index_privacy` (`privacy`),
   KEY `index_description` (`description`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `auth` (
+  `id` int(11) NOT NULL auto_increment,
+  `token` varchar(255) NOT NULL,
+  `user` varchar(64) NOT NULL,
+  `creation` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user` (`user`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;

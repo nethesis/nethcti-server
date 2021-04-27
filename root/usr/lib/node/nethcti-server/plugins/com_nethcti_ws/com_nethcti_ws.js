@@ -1469,14 +1469,9 @@ function meetmeConfEnd(confId) {
  */
 function sendEvtToUserWithExtenId(evtName, evtObj, extenId) {
   try {
-    var socketsList = wsServer.sockets.sockets;
-    var key;
-    for (key in socketsList) {
-      if (socketsList[key] &&
-        socketsList[key].nethcti &&
-        compAuthorization.verifyUserEndpointExten(socketsList[key].nethcti.username, extenId) === true) {
-
-        socketsList[key].emit(evtName, evtObj);
+    for (let socket of wsServer.sockets.sockets.values()) {
+      if (socket.nethcti && compAuthorization.verifyUserEndpointExten(socket.nethcti.username, extenId) === true) {
+        socket.emit(evtName, evtObj);
       }
     }
   } catch (err) {
@@ -1949,7 +1944,7 @@ function startWsServer() {
     wsServer = io(httpServer, {
       'transports': ['websocket'],
       'pingInterval': 25000, // default
-      'pingTimeout': 20000,
+      'pingTimeout': 10000000,
       'allowUpgrades': false
     });
     wsServer.on('connection', wsConnHdlr);
@@ -2135,6 +2130,10 @@ function loginHdlr(socket, obj) {
       return;
     }
 
+    if (compAuthe.isShibbolethUser(obj.accessKeyId)) {
+      obj.accessKeyId = compAuthe.getShibbolethUsername(obj.accessKeyId);
+    }
+
     if (compAuthe.verifyToken(obj.accessKeyId, obj.token, false) === true) { // user successfully authenticated
       logger.log.info(IDLOG, 'user "' + obj.accessKeyId + '" successfully authenticated from ' + getWebsocketEndpoint(socket) +
         ' with socket id ' + socket.id);
@@ -2235,6 +2234,7 @@ function doLogin(socket, obj) {
     }
     socket.nethcti.uaType = obj.uaType;
     socket.nethcti.username = obj.accessKeyId;
+
     // send authenticated successfully response
     sendAutheSuccess(socket);
     var username = astProxy.isExten(obj.accessKeyId) ? compUser.getUserUsingEndpointExtension(obj.accessKeyId) : obj.accessKeyId;
@@ -2331,10 +2331,10 @@ function disconnHdlr(socket, reason) {
       username = wsid[socket.id].username;
 
       // count the number of cti sockets for the user from both websocket secure and not
-      for (sid in wsServer.sockets.sockets) {
-        if (wsServer.sockets.sockets.get(sid).nethcti &&
-          wsServer.sockets.sockets.get(sid).nethcti.username === username &&
-          wsServer.sockets.sockets.get(sid).nethcti.userAgent === USER_AGENT) {
+      for (let tempSock of wsServer.sockets.sockets.values()) {
+        if (tempSock.nethcti &&
+            tempSock.nethcti.username === username &&
+            tempSock.nethcti.userAgent === USER_AGENT) {
 
           count += 1;
         }

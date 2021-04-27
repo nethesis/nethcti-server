@@ -2613,8 +2613,11 @@ var compConfigManager;
             var str = 'holding conversation with unsupported phone (exten: ' + req.params.endpointId + '/' + extenAgent + ')';
             logger.log.warn(IDLOG, str);
             compUtil.net.sendHttp500(IDLOG, res, str);
-          } else {
+          } else if (isSupported && compAstProxy.isAutoC2CEnabled()) {
             ajaxPhoneHoldUnhold(username, req, res);
+          } else if (isSupported && compAstProxy.isC2CModeCloud()) {
+            sendPhoneHoldToTcp(username, req, res);
+            compUtil.net.sendHttp200(IDLOG, res);
           }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
@@ -3355,8 +3358,14 @@ var compConfigManager;
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
-          ajaxPhoneAnswer(username, req, res);
-
+          const extenAgent = compAstProxy.getExtensionAgent(req.params.endpointId);
+          const isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
+          if (isSupported && compAstProxy.isAutoC2CEnabled()) {
+            ajaxPhoneAnswer(username, req, res);
+          } else if (isSupported && compAstProxy.isC2CModeCloud()) {
+            sendPhoneAnswerToTcp(username, req, res);
+            compUtil.net.sendHttp200(IDLOG, res);
+          }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -5088,8 +5097,11 @@ var compConfigManager;
             var str = 'sending dtmf with unsupported phone (exten: ' + req.params.endpointId + '/' + extenAgent + ')';
             logger.log.warn(IDLOG, str);
             compUtil.net.sendHttp500(IDLOG, res, str);
-          } else {
+          } else if (isSupported && compAstProxy.isAutoC2CEnabled()) {
             ajaxPhoneDtmf(username, req, res);
+          } else if (isSupported && compAstProxy.isC2CModeCloud()) {
+            sendPhoneDtmfToTcp(username, req, res);
+            compUtil.net.sendHttp200(IDLOG, res);
           }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
@@ -5506,7 +5518,7 @@ function ajaxPhoneDtmf(username, req, res) {
       (extenAgent.toLowerCase().indexOf('yealink') > -1 || extenAgent.toLowerCase().indexOf('sangoma') > -1)) {
 
       tone = 'POUND';
-    } else if (tone === '#' && extenAgent.toLowerCase().indexOf('snom') > -1) {
+    } else if (tone === '#') {
       tone = '%23';
     }
     // get the url to call to originate the new call. If the url is an empty
@@ -5516,8 +5528,8 @@ function ajaxPhoneDtmf(username, req, res) {
     if (typeof url === 'string' && url !== '') {
 
       // the credential to access the phone via url
-      var phoneUser = compUser.getPhoneWebUser(username, exten);
-      var phonePass = compUser.getPhoneWebPass(username, exten);
+      var phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      var phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
 
       // replace the parameters of the url template
       url = url.replace(/\$SERVER/g, serverHostname);
@@ -5592,8 +5604,8 @@ function ajaxPhoneHoldUnhold(username, req, res) {
     if (typeof url === 'string' && url !== '') {
 
       // the credential to access the phone via url
-      var phoneUser = compUser.getPhoneWebUser(username, exten);
-      var phonePass = compUser.getPhoneWebPass(username, exten);
+      var phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      var phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
 
       // replace the parameters of the url template
       url = url.replace(/\$SERVER/g, serverHostname);
@@ -5691,8 +5703,8 @@ function ajaxPhoneCall(username, req, res) {
     if (typeof url === 'string' && url !== '') {
 
       // the credential to access the phone via url
-      var phoneUser = compUser.getPhoneWebUser(username, exten);
-      var phonePass = compUser.getPhoneWebPass(username, exten);
+      var phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      var phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
 
       // replace the parameters of the url template
       url = url.replace(/\$SERVER/g, serverHostname);
@@ -5849,6 +5861,158 @@ function sendPhoneCallToTcp(username, req, res) {
 }
 
 /**
+ * Send the request to originate a new phone call through an http get
+ * request to a connected tcp client. The tcp client will do the request
+ * to the final physical supported phone.
+ *
+ * @method sendPhoneCallToTcp
+ * @param {string} username The username that originate the call
+ * @param {object} req The client request
+ * @param {object} res The client response
+ */
+function sendPhoneCallToTcp(username, req, res) {
+  try {
+    if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    let to = compAstProxy.addPrefix(req.params.number);
+    let exten = req.params.endpointId;
+    let extenIp = compAstProxy.getExtensionIp(exten);
+    let extenAgent = compAstProxy.getExtensionAgent(exten);
+    let serverHostname = compConfigManager.getServerHostname();
+    // get the url to call to originate the new call. If the url is an empty
+    // string, the phone is not supported, so the call fails
+    let url = compConfigManager.getCallUrlFromAgent(extenAgent);
+
+    if (typeof url === 'string' && url !== '') {
+      let phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      let phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
+      url = url.replace(/\$SERVER/g, serverHostname);
+      url = url.replace(/\$NUMBER/g, to);
+      url = url.replace(/\$ACCOUNT/g, exten);
+      url = url.replace(/\$PHONE_IP/g, extenIp);
+      url = url.replace(/\$PHONE_USER/g, phoneUser);
+      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      compNethctiTcp.sendPhoneRequest(username, url);
+    } else {
+      logger.log.warn(IDLOG, `failed call to ${to} via TCP request by the user "${username}": extenAgent is not supported`);
+      fallbackAjaxPhoneCall(username, req, res);
+    }
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+    fallbackAjaxPhoneCall(username, req, res);
+  }
+}
+
+/**
+ * Send the request to originate a new phone answer to a connected tcp client. The tcp client will do the request
+ * to the final physical supported phone.
+ *
+ * @method sendPhoneAnswerToTcp
+ * @param {string} username The username
+ * @param {object} req The client request
+ * @param {object} res The client response
+ */
+function sendPhoneAnswerToTcp(username, req, res) {
+  try {
+    if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    const exten = req.params.endpointId;
+    const extenIp = compAstProxy.getExtensionIp(exten);
+    const extenAgent = compAstProxy.getExtensionAgent(exten);
+    let url = compConfigManager.getAnswerUrlFromAgent(extenAgent);
+    if (typeof url === 'string' && url !== '') {
+      const phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      const phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
+      url = url.replace(/\$PHONE_IP/g, extenIp);
+      url = url.replace(/\$PHONE_USER/g, phoneUser);
+      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      compNethctiTcp.sendPhoneRequest(username, url);
+    } else {
+      logger.log.warn(IDLOG, `failed answer via TCP request by the user "${username}": extenAgent is not supported`);
+    }
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
+
+/**
+ * Send the request to hold to a connected tcp client. The tcp client will do the request
+ * to the final physical supported phone.
+ *
+ * @method sendPhoneHoldToTcp
+ * @param {string} username The username
+ * @param {object} req The client request
+ * @param {object} res The client response
+ */
+function sendPhoneHoldToTcp(username, req, res) {
+  try {
+    if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    const exten = req.params.endpointId;
+    const extenIp = compAstProxy.getExtensionIp(exten);
+    const extenAgent = compAstProxy.getExtensionAgent(exten);
+    let url = compConfigManager.getHoldUnholdUrlFromAgent(extenAgent);
+    if (typeof url === 'string' && url !== '') {
+      const phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      const phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
+      url = url.replace(/\$PHONE_IP/g, extenIp);
+      url = url.replace(/\$PHONE_USER/g, phoneUser);
+      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      compNethctiTcp.sendPhoneRequest(username, url);
+    } else {
+      logger.log.warn(IDLOG, `failed answer via TCP request by the user "${username}": extenAgent is not supported`);
+    }
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
+
+/**
+ * Send the request to send DTMF code to a connected tcp client. The tcp client will do the request
+ * to the final physical supported phone.
+ *
+ * @method sendPhoneDtmfToTcp
+ * @param {string} username The username
+ * @param {object} req The client request
+ * @param {object} res The client response
+ */
+function sendPhoneDtmfToTcp(username, req, res) {
+  try {
+    if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    let tone = req.params.tone;
+    const exten = req.params.endpointId;
+    const extenIp = compAstProxy.getExtensionIp(exten);
+    const extenAgent = compAstProxy.getExtensionAgent(exten);
+    // adapt "#" tone based on phone user agent
+    if (tone === '#' &&
+      (extenAgent.toLowerCase().indexOf('yealink') > -1 || extenAgent.toLowerCase().indexOf('sangoma') > -1)) {
+      tone = 'POUND';
+    } else if (tone === '#') {
+      tone = '%23';
+    }
+    let url = compConfigManager.getDtmfUrlFromAgent(extenAgent);
+    if (typeof url === 'string' && url !== '') {
+      const phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      const phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
+      url = url.replace(/\$PHONE_IP/g, extenIp);
+      url = url.replace(/\$PHONE_USER/g, phoneUser);
+      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      url = url.replace(/\$TONE/g, tone);
+      compNethctiTcp.sendPhoneRequest(username, url);
+    } else {
+      logger.log.warn(IDLOG, `failed DTMF via TCP request by the user "${username}": extenAgent is not supported`);
+    }
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
+
+/**
  * Answer to call from the extension sending an HTTP GET request to the phone device.
  *
  * @method ajaxPhoneAnswer
@@ -5874,8 +6038,8 @@ function ajaxPhoneAnswer(username, req, res) {
     if (typeof url === 'string' && url !== '') {
 
       // the credential to access the phone via url
-      var phoneUser = compUser.getPhoneWebUser(username, exten);
-      var phonePass = compUser.getPhoneWebPass(username, exten);
+      var phoneUser = encodeURIComponent(compUser.getPhoneWebUser(username, exten));
+      var phonePass = encodeURIComponent(compUser.getPhoneWebPass(username, exten));
 
       // replace the parameters of the url template
       url = url.replace(/\$PHONE_IP/g, extenIp);

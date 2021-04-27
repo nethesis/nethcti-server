@@ -13,6 +13,8 @@ event_templates('nethcti-server3-update', qw(
                 /etc/nethcti/exec_script.json
                 /etc/nethcti/services.json
                 /etc/nethcti/win_popup.json
+                /etc/nethcti/mailer.json
+                /etc/nethcti/video_conf.json
                 /etc/nethcti/nethcti.json
                 /etc/nethcti/chat.json
                 /etc/nethcti/phone_urls.json
@@ -70,4 +72,15 @@ event_services('publichost-modify', qw(
 #
 event_actions('post-restore-config', qw(
     nethcti-server-maskunit 10
+));
+
+#
+# nethserver-conference-save
+#
+event_templates('nethserver-conference-save', qw(
+                /etc/nethcti/video_conf.json
+));
+
+event_services('nethserver-conference-save', qw(
+               nethcti-server reload
 ));

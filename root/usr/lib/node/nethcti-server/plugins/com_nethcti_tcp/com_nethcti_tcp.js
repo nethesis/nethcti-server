@@ -974,7 +974,7 @@ function setNethifierLog(username, state) {
       if (username === socketUsername) {
         found = true;
         socketSend(sockets[sockId], data, function () {
-          logger.log.info(IDLOG, `sent "debug" evt to ${state === 'on' ? 'enable' : 'disable'} nethifier debug to ${socket.username} with socket.id ${socket.id}`);
+          logger.log.info(IDLOG, `sent "debug" evt to ${state === 'on' ? 'enable' : 'disable'} nethifier debug to ${sockets[sockId].username} with socket id ${sockets[sockId].id}`);
         });
       }
     }
@@ -990,11 +990,11 @@ function setNethifierLog(username, state) {
 /**
  * Send the event to open a desktop notification popup about an incoming call.
  *
- * @method sendPhoneCallRequest
+ * @method sendPhoneRequest
  * @param {string} username The username of the client
  * @param {string} url The URL of the phone to be invocated by the tcp client
  */
-function sendPhoneCallRequest(username, url) {
+function sendPhoneRequest(username, url) {
   try {
       if (typeof username !== 'string' || typeof url !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -1010,7 +1010,7 @@ function sendPhoneCallRequest(username, url) {
       socketUsername = sockets[sockId].username;
       if (username === socketUsername) {
         socketSend(sockets[sockId], data, function () {
-          logger.log.info(IDLOG, 'sent phoneCallRequest evt to originate a new phone call throught an http get req to ' + socket.username + ' with socket.id ' + socket.id + ' - url to be invoked: ' + data);
+          logger.log.info(IDLOG, 'sent phoneCallRequest evt to originate a new phone call throught an http get req to ' + sockets[sockId].username + ' with socket id ' + sockets[sockId].id + ' - url to be invoked: ' + data);
         });
       }
     }
@@ -1730,5 +1730,5 @@ exports.setCompStreaming = setCompStreaming;
 exports.setCompConfigManager = setCompConfigManager;
 exports.setCompAuthorization = setCompAuthorization;
 exports.getNumConnectedClients = getNumConnectedClients;
-exports.sendPhoneCallRequest = sendPhoneCallRequest;
+exports.sendPhoneRequest = sendPhoneRequest;
 exports.setNethifierLog = setNethifierLog;

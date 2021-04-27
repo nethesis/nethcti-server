@@ -5,6 +5,7 @@
  */
 const fs = require('fs');
 const http = require('http');
+const https = require('https');
 const moment = require('moment');
 const astProxy = require('astproxy');
 var queueRecallingManager = astProxy.queueRecallingManager;
@@ -69,6 +70,8 @@ let nvReportConf;
  */
 let nullCallPeriod = 5;
 
+var compAuthentication;
+
 module.exports = function(options, imports, register) {
 
   var logger = console;
@@ -76,6 +79,7 @@ module.exports = function(options, imports, register) {
     logger = imports.logger.ctilog;
   }
   compDbconn = imports.dbconn;
+  compAuthentication = imports.authentication;
 
   /**
    * Return true if the PIN has been enabled on at least one outbound route.
@@ -581,6 +585,48 @@ module.exports = function(options, imports, register) {
     }
   }
 
+  /**
+   * Reload the configuration of physical phones using freepbx api.
+   *
+   * @method reloadPhysicalPhoneConfig
+   * @param {object} extens Keys are extensions
+   */
+  function reloadPhysicalPhoneConfig(extens) {
+    try {
+      logger.log.info(IDLOG, `reload config of physical phones ${Object.keys(extens)}`);
+      const secretKey = compAuthentication.getAdminSecretKey();
+      const options = {
+        hostname: 'localhost',
+        port: 443,
+        path: '',
+        method: 'POST',
+        rejectUnauthorized: false,
+        headers: {
+          'User': 'admin',
+          'Secretkey': secretKey,
+          'Content-Type': 'application/json'
+        }
+      }
+      let req;
+      for (let eid in extens) {
+        options.path = '/freepbx/rest/devices/phones/reload/' + eid;
+        req = https.request(options, res => {
+          if (res && res.statusCode === 202) {
+            logger.log.info(IDLOG, `sent HTTP POST req to reload config of physical phone "${eid}"`);
+          } else if (res.statusCode !== 403 && res.statusCode !== 501) {
+            logger.log.warn(IDLOG, `error sending HTTP POST req to reload config of physical phone "${eid}": ${res.statusCode}`);
+          }
+        });
+        req.on('error', error => {
+          logger.log.error(IDLOG, `error sending HTTP POST req to reload config of physical phone "${eid}": ${error.toString()}`);
+        })
+        req.end();
+      }
+    } catch (e) {
+      logger.log.error(IDLOG, e.stack);
+    }
+  }
+
   // public interface for other architect components
   register(null, {
     astProxy: {
@@ -697,6 +743,7 @@ module.exports = function(options, imports, register) {
       EVT_EXTEN_CFU_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CFU_CHANGED,
       EVT_EXTEN_CFVM_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CFVM_CHANGED,
       setAsteriskPresence: astProxy.proxyLogic.setAsteriskPresence,
+      reloadPhysicalPhoneConfig: reloadPhysicalPhoneConfig,
       getPausedQueues: astProxy.proxyLogic.getPausedQueues,
       getExtenCfValue: astProxy.proxyLogic.getExtenCfValue,
       getExtenCfbValue: astProxy.proxyLogic.getExtenCfbValue,
