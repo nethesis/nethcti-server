@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.24.0
+Version: 3.24.1
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -88,6 +88,10 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Apr 28 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.24.1-1
+- Rest api `extension/:id` used by "admin" user return data with privacy - Bug nethesis/dev#5999
+- Too many database connections - Bug nethesis/dev#5996
+
 * Thu Apr 22 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.24.0-1
 - Jitsi instant video conference integration - nethesis/dev#5966
 - Privacy issue into the operator panel for call forward option - Bug nethesis/dev#5990
