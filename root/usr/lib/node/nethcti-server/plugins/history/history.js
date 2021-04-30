@@ -207,6 +207,51 @@ function getHistorySwitchCallInterval(data, cb) {
 }
 
 /**
+ * Get the history call of all endpoints of the groups into the interval time.
+ * It can be possible to filter the results.
+ *
+ * @method getHistoryGroupsCallInterval
+ * @param {object} data
+ *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+ *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+ *   @param {boolean} data.recording    True if the data about recording audio file must be returned
+ *   @param {string}  [data.filter]     The filter to be used
+ *   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
+ *   @param {integer} [data.offset]     The results offset
+ *   @param {integer} [data.limit]      The results limit
+ *   @param {integer} [data.sort]       The sort parameter
+ *   @param {string}  [data.type]       The calls type ("in" | "out" | "internal" | "lost"). If it is through a trunk`
+ *   @param {boolean} [removeLostCalls] True if you want to remove lost calls from the results
+ * @param {array} extens The extensions list to be included into the search
+ * @param {function} cb The callback function
+ */
+function getHistoryGroupsCallInterval(data, extens, cb) {
+  try {
+    if (typeof data !== 'object' ||
+      !Array.isArray(extens) ||
+      typeof cb !== 'function' ||
+      typeof data.recording !== 'boolean' ||
+      typeof data.to !== 'string' ||
+      typeof data.from !== 'string' ||
+      (typeof data.filter !== 'string' && data.filter !== undefined) ||
+      (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined) ||
+      (data.type && data.type !== 'in' && data.type !== 'out' && data.type !== 'internal' && data.type !== 'lost')) {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.info(IDLOG, 'search group history call between ' + data.from + ' to ' + data.to + ' for ' +
+      'all endpoints and filter ' + (data.filter ? data.filter : '""') +
+      (data.recording ? ' with recording data' : '') + ' about extens ' + extens);
+    data.trunks = compAstProxy.getTrunksList();
+    data.extens = extens;
+    dbconn.getHistorySwitchCallInterval(data, cb);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Checks if at least one of the specified list of extensions is implied in the recorded call.
  *
  * @method isAtLeastExtenInCallRecording
@@ -351,3 +396,4 @@ exports.getCallRecordingContent = getCallRecordingContent;
 exports.getCallRecordingFileData = getCallRecordingFileData;
 exports.getHistorySwitchCallInterval = getHistorySwitchCallInterval;
 exports.isAtLeastExtenInCallRecording = isAtLeastExtenInCallRecording;
+exports.getHistoryGroupsCallInterval = getHistoryGroupsCallInterval;

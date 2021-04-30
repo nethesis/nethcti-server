@@ -1546,6 +1546,31 @@ function authorizeStreamingUser(username) {
 }
 
 /**
+ * Return true if the specified user has the cdr group authorization.
+ *
+ * @method authorizeGroupCdrUser
+ * @param {string} username The username
+ * @return {boolean} True if the user has the cdr group authorization.
+ */
+function authorizeGroupCdrUser(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var profid = getUserProfileId(username);
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.cdr.value === true &&
+      profiles[profid].macro_permissions.cdr.permissions.group_cdr.value === true
+    );
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    // in the case of exception it returns false for security reasons
+    return false;
+  }
+}
+
+/**
  * Return the list of allowed streaming sources.
  *
  * @method getAllowedStreamingSources
@@ -2205,3 +2230,4 @@ exports.userHasProfile = userHasProfile;
 exports.authorizeScreenSharing = authorizeScreenSharing;
 exports.authorizeVideoconf = authorizeVideoconf;
 exports.authorizePhoneButtonsUser = authorizePhoneButtonsUser;
+exports.authorizeGroupCdrUser = authorizeGroupCdrUser;
