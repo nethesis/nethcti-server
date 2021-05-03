@@ -11,6 +11,7 @@
       "staticHttp",
       "logger",
       "history",
+      "operator",
       "authorization"
     ],
     "provides": []
