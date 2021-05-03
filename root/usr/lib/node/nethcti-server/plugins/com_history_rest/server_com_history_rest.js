@@ -179,6 +179,28 @@ function setCompHistory(compHistory) {
 }
 
 /**
+ * Set the operator architect component to be used by REST plugins.
+ *
+ * @method setCompOperator
+ * @param {object} compOperator The architect operator component
+ * @static
+ */
+function setCompOperator(compOperator) {
+  try {
+    if (typeof compOperator !== 'object') {
+      throw new Error('wrong parameter');
+    }
+    for (let p in plugins) {
+      if (typeof plugins[p].setCompOperator === 'function') {
+        plugins[p].setCompOperator(compOperator);
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Set the static http architect component to be used by REST plugins.
  *
  * @method setCompStaticHttp
@@ -500,6 +522,7 @@ exports.setCompUser = setCompUser;
 exports.setCompUtil = setCompUtil;
 exports.configPrivacy = configPrivacy;
 exports.setCompHistory = setCompHistory;
+exports.setCompOperator = setCompOperator;
 exports.setCompAstProxy = setCompAstProxy;
 exports.setCompStaticHttp = setCompStaticHttp;
 exports.setCompAuthorization = setCompAuthorization;

@@ -36,6 +36,7 @@ module.exports = function(options, imports, register) {
     serverRest.setCompHistory(imports.history);
     serverRest.setCompCel(imports.cel);
     serverRest.setCompUser(imports.user);
+    serverRest.setCompOperator(imports.operator);
     serverRest.setCompAstProxy(imports.astProxy);
     serverRest.setCompStaticHttp(imports.staticHttp);
     serverRest.start();

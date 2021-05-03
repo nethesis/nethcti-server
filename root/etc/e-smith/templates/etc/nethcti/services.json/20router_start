@@ -4,6 +4,7 @@
       "/astproxy": "http://127.0.0.1:50002/astproxy",
       "/historycall": "http://127.0.0.1:50003/historycall",
       "/histcallswitch": "http://127.0.0.1:50003/histcallswitch",
+      "/histcallsgroups": "http://127.0.0.1:50003/histcallsgroups",
       "/static": "http://127.0.0.1:50004",
       "/voicemail": "http://127.0.0.1:50005/voicemail",
       "/dbconn": "http://127.0.0.1:50006/dbconn",
