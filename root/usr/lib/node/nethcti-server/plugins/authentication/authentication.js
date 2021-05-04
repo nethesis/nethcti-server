@@ -1210,7 +1210,7 @@ function verifyToken(username, token, isRemote) {
     }
 
     // check if the user has the token
-    const userTokens = grants[username]; // all token of the user
+    const userTokens = grants[username] || []; // all token of the user
     if ((!userTokens[token] || (userTokens[token] && userTokens[token].remoteSite !== isRemote)) &&
       !inPersistentTokens(username, token)) {
 
