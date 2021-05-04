@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.24.1
+Version: 3.24.2
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -88,6 +88,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Tue May 04 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.24.2-1
+- Mobile requests authentication is broken when nethcti tokens aren't present - Bug nethesis/dev#6009
+
 * Wed Apr 28 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.24.1-1
 - Rest api `extension/:id` used by "admin" user return data with privacy - Bug nethesis/dev#5999
 - Too many database connections - Bug nethesis/dev#5996
