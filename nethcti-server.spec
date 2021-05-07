@@ -11,6 +11,7 @@ Requires: rh-nodejs10
 Requires: nethserver-nethvoice14 >= 14.7.3
 Requires: nethserver-janus
 Requires: nethserver-conference
+Requires: nethvoice-report
 Requires: sox
 Requires: mpg123
 Conflicts: nethcti-server
