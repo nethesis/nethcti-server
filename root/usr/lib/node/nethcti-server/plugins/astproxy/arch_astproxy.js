@@ -6,7 +6,7 @@
 const fs = require('fs');
 const https = require('https');
 const moment = require('moment');
-const astProxy = require('astproxy');
+const astProxy = require('@nethesis/astproxy');
 var queueRecallingManager = astProxy.queueRecallingManager;
 
 /**
