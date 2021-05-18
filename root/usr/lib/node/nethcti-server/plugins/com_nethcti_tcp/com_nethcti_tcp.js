@@ -1404,9 +1404,16 @@ function loginHdlr(socket, obj) {
 
       logger.log.info(IDLOG, 'user "' + obj.username + '" successfully authenticated from ' + getClientSocketEndpoint(socket));
 
+      if (obj.username.includes('@') && obj.username.split('@').length === 2) {
+        socket.username = obj.username.split('@')[0];
+      } else if (compAstProxy.isExten(obj.username)) {
+        socket.username = compUser.getUserUsingEndpointExtension(obj.username);
+      } else {
+        socket.username = obj.username;
+      }
+
       // sets the username and the token property to the client socket
       socket.token = obj.token;
-      socket.username = obj.username;
       socket.nethifierVersion = obj.version ? obj.version : '<3.0.0';
 
       // add client socket to future fast authentication for each request from the clients
