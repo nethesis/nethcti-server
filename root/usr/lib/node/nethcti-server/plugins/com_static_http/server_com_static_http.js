@@ -253,10 +253,9 @@ function httpServerCb(req, res) {
         // remove 'static' from the request
         // For example "/static/img/logo.png" becomes "//img/logo.png"
         req.url = req.url.replace('static', '');
-
-        fileStaticRoot.serve(req, res, function(err1, result) {
+        customFileStaticRoot.serve(req, res, function(err1, result) {
           if (err1) {
-            customFileStaticRoot.serve(req, res, function(err3, result3) {
+            fileStaticRoot.serve(req, res, function(err3, result3) {
               if (err3 && err3.status && err3.message) {
                 logger.log.error(IDLOG, 'serving "' + req.url + '": code ' + err3.status + ' "' + err3.message + '"');
               } else if (err3) {
@@ -267,17 +266,15 @@ function httpServerCb(req, res) {
                 res.end();
                 return;
               }
-            });
-          }
-          // Handle temp files: delete after serving
-          else if (path.basename(req.url).indexOf('tmpaudio') !== -1 ||
-            path.basename(req.url).indexOf('custom_msg_vm_') === 0) {
-
-            fs.unlink(path.join(webroot, req.url), function(err2) {
-              if (err2) {
-                logger.log.error(IDLOG, 'deleting temp file ' + path.join(webroot, req.url) + ': ' + err2);
-              } else {
-                logger.log.info(IDLOG, 'temp file ' + path.join(webroot, req.url) + ' has been deleted');
+              // Handle temp files: delete after serving
+              if (path.basename(req.url).indexOf('tmpaudio') !== -1 || path.basename(req.url).indexOf('custom_msg_vm_') === 0) {
+                fs.unlink(path.join(webroot, req.url), function(err2) {
+                  if (err2) {
+                    logger.log.error(IDLOG, 'deleting temp file ' + path.join(webroot, req.url) + ': ' + err2);
+                  } else {
+                    logger.log.info(IDLOG, 'temp file ' + path.join(webroot, req.url) + ' has been deleted');
+                  }
+                });
               }
             });
           }
