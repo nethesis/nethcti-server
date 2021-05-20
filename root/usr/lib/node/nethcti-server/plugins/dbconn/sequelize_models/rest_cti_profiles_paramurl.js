@@ -5,6 +5,7 @@ module.exports = function (sequelize, DataTypes) {
       primaryKey: true
     },
     profile_id: DataTypes.INTEGER,
-    url: DataTypes.STRING
+    url: DataTypes.STRING,
+    only_queues: DataTypes.BOOLEAN
   });
 }
