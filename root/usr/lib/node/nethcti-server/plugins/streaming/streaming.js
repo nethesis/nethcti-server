@@ -280,31 +280,35 @@ function start() {
     var loopStep = 0;
     var baseTime = 500;
     intervalGetSourceSample = setInterval(function() {
-      for (var i in streamings) {
-        if (loopStep % (streamings[i].getFramerate() / baseTime) === 0) {
-          // emit the streaming source changed event
-          streamings[i].getSample(function(err1, id, img) {
-            try {
-              if (err1) {
-                if (streamingErrors[id] === undefined) {
-                  streamingErrors[id] = 'logged';
-                  logger.log.warn(IDLOG, 'streaming "' + id + '" error: ' + err1.toString());
+      try {
+        for (var i in streamings) {
+          if (loopStep % (streamings[i].getFramerate() / baseTime) === 0) {
+            // emit the streaming source changed event
+            streamings[i].getSample(function(err1, id, img) {
+              try {
+                if (err1) {
+                  if (streamingErrors[id] === undefined) {
+                    streamingErrors[id] = 'logged';
+                    logger.log.warn(IDLOG, 'streaming "' + id + '" error: ' + err1.toString());
+                  }
+                  return;
                 }
-                return;
+                delete streamingErrors[id];
+                logger.log.info(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_CHANGED + '"');
+                emitter.emit(EVT_STREAMING_SOURCE_CHANGED, {
+                  streaming: {
+                    source: id,
+                    image: img
+                  }
+                });
+              } catch (err2) {
+                logger.log.error(IDLOG, err2.stack);
               }
-              delete streamingErrors[id];
-              logger.log.info(IDLOG, 'emit event "' + EVT_STREAMING_SOURCE_CHANGED + '"');
-              emitter.emit(EVT_STREAMING_SOURCE_CHANGED, {
-                streaming: {
-                  source: id,
-                  image: img
-                }
-              });
-            } catch (err2) {
-              logger.log.error(IDLOG, err2.stack);
-            }
-          });
+            });
+          }
         }
+      } catch (err2) {
+        logger.log.error(IDLOG, err2.stack);
       }
       loopStep = (loopStep < 600 ? loopStep + 1 : 1);
     }, baseTime);
