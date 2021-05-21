@@ -189,21 +189,25 @@ exports.Streaming = function(data) {
    * @return {object} The sample from video source in base64 format.
    */
   function getSample(cb) {
-    if (url) {
-      request({
-        uri: url,
-        encoding: null,
-        timeout: 2000
-      }, function(err, res, body) {
-        if (!err && res.statusCode === 200) {
-          var data = "data:" + res.headers["content-type"] + ";base64," + new Buffer(body).toString('base64');
-          cb(err, id, data);
-        } else {
-          cb(err, id);
-        }
-      });
-    } else {
-      cb('url not found');
+    try {
+      if (url) {
+        request({
+          uri: new URL(url),
+          encoding: null,
+          timeout: 2000
+        }, function(err, res, body) {
+          if (!err && res.statusCode === 200) {
+            var data = "data:" + res.headers["content-type"] + ";base64," + new Buffer(body).toString('base64');
+            cb(err, id, data);
+          } else {
+            cb(err, id);
+          }
+        });
+      } else {
+        cb('url not found');
+      }
+    } catch (error) {
+      throw error;
     }
   }
 
