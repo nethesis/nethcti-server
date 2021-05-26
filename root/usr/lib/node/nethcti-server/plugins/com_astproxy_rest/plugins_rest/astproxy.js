@@ -742,6 +742,7 @@ var compConfigManager;
         * 1. [`astproxy/op_wait_conv`](#op_wait_convpost)
         * 1. [`astproxy/pin`](#pinpost)
         * 1. [`astproxy/incall_audio`](#incall_audiopost)
+        * 1. [`astproxy/phone_reload`](#phone_reloadpost)
         *
         * ---
         *
@@ -1247,6 +1248,18 @@ var compConfigManager;
         *
         *     { "audio_id": "111" }
         *
+        * ---
+        *
+        * ### <a id="phone_reloadpost">**`astproxy/phone_reload`**</a>
+        *
+        * Reload a physical supported phone. The request must contains the following parameters:
+        *
+        * * `exten: the extensions identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "exten": "2001" }
+        *
         * <br>
         *
         * # DELETE requests
@@ -1382,6 +1395,7 @@ var compConfigManager;
          *   @param {string} op_wait_conv          puts the conversation waiting into the waiting queue associated to the user profile
          *   @param {string} pin                   Sets the pin for an extension
          *   @param {string} incall_audio          Listen an audio file into the current conversation
+         *   @param {string} phone_reload          Reload a physical supported phone
          *   @param {string} mute_userconf         Mute a user of a meetme conference
          *   @param {string} answer_webrtc         Answer a conversation from the webrtc extension sending the command to the client
          *   @param {string} blindtransfer         Transfer a conversation with blind type
@@ -1431,6 +1445,7 @@ var compConfigManager;
           'op_wait_conv',
           'pin',
           'incall_audio',
+          'phone_reload',
           'mute_userconf',
           'answer_webrtc',
           'blindtransfer',
@@ -2802,7 +2817,7 @@ var compConfigManager;
        *
        *     POST incall_audio
        *
-       * @method call
+       * @method incall_audio
        * @param {object}   req  The client request
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
@@ -2849,6 +2864,40 @@ var compConfigManager;
             logger.log.warn(IDLOG, msg);
             compUtil.net.sendHttp500(IDLOG, res, msg);
           }
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * Reload a physical supported phone with the following REST API:
+       *
+       *     POST phone_reload
+       *
+       * @method phone_reload
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      phone_reload: function (req, res, next) {
+        try {
+          let username = req.headers.authorization_user;
+          if (typeof req.params !== 'object' || typeof req.params.exten !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.exten) === false) {
+            logger.log.warn(IDLOG, 'reload physical phone with exten "' + req.params.exten + '" from user "' + username +
+              '" has been failed: "' + req.params.exten + '" is not owned by him');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          logger.log.info(IDLOG, 'the exten "' + req.params.exten + '"" is owned by "' + username + '"');
+          const data = {};
+          data[req.params.exten] = '';
+          compAstProxy.reloadPhysicalPhoneConfig(data);
+          compUtil.net.sendHttp200(IDLOG, res);
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -5257,6 +5306,7 @@ var compConfigManager;
     exports.park = astproxy.park;
     exports.call = astproxy.call;
     exports.incall_audio = astproxy.incall_audio;
+    exports.phone_reload = astproxy.phone_reload;
     exports.dtmf = astproxy.dtmf;
     exports.mute = astproxy.mute;
     exports.cfvm = astproxy.cfvm;
