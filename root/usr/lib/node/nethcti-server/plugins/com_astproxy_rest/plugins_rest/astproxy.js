@@ -5533,7 +5533,7 @@ function call(username, req, res) {
       }
     } else if (isSupported && compAstProxy.isAutoC2CEnabled()) {
       ajaxPhoneCall(username, req, res);
-    } else if (isSupported && compAstProxy.isC2CModeCloud()) {
+    } else if (isSupported && compAstProxy.isC2CModeCloud() && compNethctiTcp.isUserConnected(username)) {
       sendPhoneCallToTcp(username, req, res);
       compUtil.net.sendHttp200(IDLOG, res); // to evaluate
     } else {

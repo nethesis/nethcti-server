@@ -718,6 +718,30 @@ function extenDialing(data) {
 }
 
 /**
+ * Check if the user is connected.
+ *
+ * @method isUserConnected
+ * @param {string} username The username to be checked
+ * @return {boolean} True if the username is connected
+ */
+ function isUserConnected(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    for (let sockId in sockets) {
+      if (username === sockets[sockId].username) {
+        return true;
+      }
+    }
+    return false;
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
  * Handler for the _evtUserPresenceChanged_ event emitted by _user_ component.
  * The user has changed the presence, so notify all users associated with it, with the
  * presence data of the user.
@@ -1739,3 +1763,4 @@ exports.setCompAuthorization = setCompAuthorization;
 exports.getNumConnectedClients = getNumConnectedClients;
 exports.sendPhoneRequest = sendPhoneRequest;
 exports.setNethifierLog = setNethifierLog;
+exports.isUserConnected = isUserConnected;
