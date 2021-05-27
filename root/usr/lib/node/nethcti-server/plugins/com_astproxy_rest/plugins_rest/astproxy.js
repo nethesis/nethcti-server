@@ -5839,7 +5839,7 @@ function ajaxPhoneCall(username, req, res) {
                 ' UA "' + extenAgent.toLowerCase() + '" by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
               logger.log.info(IDLOG, url);
               res.send(httpResp.statusCode, {
-                phoneRespStatusCode: httpResp.statusCode
+                phoneRespStatusCode: 200
               });
             } else {
               logger.log.warn(IDLOG, 'failed call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
