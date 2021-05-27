@@ -5838,7 +5838,7 @@ function ajaxPhoneCall(username, req, res) {
               logger.log.info(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                 ' UA "' + extenAgent.toLowerCase() + '" by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
               logger.log.info(IDLOG, url);
-              res.send(httpResp.statusCode, {
+              res.send(200, {
                 phoneRespStatusCode: httpResp.statusCode
               });
             } else {
