@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.24.2
+Version: 3.25.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -89,6 +89,20 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Jun 18 2021 Sebastian <sebastian.besel@nethesis.it> - 3.25.0-1
+- Nethifier shows error dialog making a new call with Snom (c2c auto) - Bug nethesis/dev#6025
+- Calls don't work in "cloud click 2 call" mode and nethifier not connected - Bug nethesis/dev#6023
+- Reload phone configuration instead of restarting it (setting physical buttons) - nethesis/dev#6022
+- Server crash getting streaming source with malformed URL - Bug nethesis/dev#6020
+- Wizard: add an option to open parameterized URL only for incoming calls through queues - nethesis/dev#5928
+- Nethifier: it does not receive events when logged-in as user@domain or with the extension identifier - Bug nethesis/dev#6019
+- Nethifier: custom notification popup is not definitive - Bug nethesis/dev#6005
+- Add nethvoice-report rpm requirement - nethesis/dev#5951
+- Get "NullCallPeriod" from nethvoice-report api instead of from the config db - nethesis/dev#5950
+- Migrate astproxy npm package to the new org account - Bug nethesis/dev#6013
+- Groups calls history - nethesis/dev#5914
+- Mobile requests authentication is broken when nethcti tokens aren't present - Bug nethesis/dev#6009
+
 * Tue May 04 2021 Alessandro Polidori <alessandro.polidori@nethesis.it> - 3.24.2-1
 - Mobile requests authentication is broken when nethcti tokens aren't present - Bug nethesis/dev#6009
 
