@@ -1101,26 +1101,7 @@ function getEmailAllContacts(ctiPbBounds, pbBounds, replacements, cb) {
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
       ' WHERE ', pbBounds, ')',
       ' ORDER BY company ASC, name ASC'
-      // (offset && limit ? ' LIMIT ' + offset + ',' + limit : '')
     ].join('');
-
-    // var companyXFields = 'owner_id, workstreet, workcity, workprovince, workcountry, workphone, homephone, cellphone, url, type, title, notes ';
-    // var queryCompany = [
-    //   'SELECT id, company, ', companyXFields, ', CONCAT(\'[\', ',
-    //   'GROUP_CONCAT(\'{\', \'"id": \', id, \',\', \'"name": "\', name, \'", \', \'"source": "\', source, \'"}\'), \']\') AS contacts',
-    //   ' FROM (',
-    //   '(SELECT id, name, company, ', companyXFields, ', \'cti\' AS source',
-    //   ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-    //   ' WHERE ', ctiPbBounds, ')',
-    //   ' UNION ',
-    //   '(SELECT id, name, company, ', companyXFields, ', \'centralized\' AS source',
-    //   ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
-    //   ' WHERE ', pbBounds, ')',
-    //   ') t',
-    //   ' GROUP BY company',
-    //   ' ORDER BY company ASC, name ASC'
-    //   // (offset && limit ? ' LIMIT ' + offset + ',' + limit : '')
-    // ].join('');
 
     var queryCount = [
       'SELECT COUNT(*) AS total FROM ',
@@ -1128,19 +1109,6 @@ function getEmailAllContacts(ctiPbBounds, pbBounds, replacements, cb) {
       ' UNION ALL',
       ' SELECT id FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK, ' WHERE ', pbBounds, ') s'
     ].join('');
-
-    // var queryCompanyCount = [
-    //   'SELECT COUNT(DISTINCT company) AS total',
-    //   ' FROM (',
-    //   '(SELECT id, name, company',
-    //   ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-    //   ' WHERE ', ctiPbBounds, ')',
-    //   ' UNION ',
-    //   '(SELECT id, name, company',
-    //   ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
-    //   ' WHERE ', pbBounds, ')',
-    //   ') t'
-    // ].join('');
 
     compDbconnMain.dbConn['cti_phonebook'].query(
       'SET @@group_concat_max_len = 65535',
