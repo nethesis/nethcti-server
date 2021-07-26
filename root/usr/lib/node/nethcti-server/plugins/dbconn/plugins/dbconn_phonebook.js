@@ -846,6 +846,46 @@ function pbQueryAsync (query, replacements) {
 
 /**
  * Utility private function
+ * Executes the specified query asynchronously inside nethcti3 and phonebook db.
+ *
+ * @method pbQueryAsync
+ * @param {string} query The query to be executed
+ * @param {object} replacements Values to be replaced inside the query
+ * @param {string} tag A tag identify the promise
+ * @private
+ */
+ function pbQueryAsyncTag (query, replacements, company, tag) {
+  try {
+    return new Promise((resolve, reject) => {
+      compDbconnMain.dbConn['cti_phonebook'].query(
+        query,
+        replacements,
+        (err, results) => {
+          try {
+            compDbconnMain.incNumExecQueries();
+            if (err) {
+              reject(err.toString())
+            }
+            resolve({
+              company: company,
+              tag: tag,
+              data: results
+            });
+          } catch (error) {
+            logger.log.error(IDLOG, error.stack);
+            reject(err.toString())
+          }
+        }
+      );
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    reject(err.toString())
+  }
+}
+
+/**
+ * Utility private function
  * Execute a query (with count) on both cti and centralize phonebooks
  * through a union.
  *
@@ -920,23 +960,36 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
     ].join('');
 
     var queryCompany = [
-      'SELECT id, company, ', companyXFields , ', source',
+      'SELECT company',
       ' FROM (',
-      '(SELECT id, name, company, ', companyXFields, ', \'cti\' AS source',
+      '(SELECT company',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
       ' WHERE ', ctiPbBounds, ')',
       ' UNION ',
-      '(SELECT id, name, company, ', companyXFields, ', \'centralized\' AS source',
+      '(SELECT company',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
       ' WHERE ', pbBounds, ')',
       ' ) t',
-      ' WHERE name IS NULL OR name = ""',
-      ' ORDER BY company ASC, name ASC',
+      ' ORDER BY company ASC',
       (offset && limit ? ' LIMIT ' + offset + ',' + limit : '')
     ].join('');
 
+    var queryInfo = [
+      'SELECT id, company, ', companyXFields, ', source',
+      ' FROM (',
+      '(SELECT id, name, company, ', companyXFields, ', \'cti\' AS source',
+      ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
+      ' WHERE (owner_id = ? OR type = "public") AND (company = ?)',
+      ' AND (name IS NULL OR name = ""))',
+      ' UNION ',
+      '(SELECT id, name, company, ', companyXFields, ', \'centralized\' AS source',
+      ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
+      ' WHERE (company = ?) AND (type != "nethcti")',
+      ' AND (name IS NULL OR name = ""))',
+      ' ) t'
+    ].join('');
+
     var contactsXFields = [
-      'company,',
       'id,',
       'name'
     ].join('');
@@ -946,15 +999,15 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       ' FROM (',
       '(SELECT ', contactsXFields, ', \'cti\' AS source',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-      ' WHERE ', ctiPbBounds,
-      ' AND (name IS NOT NULL OR name != ""))',
+      ' WHERE (owner_id = ? OR type = "public") AND (company = ?)',
+      ' AND (name IS NOT NULL AND name != ""))',
       ' UNION ',
       '(SELECT ', contactsXFields, ', \'centralized\' AS source',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
-      ' WHERE ', pbBounds,
-      ' AND (name IS NOT NULL OR name != ""))',
+      ' WHERE (company = ?) AND (type != "nethcti")',
+      ' AND (name IS NOT NULL AND name != ""))',
       ' ) t',
-      ' ORDER BY name ASC, company ASC'
+      ' ORDER BY name ASC'
     ].join('');
 
     var queryCount = [
@@ -965,13 +1018,13 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
     ].join('');
 
     var queryCompanyCount = [
-      'SELECT COUNT(DISTINCT company) AS total',
+      'SELECT COUNT(company) AS total',
       ' FROM (',
-      '(SELECT id, name, company',
+      '(SELECT company',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
       ' WHERE ', ctiPbBounds, ')',
       ' UNION ',
-      '(SELECT id, name, company',
+      '(SELECT company',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
       ' WHERE ', pbBounds, ')',
       ') t'
@@ -989,51 +1042,76 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       )
     ]).then((values) => {
       let results = values[0]
-      let totalCount = values[1].total
+      let totalCount = values[1][0].total
 
-      if (view === 'company') {
-        compDbconnMain.dbConn['cti_phonebook'].query(
-          queryContacts,
-          replacements,
-          (err, resultsContacts) => {
-            if (err) {
-              cb(err, null);
-              return;
-            }
-            try {
-              compDbconnMain.incNumExecQueries();
-              resultsContacts.forEach(contact => {
-                // find all the companies for every contact
-                let companyContactsObj = results.filter(companyContact => companyContact.company.toLowerCase() === contact.company.toLowerCase())
-                // cicle the found companies
-                companyContactsObj.forEach(companyContactObj => {
-                  // create contacts array when not exists
-                  if (!companyContactObj.contacts) companyContactObj.contacts = []
-                  // push contact inside company contacts
-                  let inContacts = companyContactObj.contacts.some(c => c.id === contact.id)
-                  if (!inContacts) companyContactObj.contacts.push(contact)
-                });
-              });
-              // add key or convert contacts to string for backward compatibility
-              results.forEach((result) => {
-                if ("contacts" in result) {
-                  // convert to string
-                  result.contacts = JSON.stringify(result.contacts)
-                } else {
-                  // add contacts key
-                  result.contacts = null
-                }
-              })
-              // return results in callback for company
-              cb(null, {
-                count: totalCount,
-                rows: results
-              });
-            } catch (error) {
-              logger.log.error(IDLOG, error.stack);
-              cb(error);
-            }
+      // manage company results
+      if (view === 'company' && results.length > 0)  {
+        let promises = []
+        results.forEach((result) => {
+          let companyReplacements = [
+            replacements[0],
+            result.company,
+            result.company
+          ]
+          // prepare company info query
+          promises.push(
+            pbQueryAsyncTag(
+              queryInfo,
+              companyReplacements,
+              result.company,
+              "info"
+            )
+          )
+          // prepare company contacts query
+          promises.push(
+            pbQueryAsyncTag(
+              queryContacts,
+              companyReplacements,
+              result.company,
+              "contacts"
+            )
+          )
         })
+        // manage results informations and contacts
+        Promise.all(promises).then((values) => {
+          // cicle results
+          results.forEach((result) => {
+            let companyValues = values.filter(value => value.company == result.company)
+            companyValues.forEach((value) => {
+              // add informations to result
+              if (value.tag === "info") {
+                result.id = value.data[0] ? value.data[0].id : null
+                result.owner_id = value.data[0] ? value.data[0].owner_id : null
+                result.workstreet = value.data[0] ? value.data[0].workstreet : null
+                result.workcity = value.data[0] ? value.data[0].workcity : null
+                result.workprovince = value.data[0] ? value.data[0].workprovince : null
+                result.workcountry = value.data[0] ? value.data[0].workcountry : null
+                result.workphone = value.data[0] ? value.data[0].workphone : null
+                result.homephone = value.data[0] ? value.data[0].homephone : null
+                result.cellphone = value.data[0] ? value.data[0].cellphone : null
+                result.fax = value.data[0] ? value.data[0].fax : null
+                result.workemail = value.data[0] ? value.data[0].workemail : null
+                result.url = value.data[0] ? value.data[0].url : null
+                result.type = value.data[0] ? value.data[0].type : null
+                result.title = value.data[0] ? value.data[0].title : null
+                result.notes = value.data[0] ? value.data[0].notes : null
+                result.source = value.data[0] ? value.data[0].source : null
+              }
+              // add contacts to result
+              if (value.tag === "contacts") {
+                // stringify for backward compatibility
+                result.contacts = JSON.stringify(value.data)
+              }
+            })
+          })
+          // return results in callback for company
+          cb(null, {
+            count: totalCount,
+            rows: results
+          });
+        }).catch((error) => {
+          console.error(error.message)
+        });
       } else {
         // return results in callback for person and all
         cb(null, {
@@ -1041,7 +1119,6 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
           rows: results
         });
       }
-
     });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
