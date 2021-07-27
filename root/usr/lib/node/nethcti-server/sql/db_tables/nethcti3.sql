@@ -54,7 +54,8 @@ CREATE TABLE IF NOT EXISTS `cti_phonebook` (
   KEY `wphone_idx` (`workphone`),
   KEY `cphone_idx` (`cellphone`),
   KEY `extension_idx` (`extension`),
-  KEY `fax_idx` (`fax`)
+  KEY `fax_idx` (`fax`),
+  KEY `company_idx` (`company`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `postit` (
