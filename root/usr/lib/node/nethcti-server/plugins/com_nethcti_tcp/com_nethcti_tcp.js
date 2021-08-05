@@ -13,6 +13,7 @@
  */
 var fs = require('fs');
 var net = require('net');
+var tls = require('tls');
 var pathReq = require('path');
 var EventEmitter = require('events').EventEmitter;
 
@@ -364,11 +365,38 @@ var streamingNotifTemplatePath;
 /**
  * The TCP server port. It is customized by the configuration file.
  *
- * @property port
+ * @property tcpPort
  * @type string
  * @private
  */
-var port;
+var tcpPort;
+
+/**
+ * The TLS server port. It is customized by the configuration file.
+ *
+ * @property tlsPort
+ * @type string
+ * @private
+ */
+ var tlsPort;
+
+/**
+ * The TLS server private key path. It is customized by the configuration file.
+ *
+ * @property tlsKey
+ * @type string
+ * @private
+ */
+ var tlsKey;
+
+/**
+ * The TLS server certificate path. It is customized by the configuration file.
+ *
+ * @property tlsCert
+ * @type string
+ * @private
+ */
+ var tlsCert;
 
 /**
  * The protocol used by the cti server. It is used by the windows popup notification
@@ -1109,7 +1137,7 @@ function sendHangupNotificationEvent(username, data, socket) {
 }
 
 /**
- * Configurates the TCP server properties by a configuration file.
+ * Configurates the TCP and TLS servers properties by a configuration file.
  * The file must use the JSON syntax.
  *
  * @method config
@@ -1132,9 +1160,33 @@ function config(path) {
 
     // initialize the port of the tcp server
     if (json && json.tcp && json.tcp.port) {
-      port = json.tcp.port;
+      tcpPort = json.tcp.port;
     } else {
-      logger.log.warn(IDLOG, path + ': no tcp "port" has been specified');
+      logger.log.error(IDLOG, path + ': no tcp "port" has been specified');
+    }
+
+    // initialize the port, key and cert of the tls server
+    if (json && json.tls) {
+      // set tls port
+      if (json.tls.port) {
+        tlsPort = json.tls.port;
+      } else {
+        logger.log.error(IDLOG, path + ': no tls "port" has been specified');
+      }
+      // set tls key
+      if (json.tls.key) {
+        tlsKey = json.tls.key;
+      } else {
+        logger.log.error(IDLOG, path + ': no tls "key" has been specified');
+      }
+      // set tls cert
+      if (json.tls.cert) {
+        tlsCert = json.tls.cert;
+      } else {
+        logger.log.error(IDLOG, path + ': no tls "cert" has been specified');
+      }
+    } else {
+      logger.log.error(IDLOG, path + ': no tls parameters have been specified');
     }
 
     // initialize the paths of the notification templates
@@ -1142,7 +1194,7 @@ function config(path) {
       callNotifTemplatePath = json.tcp.base_templates + pathReq.sep + CALL_NOTIF_TEMPLATE_NAME;
       streamingNotifTemplatePath = json.tcp.base_templates + pathReq.sep + STREAMING_NOTIF_TEMPLATE_NAME;
     } else {
-      logger.log.warn(IDLOG, path + ': no "base_templates" has been specified');
+      logger.log.error(IDLOG, path + ': no "base_templates" has been specified');
     }
 
     // initialize the interval at which update the token expiration of all users
@@ -1230,7 +1282,7 @@ function configWinPopup(path) {
 }
 
 /**
- * Creates the TCP server and adds the listeners for other components.
+ * Creates the TCP and TLS servers and adds the listeners for other components.
  *
  * @method start
  */
@@ -1238,14 +1290,14 @@ function start() {
   try {
     // check the configuration. The server starts only if the configuration has been done
     // correctly, that is if the /etc/nethcti/services.json file exists and contains
-    // the tcp json object
-    if (port === undefined) {
-      logger.log.warn(IDLOG, 'tcp server does not start, because the configuration is not present');
+    // the tcp and tls json object
+    if (tcpPort === undefined || tlsPort === undefined || tlsKey === undefined || tlsCert === undefined) {
+      logger.log.error(IDLOG, 'tcp and tls servers do not start, because the configuration is not present');
       return;
     }
     // also check if the notification template file path exist
     if (!callNotifTemplatePath || !streamingNotifTemplatePath) {
-      logger.log.warn(IDLOG, 'tcp server does not start: templates file path are undefined');
+      logger.log.error(IDLOG, 'tcp and tls servers do not start: templates file path are undefined');
       return;
     }
 
@@ -1253,12 +1305,25 @@ function start() {
     setAstProxyListeners();
 
     // tcp server
-    server = net.createServer();
+    tcpServer = net.createServer();
 
     // add listeners
-    server.on('connection', connHdlr);
-    server.listen(port, function () {
-      logger.log.warn(IDLOG, 'tcp server listening on ' + server.address().address + ':' + server.address().port);
+    tcpServer.on('connection', connHdlr);
+    tcpServer.listen(tcpPort, function () {
+      logger.log.warn(IDLOG, 'tcp server listening on ' + tcpServer.address().address + ':' + tcpServer.address().port);
+    });
+
+    // tls server
+    tlsServer = tls.createServer({
+        key: fs.readFileSync(tlsKey),
+        cert: fs.readFileSync(tlsCert)
+      }
+    );
+
+    // add listeners
+    tlsServer.on('secureConnection', connHdlr)
+    tlsServer.listen(tlsPort, function () {
+      logger.log.warn(IDLOG, 'tls server listening on ' + tlsServer.address().address + ':' + tlsServer.address().port);
     });
 
     // start the automatic update of token expiration of all the users that are connected by tcp.

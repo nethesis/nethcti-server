@@ -8,6 +8,11 @@
     "port": "{$ports[0] || 8182}",
     "base_templates": "http://{$SystemName}.{$DomainName}/webrest/static/templates/notification_popup"
   \},
+  "tls": \{
+    "port": "{$ports[1] || 8183}",
+    "key": "{$pki{'KeyFile'} || '/etc/asterisk/keys/NethServer.key'}",
+    "cert": "{$pki{'CrtFile'} || '/etc/asterisk/keys/NethServer.crt'}"
+  \},
   "websocket": \{
     "http_port": "{${'nethcti-server'}{WsPort} || 8181}"
   \},
