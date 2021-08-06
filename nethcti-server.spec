@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.25.0
+Version: 3.26.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -89,6 +89,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Aug 06 2021 Sebastian <sebastian.besel@nethesis.it> - 3.26.0-1
+- Phonebook: data for companies and contacts sometimes don't correspond - Bug nethesis/dev#6038
+
 * Fri Jun 18 2021 Sebastian <sebastian.besel@nethesis.it> - 3.25.0-1
 - Nethifier shows error dialog making a new call with Snom (c2c auto) - Bug nethesis/dev#6025
 - Calls don't work in "cloud click 2 call" mode and nethifier not connected - Bug nethesis/dev#6023
