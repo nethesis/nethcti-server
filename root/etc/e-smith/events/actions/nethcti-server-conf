@@ -23,15 +23,19 @@ CDRDBNAME=$(/usr/bin/scl enable rh-php56 -- php -r "include_once('/etc/freepbx.c
 
 EXISTS=$(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "SHOW KEYS FROM asteriskcdrdb.queue_log WHERE Key_name='event'");
 if [[ $EXISTS == "" ]]; then
-  $(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "ALTER TABLE asteriskcdrdb.queue_log ADD INDEX event(event)");
+  /usr/bin/mysql --defaults-file=/root/.my.cnf -e "ALTER TABLE asteriskcdrdb.queue_log ADD INDEX event(event)"
 fi
 EXISTS=$(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "SHOW KEYS FROM asteriskcdrdb.queue_log WHERE Key_name='ib1'");
 if [[ $EXISTS == "" ]]; then
-  $(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "ALTER TABLE asteriskcdrdb.queue_log ADD INDEX ib1(agent,queuename)");
+  /usr/bin/mysql --defaults-file=/root/.my.cnf -e "ALTER TABLE asteriskcdrdb.queue_log ADD INDEX ib1(agent,queuename)"
 fi
 EXISTS=$(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "SHOW KEYS FROM asteriskcdrdb.queue_log WHERE Key_name='callid_idx'");
 if [[ $EXISTS == "" ]]; then
-  $(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "ALTER TABLE asteriskcdrdb.queue_log ADD INDEX callid_idx(callid)");
+  /usr/bin/mysql --defaults-file=/root/.my.cnf -e "ALTER TABLE asteriskcdrdb.queue_log ADD INDEX callid_idx(callid)"
+fi
+EXISTS=$(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "SHOW KEYS FROM nethcti3.cti_phonebook WHERE Key_name='company_idx'");
+if [[ $EXISTS == "" ]]; then
+  /usr/bin/mysql --defaults-file=/root/.my.cnf -e "ALTER TABLE nethcti3.cti_phonebook ADD INDEX company_idx(company)"
 fi
 
 # Update SQL queries of default customer cards for issue #5870
