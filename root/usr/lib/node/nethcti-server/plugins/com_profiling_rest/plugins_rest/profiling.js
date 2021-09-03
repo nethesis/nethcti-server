@@ -333,7 +333,8 @@ function setCompUtil(comp) {
                   tot_users: compConfigManager.getTotNumUsers(),
                   conn_clients: getConnectedClientsNum(),
                   hostname: compProfiling.getHostname(),
-                  publichost: compProfiling.getPublichost()
+                  publichost: compProfiling.getPublichost(),
+                  server_time: compProfiling.getServerTime()
                 };
                 res.send(200, result);
               }

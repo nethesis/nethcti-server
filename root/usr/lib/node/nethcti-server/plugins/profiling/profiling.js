@@ -377,11 +377,21 @@ function startCheckCtiClientUpdate() {
   }
 }
 
+/**
+ * Returns the server's timestamp
+ *
+ * @returns {string} The timestamp
+ */
+function getServerTime() {
+  return new Date().getTime()
+}
+
 // public interface
 exports.config = config;
 exports.setLogger = setLogger;
 exports.getProcMem = getProcMem;
 exports.getHostname = getHostname;
+exports.getServerTime = getServerTime;
 exports.getPublichost = getPublichost;
 exports.getProcessPid = getProcessPid;
 exports.getNodeVersion = getNodeVersion;
