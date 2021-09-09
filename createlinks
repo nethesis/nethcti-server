@@ -84,3 +84,10 @@ event_templates('nethserver-conference-save', qw(
 event_services('nethserver-conference-save', qw(
                nethcti-server reload
 ));
+
+#
+# certificate-update
+#
+event_services('certificate-update', qw(
+    nethcti-server restart
+));
