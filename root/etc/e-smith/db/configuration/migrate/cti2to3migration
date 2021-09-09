@@ -18,7 +18,7 @@
     my $ports = $configDb->get_prop('nethcti-server', 'TCPPorts');
 
     if ( $ports eq '8179,8181,8182,8183') {
-        $configDb->set_prop('nethcti-server', 'TCPPorts', '8182');
+        $configDb->set_prop('nethcti-server', 'TCPPorts', '8182,8183');
     }
 
     return '';
