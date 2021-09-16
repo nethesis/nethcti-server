@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.26.0
+Version: 3.26.1
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -89,6 +89,12 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu Sep 16 2021 Sebastian <sebastian.besel@nethesis.it> - 3.26.1-1
+- Default registration value for unmonitored trunks is wrong - Bug nethesis/dev#6049
+- Enable encrypted connections to the tcp module  - nethesis/dev#6047
+- The timers are showing wrong info when server and client time are misaligned - Bug nethesis/dev#6052
+- Add company column to tables indexes - nethesis/dev#6045
+
 * Fri Aug 06 2021 Sebastian <sebastian.besel@nethesis.it> - 3.26.0-1
 - Phonebook: data for companies and contacts sometimes don't correspond - Bug nethesis/dev#6038
 
