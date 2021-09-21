@@ -234,9 +234,10 @@ function setCompAstProxy(comp) {
  *
  * @method config
  * @param {string} path The path of the JSON file with the user/endpoints associations and the authorization data
+ * @param {string} path The path of the JSON file with the user/recallonbusy permissions
  * @private
  */
-function config(path) {
+function config(path, robPath) {
   try {
     if (typeof path !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -271,6 +272,8 @@ function config(path) {
     initializeEndpointsUsersByJSON(json);
     // set user presence
     initializeUsersPresence();
+    // set users's "recal on busy" permission status
+    initializeUsersRecallOnBusy(robPath);
     // set the association between extensions and usernames
     setExtensionsUsernameAssociation();
 
@@ -2081,6 +2084,32 @@ function updateUserPresenceOnBusy(username) {
         }
       });
     }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Initialize the "recall on busy" permission status of all users.
+ *
+ * @method initializeUsersRecallOnBusy
+ * @private
+ */
+ function initializeUsersRecallOnBusy(path) {
+  const USERS_ROB_FILEPATH = path
+  try {
+    // read JSON file with the user/recallonbusy permissions
+    var robJson = JSON.parse(fs.readFileSync(USERS_ROB_FILEPATH, 'utf8'));
+    for (let username in users) {
+      users[username].setRecallOnBusy(
+        robJson[username] && robJson[username].recallonbusy ? (
+          robJson[username].recallonbusy
+        ) : (
+          'disabled'
+        )
+      )
+    }
+    logger.log.info(IDLOG, 'set of recall on busy permissions done');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }

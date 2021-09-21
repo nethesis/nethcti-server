@@ -99,7 +99,10 @@ module.exports = function(options, imports, register) {
     controllerUser.setCompAstProxy(imports.astProxy);
     controllerUser.setCompDbconn(imports.dbconn);
     imports.astProxy.on(imports.astProxy.EVT_READY, function() {
-      controllerUser.config('/etc/nethcti/users.json');
+      controllerUser.config(
+        '/etc/nethcti/users.json',
+        '/etc/nethcti/recallonbusy.json'
+      );
     });
     imports.astProxy.on(imports.astProxy.EVT_RELOADED, function() {
       controllerUser.reload();
