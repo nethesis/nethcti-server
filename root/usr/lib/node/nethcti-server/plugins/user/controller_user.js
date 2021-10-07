@@ -41,6 +41,15 @@ var IDLOG = '[controller_user]';
 var USERS_CONF_FILEPATH;
 
 /**
+ * The configuration file path of the ROB users permissions.
+ *
+ * @property ROB_CONF_FILEPATH
+ * @type string
+ * @private
+ */
+ var ROB_CONF_FILEPATH;
+
+/**
  * Fired when the creation of the _User_ objects is completed.
  *
  * @event usersReady
@@ -234,10 +243,10 @@ function setCompAstProxy(comp) {
  *
  * @method config
  * @param {string} path The path of the JSON file with the user/endpoints associations and the authorization data
- * @param {string} path The path of the JSON file with the user/recallonbusy permissions
+ * @param {string} ROBPath The path of the JSON file with the user/recallonbusy permissions
  * @private
  */
-function config(path, robPath) {
+function config(path, ROBPath) {
   try {
     if (typeof path !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -248,6 +257,7 @@ function config(path, robPath) {
       throw new Error(path + ' does not exist');
     }
     USERS_CONF_FILEPATH = path;
+    ROB_CONF_FILEPATH = ROBPath;
 
     // read JSON file with the user/endpoint associations
     var json = JSON.parse(fs.readFileSync(USERS_CONF_FILEPATH, 'utf8'));
@@ -272,8 +282,8 @@ function config(path, robPath) {
     initializeEndpointsUsersByJSON(json);
     // set user presence
     initializeUsersPresence();
-    // set users's "recal on busy" permission status
-    initializeUsersRecallOnBusy(robPath);
+    // set users's ROB permission status
+    initializeUsersRecallOnBusy(ROBPath);
     // set the association between extensions and usernames
     setExtensionsUsernameAssociation();
 
@@ -348,7 +358,7 @@ function reload() {
   try {
     reloading = true;
     reset();
-    config(USERS_CONF_FILEPATH);
+    config(USERS_CONF_FILEPATH, ROB_CONF_FILEPATH);
     logger.log.warn(IDLOG, 'reloaded');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -2096,10 +2106,9 @@ function updateUserPresenceOnBusy(username) {
  * @private
  */
  function initializeUsersRecallOnBusy(path) {
-  const USERS_ROB_FILEPATH = path
   try {
     // read JSON file with the user/recallonbusy permissions
-    var robJson = JSON.parse(fs.readFileSync(USERS_ROB_FILEPATH, 'utf8'));
+    var robJson = JSON.parse(fs.readFileSync(path, 'utf8'));
     for (let username in users) {
       users[username].setRecallOnBusy(
         robJson[username] && robJson[username].recallonbusy ? (
