@@ -762,7 +762,8 @@ module.exports = function(options, imports, register) {
       getC2CMode: astProxy.proxyLogic.getC2CMode,
       getRecallData: getRecallData,
       getQueueRecallInfo: getQueueRecallInfo,
-      checkQueueRecallingStatus: queueRecallingManager.checkQueueRecallingStatus
+      checkQueueRecallingStatus: queueRecallingManager.checkQueueRecallingStatus,
+      recallOnBusy: astProxy.proxyLogic.recallOnBusy
     }
   });
 

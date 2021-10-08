@@ -68,6 +68,15 @@ exports.User = function (uname, na) {
   var presenceOnBusy;
 
   /**
+   * The user's "recall on busy" permission status.
+   *
+   * @property recallOnBusy
+   * @type {string}
+   * @private
+   */
+   var recallOnBusy;
+
+  /**
    * The conditinoal presence of the user on unavailable.
    *
    * @property presenceOnUnavailable
@@ -138,6 +147,26 @@ exports.User = function (uname, na) {
    */
   function getPresence() {
     return presence ? presence : '';
+  }
+
+  /**
+   * Get the "recall on busy" permission.
+   *
+   * @method getRecallOnBusy
+   * @return {object} The "recall on busy" permission status.
+   */
+  function getRecallOnBusy() {
+    return recallOnBusy ? recallOnBusy : '';
+  }
+
+  /**
+   * Set the "recall on busy" permission.
+   *
+   * @method setRecallOnBusy
+   * @param {string} status The "recall on busy" permission status.
+   */
+  function setRecallOnBusy(status) {
+    recallOnBusy = status;
   }
 
   /**
@@ -380,7 +409,8 @@ exports.User = function (uname, na) {
       presence: getPresence(),
       endpoints: jsonEndpoints,
       presenceOnBusy: getPresenceOnBusy(),
-      presenceOnUnavailable: getPresenceOnUnavailable()
+      presenceOnUnavailable: getPresenceOnUnavailable(),
+      recallOnBusy: getRecallOnBusy()
     };
   }
 
@@ -394,6 +424,8 @@ exports.User = function (uname, na) {
     getUsername: getUsername,
     addEndpoint: addEndpoint,
     getAllEndpoints: getAllEndpoints,
+    getRecallOnBusy: getRecallOnBusy,
+    setRecallOnBusy: setRecallOnBusy,
     getPresenceOnBusy: getPresenceOnBusy,
     setPresenceOnBusy: setPresenceOnBusy,
     getAllEndpointsJSON: getAllEndpointsJSON,

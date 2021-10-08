@@ -743,6 +743,7 @@ var compConfigManager;
         * 1. [`astproxy/pin`](#pinpost)
         * 1. [`astproxy/incall_audio`](#incall_audiopost)
         * 1. [`astproxy/phone_reload`](#phone_reloadpost)
+        * 1. [`astproxy/recall_on_busy`](#recallpost)
         *
         * ---
         *
@@ -1281,6 +1282,19 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="recallpost">**`astproxy/recall_on_busy`**</a>
+        *
+        * Books the recall to a busy user.
+        * The request must contains the following parameters:
+        *
+        * * `caller: the main extension of the user that books the recall`
+        * * `called: the main extension of the user to recall`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "caller": "201", called: "202" }
+        *
+        * ---
         *
         * @class plugin_rest_astproxy
         * @static
@@ -1462,7 +1476,8 @@ var compConfigManager;
           'queuemember_remove',
           'queuemember_unpause',
           'blindtransfer_queue',
-          'blindtransfer_parking'
+          'blindtransfer_parking',
+          'recall_on_busy'
         ],
         'head': [],
 
@@ -5298,6 +5313,62 @@ var compConfigManager;
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
+      },
+
+      /**
+       * Book the recall to a busy user with the following REST API:
+       *
+       *     POST recall_on_busy
+       *
+       * @method recall_on_busy
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @returns {object} The JSON with the number of the waiting extensions
+       */
+      recall_on_busy: function (req, res) {
+        try {
+          const username = req.headers.authorization_user
+
+          // check parameters
+          if (typeof req.params !== 'object' || typeof req.params.caller !== 'string' || typeof req.params.called !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res)
+            return
+          }
+          // check if the caller extension is owned by the user
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.caller) === false) {
+            logger.log.warn(IDLOG, 'booking the recall failed: ' + req.params.caller + ' is not owned by user "' + username + '"')
+            compUtil.net.sendHttp403(IDLOG, res)
+            return;
+          }
+          // check if the user has the permission to book a recall
+          if (compUser.getUserInfoJSON(username).recallOnBusy !== 'enabled') {
+            logger.log.warn(IDLOG, 'booking the recall failed: permission denied for user "' + username + '"')
+            compUtil.net.sendHttp403(IDLOG, res)
+            return;
+          }
+
+          compAstProxy.recallOnBusy(req.params.caller, req.params.called, function (err, resp) {
+            try {
+              if (err) {
+                logger.log.warn(IDLOG, 'booking the recall from ' + req.params.caller + ' to "' + req.params.called + ' by user "' + username + '" has been failed')
+                compUtil.net.sendHttp500(IDLOG, res, err.toString())
+                return
+              }
+
+              logger.log.info(IDLOG, 'booking the recall from ' + req.params.caller + ' to ' + req.params.called + ' by user "' + username + '" has been successful')
+              res.send(200, {
+                waitingExtensions: resp.extensions_waiting ? resp.extensions_waiting.length : 0
+              })
+
+            } catch (error) {
+              logger.log.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString())
+            }
+          });
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack)
+          compUtil.net.sendHttp500(IDLOG, res, err.toString())
+        }
       }
     };
     exports.cw = astproxy.cw;
@@ -5365,6 +5436,7 @@ var compConfigManager;
     exports.answer_webrtc = astproxy.answer_webrtc;
     exports.hangup_channel = astproxy.hangup_channel;
     exports.pickup_parking = astproxy.pickup_parking;
+    exports.recall_on_busy = astproxy.recall_on_busy;
     exports.qmanager_queues = astproxy.qmanager_queues;
     exports.unmute_userconf = astproxy.unmute_userconf;
     exports.hangup_userconf = astproxy.hangup_userconf;
