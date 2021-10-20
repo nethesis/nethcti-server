@@ -47,6 +47,14 @@
             "dtmf": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=$TONE"
         }
     },
+    "^Nethesis\\\s*NP.*": {
+        "urls": {
+            "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=$NUMBER;ENTER",
+            "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=OK",
+            "hold_unhold": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=F_HOLD",
+            "dtmf": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=$TONE"
+        }
+    },
     "^alcatel\\\s.*1G": {
         "urls": {
             "call": "http://user:nethvoice@$PHONE_IP/activeuri.kl1?number=$NUMBER&account=$ACCOUNT",
