@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.26.1
+Version: 3.27.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -89,6 +89,10 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu Oct 21 2021 Sebastian <sebastian.besel@nethesis.it> - 3.27.0-1
+- Switch nethifier's socket to TLS with backward compatibility - nethesis/dev#6060
+- Add the Recall On Busy module - nethesis/dev#6066
+
 * Thu Sep 16 2021 Sebastian <sebastian.besel@nethesis.it> - 3.26.1-1
 - Default registration value for unmonitored trunks is wrong - Bug nethesis/dev#6049
 - Enable encrypted connections to the tcp module  - nethesis/dev#6047
