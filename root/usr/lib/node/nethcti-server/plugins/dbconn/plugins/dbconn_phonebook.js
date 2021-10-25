@@ -532,19 +532,19 @@ function getAllContactsAlphabetically(username, offset, limit, cb) {
     var query = [
       '(SELECT ', fields, ', extension, speeddial_num, name AS n',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-      ' WHERE name IS NOT NULL AND name != "" AND (owner_id=? OR type="public"))',
+      ' WHERE (name IS NOT NULL AND name != "") AND (owner_id=? OR type="public"))',
       ' UNION ',
       '(SELECT ', fields, ', "" AS extension, "" AS speeddial_num, name AS n',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
-      ' WHERE name IS NOT NULL AND name != "" AND type != "nethcti")',
+      ' WHERE (name IS NOT NULL AND name != "") AND (type != "nethcti"))',
       ' UNION ',
       '(SELECT ', fields, ', extension, speeddial_num, company AS n',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-      ' WHERE name IS NULL OR name = "" AND company IS NOT NULL AND company != "" AND (owner_id=? OR type="public"))',
+      ' WHERE (name IS NULL OR name = "") AND (company IS NOT NULL AND company != "") AND (owner_id=? OR type="public"))',
       ' UNION ',
       '(SELECT ', fields, ', "" AS extension, "" AS speeddial_num, company AS n',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
-      ' WHERE name IS NULL OR name = "" AND company IS NOT NULL AND company != "" AND type != "nethcti")',
+      ' WHERE (name IS NULL OR name = "") AND (company IS NOT NULL AND company != "") AND (type != "nethcti"))',
       ' ORDER BY n',
       (offset && limit ? ' LIMIT ?,?' : '')
     ].join('');
