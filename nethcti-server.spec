@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.27.0
+Version: 3.27.1
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -89,6 +89,10 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Oct 29 2021 Sebastian <sebastian.besel@nethesis.it> - 3.27.1-1
+- NethCTI: add phone URLs for NethPhone - nethesis/dev#6070
+- Phonebook's _/getall_ endpoint returns wrong contacts - Bug nethesis/dev#6071
+
 * Thu Oct 21 2021 Sebastian <sebastian.besel@nethesis.it> - 3.27.0-1
 - Switch nethifier's socket to TLS with backward compatibility - nethesis/dev#6060
 - Add the Recall On Busy module - nethesis/dev#6066
