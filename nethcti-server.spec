@@ -6,7 +6,6 @@ Group: Network
 License: GPLv2
 Source0: %{name}-%{version}.tar.gz
 BuildRequires: nethserver-devtools
-BuildRequires: nodejs >= 6.16.0
 Requires: rh-nodejs10
 Requires: nethserver-nethvoice14 >= 14.7.3
 Requires: nethserver-janus
@@ -25,28 +24,11 @@ Node.js server application used for NethCTI
 
 %build
 perl -w createlinks
-cd root/usr/lib/node/nethcti-server && npm install && cd -
 # nethcti configuration directory
 mkdir -p root/etc/nethcti
 mkdir -p root/etc/nethcti/dbstatic.d
 mkdir -p root/var/lib/nethserver/nethcti/static
 mkdir -p root/var/lib/asterisk/sounds/nethcti
-
-# clean nodejs npm modules
-find root/usr/lib/node/nethcti-server/node_modules -iname readme.\* -o \
-  -iname benchmark\* -o \
-  -iname sample\* -o \
-  -iname logos\* -o \
-  -iname test\* -o \
-  -iname example\* -o \
-  -iname changelog\* -o \
-  -iname man -o \
-  -iname doc -o \
-  -iname docs -o \
-  -iname component.json -o \
-  -iname \*.md -o \
-  -iname \*.bat -o \
-  -iname \*.tgz | xargs rm -rf
 
 %install
 rm -rf %{buildroot}

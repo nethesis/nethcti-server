@@ -1,0 +1,35 @@
+#!/bin/bash
+
+#
+# Install npm dependencies
+#
+
+#
+# Exit 1 on error
+#
+set -xe
+
+#
+# Install node_modules
+#
+cd root/usr/lib/node/nethcti-server
+npm install
+cd -
+
+#
+# Clean nodejs npm modules from node_modules
+#
+find root/usr/lib/node/nethcti-server/node_modules -iname readme.\* -o \
+  -iname benchmark\* -o \
+  -iname sample\* -o \
+  -iname logos\* -o \
+  -iname test\* -o \
+  -iname example\* -o \
+  -iname changelog\* -o \
+  -iname man -o \
+  -iname doc -o \
+  -iname docs -o \
+  -iname component.json -o \
+  -iname \*.md -o \
+  -iname \*.bat -o \
+  -iname \*.tgz | xargs rm -rf
