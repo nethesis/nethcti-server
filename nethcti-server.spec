@@ -66,7 +66,7 @@ rm -rf %{buildroot}
 --dir /var/lib/nethserver/nethcti/templates/customer_card 'attr(0775,asterisk,asterisk)' \
 --dir /usr/lib/node/nethcti-server/plugins/com_static_http/static 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk/sounds/nethcti 'attr(0775,asterisk,asterisk)' \
---dir /etc/nethcti/dbstatic.d 'attr(0775,asterisk,asterisk)' \
+--dir /etc/nethcti/dbstatic.d 'attr(0770,asterisk,asterisk)' \
 --dir /etc/nethcti 'attr(0775,asterisk,asterisk)' > %{name}-%{version}-filelist
 
 %clean
