@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.27.3
+Version: 3.27.4
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -89,6 +89,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Jan 31 2022 Sebastian <sebastian.besel@nethesis.it> - 3.27.4-1
+- Improve management of some actions available on calls - Bug nethesis/dev#6105
+
 * Fri Jan 28 2022 Sebastian <sebastian.besel@nethesis.it> - 3.27.3-1
 - Lack of call popup if using physical phone - Bug nethesis/dev#6083
 
