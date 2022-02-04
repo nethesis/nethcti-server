@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.27.4
+Version: 3.27.5
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -89,6 +89,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Feb 04 2022 Stefano Fancello <stefano.fancello@nethesis.it> - 3.27.5-1
+- Merge pull request #256 from nethesis/facter
+
 * Mon Jan 31 2022 Sebastian <sebastian.besel@nethesis.it> - 3.27.4-1
 - Improve management of some actions available on calls - Bug nethesis/dev#6105
 
