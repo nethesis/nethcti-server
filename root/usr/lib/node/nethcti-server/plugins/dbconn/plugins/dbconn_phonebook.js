@@ -532,7 +532,7 @@ function getAllContactsAlphabetically(username, offset, limit, cb) {
     var query = [
       '(SELECT ', fields, ', extension, speeddial_num, name AS n',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-      ' WHERE (name IS NOT NULL AND name != "") AND (owner_id=? OR type="public"))',
+      ' WHERE (name IS NOT NULL AND name != "") AND (owner_id=? OR type="public") AND (type!="speeddial"))',
       ' UNION ',
       '(SELECT ', fields, ', "" AS extension, "" AS speeddial_num, name AS n',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
@@ -540,7 +540,7 @@ function getAllContactsAlphabetically(username, offset, limit, cb) {
       ' UNION ',
       '(SELECT ', fields, ', extension, speeddial_num, company AS n',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-      ' WHERE (name IS NULL OR name = "") AND (company IS NOT NULL AND company != "") AND (owner_id=? OR type="public"))',
+      ' WHERE (name IS NULL OR name = "") AND (company IS NOT NULL AND company != "") AND (owner_id=? OR type="public") AND (type != "speeddial"))',
       ' UNION ',
       '(SELECT ', fields, ', "" AS extension, "" AS speeddial_num, company AS n',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
@@ -933,7 +933,8 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
     var query = [
       '(SELECT ', fields, ', extension, speeddial_num, \'cti\' AS source',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-      ' WHERE ', ctiPbBounds, ')',
+      ' WHERE ', ctiPbBounds,
+      ' AND (type != \'speeddial\'))',
       ' UNION ',
       '(SELECT ', fields, ', \'\' AS extension, \'\' AS speeddial_num, \'centralized\' AS source',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
@@ -964,7 +965,8 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       ' FROM (',
       '(SELECT company',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-      ' WHERE ', ctiPbBounds, ')',
+      ' WHERE ', ctiPbBounds,
+      ' AND type != \'speeddial\')',
       ' UNION ',
       '(SELECT company',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
@@ -980,7 +982,8 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       '(SELECT id, name, company, ', companyXFields, ', \'cti\' AS source',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
       ' WHERE (owner_id = ? OR type = "public") AND (company = ?)',
-      ' AND (name IS NULL OR name = ""))',
+      ' AND (name IS NULL OR name = "")',
+      ' AND (type != "speeddial"))',
       ' UNION ',
       '(SELECT id, name, company, ', companyXFields, ', \'centralized\' AS source',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
@@ -1000,7 +1003,8 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       '(SELECT ', contactsXFields, ', \'cti\' AS source',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
       ' WHERE (owner_id = ? OR type = "public") AND (company = ?)',
-      ' AND (name IS NOT NULL AND name != ""))',
+      ' AND (name IS NOT NULL AND name != "")',
+      ' AND (type != \'speeddial\'))',
       ' UNION ',
       '(SELECT ', contactsXFields, ', \'centralized\' AS source',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
@@ -1011,10 +1015,12 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
     ].join('');
 
     var queryCount = [
-      'SELECT COUNT(*) AS total FROM ',
-      '(SELECT id FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK, ' WHERE ', ctiPbBounds,
+      'SELECT COUNT(*) AS total FROM (',
+      '(SELECT id FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
+      ' WHERE ', ctiPbBounds,
+      ' AND (type != \'speeddial\'))',
       ' UNION ALL',
-      ' SELECT id FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK, ' WHERE ', pbBounds, ') s'
+      ' (SELECT id FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK, ' WHERE ', pbBounds, ')) s'
     ].join('');
 
     var queryCompanyCount = [
@@ -1022,7 +1028,8 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       ' FROM (',
       '(SELECT company',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-      ' WHERE ', ctiPbBounds, ')',
+      ' WHERE ', ctiPbBounds,
+      ' AND (type != \'speeddial\'))',
       ' UNION ',
       '(SELECT company',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
@@ -1176,15 +1183,17 @@ function getEmailAllContacts(ctiPbBounds, pbBounds, replacements, cb) {
       ' UNION ',
       '(SELECT ', fields, ', \'\' AS extension, \'\' AS speeddial_num, \'centralized\' AS source',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
-      ' WHERE ', pbBounds, ')',
+      ' WHERE ', pbBounds,
+      ' AND (type != \'speeddial\'))',
       ' ORDER BY company ASC, name ASC'
     ].join('');
 
     var queryCount = [
-      'SELECT COUNT(*) AS total FROM ',
+      'SELECT COUNT(*) AS total FROM (',
       '(SELECT id FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK, ' WHERE ', ctiPbBounds,
+      ' AND (type != \'speeddial\'))',
       ' UNION ALL',
-      ' SELECT id FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK, ' WHERE ', pbBounds, ') s'
+      ' (SELECT id FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK, ' WHERE ', pbBounds, ')) s'
     ].join('');
 
     compDbconnMain.dbConn['cti_phonebook'].query(
