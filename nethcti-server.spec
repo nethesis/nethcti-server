@@ -7,6 +7,7 @@ License: GPLv2
 Source0: %{name}-%{version}.tar.gz
 BuildRequires: nethserver-devtools
 BuildRequires: nodejs >= 6.16.0
+BuildRequires: npm
 Requires: rh-nodejs10
 Requires: nethserver-nethvoice14 >= 14.7.3
 Requires: nethserver-janus
