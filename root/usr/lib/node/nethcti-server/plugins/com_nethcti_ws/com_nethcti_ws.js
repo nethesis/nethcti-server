@@ -1327,6 +1327,12 @@ function extenChanged(exten) {
     for (sockid in wsid) {
       username = wsid[sockid].username;
 
+      // get username when the user is logged in with extension
+      if (astProxy.isExten(username)) {
+        const usernameByExt = astProxy.getUsernameByExtension(username)
+        if (usernameByExt) username = usernameByExt
+      }
+
       // checks if the user has the privacy enabled
       //
       // Scenario 1: the user has the "privacy" and "admin queues" permissions enabled
