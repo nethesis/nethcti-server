@@ -238,7 +238,8 @@ function getHistoryCallInterval(data, cb) {
         '(cnum NOT IN (?) AND dst IN (?)) AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?) AND ' +
-        'disposition IN ("NO ANSWER","BUSY","FAILED")',
+        'disposition IN ("NO ANSWER","BUSY","FAILED")' +
+        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)',
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -452,7 +453,8 @@ function getHistorySwitchCallInterval(data, cb) {
         ') AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?) AND ' +
-        'disposition IN ("NO ANSWER","BUSY","FAILED")',
+        'disposition IN ("NO ANSWER","BUSY","FAILED")' +
+        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)',
         data.trunks,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
