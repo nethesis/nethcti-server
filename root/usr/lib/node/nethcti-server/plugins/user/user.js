@@ -77,6 +77,16 @@ exports.User = function (uname, na) {
    var recallOnBusy;
 
   /**
+   * The user's mainPresence status.
+   * The retrieved presence by combining the user presence with the endpoints status.
+   *
+   * @property mainPresence
+   * @type {string}
+   * @private
+   */
+   var mainPresence;
+
+  /**
    * The conditinoal presence of the user on unavailable.
    *
    * @property presenceOnUnavailable
@@ -147,6 +157,26 @@ exports.User = function (uname, na) {
    */
   function getPresence() {
     return presence ? presence : '';
+  }
+
+  /**
+   * Get the mainPresence status.
+   *
+   * @method getMainPresence
+   * @return {string} The main presence status.
+   */
+  function getMainPresence() {
+    return mainPresence ? mainPresence : '';
+  }
+
+  /**
+   * Set the presence status.
+   *
+   * @method setMainPresence
+   * @param {string} status The presence status
+   */
+   function setMainPresence(status) {
+    mainPresence = status;
   }
 
   /**
@@ -406,6 +436,7 @@ exports.User = function (uname, na) {
     return {
       name: getName(),
       username: username,
+      mainPresence: getMainPresence(),
       presence: getPresence(),
       endpoints: jsonEndpoints,
       presenceOnBusy: getPresenceOnBusy(),
@@ -423,6 +454,8 @@ exports.User = function (uname, na) {
     getPresence: getPresence,
     getUsername: getUsername,
     addEndpoint: addEndpoint,
+    getMainPresence: getMainPresence,
+    setMainPresence: setMainPresence,
     getAllEndpoints: getAllEndpoints,
     getRecallOnBusy: getRecallOnBusy,
     setRecallOnBusy: setRecallOnBusy,

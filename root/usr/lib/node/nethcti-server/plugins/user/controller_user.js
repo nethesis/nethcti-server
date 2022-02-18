@@ -16,6 +16,7 @@ var User = require('./user').User;
 var async = require('async');
 var EventEmitter = require('events').EventEmitter;
 var userPresence = require('./user_presence');
+var userMainPresence = require('./user_main_presence');
 var endpointTypes = require('./endpoint_types');
 const endpointExtension = require('./endpointExtension');
 
@@ -104,6 +105,20 @@ var EVT_USER_PROFILE_AVATAR_CHANGED = 'userProfileAvatarChanged';
  * @default "userPresenceChanged"
  */
 var EVT_USER_PRESENCE_CHANGED = 'userPresenceChanged';
+
+/**
+ * Fired when the main user presence has changed.
+ *
+ * @event userMainPresenceChanged
+ */
+/**
+ * The name of the user presence changed event.
+ *
+ * @property EVT_USER_MAIN_PRESENCE_CHANGED
+ * @type string
+ * @default "userMainPresenceChanged"
+ */
+ var EVT_USER_MAIN_PRESENCE_CHANGED = 'userMainPresenceChanged';
 
 /**
  * True if the component has been started. Used to emit EVT_RELOADED
@@ -1961,6 +1976,179 @@ function updateUserPresence(username) {
         }
       });
     }
+    updateUserMainPresence(username)
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Returns the final telephonic presence checking all extensions
+ *
+ * @method retrieveExtensionsPresence
+ * @param {object} extensions
+ * @private
+ */
+function retrieveExtensionsPresence(extensions) {
+  const extenStatusList = new Set()
+  try {
+    if (typeof extensions !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    const staticExtStatusList = compAstProxy.EXTEN_STATUS_ENUM
+    for (let [_, value] of extensions) {
+      extenStatusList.add(value.status)
+    }
+    // apply logic on extensions status
+    if (extenStatusList.has(staticExtStatusList.BUSY)) {
+      // when at least one extension is busy the thelephonic status is busy
+      return staticExtStatusList.BUSY
+    } else if (extenStatusList.has(staticExtStatusList.BUSY_RINGING)) {
+      // when the previous is not present and at least one extension is busy_ringing
+      // the thelephonic status is busy busy_ringing
+      return staticExtStatusList.BUSY_RINGING;
+    } else if (extenStatusList.has(staticExtStatusList.RINGING)) {
+      // when the previous are not present and at least one extension is busy_ringing
+      // the telephonic status is busy_ringing
+      return staticExtStatusList.RINGING;
+    } else if (extenStatusList.has(staticExtStatusList.ONHOLD)) {
+      // when the previous are not present and at least one extension is busy_ringing
+      // the telephonic status is busy_ringing
+      return staticExtStatusList.ONHOLD;
+    } else if (extenStatusList.has(staticExtStatusList.ONLINE)) {
+      // when the previous are not present and at least one extension is online
+      // the telephonic status is online
+      return staticExtStatusList.ONLINE;
+    } else {
+      return staticExtStatusList.OFFLINE;
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return ""
+  }
+}
+
+/**
+ * Returns the final main presence of the user
+ *
+ * @method retrieveMainPresence
+ * @param {string} userPresence
+ * @param {string} extensionsPresence
+ * @private
+ */
+function retrieveMainPresence(customPresence, extensionsPresence) {
+  try {
+    if (typeof customPresence !== 'string' && typeof extensionsPresence !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    const staticExtStatusList = compAstProxy.EXTEN_STATUS_ENUM
+    const customPresenceOnline = customPresence === userPresence.STATUS.online
+    var mainPresence
+    switch (true) {
+      case customPresence === userPresence.STATUS.dnd:
+        // the main presence is set to "dnd" when the custom presence is dnd
+        mainPresence = userMainPresence.STATUS.dnd
+        break
+      case customPresence === userPresence.STATUS.voicemail:
+        // the main presence is set to "voicemail" when the custom presence is voicemail
+        mainPresence = userMainPresence.STATUS.voicemail
+        break
+      case customPresence === userPresence.STATUS.cellphone:
+        // the main presence is set to "cellphone" when the custom presence is cellphone
+        mainPresence = userMainPresence.STATUS.cellphone
+        break
+      case customPresence === userPresence.STATUS.callforward:
+        // the main presence is set to "callforward" when the custom presence is callforward
+        mainPresence = userMainPresence.STATUS.callforward
+        break
+      case customPresenceOnline && (extensionsPresence === staticExtStatusList.ONLINE):
+        // the main presence is set to "online" when the custom presence is online
+        // and the extensions presence is ONLINE
+        mainPresence = userMainPresence.STATUS.online
+        break
+      case customPresenceOnline && (extensionsPresence === staticExtStatusList.BUSY):
+        // the main presence is set to "busy" when the custom presence is online
+        // and the extensions presence is BUSY
+        mainPresence = userMainPresence.STATUS.busy
+        break
+      case customPresenceOnline && (extensionsPresence === staticExtStatusList.BUSY_RINGING):
+        // the main presence is set to "busy" when the custom presence is online
+        // and the extensions presence is BUSY_RINGING
+        mainPresence = userMainPresence.STATUS.busy
+        break
+      case customPresenceOnline && (extensionsPresence === staticExtStatusList.ONHOLD):
+        // the main presence is set to "busy" when the custom presence is online
+        // and the extensions presence is ONHOLD
+        mainPresence = userMainPresence.STATUS.busy
+        break
+      case customPresenceOnline && (extensionsPresence === staticExtStatusList.RINGING):
+        // the main presence is set to "ringing" when the custom presence is online
+        // and the extensions presence is RINGING
+        mainPresence = userMainPresence.STATUS.ringing
+        break
+      case customPresenceOnline && (extensionsPresence === staticExtStatusList.OFFLINE):
+        // the main presence is set to "offline" when the custom presence is online
+        // and the extensions presence is OFFLINE
+        mainPresence = userMainPresence.STATUS.offline
+        break
+      default:
+        // otherwise the main presence is set to offline
+        mainPresence = userMainPresence.STATUS.offline
+        break
+    }
+    return mainPresence
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack)
+    return ""
+  }
+}
+
+/**
+ * Update the user mainPresence.
+ *
+ * @method updateUserMainPresence
+ * @param {string} username The username to be updated
+ * @public
+ */
+function updateUserMainPresence(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    const userExtensions = getAllEndpointsExtension(username)
+    const customPresence = users[username].getPresence()
+    const oldMainPresence = users[username].getMainPresence()
+    const astExtensions = new Map()
+    for (const ext in userExtensions) {
+      const astExtension = compAstProxy.getJSONExtension(ext)
+      astExtensions.set(ext, astExtension)
+    }
+    const extensionsPresence = retrieveExtensionsPresence(astExtensions)
+    const newMainPresence = retrieveMainPresence(customPresence, extensionsPresence)
+
+    // change the main presence only when is different than the previous
+    if (oldMainPresence !== newMainPresence) {
+
+      // set the main presence
+      logger.log.info(IDLOG, 'set user main presence of "' + username + '" to "' + newMainPresence + '"');
+      users[username].setMainPresence(newMainPresence);
+
+      if (!reloading) {
+        const evtPresence = users[username].getMainPresence()
+        const mainExtId = getEndpointMainExtension(username).getId()
+        const cfval = compAstProxy.getExtenCfValue(mainExtId)
+
+        // emit the ws main presence update event
+        logger.log.info(IDLOG, 'emit event "' + EVT_USER_MAIN_PRESENCE_CHANGED + '"')
+        emitter.emit(EVT_USER_MAIN_PRESENCE_CHANGED, {
+          mainPresence: {
+            username: username,
+            status: evtPresence,
+            to: (evtPresence ===  userMainPresence.STATUS.callforward && cfval) ? cfval : undefined
+          }
+        })
+      }
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2992,6 +3180,7 @@ exports.hasVoicemailEndpoint = hasVoicemailEndpoint;
 exports.getUsernamesWithData = getUsernamesWithData;
 exports.setMobilePhoneNumber = setMobilePhoneNumber;
 exports.getPresenceListOnBusy = getPresenceListOnBusy;
+exports.updateUserMainPresence = updateUserMainPresence;
 exports.getPresenceOnUnavailable = getPresenceOnUnavailable;
 exports.setPresenceOnUnavailable = setPresenceOnUnavailable;
 exports.getPresenceCallforwardTo = getPresenceCallforwardTo;
@@ -3005,6 +3194,7 @@ exports.getAllUsersEndpointsExtension = getAllUsersEndpointsExtension;
 exports.getUserUsingEndpointExtension = getUserUsingEndpointExtension;
 exports.getUsersUsingEndpointVoicemail = getUsersUsingEndpointVoicemail;
 exports.getPresenceOnBusyCallforwardTo = getPresenceOnBusyCallforwardTo;
+exports.EVT_USER_MAIN_PRESENCE_CHANGED = EVT_USER_MAIN_PRESENCE_CHANGED;
 exports.EVT_USER_PROFILE_AVATAR_CHANGED = EVT_USER_PROFILE_AVATAR_CHANGED;
 exports.getPresenceOnUnavailableCallforwardTo = getPresenceOnUnavailableCallforwardTo;
 exports.getParamUrl = getParamUrl;

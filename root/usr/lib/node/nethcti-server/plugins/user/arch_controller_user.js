@@ -72,6 +72,7 @@ module.exports = function(options, imports, register) {
       hasVoicemailEndpoint: controllerUser.hasVoicemailEndpoint,
       getUsernamesWithData: controllerUser.getUsernamesWithData,
       getPresenceListOnBusy: controllerUser.getPresenceListOnBusy,
+      updateUserMainPresence: controllerUser.updateUserMainPresence,
       getPresenceOnUnavailable: controllerUser.getPresenceOnUnavailable,
       setPresenceOnUnavailable: controllerUser.setPresenceOnUnavailable,
       getPresenceCallforwardTo: controllerUser.getPresenceCallforwardTo,
@@ -85,6 +86,7 @@ module.exports = function(options, imports, register) {
       getUserUsingEndpointExtension: controllerUser.getUserUsingEndpointExtension,
       getUsersUsingEndpointVoicemail: controllerUser.getUsersUsingEndpointVoicemail,
       getPresenceOnBusyCallforwardTo: controllerUser.getPresenceOnBusyCallforwardTo,
+      EVT_USER_MAIN_PRESENCE_CHANGED: controllerUser.EVT_USER_MAIN_PRESENCE_CHANGED,
       EVT_USER_PROFILE_AVATAR_CHANGED: controllerUser.EVT_USER_PROFILE_AVATAR_CHANGED,
       getPresenceOnUnavailableCallforwardTo: controllerUser.getPresenceOnUnavailableCallforwardTo
     }

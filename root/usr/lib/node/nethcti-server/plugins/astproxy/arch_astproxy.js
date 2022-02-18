@@ -720,6 +720,7 @@ module.exports = function(options, imports, register) {
       isExtenDynMemberQueue: astProxy.proxyLogic.isExtenDynMemberQueue,
       isDynMemberLoggedInQueue: astProxy.proxyLogic.isDynMemberLoggedInQueue,
       CF_TYPES: astProxy.CF_TYPES,
+      EXTEN_STATUS_ENUM: astProxy.proxyLogic.EXTEN_STATUS_ENUM,
       EVT_EXTEN_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CHANGED,
       EVT_EXTEN_HANGUP: astProxy.proxyLogic.EVT_EXTEN_HANGUP,
       EVT_NEW_CDR: astProxy.proxyLogic.EVT_NEW_CDR,
