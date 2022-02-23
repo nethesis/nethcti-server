@@ -1364,6 +1364,8 @@ function extenChanged(exten) {
     // sends the update with clear number, otherwise the number is obfuscated to respect the privacy authorization
     var sockid, username, extJson;
 
+    // retrieve extension value from exten
+    const extension = exten.getExten()
     for (sockid in wsid) {
       username = wsid[sockid].username;
 
@@ -1382,14 +1384,14 @@ function extenChanged(exten) {
       // Other cases: all the calls are obfuscated except those concerning the user to send to
       if (compAuthorization.isPrivacyEnabled(username) === true &&
         compAuthorization.authorizeAdminQueuesUser(username) === false &&
-        compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
+        compAuthorization.verifyUserEndpointExten(username, extension) === false &&
         wsServer.sockets.sockets.has(sockid)) {
 
         extJson = exten.toJSON(privacyStrReplace, privacyStrReplace);
 
       } else if (compAuthorization.isPrivacyEnabled(username) === true &&
         compAuthorization.authorizeAdminQueuesUser(username) === true &&
-        compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
+        compAuthorization.verifyUserEndpointExten(username, extension) === false &&
         wsServer.sockets.sockets.has(sockid)) {
 
         extJson = exten.toJSON(privacyStrReplace);
@@ -1399,7 +1401,10 @@ function extenChanged(exten) {
       }
       if (wsServer.sockets.sockets.has(sockid)) {
         wsServer.sockets.sockets.get(sockid).emit(EVT_EXTEN_UPDATE, extJson);
-        compUser.updateUserMainPresence(extJson.username)
+        if (extension) {
+          // retrieve the main presence and emit the associated event
+          compUser.updateUserMainPresence(extension)
+        }
       }
     }
   } catch (err) {
