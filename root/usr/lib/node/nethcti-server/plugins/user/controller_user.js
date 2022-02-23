@@ -1976,7 +1976,8 @@ function updateUserPresence(username) {
         }
       });
     }
-    updateUserMainPresence(username)
+    // retrieve the main presence and emit the associated event
+    updateUserMainPresence(mainExtId)
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2107,14 +2108,15 @@ function retrieveMainPresence(customPresence, extensionsPresence) {
  * Update the user mainPresence.
  *
  * @method updateUserMainPresence
- * @param {string} username The username to be updated
+ * @param {string} username The the updated extension
  * @public
  */
-function updateUserMainPresence(username) {
+function updateUserMainPresence(exten) {
   try {
-    if (typeof username !== 'string') {
+    if (typeof exten !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+    const username = getUserFromExten(exten)
     const userExtensions = getAllEndpointsExtension(username)
     const customPresence = users[username].getPresence()
     const oldMainPresence = users[username].getMainPresence()
@@ -2128,13 +2130,12 @@ function updateUserMainPresence(username) {
 
     // change the main presence only when is different than the previous
     if (oldMainPresence !== newMainPresence) {
-
       // set the main presence
       logger.log.info(IDLOG, 'set user main presence of "' + username + '" to "' + newMainPresence + '"');
       users[username].setMainPresence(newMainPresence);
 
       if (!reloading) {
-        const evtPresence = users[username].getMainPresence()
+        const mainPresence = users[username].getMainPresence()
         const mainExtId = getEndpointMainExtension(username).getId()
         const cfval = compAstProxy.getExtenCfValue(mainExtId)
 
@@ -2143,8 +2144,8 @@ function updateUserMainPresence(username) {
         emitter.emit(EVT_USER_MAIN_PRESENCE_CHANGED, {
           mainPresence: {
             username: username,
-            status: evtPresence,
-            to: (evtPresence ===  userMainPresence.STATUS.callforward && cfval) ? cfval : undefined
+            status: mainPresence,
+            to: (mainPresence ===  userMainPresence.STATUS.callforward && cfval) ? cfval : undefined
           }
         })
       }
