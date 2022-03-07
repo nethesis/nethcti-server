@@ -265,9 +265,11 @@ function getHistoryCallInterval(data, cb) {
       attributes: attributes,
       offset: (data.offset ? parseInt(data.offset) : 0),
       limit: (data.limit ? parseInt(data.limit) : null),
+      group: ['uniqueid','linkedid','disposition'],
       order: (data.sort ? data.sort : 'time desc')
 
     }).then(function(results) {
+      results.count = results.count.length;
       logger.log.info(IDLOG, results.count + ' results searching history call interval between ' +
         data.from + ' to ' + data.to + ' and filter ' + data.filter +
         (data.endpoints ? (' for endpoints ' + data.endpoints) : ''));
@@ -477,10 +479,11 @@ function getHistorySwitchCallInterval(data, cb) {
       attributes: attributes,
       offset: (data.offset ? parseInt(data.offset) : 0),
       limit: (data.limit ? parseInt(data.limit) : null),
+      group: ['uniqueid','linkedid','disposition'],
       order: (data.sort ? data.sort : 'time desc')
 
     }).then(function(results) {
-
+      results.count = results.count.length;
       logger.log.info(IDLOG, results.count + ' results searching switchboard history call interval between ' +
         data.from + ' to ' + data.to + ' and filter ' + data.filter);
       cb(null, results);
