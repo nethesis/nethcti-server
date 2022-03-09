@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.27.5
+Version: 3.28.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -90,6 +90,13 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Mar 07 2022 Sebastian <sebastian.besel@nethesis.it> - 3.28.0-1
+- Combine telephone presence and custom presence into one main presence - nethesis/dev#6110
+
+* Wed Feb 16 2022 Sebastian <sebastian.besel@nethesis.it> - 3.27.6-1
+- Something goes wrong on user-extension check - Bug nethesis/dev#6107
+- Fix of favorite contacts in the speed-dial and in the address book - Bug nethesis/dev#6082
+
 * Fri Feb 04 2022 Stefano Fancello <stefano.fancello@nethesis.it> - 3.27.5-1
 - Merge pull request #256 from nethesis/facter
 

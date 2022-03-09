@@ -354,6 +354,7 @@ var EVT_ENDPOINT_PRESENCE_UPDATE = 'endpointPresenceUpdate';
  * @param {object} data The data about the user presence update
  *
  */
+
 /**
  * The name of the user presence update event.
  *
@@ -362,6 +363,15 @@ var EVT_ENDPOINT_PRESENCE_UPDATE = 'endpointPresenceUpdate';
  * @default "userPresenceUpdate"
  */
 var EVT_USER_PRESENCE_UPDATE = 'userPresenceUpdate';
+
+/**
+ * The name of the user main presence update event.
+ *
+ * @property EVT_USER_MAIN_PRESENCE_UPDATE
+ * @type string
+ * @default "userMainPresenceUpdate"
+ */
+ var EVT_USER_MAIN_PRESENCE_UPDATE = 'userMainPresenceUpdate';
 
 /**
  * Emitted to a websocket client connection on a user profile avatar update.
@@ -946,6 +956,7 @@ function setUserListeners() {
       throw new Error('wrong user object');
     }
     compUser.on(compUser.EVT_USER_PRESENCE_CHANGED, evtUserPresenceChanged);
+    compUser.on(compUser.EVT_USER_MAIN_PRESENCE_CHANGED, evtUserMainPresenceChanged);
     compUser.on(compUser.EVT_USER_PROFILE_AVATAR_CHANGED, evtUserProfileAvatarChanged);
 
   } catch (err) {
@@ -1113,6 +1124,35 @@ function evtUserPresenceChanged(evt) {
     var sockid;
     for (sockid in wsid) {
       wsServer.sockets.sockets.get(sockid).emit(EVT_USER_PRESENCE_UPDATE, evt);
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Handler for the _userMainPresenceChanged_ event emitted by _user_
+ * component. The user main presence has changed, so notifies all clients.
+ *
+ * @method evtUserPresenceChanged
+ * @param {object} evt
+ *  @param {string} evt.username The username
+ *  @param {string} evt.presence The main presence status of the user
+ * @private
+ */
+ function evtUserMainPresenceChanged(evt) {
+
+  try {
+    if (typeof evt !== 'object' ) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    logger.log.info(IDLOG, 'received event "' + compUser.EVT_USER_MAIN_PRESENCE_CHANGED + '" ' + JSON.stringify(evt));
+    logger.log.info(IDLOG, 'emit event "' + EVT_USER_MAIN_PRESENCE_UPDATE + '" ' + JSON.stringify(evt) + ' to websockets');
+
+    // emits the event to all users
+    var sockid;
+    for (sockid in wsid) {
+      wsServer.sockets.sockets.get(sockid).emit(EVT_USER_MAIN_PRESENCE_UPDATE, evt);
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1324,6 +1364,8 @@ function extenChanged(exten) {
     // sends the update with clear number, otherwise the number is obfuscated to respect the privacy authorization
     var sockid, username, extJson;
 
+    // retrieve extension value from exten
+    const extension = exten.getExten()
     for (sockid in wsid) {
       username = wsid[sockid].username;
 
@@ -1342,14 +1384,14 @@ function extenChanged(exten) {
       // Other cases: all the calls are obfuscated except those concerning the user to send to
       if (compAuthorization.isPrivacyEnabled(username) === true &&
         compAuthorization.authorizeAdminQueuesUser(username) === false &&
-        compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
+        compAuthorization.verifyUserEndpointExten(username, extension) === false &&
         wsServer.sockets.sockets.has(sockid)) {
 
         extJson = exten.toJSON(privacyStrReplace, privacyStrReplace);
 
       } else if (compAuthorization.isPrivacyEnabled(username) === true &&
         compAuthorization.authorizeAdminQueuesUser(username) === true &&
-        compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
+        compAuthorization.verifyUserEndpointExten(username, extension) === false &&
         wsServer.sockets.sockets.has(sockid)) {
 
         extJson = exten.toJSON(privacyStrReplace);
@@ -1359,6 +1401,10 @@ function extenChanged(exten) {
       }
       if (wsServer.sockets.sockets.has(sockid)) {
         wsServer.sockets.sockets.get(sockid).emit(EVT_EXTEN_UPDATE, extJson);
+        if (extension) {
+          // retrieve the main presence and emit the associated event
+          compUser.updateUserMainPresence(extension)
+        }
       }
     }
   } catch (err) {
