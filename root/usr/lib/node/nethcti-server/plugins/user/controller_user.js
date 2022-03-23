@@ -297,6 +297,8 @@ function config(path, ROBPath) {
     initializeEndpointsUsersByJSON(json);
     // set user presence
     initializeUsersPresence();
+    // set users mainPresence
+    initializeUsersMainPresence();
     // set users's ROB permission status
     initializeUsersRecallOnBusy(ROBPath);
     // set the association between extensions and usernames
@@ -1976,8 +1978,10 @@ function updateUserPresence(username) {
         }
       });
     }
-    // retrieve the main presence and emit the associated event
-    updateUserMainPresence(mainExtId)
+    // retrieve the mainPresence and emit the associated event
+    if (mainExtId) {
+      updateUserMainPresence(mainExtId)
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2030,7 +2034,7 @@ function retrieveExtensionsPresence(extensions) {
 }
 
 /**
- * Returns the final main presence of the user
+ * Returns the final mainPresence of the user
  *
  * @method retrieveMainPresence
  * @param {string} userPresence
@@ -2108,7 +2112,7 @@ function retrieveMainPresence(customPresence, extensionsPresence) {
  * Update the user mainPresence.
  *
  * @method updateUserMainPresence
- * @param {string} username The the updated extension
+ * @param {string} exten The extension of the user to be updated.
  * @public
  */
 function updateUserMainPresence(exten) {
@@ -2308,6 +2312,26 @@ function updateUserPresenceOnBusy(username) {
       )
     }
     logger.log.info(IDLOG, 'set of recall on busy permissions done');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Initialize the mainPresence of all users.
+ *
+ * @method initializeUsersMainPresence
+ * @private
+ */
+ function initializeUsersMainPresence() {
+  try {
+    for (let username in users) {
+      const userExtension = users[username].getAllEndpoints().extension
+      if (userExtension) {
+        updateUserMainPresence(Object.keys(userExtension)[0]);
+      }
+    }
+    logger.log.info(IDLOG, 'set all users mainPresence done');
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }

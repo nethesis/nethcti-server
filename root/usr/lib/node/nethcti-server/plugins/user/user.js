@@ -5,6 +5,7 @@
  * @main controller_user
  */
 var endpointTypes = require('./endpoint_types');
+var userMainPresence = require('./user_main_presence');
 var EndpointEmail = require('./endpointEmail').EndpointEmail;
 var EndpointJabber = require('./endpointJabber').EndpointJabber;
 var EndpointCalendar = require('./endpointCalendar').EndpointCalendar;
@@ -84,7 +85,7 @@ exports.User = function (uname, na) {
    * @type {string}
    * @private
    */
-   var mainPresence;
+   var mainPresence = userMainPresence.STATUS.offline;
 
   /**
    * The conditinoal presence of the user on unavailable.
@@ -175,7 +176,7 @@ exports.User = function (uname, na) {
    * @method setMainPresence
    * @param {string} status The presence status
    */
-   function setMainPresence(status) {
+  function setMainPresence(status) {
     mainPresence = status;
   }
 
