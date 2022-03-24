@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.28.0
+Version: 3.28.1
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -90,6 +90,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu Mar 24 2022 Sebastian <sebastian.besel@nethesis.it> - 3.28.1-1
+- Sometimes the new presence is not correctly updated - Bug nethesis/dev#6128
+
 * Mon Mar 07 2022 Sebastian <sebastian.besel@nethesis.it> - 3.28.0-1
 - Combine telephone presence and custom presence into one main presence - nethesis/dev#6110
 
