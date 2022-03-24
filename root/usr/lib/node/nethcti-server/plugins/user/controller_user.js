@@ -2326,7 +2326,7 @@ function updateUserPresenceOnBusy(username) {
  function initializeUsersMainPresence() {
   try {
     for (let username in users) {
-      const userExtension = users[username].getAllEndpoints().extension
+      const userExtension = users[username].getAllEndpoints().mainextension
       if (userExtension) {
         updateUserMainPresence(Object.keys(userExtension)[0]);
       }
