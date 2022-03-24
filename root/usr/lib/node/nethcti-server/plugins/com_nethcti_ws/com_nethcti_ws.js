@@ -1401,11 +1401,11 @@ function extenChanged(exten) {
       }
       if (wsServer.sockets.sockets.has(sockid)) {
         wsServer.sockets.sockets.get(sockid).emit(EVT_EXTEN_UPDATE, extJson);
-        if (extension) {
-          // retrieve the main presence and emit the associated event
-          compUser.updateUserMainPresence(extension)
-        }
       }
+    }
+    if (extension) {
+      // retrieve the mainPresence and emit the associated event
+      compUser.updateUserMainPresence(extension)
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
