@@ -226,7 +226,8 @@ function getHistoryCallInterval(data, cb) {
       whereClause = [
         '(cnum IN (?) AND dst NOT IN (?)) AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?) ' +
+        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)',
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -238,7 +239,8 @@ function getHistoryCallInterval(data, cb) {
         '(cnum NOT IN (?) AND dst IN (?)) AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?) AND ' +
-        'disposition IN ("NO ANSWER","BUSY","FAILED")',
+        'disposition IN ("NO ANSWER","BUSY","FAILED")' +
+        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)',
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -263,9 +265,11 @@ function getHistoryCallInterval(data, cb) {
       attributes: attributes,
       offset: (data.offset ? parseInt(data.offset) : 0),
       limit: (data.limit ? parseInt(data.limit) : null),
+      group: ['uniqueid','linkedid','disposition'],
       order: (data.sort ? data.sort : 'time desc')
 
     }).then(function(results) {
+      results.count = results.count.length;
       logger.log.info(IDLOG, results.count + ' results searching history call interval between ' +
         data.from + ' to ' + data.to + ' and filter ' + data.filter +
         (data.endpoints ? (' for endpoints ' + data.endpoints) : ''));
@@ -452,7 +456,8 @@ function getHistorySwitchCallInterval(data, cb) {
         ') AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?) AND ' +
-        'disposition IN ("NO ANSWER","BUSY","FAILED")',
+        'disposition IN ("NO ANSWER","BUSY","FAILED")' +
+        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)',
         data.trunks,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -474,10 +479,11 @@ function getHistorySwitchCallInterval(data, cb) {
       attributes: attributes,
       offset: (data.offset ? parseInt(data.offset) : 0),
       limit: (data.limit ? parseInt(data.limit) : null),
+      group: ['uniqueid','linkedid','disposition'],
       order: (data.sort ? data.sort : 'time desc')
 
     }).then(function(results) {
-
+      results.count = results.count.length;
       logger.log.info(IDLOG, results.count + ' results searching switchboard history call interval between ' +
         data.from + ' to ' + data.to + ' and filter ' + data.filter);
       cb(null, results);
