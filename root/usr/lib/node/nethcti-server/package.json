@@ -25,6 +25,7 @@
     "restify": "4.3.4",
     "sequelize": "3.34.0",
     "socket.io": "^3.0.4",
+    "sql-template-strings": "^2.2.2",
     "uuid": "^3.3.2",
     "winston": "2.3.1"
   },
