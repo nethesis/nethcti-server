@@ -271,9 +271,7 @@ function getHistoryCallInterval(data, cb) {
     }).then(function(results) {
       compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
           where: whereClause,
-          attributes: undefined,
-          offset: (data.offset ? parseInt(data.offset) : 0),
-          limit: (data.limit ? parseInt(data.limit) : null)
+          attributes: undefined
           }).then(function(count) {
               results.count = count;
               logger.log.info(IDLOG, results.count + ' results searching switchboard history call interval between ' +
@@ -493,9 +491,7 @@ function getHistorySwitchCallInterval(data, cb) {
     }).then(function(results) {
       compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
           where: whereClause,
-          attributes: undefined,
-          offset: (data.offset ? parseInt(data.offset) : 0),
-          limit: (data.limit ? parseInt(data.limit) : null)
+          attributes: undefined
           }).then(function(count) {
               results.count = count;
               logger.log.info(IDLOG, results.count + ' results searching switchboard history call interval between ' +
