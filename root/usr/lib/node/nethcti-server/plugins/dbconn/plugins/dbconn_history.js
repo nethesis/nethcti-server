@@ -260,7 +260,7 @@ function getHistoryCallInterval(data, cb) {
     }
 
     // search
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAndCountAll({
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
       where: whereClause,
       attributes: attributes,
       offset: (data.offset ? parseInt(data.offset) : 0),
@@ -269,16 +269,26 @@ function getHistoryCallInterval(data, cb) {
       order: (data.sort ? data.sort : 'time desc')
 
     }).then(function(results) {
-      results.count = results.count.length;
-      logger.log.info(IDLOG, results.count + ' results searching history call interval between ' +
-        data.from + ' to ' + data.to + ' and filter ' + data.filter +
-        (data.endpoints ? (' for endpoints ' + data.endpoints) : ''));
-      cb(null, results);
-
-    }, function(err) { // manage the error
-
-      logger.log.error(IDLOG, 'searching history call interval between ' + data.from + ' to ' + data.to +
-        ' for endpoints ' + data.endpoints + ' and filter ' + data.filter + ': ' + err.toString());
+      compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
+          where: whereClause,
+          group: ['uniqueid','linkedid','disposition'],
+          attributes: attributes
+          }).then(function(count) {
+              const res = {
+                count: count.length,
+                rows: results
+              }
+              logger.log.info(IDLOG, res.count + ' results searching switchboard history call interval between ' +
+                  data.from + ' to ' + data.to + ' and filter ' + data.filter);
+              cb(null, res);
+          }, function(err) { // manage the error
+              logger.log.error(IDLOG, 'counting switchboard history call interval between ' + data.from + ' to ' + data.to +
+                  ' with filter ' + data.filter + ': ' + err.toString());
+              cb(err.toString());
+          });
+      }, function(err) { // manage the error
+      logger.log.error(IDLOG, 'searching switchboard history call interval between ' + data.from + ' to ' + data.to +
+        ' with filter ' + data.filter + ': ' + err.toString());
       cb(err.toString());
     });
 
@@ -474,7 +484,7 @@ function getHistorySwitchCallInterval(data, cb) {
     }
 
     // search
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAndCountAll({
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
       where: whereClause,
       attributes: attributes,
       offset: (data.offset ? parseInt(data.offset) : 0),
@@ -483,13 +493,24 @@ function getHistorySwitchCallInterval(data, cb) {
       order: (data.sort ? data.sort : 'time desc')
 
     }).then(function(results) {
-      results.count = results.count.length;
-      logger.log.info(IDLOG, results.count + ' results searching switchboard history call interval between ' +
-        data.from + ' to ' + data.to + ' and filter ' + data.filter);
-      cb(null, results);
-
-    }, function(err) { // manage the error
-
+      compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
+          where: whereClause,
+          group: ['uniqueid','linkedid','disposition'],
+          attributes: attributes
+           }).then(function(count) {
+              const res = {
+                count: count.length,
+                rows: results
+              }
+              logger.log.info(IDLOG, res.count + ' results searching switchboard history call interval between ' +
+                  data.from + ' to ' + data.to + ' and filter ' + data.filter);
+              cb(null, res);
+          }, function(err) { // manage the error
+              logger.log.error(IDLOG, 'counting switchboard history call interval between ' + data.from + ' to ' + data.to +
+                  ' with filter ' + data.filter + ': ' + err.toString());
+              cb(err.toString());
+          });
+      }, function(err) { // manage the error
       logger.log.error(IDLOG, 'searching switchboard history call interval between ' + data.from + ' to ' + data.to +
         ' with filter ' + data.filter + ': ' + err.toString());
       cb(err.toString());
