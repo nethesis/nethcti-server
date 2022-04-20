@@ -149,6 +149,7 @@ module.exports = function(options, imports, register) {
       var temp;
       var allAgents = {};
       var queues = astProxy.proxyLogic.getQueues();
+      // get all agents from all queues
       for (q in queues) {
         if (queues[q] === undefined) {
           continue;
@@ -165,6 +166,7 @@ module.exports = function(options, imports, register) {
         }
       }
       var permittedAgents = {};
+      // get permitted agents
       for (i = 0; i < qlist.length; i++) {
         if (queues[qlist[i]] === undefined) {
           continue;
@@ -179,10 +181,11 @@ module.exports = function(options, imports, register) {
       compDbconn.getAgentsStatsByList(allAgents, function (err1, result) {
         for (var u in result) {
           if (!permittedAgents[u]) {
+            // remove not permitted agents from result
             delete result[u];
           } else {
             for (var q in result[u]) {
-              if (qlist.indexOf(q) === -1 && q !== 'incomingCalls' && q !== 'outgoingCalls' && q !== 'allCalls') {
+              if (qlist.indexOf(q) === -1 && q !== 'incomingCalls' && q !== 'outgoingCalls' && q !== 'allCalls' && q !== 'allQueues') {
                 delete result[u][q];
               }
             }

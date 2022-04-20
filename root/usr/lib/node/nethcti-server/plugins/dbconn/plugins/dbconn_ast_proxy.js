@@ -6,6 +6,7 @@
  */
 var async = require('async');
 var moment = require('moment');
+const SQL = require('sql-template-strings')
 
 /**
  * The module identifier used by the logger.
@@ -824,6 +825,124 @@ WHERE \`event\` IN ("PAUSE","UNPAUSE") AND agent IN ("${agents.join('","')}") AN
 }
 
 /**
+ * Provides data to calculate recall_time for queues and agents
+ *
+ * @method getRecallTimeStats
+ * @return {function} The cb function to be executed
+ */
+function getRecallTimeStats(agents) {
+  try {
+    if (Array.isArray(agents) !== true) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments))
+    }
+    return function (callback) {
+      try {
+
+        // prepare the query
+        const query = SQL`
+          SELECT t1.queue, t.cnam AS agent, TIMESTAMPDIFF(SECOND, time1, t.calldate) AS recall_time
+          FROM daily_cdr t
+            RIGHT JOIN
+            (
+              SELECT b.callid, b.data2 AS caller, CAST(b.TIME AS DATETIME) AS time1, b.queuename AS queue
+              FROM queue_log a
+                LEFT JOIN queue_log b
+                ON b.callid = a.callid
+              WHERE a.event IN ("EXITEMPTY", "EXITWITHKEY", "EXITWITHTIMEOUT", "FULL", "JOINEMPTY", "JOINUNAVAIL", "ABANDON") AND b.event = "ENTERQUEUE"
+            ) t1
+            ON t.dst LIKE CONCAT('%', t1.caller ,'%')
+          WHERE t.disposition = "ANSWERED" AND t.cnam IN (${agents}) AND t.calldate > t1.time1 AND t.billsec > 0
+          GROUP BY t1.callid, t1.queue
+          ORDER BY t.calldate
+        `
+
+        // execute the query
+        compDbconnMain.dbConn['queue_log'].query(
+          query,
+          (err, results) => {
+            try {
+              if (err) {
+                // catch the query error
+                throw new Error(err)
+              }
+
+              // manage results
+              if (results.length > 0) {
+                logger.log.info(IDLOG, 'get recall time stats of queue agents "' + agents + '" has been successful')
+
+                // results is an array of objects, there's an object for each recall
+                // the object keys are queue: string, agent: string, recall_time: int
+                callback(null, results)
+
+              } else {
+                logger.log.info(IDLOG, 'get calls taken count stats of agents "' + agents + '": not found')
+                callback(null, {})
+              }
+            } catch (error) {
+              logger.log.error(IDLOG, error.stack)
+              callback(error)
+            }
+          }
+        )
+        compDbconnMain.incNumExecQueries()
+      } catch (err) {
+        logger.log.error(IDLOG, err.stack)
+        callback(err)
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack)
+  }
+}
+
+/**
+ * Provides recall_time for agents
+ *
+ * @method agentsRecallTime
+ * @return {function} The object containing recall_time stats for each agent and his queues
+ */
+function agentsRecallTime(stats) {
+  try {
+    if (!stats) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments))
+    }
+    if (stats.length > 0) {
+      // calculate min, max, avg recall_time for allCalls
+      const agentsStats = {}
+      // find agents
+      const agents = [...new Set(stats.map(el => el.agent))]
+      agents.forEach(agent => {
+        agentsStats[agent] = {}
+        const agentStats = stats.filter(el => el.agent == agent)
+
+        // find recall_time for all queues
+        const recallTime = agentStats.map(el => el.recall_time)
+        agentsStats[agent].min_recall_time = Math.min(...recallTime) || 0,
+        agentsStats[agent].max_recall_time = Math.max(...recallTime) || 0,
+        agentsStats[agent].avg_recall_time = Math.round(recallTime.reduce((a, b) => a + b) / recallTime.length) || 0
+
+        // find agent's queues
+        const queues = [...new Set(agentStats.map(el => el.queue))]
+        // find recall_time for each queue
+        queues.forEach(queue => {
+          const queueStats = agentStats.filter(el => el.queue == queue)
+          const queueRecallTime = queueStats.map(el => el.recall_time)
+          agentsStats[agent][queue] = {
+            min_recall_time: Math.min(...queueRecallTime) || 0,
+            max_recall_time: Math.max(...queueRecallTime) || 0,
+            avg_recall_time: Math.round(queueRecallTime.reduce((a, b) => a + b) / queueRecallTime.length) || 0
+          }
+        })
+      })
+      return agentsStats
+    }
+    return null
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Return function to have calls taken counter of queue agents and their
  * time of last call.
  *
@@ -1116,7 +1235,8 @@ function getAgentsStatsByList(members, cb) {
       calls_missed: getAgentsMissedCalls(agents),
       calls_outgoing: getAgentsOutgoingCalls(agents),
       pause_durations: getAgentsPauseDurations(agents),
-      logon_durations: getAgentsLogonDurations(agents)
+      logon_durations: getAgentsLogonDurations(agents),
+      recall_time_stats: getRecallTimeStats(agents)
     };
     async.parallel(functs, function (err, data) {
       try {
@@ -1126,6 +1246,7 @@ function getAgentsStatsByList(members, cb) {
         } else {
           var u, q;
           var ret = {};
+          // calls stats
           for (u in data.calls_stats) {
             if (!ret[u]) {
               ret[u] = {
@@ -1154,6 +1275,7 @@ function getAgentsStatsByList(members, cb) {
             }
             ret[u].incomingCalls.avg_duration_incoming = Math.floor(ret[u].incomingCalls.avg_duration_incoming / Object.keys(data.calls_stats[u]).length);
           }
+          // pause unpause
           for (u in data.pause_unpause) {
             if (!ret[u]) {
               ret[u] = {};
@@ -1166,6 +1288,7 @@ function getAgentsStatsByList(members, cb) {
               ret[u][q].last_unpaused_time = data.pause_unpause[u][q].last_unpaused_time;
             }
           }
+          // login logout
           for (u in data.login_logout) {
             if (!ret[u]) {
               ret[u] = {};
@@ -1268,6 +1391,24 @@ function getAgentsStatsByList(members, cb) {
               ret[u].allCalls.max_duration = ret[u].incomingCalls.max_duration_incoming;
             } else if (ret[u].outgoingCalls && ret[u].outgoingCalls.max_duration_outgoing) {
               ret[u].allCalls.max_duration = ret[u].outgoingCalls.max_duration_outgoing;
+            }
+          }
+          // agent's recall_time
+          const art = agentsRecallTime(data.recall_time_stats)
+          if (art && Object.keys(art).length > 0) {
+            for (u in ret) {
+              // set recall_time for agent
+              ret[u].allQueues = {}
+              if (art[u] && art[u].min_recall_time) ret[u].allQueues.min_recall_time = art[u].min_recall_time
+              if (art[u] && art[u].max_recall_time) ret[u].allQueues.max_recall_time = art[u].max_recall_time
+              if (art[u] && art[u].avg_recall_time) ret[u].allQueues.avg_recall_time = art[u].avg_recall_time
+              for (q in art[u]) {
+                if (!ret[u][q]) ret[u][q] = {}
+                // set recall_time for each queue of the agent
+                if (art[u] && art[u][q] && art[u][q].min_recall_time) ret[u][q].min_recall_time = art[u][q].min_recall_time
+                if (art[u] && art[u][q] && art[u][q].max_recall_time) ret[u][q].max_recall_time = art[u][q].max_recall_time
+                if (art[u] && art[u][q] && art[u][q].avg_recall_time) ret[u][q].avg_recall_time = art[u][q].avg_recall_time
+              }
             }
           }
           if (CACHE_ENABLED) {
