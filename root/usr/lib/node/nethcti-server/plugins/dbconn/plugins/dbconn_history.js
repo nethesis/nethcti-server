@@ -269,14 +269,18 @@ function getHistoryCallInterval(data, cb) {
       order: (data.sort ? data.sort : 'time desc')
 
     }).then(function(results) {
-      compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
+      compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
           where: whereClause,
-          attributes: undefined
+          group: ['uniqueid','linkedid','disposition'],
+          attributes: attributes
           }).then(function(count) {
-              results.count = count;
-              logger.log.info(IDLOG, results.count + ' results searching switchboard history call interval between ' +
+              const res = {
+                count: count.length,
+                rows: results
+              }
+              logger.log.info(IDLOG, res.count + ' results searching switchboard history call interval between ' +
                   data.from + ' to ' + data.to + ' and filter ' + data.filter);
-              cb(null, results);
+              cb(null, res);
           }, function(err) { // manage the error
               logger.log.error(IDLOG, 'counting switchboard history call interval between ' + data.from + ' to ' + data.to +
                   ' with filter ' + data.filter + ': ' + err.toString());
@@ -489,14 +493,18 @@ function getHistorySwitchCallInterval(data, cb) {
       order: (data.sort ? data.sort : 'time desc')
 
     }).then(function(results) {
-      compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
+      compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
           where: whereClause,
-          attributes: undefined
-          }).then(function(count) {
-              results.count = count;
-              logger.log.info(IDLOG, results.count + ' results searching switchboard history call interval between ' +
+          group: ['uniqueid','linkedid','disposition'],
+          attributes: attributes
+           }).then(function(count) {
+              const res = {
+                count: count.length,
+                rows: results
+              }
+              logger.log.info(IDLOG, res.count + ' results searching switchboard history call interval between ' +
                   data.from + ' to ' + data.to + ' and filter ' + data.filter);
-              cb(null, results);
+              cb(null, res);
           }, function(err) { // manage the error
               logger.log.error(IDLOG, 'counting switchboard history call interval between ' + data.from + ' to ' + data.to +
                   ' with filter ' + data.filter + ': ' + err.toString());
