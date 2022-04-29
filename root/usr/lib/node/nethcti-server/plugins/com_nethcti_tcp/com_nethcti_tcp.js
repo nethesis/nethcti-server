@@ -972,6 +972,9 @@ function sendCallNotificationEvent(username, data, socket) {
     var isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
     // check if the answer button is to be displayed
     var answerAction = (isSupported || compUser.isExtenWebrtc(data.dialingExten)) ? true : false;
+    // retrieve call's conversation data
+    const exten = compAstProxy.getJSONExtension(data.dialingExten)
+    const conv = Object.values(exten.conversations).find(el => el.id.includes(data.channel))
     // always add this information without filter them
     var params = [
       'callerNum=', data.callerIdentity.callerNum,
@@ -981,7 +984,8 @@ function sendCallNotificationEvent(username, data, socket) {
       '&dialExten=', data.dialingExten,
       '&answerAction=', answerAction,
       '&webrtc=', compUser.isExtenWebrtc(data.dialingExten),
-      '&random=', (new Date()).getTime()
+      '&random=', (new Date()).getTime(),
+      '&uniqueId=', `${conv.uniqueId}`
     ].join('');
     // add parameters to the HTTP GET url
     var url = callNotifTemplatePath + '?' + params;
