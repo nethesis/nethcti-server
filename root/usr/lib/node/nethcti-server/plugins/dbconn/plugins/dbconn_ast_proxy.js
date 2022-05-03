@@ -830,11 +830,8 @@ WHERE \`event\` IN ("PAUSE","UNPAUSE") AND agent IN ("${agents.join('","')}") AN
  * @method getRecallTimeStats
  * @return {function} The cb function to be executed
  */
-function getRecallTimeStats(agents) {
+function getRecallTimeStats() {
   try {
-    if (Array.isArray(agents) !== true) {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments))
-    }
     return function (callback) {
       try {
 
@@ -851,7 +848,11 @@ function getRecallTimeStats(agents) {
               WHERE a.event IN ("EXITEMPTY", "EXITWITHKEY", "EXITWITHTIMEOUT", "FULL", "JOINEMPTY", "JOINUNAVAIL", "ABANDON") AND b.event = "ENTERQUEUE"
             ) t1
             ON t.dst LIKE CONCAT('%', t1.caller ,'%')
-          WHERE t.disposition = "ANSWERED" AND t.cnam IN (${agents}) AND t.calldate > t1.time1 AND t.billsec > 0
+          WHERE t.disposition = "ANSWERED"
+            AND t.cnam IN (
+              SELECT DISTINCT(t.cnam) FROM queue_log WHERE t.cnam IS NOT NULL AND t.cnam!="NONE" AND queuename=t1.queue
+            )
+            AND t.calldate > t1.time1 AND t.billsec > 0
           GROUP BY t1.callid, t1.queue
           ORDER BY t.calldate
         `
@@ -868,14 +869,14 @@ function getRecallTimeStats(agents) {
 
               // manage results
               if (results.length > 0) {
-                logger.log.info(IDLOG, 'get recall time stats of queue agents "' + agents + '" has been successful')
+                logger.log.info(IDLOG, 'get recall time stats of queues and agents has been successful')
 
                 // results is an array of objects, there's an object for each recall
                 // the object keys are queue: string, agent: string, recall_time: int
                 callback(null, results)
 
               } else {
-                logger.log.info(IDLOG, 'get calls taken count stats of agents "' + agents + '": not found')
+                logger.log.info(IDLOG, 'recall time stats of queues and agents: not found')
                 callback(null, {})
               }
             } catch (error) {
@@ -1236,7 +1237,7 @@ function getAgentsStatsByList(members, cb) {
       calls_outgoing: getAgentsOutgoingCalls(agents),
       pause_durations: getAgentsPauseDurations(agents),
       logon_durations: getAgentsLogonDurations(agents),
-      recall_time_stats: getRecallTimeStats(agents)
+      recall_time_stats: getRecallTimeStats()
     };
     async.parallel(functs, function (err, data) {
       try {
@@ -1393,7 +1394,7 @@ function getAgentsStatsByList(members, cb) {
               ret[u].allCalls.max_duration = ret[u].outgoingCalls.max_duration_outgoing;
             }
           }
-          // agent's recall_time
+          // art = agent's recall_time
           const art = agentsRecallTime(data.recall_time_stats)
           if (art && Object.keys(art).length > 0) {
             for (u in ret) {
