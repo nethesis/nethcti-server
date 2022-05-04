@@ -178,21 +178,25 @@ module.exports = function(options, imports, register) {
           }
         }
       }
-      compDbconn.getAgentsStatsByList(allAgents, function (err1, result) {
-        for (var u in result) {
-          if (!permittedAgents[u]) {
-            // remove not permitted agents from result
-            delete result[u];
-          } else {
-            for (var q in result[u]) {
-              if (qlist.indexOf(q) === -1 && q !== 'incomingCalls' && q !== 'outgoingCalls' && q !== 'allCalls' && q !== 'allQueues') {
-                delete result[u][q];
+      compDbconn.getAgentsStatsByList(
+        allAgents,
+        function (err1, result) {
+          for (var u in result) {
+            if (!permittedAgents[u]) {
+              // remove not permitted agents from result
+              delete result[u];
+            } else {
+              for (var q in result[u]) {
+                if (qlist.indexOf(q) === -1 && q !== 'incomingCalls' && q !== 'outgoingCalls' && q !== 'allCalls' && q !== 'allQueues') {
+                  delete result[u][q];
+                }
               }
             }
           }
-        }
-        cb(err1, result);
-      });
+          cb(err1, result);
+        },
+        qlist
+      );
     } catch (error) {
       logger.log.error(IDLOG, error.stack);
       cb(error);

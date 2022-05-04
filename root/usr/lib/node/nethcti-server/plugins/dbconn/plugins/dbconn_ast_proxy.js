@@ -1213,8 +1213,9 @@ WHERE event IN ("REMOVEMEMBER","ADDMEMBER")
  * @method getAgentsStatsByList
  * @param {object} members The list of all agents of all queues with logged-in and pause status
  * @param {function} cb The callback function
+ * @param {array} qlist The list of permitted queues for qmanager
  */
-function getAgentsStatsByList(members, cb) {
+function getAgentsStatsByList(members, cb, qlist) {
   try {
     if (typeof cb !== 'function' || typeof members !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -1392,6 +1393,12 @@ function getAgentsStatsByList(members, cb) {
               ret[u].allCalls.max_duration = ret[u].incomingCalls.max_duration_incoming;
             } else if (ret[u].outgoingCalls && ret[u].outgoingCalls.max_duration_outgoing) {
               ret[u].allCalls.max_duration = ret[u].outgoingCalls.max_duration_outgoing;
+            }
+          }
+          // remove not permitted queues from recall stats data
+          for (let i in data.recall_time_stats) {
+            if (!qlist.includes(data.recall_time_stats[i].queue)) {
+              data.recall_time_stats.splice(i, 1)
             }
           }
           // art = agent's recall_time
