@@ -968,13 +968,28 @@ function socketSend(socket, msg, cb) {
  */
 function sendCallNotificationEvent(username, data, socket) {
   try {
+    let exten, conv, uniqueId
     var extenAgent = compAstProxy.getExtensionAgent(data.dialingExten);
     var isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
     // check if the answer button is to be displayed
     var answerAction = (isSupported || compUser.isExtenWebrtc(data.dialingExten)) ? true : false;
-    // retrieve call's conversation data
-    const exten = compAstProxy.getJSONExtension(data.dialingExten)
-    const conv = Object.values(exten.conversations).find(el => el.id.includes(data.channel))
+    // the call's conversation data
+    if (data && data.dialingExten) {
+      exten = compAstProxy.getJSONExtension(data.dialingExten)
+    }
+    // find the right conversation
+    if (exten && exten.conversations && data.channel) {
+      conv = Object.values(exten.conversations).find(el => el.id.includes(data.channel))
+    }
+    // the uniqueId of the conversation
+    if (conv && conv.uniqueId) {
+      /**
+       * Sometimes this function could be called before the
+       * conversation update so the uniqueId could not be present
+       * and will be returned as empty string
+       */
+      uniqueId = conv.uniqueId
+    }
     // always add this information without filter them
     var params = [
       'callerNum=', data.callerIdentity.callerNum,
@@ -985,7 +1000,7 @@ function sendCallNotificationEvent(username, data, socket) {
       '&answerAction=', answerAction,
       '&webrtc=', compUser.isExtenWebrtc(data.dialingExten),
       '&random=', (new Date()).getTime(),
-      '&uniqueId=', `${conv.uniqueId}`
+      '&uniqueId=', `${uniqueId || ''}`
     ].join('');
     // add parameters to the HTTP GET url
     var url = callNotifTemplatePath + '?' + params;
