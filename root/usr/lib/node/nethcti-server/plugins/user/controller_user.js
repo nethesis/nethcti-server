@@ -2123,7 +2123,6 @@ function updateUserMainPresence(exten) {
     const username = getUserFromExten(exten)
     const userExtensions = getAllEndpointsExtension(username)
     const customPresence = users[username].getPresence()
-    const oldMainPresence = users[username].getMainPresence()
     const astExtensions = new Map()
     for (const ext in userExtensions) {
       const astExtension = compAstProxy.getJSONExtension(ext)
@@ -2132,27 +2131,24 @@ function updateUserMainPresence(exten) {
     const extensionsPresence = retrieveExtensionsPresence(astExtensions)
     const newMainPresence = retrieveMainPresence(customPresence, extensionsPresence)
 
-    // change the main presence only when is different than the previous
-    if (oldMainPresence !== newMainPresence) {
-      // set the main presence
-      logger.log.info(IDLOG, 'set user main presence of "' + username + '" to "' + newMainPresence + '"');
-      users[username].setMainPresence(newMainPresence);
+    // set the main presence
+    logger.log.info(IDLOG, 'set user main presence of "' + username + '" to "' + newMainPresence + '"');
+    users[username].setMainPresence(newMainPresence);
 
-      if (!reloading) {
-        const mainPresence = users[username].getMainPresence()
-        const mainExtId = getEndpointMainExtension(username).getId()
-        const cfval = compAstProxy.getExtenCfValue(mainExtId)
+    if (!reloading) {
+      const mainPresence = users[username].getMainPresence()
+      const mainExtId = getEndpointMainExtension(username).getId()
+      const cfval = compAstProxy.getExtenCfValue(mainExtId)
 
-        // emit the ws main presence update event
-        logger.log.info(IDLOG, 'emit event "' + EVT_USER_MAIN_PRESENCE_CHANGED + '"')
-        emitter.emit(EVT_USER_MAIN_PRESENCE_CHANGED, {
-          mainPresence: {
-            username: username,
-            status: mainPresence,
-            to: (mainPresence ===  userMainPresence.STATUS.callforward && cfval) ? cfval : undefined
-          }
-        })
-      }
+      // emit the ws main presence update event
+      logger.log.info(IDLOG, 'emit event "' + EVT_USER_MAIN_PRESENCE_CHANGED + '"')
+      emitter.emit(EVT_USER_MAIN_PRESENCE_CHANGED, {
+        mainPresence: {
+          username: username,
+          status: mainPresence,
+          to: (mainPresence ===  userMainPresence.STATUS.callforward && cfval) ? cfval : undefined
+        }
+      })
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
