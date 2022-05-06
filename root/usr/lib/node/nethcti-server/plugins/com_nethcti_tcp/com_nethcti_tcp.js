@@ -707,6 +707,7 @@ function extenDialing(data) {
     if (typeof data !== 'object' ||
       typeof data.channel !== 'string' ||
       typeof data.dialingExten !== 'string' ||
+      typeof data.destUniqueId !== 'string' ||
       typeof data.callerIdentity !== 'object') {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -968,27 +969,14 @@ function socketSend(socket, msg, cb) {
  */
 function sendCallNotificationEvent(username, data, socket) {
   try {
-    let exten, conv, uniqueId
+    let uniqueId
     var extenAgent = compAstProxy.getExtensionAgent(data.dialingExten);
     var isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
     // check if the answer button is to be displayed
     var answerAction = (isSupported || compUser.isExtenWebrtc(data.dialingExten)) ? true : false;
-    // the call's conversation data
-    if (data && data.dialingExten) {
-      exten = compAstProxy.getJSONExtension(data.dialingExten)
-    }
-    // find the right conversation
-    if (exten && exten.conversations && data.channel) {
-      conv = Object.values(exten.conversations).find(el => el.id.includes(data.channel))
-    }
     // the uniqueId of the conversation
-    if (conv && conv.uniqueId) {
-      /**
-       * Sometimes this function could be called before the
-       * conversation update so the uniqueId could not be present
-       * and will be returned as empty string
-       */
-      uniqueId = conv.uniqueId
+    if (data.destUniqueId) {
+      uniqueId = data.destUniqueId
     }
     // always add this information without filter them
     var params = [
