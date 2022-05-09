@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.28.1
+Version: 3.28.2
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -90,6 +90,12 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon May 09 2022 Sebastian <sebastian.besel@nethesis.it> - 3.28.2-1
+- Add param URL to nethifier - nethesis/dev#6141
+- Add recall times for agents and for queues - nethesis/dev#6127
+- Don't show calls answered by someone else as lost - Bug nethesis/dev#6129
+- Sometimes the new presence is not correctly updated - Bug nethesis/dev#6128
+
 * Thu Mar 24 2022 Sebastian <sebastian.besel@nethesis.it> - 3.28.1-1
 - Sometimes the new presence is not correctly updated - Bug nethesis/dev#6128
 
