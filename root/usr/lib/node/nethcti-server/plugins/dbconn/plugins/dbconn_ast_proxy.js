@@ -1558,6 +1558,7 @@ function getPinExtens(extens, cb) {
     }
     if (extens.length === 0) {
       cb(null, {});
+      return;
     }
     compDbconnMain.dbConn['pin'].query(
       'SELECT `extension`, `pin`, `enabled` FROM `pin` WHERE `extension` IN (?)',
