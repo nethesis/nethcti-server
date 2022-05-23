@@ -7,6 +7,7 @@
 var userPresence = require('./user_presence');
 var endpointTypes = require('./endpoint_types');
 var controllerUser = require('./controller_user');
+var endpointExtension = require('./endpointExtension');
 
 /**
  * The module identifier used by the logger.
@@ -27,6 +28,7 @@ module.exports = function(options, imports, register) {
   // public interface for other architect components
   register(null, {
     user: {
+      TYPES: endpointExtension.TYPES,
       ENDPOINT_TYPES: endpointTypes.TYPES,
       isValidUserPresence: userPresence.isValidUserPresence,
       isValidUserPresenceOnBusy: userPresence.isValidUserPresenceOnBusy,

@@ -694,20 +694,26 @@ function checkAutoDndOffLogin(username) {
       var autoDndOffLoginEnabled = userSettings[username][USER_CONFIG_KEYS.auto_dndoff_login];
       if (autoDndOffLoginEnabled) {
 
-        var e = compUser.getEndpointMainExtension(username).getId();
+        const allEndpoints = compUser.getEndpointsJSON(username)
+        const uniqueExt = Array.from(new Set(Object.keys(allEndpoints.extension)))
 
-        logger.log.info(IDLOG, 'set DND OFF for exten "' + e + '" due to automatic DND OFF on login setting');
-        compAstProxy.setDnd(e, false, function(err, resp) {
-          try {
-            if (err) {
-              logger.log.warn(IDLOG, err);
-            } else {
-              logger.log.info(IDLOG, 'DND OFF has been set for exten "' + e + '" due to "auto dnd off login" setting of user "' + username + '"');
+        uniqueExt.map(ext => {
+          logger.log.info(IDLOG, 'set DND OFF for exten "' + ext + '" due to automatic DND OFF on login setting');
+          compAstProxy.setDnd(ext, false, function(err, resp) {
+            try {
+              if (err) {
+                logger.log.warn(IDLOG, err);
+              } else {
+                if (allEndpoints.extension[ext].type === compUser.TYPES.physical) {
+                  compAstProxy.reloadPhysicalPhoneConfig({[ext]: ''});
+                }
+                logger.log.info(IDLOG, 'DND OFF has been set for exten "' + ext + '" due to "auto dnd off login" setting of user "' + username + '"');
+              }
+            } catch (err1) {
+              logger.log.error(IDLOG, err1.stack);
             }
-          } catch (err1) {
-            logger.log.error(IDLOG, err1.stack);
-          }
-        });
+          });
+        })
       }
     }
   } catch (err) {
@@ -861,20 +867,26 @@ function checkAutoDndOnLogout(username) {
       var autoDndOnLogoutEnabled = userSettings[username][USER_CONFIG_KEYS.auto_dndon_logout];
       if (autoDndOnLogoutEnabled) {
 
-        var e = compUser.getEndpointMainExtension(username).getId();
+        const allEndpoints = compUser.getEndpointsJSON(username)
+        const uniqueExt = Array.from(new Set(Object.keys(allEndpoints.extension)))
 
-        logger.log.info(IDLOG, 'set DND ON for exten "' + e + '" due to automatic DND ON on logout setting');
-        compAstProxy.setDnd(e, true, function(err, resp) {
-          try {
-            if (err) {
-              logger.log.warn(IDLOG, err);
-            } else {
-              logger.log.info(IDLOG, 'DND ON has been set for exten "' + e + '" due to "auto dnd on logout" setting of user "' + username + '"');
+        uniqueExt.map(ext => {
+          logger.log.info(IDLOG, 'set DND ON for exten "' + ext + '" due to automatic DND ON on logout setting');
+          compAstProxy.setDnd(ext, true, function(err, resp) {
+            try {
+              if (err) {
+                logger.log.warn(IDLOG, err);
+              } else {
+                if (allEndpoints.extension[ext].type === compUser.TYPES.physical) {
+                  compAstProxy.reloadPhysicalPhoneConfig({[ext]: ''});
+                }
+                logger.log.info(IDLOG, 'DND ON has been set for exten "' + ext + '" due to "auto dnd on logout" setting of user "' + username + '"');
+              }
+            } catch (err1) {
+              logger.log.error(IDLOG, err1.stack);
             }
-          } catch (err1) {
-            logger.log.error(IDLOG, err1.stack);
-          }
-        });
+          });
+        })
       }
     }
   } catch (err) {
