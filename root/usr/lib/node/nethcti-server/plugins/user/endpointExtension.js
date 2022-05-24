@@ -221,6 +221,8 @@ const TYPES = {
   mobile: 'mobile'
 };
 
+exports.TYPES = TYPES
+
 /**
  * Checks if the extension type is valid.
  *
