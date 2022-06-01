@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.28.3
+Version: 3.28.4
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -90,6 +90,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Jun 01 2022 Sebastian <sebastian.besel@nethesis.it> - 3.28.4-1
+- Pickup of calls parked with transfer to 70 fails - Bug nethesis/dev#6156
+
 * Thu May 26 2022 Sebastian <sebastian.besel@nethesis.it> - 3.28.3-1
 - Wrong DND and Queues status of physical phone - Bug nethesis/dev#6151
 - Avoid inconsistent status on presence update  - Bug nethesis/dev#6155
