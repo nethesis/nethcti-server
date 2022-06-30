@@ -5660,7 +5660,7 @@ function ajaxPhoneDtmf(username, req, res) {
       url = url.replace(/\$SERVER/g, serverHostname);
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
-      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      url = url.replace(/\$PHONE_PASS/g, encodeURIComponent(phonePass));
       url = url.replace(/\$TONE/g, tone);
 
       httpReq.get(url, function (httpResp) {
@@ -5736,7 +5736,7 @@ function ajaxPhoneHoldUnhold(username, req, res) {
       url = url.replace(/\$SERVER/g, serverHostname);
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
-      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      url = url.replace(/\$PHONE_PASS/g, encodeURIComponent(phonePass));
 
       httpReq.get(url, function (httpResp) {
         try {
@@ -5837,7 +5837,7 @@ function ajaxPhoneCall(username, req, res) {
       url = url.replace(/\$ACCOUNT/g, exten);
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
-      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      url = url.replace(/\$PHONE_PASS/g, encodeURIComponent(phonePass));
 
       // alcatel phones accept GET/401/GET/2xx handshake
       // first request get 401 response
@@ -5974,7 +5974,7 @@ function sendPhoneCallToTcp(username, req, res) {
       url = url.replace(/\$ACCOUNT/g, exten);
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
-      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      url = url.replace(/\$PHONE_PASS/g, encodeURIComponent(phonePass));
       compNethctiTcp.sendPhoneRequest(username, url);
     } else {
       logger.log.warn(IDLOG, `failed call to ${to} via TCP request by the user "${username}": extenAgent is not supported`);
@@ -6009,7 +6009,7 @@ function sendPhoneAnswerToTcp(username, req, res) {
       const phonePass = compUser.getPhoneWebPass(username, exten);
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
-      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      url = url.replace(/\$PHONE_PASS/g, encodeURIComponent(phonePass));
       compNethctiTcp.sendPhoneRequest(username, url);
     } else {
       logger.log.warn(IDLOG, `failed answer via TCP request by the user "${username}": extenAgent is not supported`);
@@ -6042,7 +6042,7 @@ function sendPhoneHoldToTcp(username, req, res) {
       const phonePass = compUser.getPhoneWebPass(username, exten);
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
-      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      url = url.replace(/\$PHONE_PASS/g, encodeURIComponent(phonePass));
       compNethctiTcp.sendPhoneRequest(username, url);
     } else {
       logger.log.warn(IDLOG, `failed answer via TCP request by the user "${username}": extenAgent is not supported`);
@@ -6083,7 +6083,7 @@ function sendPhoneDtmfToTcp(username, req, res) {
       const phonePass = compUser.getPhoneWebPass(username, exten);
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
-      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      url = url.replace(/\$PHONE_PASS/g, encodeURIComponent(phonePass));
       url = url.replace(/\$TONE/g, tone);
       compNethctiTcp.sendPhoneRequest(username, url);
     } else {
@@ -6126,7 +6126,7 @@ function ajaxPhoneAnswer(username, req, res) {
       // replace the parameters of the url template
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
-      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      url = url.replace(/\$PHONE_PASS/g, encodeURIComponent(phonePass));
 
       // alcatel phones accept GET/401/GET/2xx handshake
       // first request get 401 response
