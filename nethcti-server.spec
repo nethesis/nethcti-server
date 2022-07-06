@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.28.4
+Version: 3.28.5
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -90,6 +90,10 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Jul 06 2022 Stefano Fancello <stefano.fancello@nethesis.it> - 3.28.5-1
+- in cti call history, transfered calls show a wrong duration - Bug nethesis/dev#6162
+- Don't show internal calls answered by someone else as lost   - Bug nethesis/dev#6161
+
 * Wed Jun 01 2022 Sebastian <sebastian.besel@nethesis.it> - 3.28.4-1
 - Pickup of calls parked with transfer to 70 fails - Bug nethesis/dev#6156
 
