@@ -284,12 +284,12 @@ const queryDoneCalls = '\
     AND a.queuename IN (<REPLACE_LOST_QUEUES>)';
 
 const queryCdrCalls = '\
-  SELECT calldate AS time,\
+  SELECT DISTINCT calldate AS time,\
     l.queuename as queuename,\
     "OUT" AS direction,\
     IF (disposition="ANSWERED", "DONE", disposition) AS action,\
     0 AS position,\
-    0 AS duration,\
+    duration,\
     0 AS hold,\
     dst AS cid,\
     dst_cnam AS name,\
