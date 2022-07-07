@@ -292,8 +292,8 @@ const queryCdrCalls = '\
     0 AS duration,\
     0 AS hold,\
     dst AS cid,\
-    cnam AS name,\
-    ccompany AS company,\
+    dst_cnam AS name,\
+    dst_ccompany AS company,\
     accountcode AS agent,\
     "" \
   FROM daily_cdr c\
@@ -367,7 +367,7 @@ function getRecall(obj, cb) {
     }
     const query = `
 SELECT
-  cid, name, company, action, UNIX_TIMESTAMP(time) as time, direction, queuename,
+  cid, name, company, action, MIN(UNIX_TIMESTAMP(time)) as time, direction, queuename,
   IF (event = "", action, event) AS event
 FROM ${getAllQueueRecallQueryTable(obj.hours, obj.queues, obj.agents)}
 GROUP BY cid, queuename
