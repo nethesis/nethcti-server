@@ -371,7 +371,7 @@ SELECT
   IF (event = "", action, event) AS event
 FROM ${getAllQueueRecallQueryTable(obj.hours, obj.queues, obj.agents)}
 GROUP BY cid, queuename
-ORDER BY time DESC`;
+ORDER BY time ASC`;
     compDbconnMain.dbConn['queue_log'].query(
       query,
       (err, results, fields) => {
