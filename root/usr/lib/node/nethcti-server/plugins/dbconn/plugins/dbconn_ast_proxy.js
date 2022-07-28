@@ -284,17 +284,17 @@ const queryDoneCalls = '\
     AND a.queuename IN (<REPLACE_LOST_QUEUES>)';
 
 const queryCdrCalls = '\
-  SELECT calldate AS time,\
+  SELECT DISTINCT calldate AS time,\
     l.queuename as queuename,\
     "OUT" AS direction,\
     IF (disposition="ANSWERED", "DONE", disposition) AS action,\
     0 AS position,\
-    0 AS duration,\
+    duration,\
     0 AS hold,\
     dst AS cid,\
-    cnam AS name,\
-    ccompany AS company,\
-    accountcode AS agent,\
+    dst_cnam AS name,\
+    dst_ccompany AS company,\
+    cnam AS agent,\
     "" \
   FROM daily_cdr c\
     INNER JOIN asteriskcdrdb.queue_log l ON c.dst=l.data2\
@@ -367,11 +367,11 @@ function getRecall(obj, cb) {
     }
     const query = `
 SELECT
-  cid, name, company, action, UNIX_TIMESTAMP(time) as time, direction, queuename,
+  cid, name, company, action, MIN(UNIX_TIMESTAMP(time)) as time, direction, queuename,
   IF (event = "", action, event) AS event
 FROM ${getAllQueueRecallQueryTable(obj.hours, obj.queues, obj.agents)}
 GROUP BY cid, queuename
-ORDER BY time DESC`;
+ORDER BY time ASC`;
     compDbconnMain.dbConn['queue_log'].query(
       query,
       (err, results, fields) => {
