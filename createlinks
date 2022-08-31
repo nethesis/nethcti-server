@@ -91,3 +91,12 @@ event_services('nethserver-conference-save', qw(
 event_services('certificate-update', qw(
     nethcti-server restart
 ));
+
+#
+# post-restore-data event
+#
+
+$event = "post-restore-data";
+event_actions($event,
+   'nethcti-server-fix-rsync-perms' => '10',
+);
