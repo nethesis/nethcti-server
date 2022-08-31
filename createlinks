@@ -95,7 +95,6 @@ event_services('certificate-update', qw(
 #
 # post-restore-data event
 #
-
 $event = "post-restore-data";
 event_actions($event,
    'nethcti-server-fix-rsync-perms' => '10',
