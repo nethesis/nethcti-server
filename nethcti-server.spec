@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.28.6
+Version: 3.28.7
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -90,6 +90,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Sep 02 2022 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 3.28.7-1
+- rsync disaster recovery introduces permissions issue - Bug NethServer/dev#6691
+
 * Mon Aug 01 2022 Stefano Fancello <stefano.fancello@nethesis.it> - 3.28.6-1
 - In not managed calls, take time from first interaction instead of last one - Bug nethesis/dev#6177
 
