@@ -47,7 +47,7 @@ NODE_ENV=development
 
 ## Documentation
 
-https://nethvoice.docs.nethesis.it/en/v14/cti_dev.html
+https://nethvoice.docs.nethesis.it/it/v14/
 
 ## Authentication
 
