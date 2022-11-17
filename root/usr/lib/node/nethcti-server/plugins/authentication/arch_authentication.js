@@ -44,6 +44,7 @@ module.exports = function(options, imports, register) {
       getAdminSecretKey: authentication.getAdminSecretKey,
       getRemoteSiteName: authentication.getRemoteSiteName,
       updateTokenExpires: authentication.updateTokenExpires,
+      getPersistentToken: authentication.getPersistentToken,
       removeShibbolethMap: authentication.removeShibbolethMap,
       isUnautheCallEnabled: authentication.isUnautheCallEnabled,
       getShibbolethUsername: authentication.getShibbolethUsername,

@@ -243,7 +243,8 @@ function setCompUser(comp) {
         'post': [
           'login',
           'remotelogin',
-          'logout'
+          'logout',
+          'phone_island_token'
         ],
         'head': [],
         'del': []
@@ -342,6 +343,54 @@ function setCompUser(comp) {
       },
 
       /**
+       * Provides the login function for the phone island with the following REST API:
+       *
+       *     phone_island_token
+       *
+       * Every user with a valid token can invoke it and receive an API token without expiration
+       * There is only a persistent phone island token for each user
+       *
+       * @method phone_island_token
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @param {function} next Function to run the next handler in the chain
+       * @return The token without expiration and the username
+       */
+       phone_island_token: async function(req, res) {
+        try {
+
+          // Get the username from the headers
+          const username = req.headers.authorization_user;
+          // Get the valid token from the request
+          // The token validity is checked inside the authorization proxy
+          const authToken = req.headers.authorization_token;
+
+          // Check if the user component has been configured (after asterisk ready status)
+          if (compUser.isConfigured() === false) {
+            var errmsg = 'service not ready: user component not configured - possible asterisk delay';
+            logger.log.warn(IDLOG, errmsg);
+            compUtil.net.sendHttp503(IDLOG, res, errmsg);
+            return;
+          }
+
+          // Add _phone_island to the end of api username tokens
+          const apiUsername = `${username}_phone_island`
+
+          // Create the persistent token using username and a valid authentication token
+          const apiToken = await compAuthe.getPersistentToken(apiUsername, authToken);
+          // Return the token ready to be used by api's and ws
+          res.send(200, {
+            api_token: apiToken,
+            username: username
+          });
+
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp401(IDLOG, err);
+        }
+      },
+
+      /**
        * Provides the logout function with the following REST API:
        *
        *     logout
@@ -375,6 +424,7 @@ function setCompUser(comp) {
     exports.api = authentication.api;
     exports.login = authentication.login;
     exports.logout = authentication.logout;
+    exports.phone_island_token = authentication.phone_island_token;
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;
     exports.setCompUser = setCompUser;
