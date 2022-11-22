@@ -49,6 +49,7 @@ module.exports = function(options, imports, register) {
       isUnautheCallEnabled: authentication.isUnautheCallEnabled,
       getShibbolethUsername: authentication.getShibbolethUsername,
       removePersistentToken: authentication.removePersistentToken,
+      persistentTokenExists: authentication.persistentTokenExists,
       isUnautheCallIPEnabled: authentication.isUnautheCallIPEnabled,
       authenticateRemoteSite: authentication.authenticateRemoteSite,
       isAutoUpdateTokenExpires: authentication.isAutoUpdateTokenExpires,

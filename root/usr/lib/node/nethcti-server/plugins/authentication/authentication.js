@@ -781,18 +781,19 @@ async function newPersistentToken(username, password, nonce) {
  * @method removePersistentToken
  * @param  {string} username The access key
  * @param  {string} token The token
+ * @param  {string} type The type of the persistent token
  * @return {boolean} True if the grant removing has been successful.
  */
-function removePersistentToken(username, token) {
+async function removePersistentToken(username, token, type) {
   try {
     // check the parameters
-    if (typeof username !== 'string' || typeof token !== 'string') {
+    if (typeof username !== 'string' || typeof token !== 'string' || typeof type !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     // delete the persistent token
-    compDbconn.deleteAuthToken({ user: username });
+    await compDbconn.deleteAuthToken({ user: username });
     persistentTokens.delete(username);
-    logger.log.info(IDLOG, 'removed token "' + token + '" for user ' + username);
+    logger.log.info(IDLOG, 'removed persistent token of type "' + type + '" for user ' + username);
     if (!persistentTokens.has(username)) {
       return true;
     }
@@ -1211,8 +1212,8 @@ function isAutoUpdateTokenExpires() {
       }
     }
     // Check the api persistent token
-    if (persistentTokens.has(`${username}_phone_island`)) {
-      const pTokenApi = persistentTokens.get(`${username}_phone_island`).token;
+    if (persistentTokens.has(`${username}_phone-island`)) {
+      const pTokenApi = persistentTokens.get(`${username}_phone-island`).token;
       // Compare the given encrypted token with the api persistent token
       if (pTokenApi === hashToken) {
         return true;
@@ -1220,6 +1221,26 @@ function isAutoUpdateTokenExpires() {
     }
     // Return false if there aren't matching tokens
     return false
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
+ * Check if persistent token exists.
+ *
+ * @method persistentTokenExists
+ * @param {string} username The username used to retrieve the token
+ * @return {boolean} True if the token is present inside persistent tokens.
+ * @private
+ */
+function persistentTokenExists(username) {
+  try {
+    if (persistentTokens.has(username)) {
+      return true;
+    }
+    return false;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     return false;
@@ -1406,6 +1427,7 @@ exports.updateTokenExpires = updateTokenExpires;
 exports.removeShibbolethMap = removeShibbolethMap;
 exports.isUnautheCallEnabled = isUnautheCallEnabled;
 exports.removePersistentToken = removePersistentToken;
+exports.persistentTokenExists = persistentTokenExists;
 exports.getShibbolethUsername = getShibbolethUsername;
 exports.isUnautheCallIPEnabled = isUnautheCallIPEnabled;
 exports.authenticateRemoteSite = authenticateRemoteSite;
