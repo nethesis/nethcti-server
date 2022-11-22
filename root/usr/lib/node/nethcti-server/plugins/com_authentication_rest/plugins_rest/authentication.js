@@ -365,14 +365,6 @@ function setCompUser(comp) {
           // The token validity is checked inside the authorization proxy
           const authToken = req.headers.authorization_token;
 
-          // Check if the user component has been configured (after asterisk ready status)
-          if (compUser.isConfigured() === false) {
-            var errmsg = 'service not ready: user component not configured - possible asterisk delay';
-            logger.log.warn(IDLOG, errmsg);
-            compUtil.net.sendHttp503(IDLOG, res, errmsg);
-            return;
-          }
-
           // Add _phone_island to the end of api username tokens
           const apiUsername = `${username}_phone_island`
 
