@@ -1270,7 +1270,7 @@ function verifyToken(username, token, isRemote) {
     }
 
     // check the grant presence
-    if (!grants[username] && !persistentTokens.has(username)) {
+    if (!grants[username] && !persistentTokens.has(username) && !persistentTokens.has(`${username}_phone-island`)) {
       logger.log.warn(IDLOG, 'authentication failed for ' + (isRemote ? 'remote site ' : 'local ') + 'username: "' + username + '": no grant is present');
       return false;
     }
