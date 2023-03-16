@@ -31,7 +31,7 @@ jobs:
 
       - name: Update dependency
         run: |
-          cd /root/usr/lib/node/nethcti-server
+          sudo cd /root/usr/lib/node/nethcti-server
           npm update @nethesis/astproxy --save
       - name: Commit and create PR
         uses: peter-evans/create-pull-request@v3
