@@ -30,9 +30,8 @@ jobs:
           registry-url: https://registry.npmjs.org/
 
       - name: Update dependency
-        run: |
-          sudo cd /root/usr/lib/node/nethcti-server
-          npm update @nethesis/astproxy --save
+        working-directory: ./root/usr/lib/node/nethcti-server
+        run: npm update @nethesis/astproxy --save
       - name: Commit and create PR
         uses: peter-evans/create-pull-request@v3
         with:
