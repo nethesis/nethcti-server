@@ -218,9 +218,9 @@ var mapShibbolethUser = {};
  * @property expires
  * @type number
  * @private
- * @default 3600000 (1h)
+ * @default 24h
  */
-var expires = 3600000;
+var expires = 60 * 1000 * 60 * 24;
 
 /**
  * If true, every authentication request also causes the update of the
