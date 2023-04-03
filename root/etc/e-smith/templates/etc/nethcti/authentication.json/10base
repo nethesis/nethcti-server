@@ -1,11 +1,10 @@
 {
     use esmith::NetworksDB;
-    use Time::Seconds;
     my $unautheCall = ${'nethcti-server'}{'UnautheCall'} || "disabled";
     my $allowedIp = ${'nethcti-server'}{'UnautheCallAddress'} || esmith::NetworksDB->local_access_spec();
     my $autheEnabled = ${'nethcti-server'}{'AuthenticationEnabled'} || "false";
 
-    my $expiration_timeout = 24 * ONE_HOUR;    # Calculate 24 hours in seconds
+    my $expiration_timeout = 60 * 60 * 24;  # Calculate 24 hours in seconds
 
     $OUT = '{
     "enabled": ' . $autheEnabled . ',
