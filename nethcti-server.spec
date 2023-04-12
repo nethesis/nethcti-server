@@ -3,7 +3,7 @@ Version: 3.28.7
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
-License: GPLv2
+License: AGPLv3
 Source0: %{name}-%{version}.tar.gz
 BuildRequires: nethserver-devtools
 BuildRequires: nodejs >= 6.16.0
