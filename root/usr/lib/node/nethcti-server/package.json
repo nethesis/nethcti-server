@@ -37,8 +37,8 @@
     "url": "https://github.com/nethesis/nethcti-server.git"
   },
   "scripts": {
-    "start": "/usr/bin/scl enable rh-nodejs10 \"node nethcti.js\"",
-    "dev": "/usr/bin/scl enable rh-nodejs10 \"nodemon nethcti.js\""
+    "start": "node nethcti.js",
+    "dev": "nodemon nethcti.js"
   },
   "engines": {
     "node": ">=6.16.0"
