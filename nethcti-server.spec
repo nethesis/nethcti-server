@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.28.7
+Version: 3.28.8
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -90,6 +90,18 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed May 31 2023 Stefano Fancello <stefano.fancello@nethesis.it> - 3.28.8-1
+- license: change to AGPLv3
+- Offhour: accept CORS (#284) nethesis/dev#6202
+- build(deps): NPM: update astproxy dependency (automated) (#287)
+- Force astproxy version update to latest
+- Fix phone-island authentication token check (#281)
+- Add remove_persistent_token and phone_island_token_exists apis
+- Remove user component check from phone_island_token
+- Add  phone_island_token api for phone island's token
+- Fix documentation URL
+- Fix external script launcher comment (#279)
+
 * Fri Sep 02 2022 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 3.28.7-1
 - rsync disaster recovery introduces permissions issue - Bug NethServer/dev#6691
 
