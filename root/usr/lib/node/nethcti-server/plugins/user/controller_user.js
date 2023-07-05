@@ -399,8 +399,23 @@ function evtExtenDndChanged(data) {
     logger.log.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_DND_CHANGED + '" event for exten "' + data.exten + '"');
 
     var username = getUserFromExten(data.exten);
-    updateUserPresence(username);
+    var allext = getAllUserExtensions(username);
 
+    function callback() {
+      updateUserPresence(username)
+    }
+
+    // Remove duplicates from extensions
+    // ...the function returns the main extension 2 times
+    // ...and remove the already extension changed by the current event
+    var exts = allext.filter((ext, index) => allext.indexOf(ext) === index && ext !== data.exten)
+
+    if (data.enabled === false) {
+      // Disable dnd for the remaining extensions of the user
+      setOnlineStatus(username, exts, callback)
+    } else if (data.enabled === true) {
+      setDNDStatus(username, exts, callback)
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -420,10 +435,39 @@ function evtExtenCfChanged(data) {
     if (typeof data !== 'object' || typeof data.exten !== 'string' || typeof data.enabled !== 'boolean') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.log.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CF_CHANGED + '" event for exten "' + data.exten + '"');
 
-    var username = getUserFromExten(data.exten);
-    updateUserPresence(username);
+    // Be sure to handle a callforward change not a voicemail change
+    if (Object.keys(data).includes('vm')) {
+      logger.log.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CF_CHANGED + '" event for exten "' + data.exten + '"');
+
+      var username = getUserFromExten(data.exten);
+      var allext = getAllUserExtensions(username);
+      var cellphoneId = getAllEndpointsCellphone(username)[
+        Object.keys(getAllEndpointsCellphone(username))[0]
+      ];
+
+      function callback() {
+        updateUserPresence(username)
+      }
+
+      // Remove duplicates from extensions
+      // ...the function returns the main extension 2 times
+      // ...and remove the already extension changed by the current event
+      var exts = allext.filter((ext, index) => allext.indexOf(ext) === index && ext !== data.exten)
+
+      if (data.enabled === false) {
+        // Disable dnd for the remaining extensions of the user
+        setOnlineStatus(username, exts, callback)
+      } else if (data.enabled === true) {
+        if (cellphoneId === data.to) {
+          // The status to be set is cellphone
+          setCellphoneStatus(username, exts, callback)
+        } else {
+          // The status to be set is callforward
+          setCallforwardStatus(username, data.to, exts, callback)
+        }
+      }
+    }
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -498,11 +542,30 @@ function evtExtenCfVmChanged(data) {
     if (typeof data !== 'object' || typeof data.exten !== 'string' || typeof data.enabled !== 'boolean') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.log.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CFVM_CHANGED + '" event for exten "' + data.exten + '"');
 
-    var username = getUserFromExten(data.exten);
-    updateUserPresence(username);
+    // Be sure to handle a voicemail change not a callforward change
+    if (Object.keys(data).includes('vm')) {
+      logger.log.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CFVM_CHANGED + '" event for exten "' + data.exten + '"');
 
+      var username = getUserFromExten(data.exten);
+      var allext = getAllUserExtensions(username);
+
+      function callback() {
+        updateUserPresence(username)
+      }
+
+      // Remove duplicates from extensions
+      // ...the function returns the main extension 2 times
+      // ...and remove the already extension changed by the current event
+      var exts = allext.filter((ext, index) => allext.indexOf(ext) === index && ext !== data.exten)
+
+      if (data.enabled === false) {
+        // Disable dnd for the remaining extensions of the user
+        setOnlineStatus(username, exts, callback)
+      } else if (data.enabled === true) {
+        setVoicemailStatus(username, exts, callback)
+      }
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -1218,6 +1281,257 @@ function setPresenceOnUnavailable(param, cb) {
 }
 
 /**
+ * Set presence status of the extensions to ONLINE.
+ *
+ * @method setOnlineStatus
+ * @param {string} username The name of the user
+ * @param {array} extensions The list of extensions
+ * @param {function} cb The callback function
+ */
+function setOnlineStatus(username, extensions, cb) {
+  var functionsList = [];
+  var mainExtensionId = getEndpointMainExtension(username).getId();
+  let extensionsObj = {};
+
+  // Add the needed functions to remove the online status to the functions list
+  for (let i = 0; i < extensions.length; i++) {
+    extensionsObj[extensions[i]] = '';
+    functionsList.push(disableDndExten(extensions[i]));
+    functionsList.push(disableCfExten(extensions[i]));
+    functionsList.push(disableCfVmExten(extensions[i]));
+  }
+
+  // Add asterisk presence set function to the functions list
+  functionsList.push(
+    function(callback) {
+      compAstProxy.setAsteriskPresence(mainExtensionId, 'AVAILABLE', callback);
+    }
+  );
+
+  // Add update user presence status function to the functions list
+  functionsList.push(
+    function(callback) {
+      updateUserPresence(username)
+      callback()
+    }
+  );
+
+  async.series(functionsList,
+    function(err) {
+      cb(err);
+      if (err) {
+        logger.log.error(IDLOG, 'setting presence of user "' + username + '" to "' + userPresence.STATUS.online);
+        logger.log.error(IDLOG, err);
+      } else {
+        logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.online + '" to user "' + username + '"');
+        compAstProxy.reloadPhysicalPhoneConfig(extensionsObj);
+      }
+    }
+  );
+}
+
+/**
+ * Set presence status of the extensions to DND.
+ *
+ * @method setDNDStatus
+ * @param {string} username The name of the user
+ * @param {array} extensions The list of extensions
+ * @param {function} cb The callback function
+ */
+function setDNDStatus(username, extensions, cb) {
+  var functionsList = [];
+  var mainExtensionId = getEndpointMainExtension(username).getId();
+  let extensionsObj = {};
+
+  // Add the needed functions to remove the online status to the functions list
+  for (let i = 0; i < extensions.length; i++) {
+    extensionsObj[extensions[i]] = '';
+    functionsList.push(disableCfExten(extensions[i]));
+    functionsList.push(disableCfVmExten(extensions[i]));
+    functionsList.push(enableDndExten(extensions[i]));
+  }
+
+  // Add asterisk presence set function to the functions list
+  functionsList.push(
+    function(callback) {
+      compAstProxy.setAsteriskPresence(mainExtensionId, 'DND', callback);
+    }
+  );
+
+  // Add update user presence status function to the functions list
+  functionsList.push(
+    function(callback) {
+      updateUserPresence(username)
+      callback()
+    }
+  );
+
+  async.series(functionsList,
+    function(err) {
+      cb(err);
+      if (err) {
+        logger.log.error(IDLOG, 'setting presence of user "' + username + '" to "' + userPresence.STATUS.dnd);
+        logger.log.error(IDLOG, err);
+      } else {
+        logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.dnd + '" to user "' + username + '"');
+        compAstProxy.reloadPhysicalPhoneConfig(extensionsObj);
+      }
+    }
+  );
+}
+
+/**
+ * Set presence status of the extensions to callforward.
+ *
+ * @method setCallforwardStatus
+ * @param {string} username The name of the user
+ * @param {string} destination The destination number
+ * @param {array} extensions The list of extensions
+ * @param {function} cb The callback function
+ */
+function setCallforwardStatus(username, destination, extensions, cb) {
+  var functionsList = [];
+  var mainExtensionId = getEndpointMainExtension(username).getId();
+  let extensionsObj = {};
+
+  // Add the needed functions to remove the online status to the functions list
+  for (let i = 0; i < extensions.length; i++) {
+    extensionsObj[extensions[i]] = '';
+    functionsList.push(disableDndExten(extensions[i]));
+    functionsList.push(disableCfVmExten(extensions[i]));
+    functionsList.push(enableCfNumberExten(extensions[i], destination, username));
+  }
+
+  // Add asterisk presence set function to the functions list
+  functionsList.push(
+    function(callback) {
+      compAstProxy.setAsteriskPresence(mainExtensionId, 'AWAY,NUMBER', callback);
+    }
+  );
+
+  // Add update user presence status function to the functions list
+  functionsList.push(
+    function(callback) {
+      updateUserPresence(username)
+      callback()
+    }
+  );
+
+  async.series(functionsList,
+    function(err) {
+      cb(err);
+      if (err) {
+        logger.log.error(IDLOG, 'setting presence of user "' + username + '" to "' + userPresence.STATUS.callforward + '" to "' + destination);
+        logger.log.error(IDLOG, err);
+      } else {
+        logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.callforward + '" to user "' + username + '"' + '" to "' + destination);
+        compAstProxy.reloadPhysicalPhoneConfig(extensionsObj);
+      }
+    }
+  );
+}
+
+/**
+ * Set presence status of the extensions to cellphone.
+ *
+ * @method setCellphoneStatus
+ * @param {string} username The name of the user
+ * @param {array} extensions The list of extensions
+ * @param {function} cb The callback function
+ */
+function setCellphoneStatus(username, extensions, cb) {
+  var functionsList = [];
+  var mainExtensionId = getEndpointMainExtension(username).getId();
+  let extensionsObj = {};
+
+  // Add the needed functions to remove the online status to the functions list
+  for (let i = 0; i < extensions.length; i++) {
+    extensionsObj[extensions[i]] = '';
+    functionsList.push(disableDndExten(extensions[i]));
+    functionsList.push(disableCfVmExten(extensions[i]));
+    functionsList.push(enableCfCellphoneExten(extensions[i], username));
+  }
+
+  // Add asterisk presence set function to the functions list
+  functionsList.push(
+    function(callback) {
+      compAstProxy.setAsteriskPresence(mainExtensionId, 'AWAY,CELLPHONE', callback);
+    }
+  );
+
+  // Add update user presence status function to the functions list
+  functionsList.push(
+    function(callback) {
+      updateUserPresence(username)
+      callback()
+    }
+  );
+
+  async.series(functionsList,
+    function(err) {
+      cb(err);
+      if (err) {
+        logger.log.error(IDLOG, 'setting presence of user "' + username + '" to "' + userPresence.STATUS.cellphone);
+        logger.log.error(IDLOG, err);
+      } else {
+        logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.cellphone + '" to user "' + username + '"');
+        compAstProxy.reloadPhysicalPhoneConfig(extensionsObj);
+      }
+    }
+  );
+}
+
+/**
+ * Set presence status of the extensions to cellphone.
+ *
+ * @method setVoicemailStatus
+ * @param {string} username The name of the user
+ * @param {array} extensions The list of extensions
+ * @param {function} cb The callback function
+ */
+function setVoicemailStatus(username, extensions, cb) {
+  var functionsList = [];
+  var mainExtensionId = getEndpointMainExtension(username).getId();
+  let extensionsObj = {};
+
+  // Add the needed functions to remove the online status to the functions list
+  for (let i = 0; i < extensions.length; i++) {
+    extensionsObj[extensions[i]] = '';
+    functionsList.push(disableDndExten(extensions[i]));
+    functionsList.push(disableCfExten(extensions[i]));
+    functionsList.push(enableCfVmExten(extensions[i], username));
+  }
+
+  // Add asterisk presence set function to the functions list
+  functionsList.push(
+    function(callback) {
+      compAstProxy.setAsteriskPresence(mainExtensionId, 'XA,VOICEMAIL', callback);
+    }
+  );
+
+  // Add update user presence status function to the functions list
+  functionsList.push(
+    function(callback) {
+      updateUserPresence(username)
+      callback()
+    }
+  );
+
+  async.series(functionsList,
+    function(err) {
+      cb(err);
+      if (err) {
+        logger.log.error(IDLOG, 'setting presence of user "' + username + '" to "' + userPresence.STATUS.cellphone);
+        logger.log.error(IDLOG, err);
+      } else {
+        logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.cellphone + '" to user "' + username + '"');
+        compAstProxy.reloadPhysicalPhoneConfig(extensionsObj);
+      }
+    }
+  );
+}
+
+/**
  * Set the user presence status.
  *
  * @method setPresence
@@ -1240,98 +1554,32 @@ function setPresence(param, cb) {
 
     // Check if the param status is a valid presence status
     if (users[param.username] && userPresence.isValidUserPresence(param.status)) {
-      var arr = [];
-      var mainExtId = getEndpointMainExtension(param.username).getId();
+
       var allext = getAllUserExtensions(param.username);
-      let allextObj = {};
-
-      // Remove duplicates from all extensions
-      // ...the function returns the main extension 2 times
+      // Remove duplicates from extensions
       allext = allext.filter((ext, index) => allext.indexOf(ext) === index)
-
-      // Add keys to allextObj used for reloading physical phones configuration
-      for (i = 0; i < allext.length; i++) {
-        allextObj[allext[i]] = '';
-      }
 
       // Set presence to online
       if (param.status === userPresence.STATUS.online) {
-        for (i = 0; i < allext.length; i++) {
-          arr.push(disableDndExten(allext[i]));
-          arr.push(disableCfExten(allext[i]));
-          arr.push(disableCfVmExten(allext[i]));
-        }
-        arr.push( // set presence in Asterisk
-          function(callback) {
-            compAstProxy.setAsteriskPresence(mainExtId, 'AVAILABLE', callback);
-          }
-        );
+        setOnlineStatus(param.username, allext, cb)
       }
       // Set presence to dnd
       else if (param.status === userPresence.STATUS.dnd) {
-        for (i = 0; i < allext.length; i++) {
-          arr.push(disableCfExten(allext[i]));
-          arr.push(disableCfVmExten(allext[i]));
-          arr.push(enableDndExten(allext[i]));
-        }
-        arr.push( // set presence in Asterisk
-          function(callback) {
-            compAstProxy.setAsteriskPresence(mainExtId, 'DND', callback);
-          }
-        );
+        setDNDStatus(param.username, allext, cb)
       }
       // Set presence to callforward to a specific number
       else if (param.status === userPresence.STATUS.callforward) {
-        for (i = 0; i < allext.length; i++) {
-          arr.push(disableDndExten(allext[i]));
-          arr.push(disableCfVmExten(allext[i]));
-          arr.push(enableCfNumberExten(allext[i], param.destination, param.username));
-        }
-        arr.push( // set presence in Asterisk
-          function(callback) {
-            compAstProxy.setAsteriskPresence(mainExtId, 'AWAY,NUMBER', callback);
-          }
-        );
+        setCallforwardStatus(param.username, param.destination, allext, cb)
       }
       // Set presence to cellphone
       else if (param.status === userPresence.STATUS.cellphone) {
-        for (i = 0; i < allext.length; i++) {
-          arr.push(disableDndExten(allext[i]));
-          arr.push(disableCfVmExten(allext[i]));
-          arr.push(enableCfCellphoneExten(allext[i], param.username));
-        }
-        arr.push( // set presence in Asterisk
-          function(callback) {
-            compAstProxy.setAsteriskPresence(mainExtId, 'AWAY,CELLPHONE', callback);
-          }
-        );
+        setCellphoneStatus(param.username, allext, cb)
       }
       // Set presence to voicemail
       else if (param.status === userPresence.STATUS.voicemail) {
-        for (i = 0; i < allext.length; i++) {
-          arr.push(disableDndExten(allext[i]));
-          arr.push(disableCfExten(allext[i]));
-          arr.push(enableCfVmExten(allext[i], param.username));
-        }
-        arr.push( // set presence in Asterisk
-          function(callback) {
-            compAstProxy.setAsteriskPresence(mainExtId, 'XA,VOICEMAIL', callback);
-          }
-        );
+        setVoicemailStatus(param.username, allext, cb)
       }
 
-      async.series(arr,
-        function(err) {
-          cb(err);
-          if (err) {
-            logger.log.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + param.status + '" to "' + param.destination + '"');
-            logger.log.error(IDLOG, err);
-          } else {
-            logger.log.info(IDLOG, 'set presence "' + userPresence.STATUS.callforward + '" to "' + param.destination + '" to user "' + param.username + '"');
-            compAstProxy.reloadPhysicalPhoneConfig(allextObj);
-          }
-        }
-      );
     } else {
       var str = 'unknown status presence "' + param.status + '"';
       logger.log.warn(IDLOG, str);
