@@ -401,10 +401,6 @@ function evtExtenDndChanged(data) {
     var username = getUserFromExten(data.exten);
     var allext = getAllUserExtensions(username);
 
-    function callback() {
-      updateUserPresence(username)
-    }
-
     // Remove duplicates from extensions
     // ...the function returns the main extension 2 times
     // ...and remove the already extension changed by the current event
@@ -437,7 +433,7 @@ function evtExtenCfChanged(data) {
     }
 
     // Be sure to handle a callforward change not a voicemail change
-    if (Object.keys(data).includes('vm')) {
+    if (Object.keys(data).includes('to')) {
       logger.log.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CF_CHANGED + '" event for exten "' + data.exten + '"');
 
       var username = getUserFromExten(data.exten);
@@ -445,10 +441,6 @@ function evtExtenCfChanged(data) {
       var cellphoneId = getAllEndpointsCellphone(username)[
         Object.keys(getAllEndpointsCellphone(username))[0]
       ];
-
-      function callback() {
-        updateUserPresence(username)
-      }
 
       // Remove duplicates from extensions
       // ...the function returns the main extension 2 times
@@ -494,7 +486,7 @@ function evtExtenCfbChanged(data) {
     logger.log.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CFB_CHANGED + '" event for exten "' + data.exten + '"');
 
     var username = getUserFromExten(data.exten);
-    updateCondUserPresence(username);
+    updateUserPresenceOnBusy(username);
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -518,11 +510,35 @@ function evtExtenCfuChanged(data) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    logger.log.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CFU_CHANGED + '" event for exten "' + data.exten + '"');
 
-    var username = getUserFromExten(data.exten);
-    updateCondUserPresence(username);
+    // Be sure to handle a callforward change not a voicemail change
+    if (Object.keys(data).includes('to')) {
+      logger.log.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CFU_CHANGED + '" event for exten "' + data.exten + '"');
 
+      var username = getUserFromExten(data.exten);
+      var allext = getAllUserExtensions(username);
+      var cellphoneId = getAllEndpointsCellphone(username)[
+        Object.keys(getAllEndpointsCellphone(username))[0]
+      ];
+
+      // Remove duplicates from extensions
+      // ...the function returns the main extension 2 times
+      // ...and remove the already extension changed by the current event
+      var exts = allext.filter((ext, index) => allext.indexOf(ext) === index && ext !== data.exten)
+
+      if (data.enabled === false) {
+        // Disable dnd for the remaining extensions of the user
+        setOnlineStatusOnUnavailable(username, exts, callback)
+      } else if (data.enabled === true) {
+        if (cellphoneId === data.to) {
+          // The status to be set is cellphone
+          setCellphoneStatusOnUnavailable(username, exts, callback)
+        } else {
+          // The status to be set is callforward
+          setCallforwardStatusOnUnavailable(username, data.to, exts, callback)
+        }
+      }
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -549,10 +565,6 @@ function evtExtenCfVmChanged(data) {
 
       var username = getUserFromExten(data.exten);
       var allext = getAllUserExtensions(username);
-
-      function callback() {
-        updateUserPresence(username)
-      }
 
       // Remove duplicates from extensions
       // ...the function returns the main extension 2 times
@@ -710,7 +722,12 @@ function disableCfbExten(ext) {
  */
 function disableCfuVmExten(ext) {
   return function(callback) {
-    compAstProxy.setCfuVm(ext, false, null, callback);
+    var isCfuVm = compAstProxy.isExtenCfuVm(ext);
+    if (isCfuVm) {
+      compAstProxy.setCfuVm(ext, false, null, callback);
+    } else {
+      if (callback) callback(null)
+    }
   };
 }
 
@@ -757,7 +774,12 @@ function enableCfbExten(ext, destination, username) {
  */
 function disableCfuExten(ext) {
   return function(callback) {
-    compAstProxy.setCfu(ext, false, null, callback);
+    var isCfu = compAstProxy.isExtenCfu(ext)
+    if (isCfu) {
+      compAstProxy.setCfu(ext, false, null, callback);
+    } else {
+      if (callback) callback(null)
+    }
   };
 }
 
@@ -1172,6 +1194,167 @@ function setMobilePhoneNumber(username, pnumber, cb) {
 }
 
 /**
+ * Set presence status on unavailable of the extensions to ONLINE.
+ *
+ * @method setOnlineStatusOnUnavailable
+ * @param {string} username The name of the user
+ * @param {array} extensions The list of extensions
+ * @param {function} cb The callback function
+ */
+function setOnlineStatusOnUnavailable(username, extensions, cb) {
+  var functionsList = [];
+  let extensionsObj = {};
+
+  // Add the needed functions to remove the online status to the functions list
+  for (let i = 0; i < extensions.length; i++) {
+    extensionsObj[extensions[i]] = '';
+    functionsList.push(disableCfuExten(extensions[i]));
+    functionsList.push(disableCfuVmExten(extensions[i]));
+  }
+
+  // Add update user presence status function to the functions list
+  functionsList.push(
+    function(callback) {
+      updateUserPresenceOnUnavailable(username)
+      callback()
+    }
+  );
+
+  async.series(functionsList,
+    function(err) {
+      cb(err);
+      if (err) {
+        logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.online + '"');
+        logger.log.error(IDLOG, err);
+      } else {
+        logger.log.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.online + '" to user "' + param.username + '"');
+      }
+    }
+  );
+}
+
+/**
+ * Set presence status on unavailable of the extensions to callforward.
+ *
+ * @method setCallforwardStatusOnUnavailable
+ * @param {string} username The name of the user
+ * @param {string} destination The destination number
+ * @param {array} extensions The list of extensions
+ * @param {function} cb The callback function
+ */
+function setCallforwardStatusOnUnavailable(username, destination, extensions, cb) {
+  var functionsList = [];
+  let extensionsObj = {};
+
+  // Add the needed functions to remove the online status to the functions list
+  for (let i = 0; i < extensions.length; i++) {
+    extensionsObj[extensions[i]] = '';
+    functionsList.push(disableCfuVmExten(extensions[i]));
+    functionsList.push(enableCfuNumberExten(extensions[i], destination, username));
+  }
+
+  // Add update user presence status function to the functions list
+  functionsList.push(
+    function(callback) {
+      updateUserPresenceOnUnavailable(username)
+      callback()
+    }
+  );
+
+  async.series(functionsList,
+    function(err) {
+      cb(err);
+      if (err) {
+        logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.callforward + '" to "' + param.destination + '"');
+        logger.log.error(IDLOG, err);
+      } else {
+        logger.log.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.callforward + '" to "' + param.destination + '" to user "' + param.username + '"');
+      }
+    }
+  );
+}
+
+/**
+ * Set presence status on unavailable of the extensions to cellphone.
+ *
+ * @method setCellphoneStatusOnUnavailable
+ * @param {string} username The name of the user
+ * @param {array} extensions The list of extensions
+ * @param {function} cb The callback function
+ */
+function setCellphoneStatusOnUnavailable(username, extensions, cb) {
+  var functionsList = [];
+  let extensionsObj = {};
+
+  // Add the needed functions to remove the online status to the functions list
+  for (let i = 0; i < extensions.length; i++) {
+    extensionsObj[extensions[i]] = '';
+    functionsList.push(disableCfuVmExten(extensions[i]));
+    functionsList.push(enableCfCellphoneExten(extensions[i], username));
+  }
+
+  // Add update user presence status function to the functions list
+  functionsList.push(
+    function(callback) {
+      updateUserPresenceOnUnavailable(username)
+      callback()
+    }
+  );
+
+  async.series(functionsList,
+    function(err) {
+      cb(err);
+      if (err) {
+        logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '"');
+        logger.log.error(IDLOG, err);
+      } else {
+        logger.log.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '" to user "' + param.username + '"');
+      }
+    }
+  );
+}
+
+/**
+ * Set presence status on unavailable of the extensions to voicemail.
+ *
+ * @method setVoicemailStatusOnUnavailable
+ * @param {string} username The name of the user
+ * @param {array} extensions The list of extensions
+ * @param {function} cb The callback function
+ */
+function setVoicemailStatusOnUnavailable(username, extensions, cb) {
+  var functionsList = [];
+  let extensionsObj = {};
+
+  // Add the needed functions to remove the online status to the functions list
+  for (let i = 0; i < extensions.length; i++) {
+    extensionsObj[extensions[i]] = '';
+    functionsList.push(disableCfuExten(extensions[i]));
+    functionsList.push(enableCfuVmExten(extensions[i], username));
+  }
+
+  // Add update user presence status function to the functions list
+  functionsList.push(
+    function(callback) {
+      updateUserPresenceOnUnavailable(username)
+      callback()
+    }
+  );
+
+  async.series(functionsList,
+    function(err) {
+      cb(err);
+      if (err) {
+        logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '"');
+        logger.log.error(IDLOG, err);
+      } else {
+        logger.log.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '" to user "' + param.username + '"');
+      }
+    }
+  );
+}
+
+/**
  * Set the user presence status on unavailable.
  *
  * @method setPresenceOnUnavailable
@@ -1191,88 +1374,34 @@ function setPresenceOnUnavailable(param, cb) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
+
     if (users[param.username] && userPresence.isValidUserPresenceOnUnavailable(param.status)) {
-      var i;
-      var arr = [];
+
       var allext = getAllUserExtensions(param.username);
+      // Remove duplicates from extensions
+      allext = allext.filter((ext, index) => allext.indexOf(ext) === index)
 
-      // set presence to online
+      // Set presence on unavailable to online
       if (param.status === userPresence.STATUS_ONUNAVAILABLE.online) {
-
-        for (i = 0; i < allext.length; i++) {
-          arr.push(disableCfuExten(allext[i]));
-          arr.push(disableCfuVmExten(allext[i]));
-        }
-        async.parallel(arr,
-          function(err) {
-            cb(err);
-            if (err) {
-              logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.online + '"');
-              logger.log.error(IDLOG, err);
-            } else {
-              logger.log.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.online + '" to user "' + param.username + '"');
-            }
-          }
-        );
+        setOnlineStatusOnUnavailable(param.username, allext, cb)
       }
-      // set presence to cellphone
-      else if (param.status === userPresence.STATUS_ONUNAVAILABLE.cellphone) {
-
-        for (i = 0; i < allext.length; i++) {
-          arr.push(enableCfuCellphoneExten(allext[i], param.username));
-        }
-        async.parallel(arr,
-          function(err) {
-            cb(err);
-            if (err) {
-              logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '"');
-              logger.log.error(IDLOG, err);
-            } else {
-              logger.log.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '" to user "' + param.username + '"');
-            }
-          }
-        );
-      }
-      // set presence to voicemail
-      else if (param.status === userPresence.STATUS_ONUNAVAILABLE.voicemail) {
-
-        for (i = 0; i < allext.length; i++) {
-          arr.push(enableCfuVmExten(allext[i], param.username));
-        }
-        async.parallel(arr,
-          function(err) {
-            cb(err);
-            if (err) {
-              logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.voicemail + '"');
-              logger.log.error(IDLOG, err);
-            } else {
-              logger.log.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.voicemail + '" to user "' + param.username + '"');
-            }
-          }
-        );
-      }
-      // set presence to callforward to a specific number
+      // Set presence on unavailable to callforward to a specific number
       else if (param.status === userPresence.STATUS_ONUNAVAILABLE.callforward) {
-
-        for (i = 0; i < allext.length; i++) {
-          arr.push(enableCfuNumberExten(allext[i], param.destination, param.username));
-        }
-        async.parallel(arr,
-          function(err) {
-            cb(err);
-            if (err) {
-              logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.callforward + '" to "' + param.destination + '"');
-              logger.log.error(IDLOG, err);
-            } else {
-              logger.log.info(IDLOG, 'set presence on unavailable "' + userPresence.STATUS_ONUNAVAILABLE.callforward + '" to "' + param.destination + '" to user "' + param.username + '"');
-            }
-          }
-        );
-      } else {
-        var str = 'unknown status presence on unavailable "' + param.status + '" to be set';
-        logger.log.warn(IDLOG, str);
-        cb(str);
+        setCallforwardStatusOnUnavailable(param.username, param.destination, allext, cb)
       }
+      // Set presence on unavailable to cellphone
+      else if (param.status === userPresence.STATUS_ONUNAVAILABLE.cellphone) {
+        setCellphoneStatusOnUnavailable(param.username, allext, cb)
+      }
+      // Set presence on unavailable to voicemail
+      else if (param.status === userPresence.STATUS_ONUNAVAILABLE.voicemail) {
+        setVoicemailStatusOnUnavailable(param.username, allext, cb)
+      }
+
+    } else {
+      var str = 'unknown status presence "' + param.status + '"';
+      logger.log.warn(IDLOG, str);
+      cb(str);
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -2160,25 +2289,6 @@ function updateUserMainPresence(exten) {
 }
 
 /**
- * Update the conditional user presence.
- *
- * @method updateCondUserPresence
- * @param {string} username The username to be updated
- * @private
- */
-function updateCondUserPresence(username) {
-  try {
-    if (typeof username !== 'string') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-    updateUserPresenceOnBusy(username);
-    updateUserPresenceOnUnavailable(username);
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-  }
-}
-
-/**
  * Update the conditional user presence on unavailable.
  *
  * @method updateUserPresenceOnUnavailable
@@ -2347,7 +2457,8 @@ function initializeUsersPresence() {
   try {
     for (let username in users) {
       updateUserPresence(username);
-      updateCondUserPresence(username);
+      updateUserPresenceOnBusy(username);
+      updateUserPresenceOnUnavailable(username);
     }
     logger.log.info(IDLOG, 'set all users presence done');
   } catch (err) {
