@@ -408,9 +408,9 @@ function evtExtenDndChanged(data) {
 
     if (data.enabled === false) {
       // Disable dnd for the remaining extensions of the user
-      setOnlineStatus(username, exts, callback)
+      setOnlineStatus(username, exts)
     } else if (data.enabled === true) {
-      setDNDStatus(username, exts, callback)
+      setDNDStatus(username, exts)
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -449,14 +449,14 @@ function evtExtenCfChanged(data) {
 
       if (data.enabled === false) {
         // Disable dnd for the remaining extensions of the user
-        setOnlineStatus(username, exts, callback)
+        setOnlineStatus(username, exts)
       } else if (data.enabled === true) {
         if (cellphoneId === data.to) {
           // The status to be set is cellphone
-          setCellphoneStatus(username, exts, callback)
+          setCellphoneStatus(username, exts)
         } else {
           // The status to be set is callforward
-          setCallforwardStatus(username, data.to, exts, callback)
+          setCallforwardStatus(username, data.to, exts)
         }
       }
     }
@@ -528,14 +528,14 @@ function evtExtenCfuChanged(data) {
 
       if (data.enabled === false) {
         // Disable dnd for the remaining extensions of the user
-        setOnlineStatusOnUnavailable(username, exts, callback)
+        setOnlineStatusOnUnavailable(username, exts)
       } else if (data.enabled === true) {
         if (cellphoneId === data.to) {
           // The status to be set is cellphone
-          setCellphoneStatusOnUnavailable(username, exts, callback)
+          setCellphoneStatusOnUnavailable(username, exts)
         } else {
           // The status to be set is callforward
-          setCallforwardStatusOnUnavailable(username, data.to, exts, callback)
+          setCallforwardStatusOnUnavailable(username, data.to, exts)
         }
       }
     }
@@ -573,9 +573,9 @@ function evtExtenCfVmChanged(data) {
 
       if (data.enabled === false) {
         // Disable dnd for the remaining extensions of the user
-        setOnlineStatus(username, exts, callback)
+        setOnlineStatus(username, exts, () => {})
       } else if (data.enabled === true) {
-        setVoicemailStatus(username, exts, callback)
+        setVoicemailStatus(username, exts, () => {})
       }
     }
   } catch (err) {
@@ -1222,7 +1222,7 @@ function setOnlineStatusOnUnavailable(username, extensions, cb) {
 
   async.series(functionsList,
     function(err) {
-      cb(err);
+      if (cb) cb(err);
       if (err) {
         logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.online + '"');
         logger.log.error(IDLOG, err);
@@ -1263,7 +1263,7 @@ function setCallforwardStatusOnUnavailable(username, destination, extensions, cb
 
   async.series(functionsList,
     function(err) {
-      cb(err);
+      if (cb) cb(err);
       if (err) {
         logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.callforward + '" to "' + param.destination + '"');
         logger.log.error(IDLOG, err);
@@ -1303,7 +1303,7 @@ function setCellphoneStatusOnUnavailable(username, extensions, cb) {
 
   async.series(functionsList,
     function(err) {
-      cb(err);
+      if (cb) cb(err);
       if (err) {
         logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '"');
         logger.log.error(IDLOG, err);
@@ -1343,7 +1343,7 @@ function setVoicemailStatusOnUnavailable(username, extensions, cb) {
 
   async.series(functionsList,
     function(err) {
-      cb(err);
+      if (cb) cb(err);
       if (err) {
         logger.log.error(IDLOG, 'setting presence on unavailable of user "' + param.username + '" to "' + userPresence.STATUS_ONUNAVAILABLE.cellphone + '"');
         logger.log.error(IDLOG, err);
@@ -1447,7 +1447,7 @@ function setOnlineStatus(username, extensions, cb) {
 
   async.series(functionsList,
     function(err) {
-      cb(err);
+      if (cb) cb(err);
       if (err) {
         logger.log.error(IDLOG, 'setting presence of user "' + username + '" to "' + userPresence.STATUS.online);
         logger.log.error(IDLOG, err);
@@ -1497,7 +1497,7 @@ function setDNDStatus(username, extensions, cb) {
 
   async.series(functionsList,
     function(err) {
-      cb(err);
+      if (cb) cb(err);
       if (err) {
         logger.log.error(IDLOG, 'setting presence of user "' + username + '" to "' + userPresence.STATUS.dnd);
         logger.log.error(IDLOG, err);
@@ -1548,7 +1548,7 @@ function setCallforwardStatus(username, destination, extensions, cb) {
 
   async.series(functionsList,
     function(err) {
-      cb(err);
+      if (cb) cb(err);
       if (err) {
         logger.log.error(IDLOG, 'setting presence of user "' + username + '" to "' + userPresence.STATUS.callforward + '" to "' + destination);
         logger.log.error(IDLOG, err);
@@ -1598,7 +1598,7 @@ function setCellphoneStatus(username, extensions, cb) {
 
   async.series(functionsList,
     function(err) {
-      cb(err);
+      if (cb) cb(err);
       if (err) {
         logger.log.error(IDLOG, 'setting presence of user "' + username + '" to "' + userPresence.STATUS.cellphone);
         logger.log.error(IDLOG, err);
@@ -1648,7 +1648,7 @@ function setVoicemailStatus(username, extensions, cb) {
 
   async.series(functionsList,
     function(err) {
-      cb(err);
+      if (cb) cb(err);
       if (err) {
         logger.log.error(IDLOG, 'setting presence of user "' + username + '" to "' + userPresence.STATUS.cellphone);
         logger.log.error(IDLOG, err);
