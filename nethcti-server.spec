@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.28.8
+Version: 3.29.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -90,6 +90,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Wed Jul 26 2023 Stefano Fancello <stefano.fancello@nethesis.it> - 3.29.0-1
+- Enhance presence on unavailable management nethesis/dev#6211
+
 * Wed May 31 2023 Stefano Fancello <stefano.fancello@nethesis.it> - 3.28.8-1
 - license: change to AGPLv3
 - Offhour: accept CORS (#284) nethesis/dev#6202
