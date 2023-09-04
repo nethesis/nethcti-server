@@ -693,26 +693,20 @@ function checkAutoDndOffLogin(username) {
       // get the prefence of the user: automatic dnd off when login to cti
       var autoDndOffLoginEnabled = userSettings[username][USER_CONFIG_KEYS.auto_dndoff_login];
       if (autoDndOffLoginEnabled) {
-
-        const allEndpoints = compUser.getEndpointsJSON(username)
-        const uniqueExt = Array.from(new Set(Object.keys(allEndpoints.extension)))
-
-        uniqueExt.map(ext => {
-          logger.log.info(IDLOG, 'set DND OFF for exten "' + ext + '" due to automatic DND OFF on login setting');
-          compAstProxy.setDnd(ext, false, function(err, resp) {
-            try {
-              if (err) {
-                logger.log.warn(IDLOG, err);
-              } else {
-                if (allEndpoints.extension[ext].type === compUser.TYPES.physical) {
-                  compAstProxy.reloadPhysicalPhoneConfig({[ext]: ''});
-                }
-                logger.log.info(IDLOG, 'DND OFF has been set for exten "' + ext + '" due to "auto dnd off login" setting of user "' + username + '"');
-              }
-            } catch (err1) {
-              logger.log.error(IDLOG, err1.stack);
+        // set presence to online on login
+        compUser.setPresence({
+          username: username,
+          status: 'online'
+        }, function(err) {
+          try {
+            if (err) {
+              logger.log.warn(IDLOG, err);
+            } else {
+              logger.log.info(IDLOG, 'DND OFF has been set for exten "' + ext + '" due to "auto dnd off login" setting of user "' + username + '"');
             }
-          });
+          } catch (err1) {
+            logger.log.error(IDLOG, err1.stack);
+          }
         })
       }
     }
@@ -866,26 +860,20 @@ function checkAutoDndOnLogout(username) {
       // get the prefence of the user: automatic dnd on when logout from cti
       var autoDndOnLogoutEnabled = userSettings[username][USER_CONFIG_KEYS.auto_dndon_logout];
       if (autoDndOnLogoutEnabled) {
-
-        const allEndpoints = compUser.getEndpointsJSON(username)
-        const uniqueExt = Array.from(new Set(Object.keys(allEndpoints.extension)))
-
-        uniqueExt.map(ext => {
-          logger.log.info(IDLOG, 'set DND ON for exten "' + ext + '" due to automatic DND ON on logout setting');
-          compAstProxy.setDnd(ext, true, function(err, resp) {
-            try {
-              if (err) {
-                logger.log.warn(IDLOG, err);
-              } else {
-                if (allEndpoints.extension[ext].type === compUser.TYPES.physical) {
-                  compAstProxy.reloadPhysicalPhoneConfig({[ext]: ''});
-                }
-                logger.log.info(IDLOG, 'DND ON has been set for exten "' + ext + '" due to "auto dnd on logout" setting of user "' + username + '"');
-              }
-            } catch (err1) {
-              logger.log.error(IDLOG, err1.stack);
+        // set presence to dnd on logout
+        compUser.setPresence({
+          username: username,
+          status: 'dnd'
+        }, function(err) {
+          try {
+            if (err) {
+              logger.log.warn(IDLOG, err);
+            } else {
+              logger.log.info(IDLOG, 'DND ON has been set for exten "' + ext + '" due to "auto dnd on logout" setting of user "' + username + '"');
             }
-          });
+          } catch (err1) {
+            logger.log.error(IDLOG, err1.stack);
+          }
         })
       }
     }
