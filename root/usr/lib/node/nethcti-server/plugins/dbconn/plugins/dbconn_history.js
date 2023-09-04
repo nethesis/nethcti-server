@@ -159,7 +159,8 @@ function getHistoryCallInterval(data, cb) {
     var attributes = [
       ['UNIX_TIMESTAMP(calldate)', 'time'],
       'channel', 'dstchannel', 'uniqueid', 'linkedid', 'userfield',
-      ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'], 'disposition', 'dcontext'
+      ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'],
+      'disposition', 'dcontext'
     ];
     if (data.recording === true) {
       attributes.push('recordingfile');
@@ -199,6 +200,12 @@ function getHistoryCallInterval(data, cb) {
         ')'),
       'direction'
     ]);
+
+    // add queue value if the call is through queue
+    attributes.push([
+      '(select c.dst from cdr as c where c.uniqueid = cdr.linkedid and c.dst != cdr.dst and c.lastapp="Queue" limit 1)',
+      'queue'
+    ])
 
     // check optional parameters
     if (data.filter === undefined) {
