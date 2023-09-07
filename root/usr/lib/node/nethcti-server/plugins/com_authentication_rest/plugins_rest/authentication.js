@@ -247,6 +247,7 @@ function setCompUser(comp) {
           'remotelogin',
           'logout',
           'phone_island_token_login',
+          'persistent_token_login',
           'persistent_token_remove'
         ],
         'head': [],
@@ -385,6 +386,42 @@ function setCompUser(comp) {
       },
 
       /**
+       * Provides the login function for the persistent tokens with the following REST API:
+       *
+       *     persistent_token_login
+       *
+       * Every user with a valid token can invoke it and receive an API token without expiration
+       * There is only a persistent token for each provided username
+       *
+       * @method persistent_token_login
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @return The token without expiration and the username
+       */
+      persistent_token_login: async function(req, res) {
+        try {
+
+          // Get the username from the headers
+          const username = req.headers.authorization_user;
+          // Get the valid token from the request
+          // The token validity is checked inside the authorization proxy
+          const authToken = req.headers.authorization_token;
+
+          // Create the persistent token using username and a valid authentication token
+          const apiToken = await compAuthe.getPersistentToken(username, authToken);
+          // Return the token ready to be used by api's and ws
+          res.send(200, {
+            token: apiToken,
+            username: username
+          });
+
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp401(IDLOG, err);
+        }
+      },
+
+      /**
        * Checks if the phone island token was already created REST API:
        *
        *     phone_island_token_check
@@ -495,6 +532,7 @@ function setCompUser(comp) {
     exports.login = authentication.login;
     exports.logout = authentication.logout;
     exports.phone_island_token_login = authentication.phone_island_token_login;
+    exports.persistent_token_login = authentication.persistent_token_login;
     exports.persistent_token_remove = authentication.persistent_token_remove;
     exports.phone_island_token_check = authentication.phone_island_token_check;
     exports.setLogger = setLogger;
