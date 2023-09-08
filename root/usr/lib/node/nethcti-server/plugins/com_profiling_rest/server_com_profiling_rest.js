@@ -314,6 +314,13 @@ function start() {
     server.use(restify.queryParser());
     server.use(restify.bodyParser());
 
+    // accept CORS requests profiling
+    server.use(restify.CORS({
+      origins: ['*'],
+      credentials: true,
+      headers: ['Authorization']
+    }));
+
     // load plugins
     for (p in plugins) {
       get = plugins[p].api.get;
