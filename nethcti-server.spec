@@ -78,8 +78,6 @@ rm -rf %{buildroot}
 %config(noreplace) /etc/nethcti/profiles.json
 %config(noreplace) /etc/nethcti/operator.json
 %config(noreplace) /etc/nethcti/streaming.json
-%config(noreplace) /var/lib/nethserver/nethcti/templates/customer_card/identity.ejs
-%config(noreplace) /var/lib/nethserver/nethcti/templates/customer_card/lastcalls.ejs
 %config(noreplace) /var/lib/nethserver/nethcti/templates/customer_card/statistics.ejs
 %config(noreplace) /var/lib/nethserver/nethcti/templates/customer_card/table.ejs
 
