@@ -59,8 +59,6 @@ rm -rf %{buildroot}
 --file /etc/nethcti/profiles.json 'attr(0600,asterisk,asterisk)' \
 --file /etc/nethcti/streaming.json 'attr(0600,asterisk,asterisk)' \
 --file /etc/nethcti/operator.json 'attr(0600,asterisk,asterisk)' \
---file /var/lib/nethserver/nethcti/templates/customer_card/identity.ejs 'attr(0600,asterisk,asterisk)' \
---file /var/lib/nethserver/nethcti/templates/customer_card/lastcalls.ejs 'attr(0600,asterisk,asterisk)' \
 --file /var/lib/nethserver/nethcti/templates/customer_card/statistics.ejs 'attr(0600,asterisk,asterisk)' \
 --file /var/lib/nethserver/nethcti/templates/customer_card/table.ejs 'attr(0600,asterisk,asterisk)' \
 --dir /var/lib/nethserver/nethcti/static 'attr(0775,asterisk,asterisk)' \
