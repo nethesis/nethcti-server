@@ -260,7 +260,9 @@ function getHistoryCallInterval(data, cb) {
       whereClause = [
         '(cnum IN (?) OR dst IN (?)) AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR dst_cnam LIKE ? OR ccompany LIKE ? OR dst_ccompany LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR dst_cnam LIKE ? OR ccompany LIKE ? OR dst_ccompany LIKE ?) AND',
+        '(uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid) AND',
+        '((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")',
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
@@ -486,7 +488,9 @@ function getHistorySwitchCallInterval(data, cb) {
     } else {
       whereClause = [
         '(calldate>=? AND calldate<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?) AND',
+        '(uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid) AND',
+        '((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")',
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
         "%" + data.filter + "%", "%" + data.filter + "%"
