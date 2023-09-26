@@ -160,7 +160,7 @@ function getHistoryCallInterval(data, cb) {
       ['UNIX_TIMESTAMP(calldate)', 'time'],
       'channel', 'dstchannel', 'uniqueid', 'linkedid', 'userfield',
       ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'],
-      'disposition', 'dcontext'
+      'disposition', 'dcontext', 'lastapp'
     ];
     if (data.recording === true) {
       attributes.push('recordingfile');
@@ -355,7 +355,7 @@ function getHistorySwitchCallInterval(data, cb) {
     var attributes = [
       ['UNIX_TIMESTAMP(calldate)', 'time'],
       'channel', 'dstchannel', 'uniqueid', 'linkedid', 'userfield',
-      ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'], 'disposition', 'dcontext'
+      ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'], 'disposition', 'dcontext', 'lastapp'
     ];
     if (data.recording === true) {
       attributes.push('recordingfile');
