@@ -220,7 +220,7 @@ function getHistoryCallInterval(data, cb) {
 
       whereClause = [
         '(cnum NOT IN (?) AND dst IN (?)) AND ' +
-        '(calldate>=? AND calldate<=?) AND ' +
+        '(calldate BETWEEN ? AND ?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)' +
         (data.removeLostCalls ? ' AND disposition NOT IN ("NO ANSWER","BUSY","FAILED")' : ''),
         data.endpoints, data.endpoints,
@@ -232,7 +232,7 @@ function getHistoryCallInterval(data, cb) {
 
       whereClause = [
         '(cnum IN (?) AND dst NOT IN (?)) AND ' +
-        '(calldate>=? AND calldate<=?) AND ' +
+        '(calldate BETWEEN ? AND ?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)' +
         'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED")' +
         'OR (disposition IN ("NO ANSWER","BUSY","FAILED")' +
@@ -246,7 +246,7 @@ function getHistoryCallInterval(data, cb) {
 
       whereClause = [
         '(cnum NOT IN (?) AND dst IN (?)) AND ' +
-        '(calldate>=? AND calldate<=?) AND ' +
+        '(calldate BETWEEN ? AND ?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?) AND ' +
         'disposition IN ("NO ANSWER","BUSY","FAILED")' +
         'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)',
@@ -259,7 +259,7 @@ function getHistoryCallInterval(data, cb) {
 
       whereClause = [
         '(cnum IN (?) OR dst IN (?)) AND ' +
-        '(calldate>=? AND calldate<=?) AND ' +
+        '(calldate BETWEEN ? AND ?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR dst_cnam LIKE ? OR ccompany LIKE ? OR dst_ccompany LIKE ?) AND ' +
         '(uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid) AND ' +
         '((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")',
@@ -425,7 +425,7 @@ function getHistorySwitchCallInterval(data, cb) {
           ')' +
           // end include attended transfered calls
         ') AND ' +
-        '(calldate>=? AND calldate<=?) AND ' +
+        '(calldate BETWEEN ? AND ?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)' +
         (data.removeLostCalls ? ' AND disposition NOT IN ("NO ANSWER","BUSY","FAILED")' : ''),
         data.trunks,
@@ -437,7 +437,7 @@ function getHistorySwitchCallInterval(data, cb) {
 
       whereClause = [
         'dstchannel REGEXP ? AND ' +
-        '(calldate>=? AND calldate<=?) AND ' +
+        '(calldate BETWEEN ? AND ?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)',
         data.trunks,
         data.from, data.to,
@@ -453,7 +453,7 @@ function getHistorySwitchCallInterval(data, cb) {
         'src IN ' + data.extens + ' AND ' +
         'cnum IN ' + data.extens + ' AND ' +
         'dst IN ' + data.extens + ' AND ' +
-        '(calldate>=? AND calldate<=?) AND ' +
+        '(calldate BETWEEN ? AND ?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?) ' +
         'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED") OR (disposition IN ("NO ANSWER","BUSY","FAILED") AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))',
         data.trunks, data.trunks,
@@ -476,7 +476,7 @@ function getHistorySwitchCallInterval(data, cb) {
           ')' +
           // end include attended transfered calls
         ') AND ' +
-        '(calldate>=? AND calldate<=?) AND ' +
+        '(calldate BETWEEN ? AND ?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?) AND ' +
         'disposition IN ("NO ANSWER","BUSY","FAILED")' +
         'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)',
@@ -487,7 +487,7 @@ function getHistorySwitchCallInterval(data, cb) {
 
     } else {
       whereClause = [
-        '(calldate>=? AND calldate<=?) AND ' +
+        '(calldate BETWEEN ? AND ?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?) AND ' +
         '(uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid) AND ' +
         '((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")',
