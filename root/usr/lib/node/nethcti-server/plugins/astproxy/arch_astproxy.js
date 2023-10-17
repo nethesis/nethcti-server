@@ -345,7 +345,7 @@ module.exports = function(options, imports, register) {
     try {
       astProxy.proxyLogic.setReloading(true);
       astProxy.reset();
-      //nethvoiceReportConfig();
+      nethvoiceReportConfig();
       asteriskConfiguration();
       asteriskObjectsConfiguration();
       extenNamesConfiguration();
@@ -777,7 +777,7 @@ module.exports = function(options, imports, register) {
 
   try {
     astProxy.setLogger(logger.log);
-    //nethvoiceReportConfig();
+    nethvoiceReportConfig();
     startReadingNullCallPeriod();
     asteriskConfiguration();
     asteriskObjectsConfiguration();
