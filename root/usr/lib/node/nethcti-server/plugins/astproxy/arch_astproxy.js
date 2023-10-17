@@ -345,7 +345,7 @@ module.exports = function(options, imports, register) {
     try {
       astProxy.proxyLogic.setReloading(true);
       astProxy.reset();
-      //nethvoiceReportConfig();
+      nethvoiceReportConfig();
       asteriskConfiguration();
       asteriskObjectsConfiguration();
       extenNamesConfiguration();
@@ -478,7 +478,7 @@ module.exports = function(options, imports, register) {
               'Content-Type': 'application/json'
             }
           };
-          const req = http.request(options, (res) => {
+          const req = https.request(options, (res) => {
             let data = '';
             res.setEncoding('utf8');
             res.on('data', (chunk) => {
@@ -527,7 +527,7 @@ module.exports = function(options, imports, register) {
               'Authorization': `Bearer ${nvReportConf.token}`
             }
           };
-          const req = http.request(options, (res) => {
+          const req = https.request(options, (res) => {
             let data = '';
             res.setEncoding('utf8');
             res.on('data', (chunk) => {
@@ -777,7 +777,7 @@ module.exports = function(options, imports, register) {
 
   try {
     astProxy.setLogger(logger.log);
-    //nethvoiceReportConfig();
+    nethvoiceReportConfig();
     startReadingNullCallPeriod();
     asteriskConfiguration();
     asteriskObjectsConfiguration();
