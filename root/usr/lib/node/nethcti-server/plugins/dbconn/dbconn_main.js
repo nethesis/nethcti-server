@@ -689,6 +689,7 @@ function initConnections() {
     if (ready) {
       emit(EVT_RELOADED);
     }
+    const refreshTimer = setInterval(refreshMysql2Connections, 5 * 1000);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -740,6 +741,38 @@ function initMysqlConn(name) {
     dbConn[name] = connection;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Ping mysql2 connection and restart if needed
+ *
+ * @method refreshMysql2Connection
+ * @private
+ */
+function refreshMysql2Connections(){
+  var k;
+  for (k in dbConn) {
+    try {
+      if (
+        dbConn[k] &&
+        dbConn[k].db_type &&
+        dbConn[k].db_type === 'mysql' &&
+        migratedTables.includes(k)
+      ) {
+          dbConn[k].ping(function (err){
+            if (!err) {
+              dbConn[k].destroy();
+              delete dbConn[k];
+              initMysqlConn(k);
+            } else {
+              logger.log.error(IDLOG, err.stack);
+            }
+          });
+        }
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+    }
   }
 }
 
