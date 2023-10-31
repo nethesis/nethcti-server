@@ -689,6 +689,27 @@ function initConnections() {
     if (ready) {
       emit(EVT_RELOADED);
     }
+    // Keep alive mysql connections by pinging them
+    const refreshTimer = setInterval(function () {
+      try {
+        for (const k in dbConn) {
+          if (
+            dbConn[k] &&
+            dbConn[k].db_type &&
+            dbConn[k].db_type === 'mysql' &&
+            migratedTables.includes(k)
+          ) {
+            dbConn[k].ping(function (err) {
+              if (err) {
+                logger.log.error(IDLOG, err.stack);
+              }
+            });
+          }
+        }
+      } catch (err) {
+        logger.log.error(IDLOG, err.stack);
+      }
+    }, 9 * 1000);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
