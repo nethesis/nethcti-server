@@ -1323,7 +1323,8 @@ function start() {
     // tls server
     tlsServer = tls.createServer({
         key: fs.readFileSync(tlsKey),
-        cert: fs.readFileSync(tlsCert)
+        cert: fs.readFileSync(tlsCert),
+        secureOptions: require('constants').SSL_OP_NO_TLSv1 | require('constants').SSL_OP_NO_TLSv1_1,
       }
     );
 
