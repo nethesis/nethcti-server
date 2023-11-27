@@ -1,6 +1,11 @@
 {
   my $ports_str = ${'nethcti-server'}{TCPPorts};
   our @ports = split(',', $ports_str);
+  if (${'nethcti-server'}{tlsSecureOptions} eq "true") {
+    our $tlsSecureOptions = "true";
+  } else {
+    our $tlsSecureOptions = "false";
+  }
   return "";
 }
 \{
@@ -11,7 +16,8 @@
   "tls": \{
     "port": "{$ports[1] || 8183}",
     "key": "/etc/asterisk/keys/NethServer.key",
-    "cert": "/etc/asterisk/keys/NethServer.crt"
+    "cert": "/etc/asterisk/keys/NethServer.crt",
+    "secureOptions": "{$tlsSecureOptions}"
   \},
   "websocket": \{
     "http_port": "{${'nethcti-server'}{WsPort} || 8181}"
