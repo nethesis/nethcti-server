@@ -399,6 +399,14 @@ var tcpPort;
  var tlsCert;
 
 /**
+ * Don't allow TLS v 1.0 and 1.1. It is customized by the configuration file.
+ * @property tlsSecureOptions
+ * @type integer
+ * @private
+ */
+  var tlsSecureOptions;
+
+/**
  * The protocol used by the cti server. It is used by the windows popup notification
  * to open the NethCTI application using the configured protocol. It is customized
  * by the configuration file.
@@ -1192,6 +1200,12 @@ function config(path) {
       } else {
         logger.log.error(IDLOG, path + ': no tls "cert" has been specified');
       }
+      // set tls secure options
+      if (json.tls.secureOptions && json.tls.secureOptions === 'true') {
+        tlsSecureOptions = require('constants').SSL_OP_NO_TLSv1 | require('constants').SSL_OP_NO_TLSv1_1;
+      } else {
+        tlsSecureOptions = null;
+      }
     } else {
       logger.log.error(IDLOG, path + ': no tls parameters have been specified');
     }
@@ -1323,7 +1337,8 @@ function start() {
     // tls server
     tlsServer = tls.createServer({
         key: fs.readFileSync(tlsKey),
-        cert: fs.readFileSync(tlsCert)
+        cert: fs.readFileSync(tlsCert),
+        secureOptions: tlsSecureOptions,
       }
     );
 
