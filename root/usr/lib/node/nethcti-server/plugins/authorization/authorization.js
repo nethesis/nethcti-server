@@ -734,8 +734,8 @@ function authorizeAdminPickupUser(username) {
 
     return (
       profiles[profid] !== undefined &&
-      profiles[profid].macro_permissions.presence_panel.value === true &&
-      profiles[profid].macro_permissions.presence_panel.permissions.pickup.value === true
+      profiles[profid].macro_permissions.settings.value === true &&
+      profiles[profid].macro_permissions.settings.permissions.pickup.value === true
     );
 
   } catch (err) {
@@ -858,8 +858,8 @@ function isPrivacyEnabled(username) {
 
     return (
       profiles[profid] !== undefined &&
-      profiles[profid].macro_permissions.settings.value === true &&
-      profiles[profid].macro_permissions.settings.permissions.privacy.value === true
+      profiles[profid].macro_permissions.nethvoice_cti.value === true &&
+      profiles[profid].macro_permissions.nethvoice_cti.permissions.privacy.value === true
     );
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -909,8 +909,8 @@ function authorizeSpyUser(username) {
 
     return (
       profiles[profid] !== undefined &&
-      profiles[profid].macro_permissions.presence_panel.value === true &&
-      profiles[profid].macro_permissions.presence_panel.permissions.spy.value === true
+      profiles[profid].macro_permissions.settings.value === true &&
+      profiles[profid].macro_permissions.settings.permissions.spy.value === true
     );
 
   } catch (err) {
@@ -939,8 +939,8 @@ function authorizeIntrudeUser(username) {
 
     return (
       profiles[profid] !== undefined &&
-      profiles[profid].macro_permissions.presence_panel.value === true &&
-      profiles[profid].macro_permissions.presence_panel.permissions.intrude.value === true
+      profiles[profid].macro_permissions.settings.value === true &&
+      profiles[profid].macro_permissions.settings.permissions.intrude.value === true
     );
 
   } catch (err) {
@@ -1026,8 +1026,8 @@ function authorizePhoneButtonsUser(username) {
     var profid = getUserProfileId(username);
     return (
       profiles[profid] !== undefined &&
-      profiles[profid].macro_permissions.settings.value === true &&
-      profiles[profid].macro_permissions.settings.permissions.phone_buttons.value === true
+      profiles[profid].macro_permissions.nethvoice_cti.value === true &&
+      profiles[profid].macro_permissions.nethvoice_cti.permissions.phone_buttons.value === true
     );
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -2129,8 +2129,8 @@ function authorizeScreenSharing(username) {
     var profid = getUserProfileId(username);
     return (
       profiles[profid] !== undefined &&
-      profiles[profid].macro_permissions.settings.value === true &&
-      profiles[profid].macro_permissions.settings.permissions.screen_sharing.value === true
+      profiles[profid].macro_permissions.nethvoice_cti.value === true &&
+      profiles[profid].macro_permissions.nethvoice_cti.permissions.screen_sharing.value === true
     );
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -2153,8 +2153,8 @@ function authorizeVideoconf(username) {
     var profid = getUserProfileId(username);
     return (
       profiles[profid] !== undefined &&
-      profiles[profid].macro_permissions.settings.value === true &&
-      profiles[profid].macro_permissions.settings.permissions.video_conference.value === true
+      profiles[profid].macro_permissions.nethvoice_cti.value === true &&
+      profiles[profid].macro_permissions.nethvoice_cti.permissions.video_conference.value === true
     );
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
