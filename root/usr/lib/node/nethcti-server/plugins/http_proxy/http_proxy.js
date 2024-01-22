@@ -236,7 +236,7 @@ function start() {
         if (req.method === 'OPTIONS') {
           var headers = {};
           headers["Access-Control-Allow-Origin"] = "*";
-          headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
+          headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS, PATCH";
           headers["Access-Control-Allow-Credentials"] = true;
           headers["Access-Control-Max-Age"] = '86400';
           headers["Access-Control-Allow-Headers"] = 'X-Requested-With,' +
