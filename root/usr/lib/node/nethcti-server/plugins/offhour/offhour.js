@@ -561,15 +561,21 @@ function enableAnnouncement(data, cb) {
 
       function (callback) {
 
-        fs.rename(sourcePath, destPath, function (err) {
+        fs.copyFile(sourcePath, destPath, function (err) {
           try {
             if (err) {
               var str = 'moving audio file for announcement "' + sourcePath + '" -> "' + destPath + '" by user "' + data.user + '" failed: ' + err;
               logger.log.warn(IDLOG, str);
               callback(str);
             } else {
-              logger.log.info(IDLOG, 'audio file for announcement has been moved ("' + sourcePath + '" -> "' + destPath + '") by user "' + data.user + '"');
-              callback();
+              fs.rm(sourcePath, function (err) {
+                if (err) {
+                  var str = 'removing audio file for announcement "' + sourcePath + '" -> "' + destPath + '" by user "' + data.user + '"';
+                  logger.log.warn(IDLOG, str);
+                  callback(str);
+                }
+                callback();
+              });
             }
           } catch (err) {
             logger.log.error(IDLOG, err.stack);
