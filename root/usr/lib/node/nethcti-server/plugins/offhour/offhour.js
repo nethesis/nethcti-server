@@ -570,7 +570,7 @@ function enableAnnouncement(data, cb) {
             } else {
               fs.rm(sourcePath, function (err) {
                 if (err) {
-                  var str = 'removing audio file for announcement "' + sourcePath + '" -> "' + destPath + '" by user "' + data.user + '"';
+                  var str = 'removing audio file for announcement "' + sourcePath + '" -> "' + destPath + '" by user "' + data.user + '" failed: ' + err;
                   logger.log.warn(IDLOG, str);
                   callback(str);
                 }
