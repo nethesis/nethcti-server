@@ -602,7 +602,7 @@ module.exports = function(options, imports, register) {
       logger.log.info(IDLOG, `reload config of physical phones ${Object.keys(extens)}`);
       const secretKey = compAuthentication.getAdminSecretKey();
       const options = {
-        hostname: 'localhost',
+        hostname: process.env.NETHVOICE_HOST,
         port: 443,
         path: '',
         method: 'POST',
