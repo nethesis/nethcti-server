@@ -156,6 +156,8 @@ function getHistoryCallInterval(data, cb) {
 
     // define the mysql field to be returned. The "recordingfile" field
     // is returned only if the "data.recording" argument is true
+    // grouped is used to visualize call grouped, useful the see
+    // how calls inside queues are managed
     if(data.grouped) {
       var attributes = [
         ['UNIX_TIMESTAMP(MIN(calldate))', 'time'],
