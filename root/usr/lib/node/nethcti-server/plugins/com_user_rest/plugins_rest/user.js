@@ -1,3 +1,5 @@
+var crypto = require('crypto');
+
 /**
  * Provides user functions through REST API.
  *
@@ -705,6 +707,17 @@ function setCompUtil(comp) {
               logger.log.info(IDLOG, 'send user info to user "' + username + '"');
               res.send(200, result);
             });
+
+            // get LK hash
+            var subscription_systemid = process.env.SUBSCRIPTION_SYSTEMID;
+            var subscription_secret = process.env.SUBSCRIPTION_SECRET;
+            if (subscription_systemid && subscription_secret) {
+              var hash = crypto.createHash('md5');
+              hash.update(subscription_systemid + ":" + subscription_secret);
+              result.lkhash = hash.digest('hex');
+            } else {
+              logger.log.info(IDLOG, "LK not enabled");
+            }
           } else {
             var strerr = 'sending user info to user "' + username + '": wrong format';
             logger.log.error(IDLOG, strerr);
