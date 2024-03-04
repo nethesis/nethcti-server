@@ -19,6 +19,7 @@ event_templates('nethcti-server3-update', qw(
                 /etc/nethcti/chat.json
                 /etc/nethcti/phone_urls.json
                 /etc/httpd/conf.d/nethcti-server.conf
+                /etc/systemd/system/nethcti-server.service.d/nethcti-server.service
 ));
 
 event_actions('nethcti-server3-update', qw(
@@ -99,3 +100,19 @@ $event = "post-restore-data";
 event_actions($event,
    'nethcti-server-fix-rsync-perms' => '10',
 );
+
+#
+# nethserver-subscription-save
+#
+$event = "nethserver-subscription-save";
+event_templates($event, qw(
+    /etc/systemd/system/nethcti-server.service.d/nethcti-server.service
+));
+
+event_actions($event,
+   'nethcti-server-daemon-reload' => '10',
+);
+
+event_services($event, qw(
+    nethcti-server restart
+));
