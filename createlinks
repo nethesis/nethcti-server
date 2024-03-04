@@ -106,7 +106,7 @@ event_actions($event,
 #
 $event = "nethserver-subscription-save";
 event_templates($event, qw(
-    /etc/systemd/system/nethcti-server.service.d/nethcti-server.service
+    /etc/systemd/system/nethcti-server.service.d/subscription.conf
 ));
 
 event_actions($event,
