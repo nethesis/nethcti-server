@@ -752,9 +752,6 @@ function setCompAuthorization(ca) {
           if (req.params.removeLostCalls) {
             obj.removeLostCalls = req.params.removeLostCalls;
           }
-          if (req.params.grouped) {
-            obj.grouped = (req.params.grouped === 'true');
-          }
 
           // use the history component
           compHistory.getHistoryCallInterval(obj, function(err1, results) {
