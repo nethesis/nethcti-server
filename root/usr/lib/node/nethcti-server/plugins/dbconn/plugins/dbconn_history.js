@@ -162,8 +162,6 @@ function getHistoryCallInterval(data, cb) {
       ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'],
       'disposition', 'dcontext', 'lastapp'
     ];
-
-
     if (data.recording === true) {
       attributes.push('recordingfile');
     }
@@ -190,7 +188,6 @@ function getHistoryCallInterval(data, cb) {
       attributes.push('dst_cnam');
       attributes.push('dst_ccompany');
       attributes.push('clid');
-
     }
 
     // add "direction" ("in" | "out" | "lost" | "") based on data.endpoints presence on "src" and "dst"
@@ -280,8 +277,7 @@ function getHistoryCallInterval(data, cb) {
       offset: (data.offset ? parseInt(data.offset) : 0),
       limit: (data.limit ? parseInt(data.limit) : null),
       group: ['uniqueid','linkedid','disposition'],
-      order: (data.sort ? data.sort : 'time desc'),
-      logging: logger.log.error
+      order: (data.sort ? data.sort : 'time desc')
     }).then(function(results) {
       compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
           where: whereClause,
@@ -553,7 +549,7 @@ function getHistorySwitchCallInterval(data, cb) {
       limit: (data.limit ? parseInt(data.limit) : null),
       group: data.grouped ? ['linkedid'] : ['uniqueid','linkedid','disposition'],
       order: (data.sort ? data.sort : 'time desc'),
-      logging: logger.log.error,
+      logging: logger.log.error
     }).then(function(results) {
       compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
           where: whereClause,
