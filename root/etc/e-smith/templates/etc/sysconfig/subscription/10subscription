@@ -1,0 +1,10 @@
+{
+    #
+    # 10subscription
+    #
+    my $systemId = $subscription{'SystemId'} || '';
+    my $secret = $subscription{'Secret'} || '';
+    $enabled = ($systemId eq '' || $secret eq '') ? 0 : 1;
+
+    $OUT = "SUBSCRIPTION_SYSTEMID=$systemId\nSUBSCRIPTION_SECRET=$secret\n";
+}
