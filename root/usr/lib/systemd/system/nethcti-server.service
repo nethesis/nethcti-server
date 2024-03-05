@@ -5,6 +5,7 @@ After=asterisk.service
 
 [Service]
 Type=simple
+EnvironmentFile=/etc/sysconfig/subscription
 WorkingDirectory=/usr/lib/node/nethcti-server
 User=asterisk
 Restart=always

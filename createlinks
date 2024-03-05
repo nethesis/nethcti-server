@@ -19,7 +19,7 @@ event_templates('nethcti-server3-update', qw(
                 /etc/nethcti/chat.json
                 /etc/nethcti/phone_urls.json
                 /etc/httpd/conf.d/nethcti-server.conf
-                /etc/systemd/system/nethcti-server.service.d/subscription.conf
+                /etc/sysconfig/subscription
 ));
 
 event_actions('nethcti-server3-update', qw(
@@ -106,12 +106,8 @@ event_actions($event,
 #
 $event = "nethserver-subscription-save";
 event_templates($event, qw(
-    /etc/systemd/system/nethcti-server.service.d/subscription.conf
+    /etc/sysconfig/subscription
 ));
-
-event_actions($event,
-   'nethcti-server-daemon-reload' => '10',
-);
 
 event_services($event, qw(
     nethcti-server restart

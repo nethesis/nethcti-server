@@ -6,9 +6,5 @@
     my $secret = $subscription{'Secret'} || '';
     $enabled = ($systemId eq '' || $secret eq '') ? 0 : 1;
 
-    $OUT = '';
-
-    if($enabled) {
-        $OUT .= "[Service]\nEnvironment=\"SUBSCRIPTION_SYSTEMID=$systemId\"\nEnvironment=\"SUBSCRIPTION_SECRET=$secret\"\n";
-    }
+    $OUT = "SUBSCRIPTION_SYSTEMID=$systemId\nSUBSCRIPTION_SECRET=$secret\n";
 }
