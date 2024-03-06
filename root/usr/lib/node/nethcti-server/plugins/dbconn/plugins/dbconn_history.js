@@ -548,8 +548,7 @@ function getHistorySwitchCallInterval(data, cb) {
       offset: (data.offset ? parseInt(data.offset) : 0),
       limit: (data.limit ? parseInt(data.limit) : null),
       group: data.grouped ? ['linkedid'] : ['uniqueid','linkedid','disposition'],
-      order: (data.sort ? data.sort : 'time desc'),
-      logging: logger.log.error
+      order: (data.sort ? data.sort : 'time desc')
     }).then(function(results) {
       compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
           where: whereClause,
