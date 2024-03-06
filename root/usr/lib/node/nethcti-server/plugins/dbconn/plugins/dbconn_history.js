@@ -278,7 +278,6 @@ function getHistoryCallInterval(data, cb) {
       limit: (data.limit ? parseInt(data.limit) : null),
       group: ['uniqueid','linkedid','disposition'],
       order: (data.sort ? data.sort : 'time desc')
-
     }).then(function(results) {
       compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
           where: whereClause,
@@ -354,11 +353,30 @@ function getHistorySwitchCallInterval(data, cb) {
 
     // define the mysql field to be returned. The "recordingfile" field
     // is returned only if the "data.recording" argument is true
-    var attributes = [
-      ['UNIX_TIMESTAMP(calldate)', 'time'],
-      'channel', 'dstchannel', 'uniqueid', 'linkedid', 'userfield',
-      ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'], 'disposition', 'dcontext', 'lastapp'
-    ];
+    // grouped is used to visualize call grouped, useful the see
+    // how calls inside queues are managed
+    if(data.grouped) {
+      var attributes = [
+        ['UNIX_TIMESTAMP(MIN(calldate))', 'time'],
+        ['(SELECT channel FROM cdr b WHERE cdr.linkedid = b.linkedid ORDER BY calldate ASC LIMIT 1)', 'channel'],
+        ['(SELECT dstchannel FROM cdr b WHERE cdr.linkedid = b.linkedid ORDER BY calldate ASC LIMIT 1)', 'dstchannel'],
+        ['MIN(uniqueid)', 'uniqueid'],
+        'linkedid',
+        'userfield',
+        ['MAX(duration)','duration'],
+        ['Coalesce(Max(CASE WHEN disposition = "answered" AND lastapp = "dial" THEN billsec ELSE 0 end), (SELECT billsec FROM cdr b WHERE  cdr.linkedid = b.linkedid AND disposition = "answered" ORDER  BY calldate ASC LIMIT  1), Min(billsec))','billsec'],
+        ['CASE WHEN Min(disposition) = "answered" THEN Min(disposition) ELSE (SELECT disposition FROM cdr b WHERE  cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1) END', 'disposition'],
+        ['(SELECT dcontext FROM cdr b WHERE  cdr.linkedid = b.linkedid ORDER  BY calldate ASCLIMIT  1)', 'dcontext'],
+        ['(SELECT lastapp FROM cdr b WHERE  cdr.linkedid = b.linkedid ORDER  BY calldate ASCLIMIT  1)', 'lastapp']
+      ];
+    } else {
+      var attributes = [
+        ['UNIX_TIMESTAMP(calldate)', 'time'],
+        'channel', 'dstchannel', 'uniqueid', 'linkedid', 'userfield',
+        ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'], 'disposition', 'dcontext', 'lastapp'
+      ];
+    }
+
     if (data.recording === true) {
       attributes.push('recordingfile');
     }
@@ -370,35 +388,61 @@ function getHistorySwitchCallInterval(data, cb) {
     if (data.trunks.length === 0) {
       data.trunks = '%';
     }
-    attributes.push([compDbconnMain.Sequelize.literal(
-        'IF (dstchannel REGEXP "' + data.trunks + '", "out", ' +
-        '(IF (channel REGEXP "' + data.trunks + '", "in", "internal"))' +
-        ')'),
-      'type'
-    ]);
+
+    if(data.grouped) {
+      attributes.push([compDbconnMain.Sequelize.literal('(select CASE WHEN channel REGEXP "' + data.trunks + '" THEN "in" WHEN dstchannel REGEXP \'' + data.trunks + '\' THEN "out" ELSE "internal" END AS `type` FROM cdr b WHERE  cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1)'), 'type']);
+    } else {
+      attributes.push([compDbconnMain.Sequelize.literal(
+          'IF (dstchannel REGEXP "' + data.trunks + '", "out", ' +
+          '(IF (channel REGEXP "' + data.trunks + '", "in", "internal"))' +
+          ')'),
+        'type'
+      ]);
+    }
 
     // if the privacy string is present, than hide the numbers
     if (data.privacyStr) {
       // the numbers are hidden
-      attributes.push(['CONCAT( SUBSTRING(cnum, 1, LENGTH(cnum) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'cnum']);
-      attributes.push(['CONCAT( SUBSTRING(src, 1, LENGTH(src) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'src']);
-      attributes.push(['CONCAT( SUBSTRING(dst, 1, LENGTH(dst) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'dst']);
-      attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'clid']);
-      attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'cnam']);
-      attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'ccompany']);
-      attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'dst_cnam']);
-      attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'dst_ccompany']);
-
+      if(data.grouped) {
+        attributes.push(['(select CONCAT( SUBSTRING(cnum, 1, LENGTH(cnum) - ' + data.privacyStr.length + '), "' + data.privacyStr + '") from cdr b where cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1)', 'cnum']);
+        attributes.push(['(select CONCAT( "", "\\"' + data.privacyStr + '\\"") from cdr b where cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1)', 'cnam']);
+        attributes.push(['(select CONCAT( "", "\\"' + data.privacyStr + '\\"") from cdr b where cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1)', 'ccompany']);
+        attributes.push(['COALESCE(MAX(CASE WHEN disposition = "ANSWERED" AND lastapp = "Dial" THEN dst_cnam ELSE NULL END), (select CONCAT( "", "\\"' + data.privacyStr + '\\"") from cdr b where cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1))', 'dst_cnam']);
+        attributes.push(['COALESCE(MAX(CASE WHEN disposition = "ANSWERED" AND lastapp = "Dial" THEN dst_ccompany ELSE NULL END), (select CONCAT( "", "\\"' + data.privacyStr + '\\"") from cdr b where cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1) )', 'dst_ccompany']);
+        attributes.push(['(select CONCAT( SUBSTRING(src, 1, LENGTH(src) - ' + data.privacyStr.length + '), "' + data.privacyStr + '") from cdr b where cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1)', 'src']);
+        attributes.push(['COALESCE(MAX(CASE WHEN disposition = "ANSWERED" AND lastapp = "Dial" THEN dst ELSE NULL END), (select CONCAT( SUBSTRING(dst, 1, LENGTH(dst) - ' + data.privacyStr.length + '), "' + data.privacyStr + '") from cdr b where cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1))', 'dst']);
+        attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'clid']);
+      } else {
+        attributes.push(['CONCAT( SUBSTRING(cnum, 1, LENGTH(cnum) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'cnum']);
+        attributes.push(['CONCAT( SUBSTRING(src, 1, LENGTH(src) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'src']);
+        attributes.push(['CONCAT( SUBSTRING(dst, 1, LENGTH(dst) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'dst']);
+        attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'clid']);
+        attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'cnam']);
+        attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'ccompany']);
+        attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'dst_cnam']);
+        attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'dst_ccompany']);
+      }
     } else {
       // the numbers are clear
-      attributes.push('cnum');
-      attributes.push('cnam');
-      attributes.push('ccompany');
-      attributes.push('dst_cnam');
-      attributes.push('dst_ccompany');
-      attributes.push('src');
-      attributes.push('dst');
-      attributes.push('clid');
+      if(data.grouped) {
+        attributes.push(['(select cnum from cdr b where cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1)', 'cnum']);
+        attributes.push(['(select cnam from cdr b where cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1)', 'cnam']);
+        attributes.push(['(select ccompany from cdr b where cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1)', 'ccompany']);
+        attributes.push(['COALESCE(MAX(CASE WHEN disposition = "ANSWERED" AND lastapp = "Dial" THEN dst_cnam ELSE NULL END), (select dst_cnam from cdr b where cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1))', 'dst_cnam']);
+        attributes.push(['COALESCE(MAX(CASE WHEN disposition = "ANSWERED" AND lastapp = "Dial" THEN dst_ccompany ELSE NULL END), (select dst_ccompany from cdr b where cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1) )', 'dst_ccompany']);
+        attributes.push(['(select src from cdr b where cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1)', 'src']);
+        attributes.push(['COALESCE(MAX(CASE WHEN disposition = "ANSWERED" AND lastapp = "Dial" THEN dst ELSE NULL END), (select dst from cdr b where cdr.linkedid = b.linkedid ORDER  BY calldate ASC LIMIT  1))', 'dst']);
+        attributes.push('clid');
+      } else {
+        attributes.push('cnum');
+        attributes.push('cnam');
+        attributes.push('ccompany');
+        attributes.push('dst_cnam');
+        attributes.push('dst_ccompany');
+        attributes.push('src');
+        attributes.push('dst');
+        attributes.push('clid');
+      }
     }
 
     // check optional parameters
@@ -419,7 +463,7 @@ function getHistorySwitchCallInterval(data, cb) {
           // include attended transfered calls
           '(' +
             'channel LIKE "Local/%;2" AND ' + // "Local/207@from-internal-000001f5;1"
-            'cnum IN ' + data.extens + ' AND ' +
+            //'cnum IN ' + data.extens + ' AND ' +
             'dst IN ' + data.extens + ' AND ' +
             'src NOT IN ' + data.extens +
           ')' +
@@ -451,7 +495,7 @@ function getHistorySwitchCallInterval(data, cb) {
         'channel NOT LIKE "%@from-queue-%" AND ' +
         'dstchannel NOT REGEXP ? AND ' +
         'src IN ' + data.extens + ' AND ' +
-        'cnum IN ' + data.extens + ' AND ' +
+        //'cnum IN ' + data.extens + ' AND ' +
         'dst IN ' + data.extens + ' AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?) ' +
@@ -470,7 +514,7 @@ function getHistorySwitchCallInterval(data, cb) {
           // include attended transfered calls
           '(' +
             'channel LIKE "Local/%;2" AND ' + // "Local/207@from-internal-000001f5;1"
-            'cnum IN ' + data.extens + ' AND ' +
+            //'cnum IN ' + data.extens + ' AND ' +
             'dst IN ' + data.extens + ' AND ' +
             'src NOT IN ' + data.extens +
           ')' +
@@ -503,13 +547,12 @@ function getHistorySwitchCallInterval(data, cb) {
       attributes: attributes,
       offset: (data.offset ? parseInt(data.offset) : 0),
       limit: (data.limit ? parseInt(data.limit) : null),
-      group: ['uniqueid','linkedid','disposition'],
+      group: data.grouped ? ['linkedid'] : ['uniqueid','linkedid','disposition'],
       order: (data.sort ? data.sort : 'time desc')
-
     }).then(function(results) {
       compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
           where: whereClause,
-          group: ['uniqueid','linkedid','disposition'],
+          group: data.grouped ? ['linkedid'] : ['uniqueid','linkedid','disposition'],
           attributes: attributes
            }).then(function(count) {
               const res = {
