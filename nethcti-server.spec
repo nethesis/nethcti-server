@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.29.0
+Version: 3.30.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -90,6 +90,15 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu Mar 07 2024 Stefano Fancello <gentoo.stefano@gmail.com> - 3.30.0-1
+- ctiapp: validating NethVoice enterprise subscription for app activation (#306) - nethesis/ns8-nethvoice#125
+- Forbid tls 1 and 1.1 connection for nethifier (#300)
+- added lastapp field in history query (#296)
+- Fix missing CORS profiling (#294)
+- Add persistent_token_login api (#293)
+- Add source queue to last calls (#291)
+- Fix auto dnd on logout and login (#292)
+
 * Wed Jul 26 2023 Stefano Fancello <stefano.fancello@nethesis.it> - 3.29.0-1
 - Enhance presence on unavailable management nethesis/dev#6211
 
