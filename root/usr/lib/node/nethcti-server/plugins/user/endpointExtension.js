@@ -6,7 +6,7 @@
  * @class EndpointExtension
  * @param {string} identifier The extension identifier
  * @param {object} data
- *  @param {string} data.type The type of the extension ("physical" | "webrtc" | "mobile")
+ *  @param {string} data.type The type of the extension ("physical" | "webrtc" | "mobile" | "nethlink")
  *  @param {string} [data.web_user] The username of the physical phone to be used to invoke HTTP apis
  *  @param {string} [data.web_password] The password of the physical phone to be used to invoke HTTP apis
  *  @param {string} [data.username] The username of the sip extension. It is present with webrtc type
@@ -17,7 +17,7 @@
 exports.EndpointExtension = function(identifier, data) {
   // check the parameter
   if (typeof identifier !== 'string' || typeof data !== 'object' ||
-    (data.type !== 'physical' && data.type !== 'webrtc' && data.type !== 'mobile')) {
+    (data.type !== 'physical' && data.type !== 'webrtc' && data.type !== 'mobile' && data.type !== 'nethlink')) {
 
     throw new Error('wrong parameters: ' + JSON.stringify(arguments));
   }
@@ -182,7 +182,7 @@ exports.EndpointExtension = function(identifier, data) {
       type: type
     };
 
-    if (type === 'webrtc' || type === 'mobile') {
+    if (type === 'webrtc' || type === 'mobile' || type === 'nethlink') {
       obj.secret = sipPassword;
       obj.username = sipUser;
     }
@@ -218,7 +218,8 @@ exports.EndpointExtension = function(identifier, data) {
 const TYPES = {
   physical: 'physical',
   webrtc: 'webrtc',
-  mobile: 'mobile'
+  mobile: 'mobile',
+  nethlink: 'nethlink',
 };
 
 exports.TYPES = TYPES
