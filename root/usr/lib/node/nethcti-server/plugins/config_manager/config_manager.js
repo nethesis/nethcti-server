@@ -147,16 +147,6 @@ var compComNethctiWs;
 var serverHostname = '';
 
 /**
- * The SIP proxy port number. It will be customized by the _config_ method.
- *
- * @property proxyPort
- * @type integer
- * @private
- * @default ""
- */
-var proxyPort;
-
-/**
  * The server chat parameters. It can be customized using the JSON
  * configuration file by means _configChat_ method.
  *
@@ -546,7 +536,7 @@ function configChat(path) {
 }
 
 /**
- * It reads the JSON configuration file and set the server ip address and proxy port.
+ * It reads the JSON configuration file and set the server ip address.
  *
  * @method config
  * @param {string} path The path of the configuration file
@@ -574,11 +564,6 @@ function config(path) {
       return;
     }
     serverHostname = json.hostname;
-
-    // set proxy port
-    if (typeof json.proxy_port == "number") {
-        proxyPort = json.proxy_port;
-    }
 
     logger.log.info(IDLOG, 'configuration done by ' + CONFIG_FILEPATH);
 
@@ -895,21 +880,6 @@ function getServerHostname() {
     logger.log.error(IDLOG, err.stack);
   }
 }
-
-/**
- * Returns the SIP proxy port.
- *
- * @method getProxyPort
- * @return {integer} The SIP proxy port.
- */
-function getProxyPort() {
-  try {
-    return proxyPort;
-  } catch (err) {
-    logger.log.error(IDLOG, err.stack);
-  }
-}
-
 
 /**
  * It reads the JSON configuration file of phone urls used to
@@ -2006,7 +1976,6 @@ exports.setCompAstProxy = setCompAstProxy;
 exports.setCompAuthorization = setCompAuthorization;
 exports.configPhoneUrls = configPhoneUrls;
 exports.getServerHostname = getServerHostname;
-exports.getProxyPort = getProxyPort
 exports.getDtmfUrlFromAgent = getDtmfUrlFromAgent;
 exports.setCompComNethctiWs = setCompComNethctiWs;
 exports.getCallUrlFromAgent = getCallUrlFromAgent;
