@@ -678,11 +678,6 @@ function setCompUtil(comp) {
               if (result.endpoints[compUser.ENDPOINT_TYPES.extension][i].id === defExt) {
                 defextObj = result.endpoints[compUser.ENDPOINT_TYPES.extension][i];
               }
-              if (result.endpoints[compUser.ENDPOINT_TYPES.extension][i].type === 'mobile') {
-                  result.endpoints[compUser.ENDPOINT_TYPES.extension][i].proxy_port = compConfigManager.getProxyPort();
-              } else {
-                  result.endpoints[compUser.ENDPOINT_TYPES.extension][i].proxy_port = null;
-              }
             }
             for (i = 0; i < result.endpoints[compUser.ENDPOINT_TYPES.mainextension].length; i++) {
               if (result.endpoints[compUser.ENDPOINT_TYPES.mainextension][i].id === defExt) {
