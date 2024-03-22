@@ -125,7 +125,8 @@ const migratedTables = [
   'pin',
   'queue_log',
   'phonebook',
-  'cti_phonebook'
+  'cti_phonebook',
+  'user_nethlink'
 ];
 
 /**
@@ -144,6 +145,7 @@ const migratedTables = [
     INCOMING:      "incoming",
     VOICEMAIL:     "voicemail",
     PHONEBOOK:     "phonebook",
+    USER_NETHLINK: 'user_nethlink',
     QUEUE_LOG:     "queue_log",
     REST_USERS:    "rest_users",
     SMS_HISTORY:   "sms_history",
@@ -167,6 +169,7 @@ const migratedTables = [
   INCOMING: 'incoming',
   VOICEMAIL: 'voicemail',
   PHONEBOOK: 'phonebook',
+  USER_NETHLINK: 'user_nethlink',
   QUEUE_LOG: 'queue_log',
   REST_USERS: 'rest_users',
   SMS_HISTORY: 'sms_history',

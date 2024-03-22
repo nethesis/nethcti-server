@@ -163,6 +163,7 @@ function setCompUtil(comp) {
      * 1. [`user/me`](#meget)
      * 1. [`user/endpoints/all`](#userendpointsallget)
      * 1. [`user/paramurl`](#paramurlget)
+     * 1. [`user/nethlink`](#nethlinkget)
      *
      * ---
      *
@@ -582,6 +583,7 @@ function setCompUtil(comp) {
          *   @param {string} presencelist_onbusy To get the list of possible conditional presence on busy status
          *   @param {string} presencelist_onunavailable To get the list of possible conditional presence on unavailable status
          *   @param {string} all_avatars To get the all user settings
+         *   @param {string} nethlink Set the nethlink object
          */
         'get': [
           'me',
@@ -593,7 +595,8 @@ function setCompUtil(comp) {
           'presence_onbusy',
           'presencelist_onbusy',
           'presence_onunavailable',
-          'presencelist_onunavailable'
+          'presencelist_onunavailable',
+          'nethlink'
         ],
 
         /**
@@ -608,6 +611,7 @@ function setCompUtil(comp) {
          *   @param {string} presence_onbusy Set a conditional presence status on busy for the user
          *   @param {string} presence_onunavailable Set a conditional presence status on unavailable for the user
          *   @param {string} mobile Associate a mobile phone number to the user
+         *   @param {string} nethlink Set the nethlink object
          */
         'post': [
           'presence',
@@ -615,7 +619,8 @@ function setCompUtil(comp) {
           'default_device',
           'presence_onbusy',
           'presence_onunavailable',
-          'mobile'
+          'mobile',
+          'nethlink'
         ],
         'head': [],
 
@@ -1002,6 +1007,79 @@ function setCompUtil(comp) {
         }
       },
 
+        /**
+       * Associate a connection nethlink timestamp to the user with the following REST API:
+       *
+       *     POST nethlink
+       *
+       * @method nethlink
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      nethlink: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          var extension = req.params.extension;
+          var actualDate = new Date()
+    
+          compUser.setNethLinkTimeStamp(username, extension, actualDate, function(err) {
+              try {
+                if (err) {
+                  logger.log.error(IDLOG, 'setting timestamp "' + actualDate + '" to user "' + username + '"');
+                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                  return;
+                }
+                logger.log.info(IDLOG, 'timestamp "' + actualDate + '" has been set successfully to user "' + username + '" ');
+                compUtil.net.sendHttp200(IDLOG, res);
+
+              } catch (err1) {
+                logger.log.error(IDLOG, err1.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+              }
+            }
+          );
+          } catch (err) {
+            logger.log.error(IDLOG, err.stack);
+            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+          }
+        },
+
+      /**
+       * Associate a connection nethlink timestamp to the user with the following REST API:
+       *
+       *     GET nethlink
+       *
+       * @method nethlink
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+        nethlink: function(req, res, next) {
+          try {
+            var username = req.headers.authorization_user;
+
+            compUser.getNethLinkTimeStamp(username, function(err, results) {
+                try {
+                  if (err) {
+                    throw err;
+                  }
+
+                  logger.log.info(IDLOG, 'timestamp has been reading from user ' + username);
+                  res.send(200, results);
+  
+                } catch (err1) {
+                  logger.log.error(IDLOG, err1.stack);
+                  compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+                }
+              }
+            );
+            } catch (err) {
+              logger.log.error(IDLOG, err.stack);
+              compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            }
+          },
+
       /**
        * Save/Delete the user settings by the following REST API:
        *
@@ -1138,6 +1216,7 @@ function setCompUtil(comp) {
     exports.setting = user.setting;
     exports.paramurl = user.paramurl;
     exports.presence = user.presence;
+    exports.nethlink = user.nethlink;
     exports.settings = user.settings;
     exports.setLogger = setLogger;
     exports.endpoints = user.endpoints;

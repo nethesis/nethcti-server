@@ -184,7 +184,86 @@ function setUserMobilePhoneNumber(username, pnumber, cb) {
   }
 }
 
+/**
+ * Store the NethCTI link timestamp associated with the user.
+ * @method setUserNethlinkTimestamp
+ * @param {string} username The username
+ * @param {string} extension The nethlink extension
+ * @param {string} actualDate The actual date
+ * @param {funcion} cb The callback function
+ */
+function setUserNethlinkTimestamp(username, extension, actualDate, cb) {
+
+  try {
+    let query = `INSERT INTO user_nethlink (user, extension, timestamp) VALUES (?, ?, ?)`;
+    let values = [username, extension, actualDate];
+
+    compDbconnMain.dbConn['user_nethlink'].query(
+      query,
+      values,
+      (err, results, fields) => {
+        try {
+          if (err) {
+            logger.log.error(IDLOG, 'saving timestamp information: ' + err.toString());
+            cb(err.toString());
+            return;
+          }
+          logger.log.info(IDLOG, 'user timestamp saved successfully');
+          cb();
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          cb(error);
+        }
+      }
+    );
+    compDbconnMain.incNumExecQueries();
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Store NethLink timestamp associated with the username.
+ * @method getUserNethlinkTimestamp
+ * @param {string} username The nethlink username
+ */
+function getUserNethlinkTimestamp(username, cb) {
+
+  try {
+    if (typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    let query = `SELECT timestamp FROM user_nethlink WHERE user = ?`;
+    let values = [username];
+
+    compDbconnMain.dbConn['user_nethlink'].query(
+      query,
+      values,
+      (err, results, fields) => {
+
+        try {
+          logger.log.info(IDLOG, 'user timestamp saved successfully');
+          cb(null, results);
+        } catch (error) {
+          logger.log.error(IDLOG, 'saving timestamp information: ' + err.toString());
+          cb(err.toString());
+        }
+
+      }
+    );
+    compDbconnMain.incNumExecQueries();
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
 apiList.setUserMobilePhoneNumber = setUserMobilePhoneNumber;
+apiList.setUserNethlinkTimestamp = setUserNethlinkTimestamp;
+apiList.getUserNethlinkTimestamp = getUserNethlinkTimestamp;
 
 // public interface
 exports.apiList = apiList;
