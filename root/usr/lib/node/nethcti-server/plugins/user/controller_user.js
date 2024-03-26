@@ -1269,6 +1269,62 @@ function setMobilePhoneNumber(username, pnumber, cb) {
 }
 
 /**
+ * Associate nethlink timestamp to the user.
+ *
+ * @method setNethLinkTimeStamp
+ * @param {string} username The username of the user to be set
+ * @param {string} extension The Nethlink extenion of the user to be set 
+* @param {string} actualDate Actual date
+ * @param {function} cb The callback function
+ */
+function setNethLinkTimeStamp(username, extension, actualDate, cb) {
+  try {
+    if (typeof username !== 'string' ||
+      typeof extension !== 'string' ||
+      typeof cb !== 'function') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (users[username]) {
+      compDbconn.setUserNethlinkTimestamp(username, extension, actualDate, cb);
+    } else {
+      logger.log.warn(IDLOG, 'setting nethlink of not existent user "' + username + '"');
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
+ * Associate nethlink timestamp to the user.
+ *
+ * @method getNethLinkTimeStamp
+ * @param {string} username The Nethlink username of the user 
+ */
+function getNethLinkTimeStamp(username, cb) {
+  try {
+    if (
+      typeof username !== 'string'){
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    if (users[username]) {
+      compDbconn.getUserNethlinkTimestamp(username,
+      function (err, results) {
+        cb(err, results); }
+      );
+    } else {
+      logger.log.warn(IDLOG, 'reading nethlink of not existent user "' + username + '"');
+    }
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
  * Set presence status on unavailable of the extensions to ONLINE.
  *
  * @method setOnlineStatusOnUnavailable
@@ -3390,6 +3446,8 @@ exports.getEndpointVoicemail = getEndpointVoicemail;
 exports.hasVoicemailEndpoint = hasVoicemailEndpoint;
 exports.getUsernamesWithData = getUsernamesWithData;
 exports.setMobilePhoneNumber = setMobilePhoneNumber;
+exports.setNethLinkTimeStamp = setNethLinkTimeStamp;
+exports.getNethLinkTimeStamp = getNethLinkTimeStamp;
 exports.getPresenceListOnBusy = getPresenceListOnBusy;
 exports.updateUserMainPresence = updateUserMainPresence;
 exports.getPresenceOnUnavailable = getPresenceOnUnavailable;
