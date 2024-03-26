@@ -195,7 +195,7 @@ function setUserMobilePhoneNumber(username, pnumber, cb) {
 function setUserNethlinkTimestamp(username, extension, actualDate, cb) {
 
   try {
-    let query = `INSERT INTO user_nethlink (user, extension, timestamp) VALUES (?, ?, ?)`;
+    let query = `REPLACE INTO user_nethlink (user, extension, timestamp) VALUES (?, ?, ?)`;
     let values = [username, extension, actualDate];
 
     compDbconnMain.dbConn['user_nethlink'].query(

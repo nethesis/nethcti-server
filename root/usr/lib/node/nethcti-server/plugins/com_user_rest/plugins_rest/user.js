@@ -1007,78 +1007,32 @@ function setCompUtil(comp) {
         }
       },
 
-        /**
-       * Associate a connection nethlink timestamp to the user with the following REST API:
+
+      /**
+       * Manages GET and POST requests to get/set the nethlink object
        *
+       *     GET  nethlink
        *     POST nethlink
        *
        * @method nethlink
-       * @param {object} req The client request
-       * @param {object} res The client response
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      nethlink: function(req, res, next) {
-        try {
-          var username = req.headers.authorization_user;
-          var extension = req.params.extension;
-          var actualDate = new Date()
-    
-          compUser.setNethLinkTimeStamp(username, extension, actualDate, function(err) {
-              try {
-                if (err) {
-                  logger.log.error(IDLOG, 'setting timestamp "' + actualDate + '" to user "' + username + '"');
-                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                  return;
-                }
-                logger.log.info(IDLOG, 'timestamp "' + actualDate + '" has been set successfully to user "' + username + '" ');
-                compUtil.net.sendHttp200(IDLOG, res);
-
-              } catch (err1) {
-                logger.log.error(IDLOG, err1.stack);
-                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
-              }
+        nethlink: function(req, res, next) {
+          try {
+            if (req.method.toLowerCase() === 'get') {
+              nethlinkGet(req, res, next);
+            } else if (req.method.toLowerCase() === 'post') {
+              nethlinkPost(req, res, next);
+            } else {
+              logger.log.warn(IDLOG, 'unknown requested method ' + req.method);
             }
-          );
           } catch (err) {
             logger.log.error(IDLOG, err.stack);
             compUtil.net.sendHttp500(IDLOG, res, err.toString());
           }
         },
-
-      /**
-       * Associate a connection nethlink timestamp to the user with the following REST API:
-       *
-       *     GET nethlink
-       *
-       * @method nethlink
-       * @param {object} req The client request
-       * @param {object} res The client response
-       * @param {function} next Function to run the next handler in the chain
-       */
-        nethlink: function(req, res, next) {
-          try {
-            var username = req.headers.authorization_user;
-
-            compUser.getNethLinkTimeStamp(username, function(err, results) {
-                try {
-                  if (err) {
-                    throw err;
-                  }
-
-                  logger.log.info(IDLOG, 'timestamp has been reading from user ' + username);
-                  res.send(200, results);
-  
-                } catch (err1) {
-                  logger.log.error(IDLOG, err1.stack);
-                  compUtil.net.sendHttp500(IDLOG, res, err1.toString());
-                }
-              }
-            );
-            } catch (err) {
-              logger.log.error(IDLOG, err.stack);
-              compUtil.net.sendHttp500(IDLOG, res, err.toString());
-            }
-          },
 
       /**
        * Save/Delete the user settings by the following REST API:
@@ -1602,3 +1556,76 @@ function presenceSet(req, res, next) {
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
   }
 }
+
+  /**
+ * Associate a connection nethlink timestamp to the user with the following REST API:
+ *
+ *     POST nethlink
+ *
+ * @method nethlinkPost
+ * @param {object} req The client request
+ * @param {object} res The client response
+ * @param {function} next Function to run the next handler in the chain
+ */
+function nethlinkPost(req, res, next) {
+  try {
+    var username = req.headers.authorization_user;
+    var extension = req.params.extension;
+    var actualDate = new Date()
+
+    compUser.setNethLinkTimeStamp(username, extension, actualDate, function(err) {
+        try {
+          if (err) {
+            logger.log.error(IDLOG, 'setting timestamp "' + actualDate + '" to user "' + username + '"');
+            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            return;
+          }
+          logger.log.info(IDLOG, 'timestamp "' + actualDate + '" has been set successfully to user "' + username + '" ');
+          compUtil.net.sendHttp200(IDLOG, res);
+
+        } catch (err1) {
+          logger.log.error(IDLOG, err1.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+        }
+      }
+    );
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+      compUtil.net.sendHttp500(IDLOG, res, err.toString());
+    }
+  }
+
+/**
+ * Associate a connection nethlink timestamp to the user with the following REST API:
+ *
+ *     GET nethlink
+ *
+ * @method nethlinkGet
+ * @param {object} req The client request
+ * @param {object} res The client response
+ * @param {function} next Function to run the next handler in the chain
+ */
+function nethlinkGet(req, res, next) {
+  try {
+    var username = req.headers.authorization_user;
+
+    compUser.getNethLinkTimeStamp(username, function(err, results) {
+        try {
+          if (err) {
+            throw err;
+          }
+
+          logger.log.info(IDLOG, 'timestamp has been reading from user ' + username);
+          res.send(200, results);
+
+        } catch (err1) {
+          logger.log.error(IDLOG, err1.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+        }
+      }
+    );
+    } catch (err) {
+      logger.log.error(IDLOG, err.stack);
+      compUtil.net.sendHttp500(IDLOG, res, err.toString());
+    }
+  }
