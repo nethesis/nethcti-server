@@ -783,6 +783,11 @@ function setCompUtil(comp) {
 
           for (i in endpoints) {
             results[i] = compUser.getUserInfoJSON(i);
+            if(results[i].username !== username) {
+              for(j in results[i].endpoints.extension) {
+                results[i].endpoints.extension[j].secret = '';
+              }
+            }
           }
           logger.log.info(IDLOG, 'send endpoints to user "' + username + '"');
           res.send(200, results);
