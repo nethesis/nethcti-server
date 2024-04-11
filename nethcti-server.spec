@@ -1,5 +1,5 @@
 Name: nethcti-server3
-Version: 3.30.0
+Version: 3.30.1
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
@@ -90,6 +90,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu Apr 11 2024 Stefano Fancello <gentoo.stefano@gmail.com> - 3.30.1-1
+- Filtered secret for all extension (#310)
+
 * Thu Mar 07 2024 Stefano Fancello <gentoo.stefano@gmail.com> - 3.30.0-1
 - ctiapp: validating NethVoice enterprise subscription for app activation (#306) - nethesis/ns8-nethvoice#125
 - Forbid tls 1 and 1.1 connection for nethifier (#300)
