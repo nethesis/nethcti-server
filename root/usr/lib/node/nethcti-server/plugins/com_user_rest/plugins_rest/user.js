@@ -724,6 +724,14 @@ function setCompUtil(comp) {
             } else {
               logger.log.info(IDLOG, "LK not enabled");
             }
+
+            // Add NS8 proxy fqdn
+            var proxy_fqdn = process.env.NETHVOICE_PROXY_FQDN;
+            if (proxy_fqdn) {
+              result.proxy_fqdn = proxy_fqdn;
+            } else {
+              logger.log.info(IDLOG, "Proxy fqdn missing");
+            }
           } else {
             var strerr = 'sending user info to user "' + username + '": wrong format';
             logger.log.error(IDLOG, strerr);
