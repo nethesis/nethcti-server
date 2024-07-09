@@ -20,7 +20,7 @@
     "node-ipc": "9.1.1",
     "node-static": "0.7.10",
     "nodemailer": "^6.5.0",
-    "pg": "6.1.6",
+    "pg": "8.12.0",
     "request": "2.88.0",
     "restify": "4.3.4",
     "sequelize": "3.34.0",
