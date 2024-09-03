@@ -6,7 +6,7 @@
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const astProxy = require('@nethesis/astproxy');
 var queueRecallingManager = astProxy.queueRecallingManager;
 
@@ -211,12 +211,13 @@ module.exports = function(options, imports, register) {
    * @return {object} The JSON statistics about all queues.
    */
   function getQCallsStatsHist(cb) {
+    var timezone = process.env.TIMEZONE;
     try {
       if (typeof cb !== 'function') {
         throw new Error('wrong parameters: ' + JSON.stringify(arguments));
       }
       if (qCallsStatsHist.last) {
-        var now = moment();
+        var now = moment().tz(timezone);
         var dd = now.format('DD');
         var HH = now.format('HH');
         var mm = now.format('mm');
@@ -229,7 +230,7 @@ module.exports = function(options, imports, register) {
         }
       }
       compDbconn.getQCallsStatsHist(nullCallPeriod, function (err1, result, len) {
-        var now = moment();
+        var now = moment().tz(timezone);
         var dd = now.format('DD');
         var HH = now.format('HH');
         var mm = now.format('mm');
