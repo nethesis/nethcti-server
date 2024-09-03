@@ -5,7 +5,7 @@
  * @submodule plugins
  */
 var async = require('async');
-var moment = require('moment');
+const moment = require('moment-timezone');
 const SQL = require('sql-template-strings')
 
 /**
@@ -321,8 +321,9 @@ function getAllQueueRecallQueryTable(hours, queues, agents) {
     }
     queues = '"' + queues.join('","') + '"';
     agents = '"' + agents.join('","') + '"';
-    const now = moment().format('YYYY-MM-DD HH:mm:ss');
-    const starting = moment().subtract({ hours: hours }).format('YYYY-MM-DD HH:mm:ss');
+    var timezone = process.env.TIMEZONE;
+    const now = moment().tz(timezone).format('YYYY-MM-DD HH:mm:ss');
+    const starting = moment().tz(timezone).subtract({ hours: hours }).format('YYYY-MM-DD HH:mm:ss');
     const timeConditionQl = '(time BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on queue_log
     const timeConditionCdr = '(calldate BETWEEN "' + starting + '" AND "' + now + '")'; // time condition on cdr
     let query = [
@@ -522,7 +523,8 @@ function getQCallsStatsHist(nullCallPeriod, cb) {
       '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30',
       '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30', '00:00'
     ];
-    const day = moment();
+    var timezone = process.env.TIMEZONE;
+    const day = moment().tz(timezone);
     const currday = day.format('DD-MMMM-YY');
     let caseClause = 'CASE ';
     for (var i = 0; i < period.length - 1; i++) {
@@ -1088,7 +1090,8 @@ function getAgentsOutgoingCalls(agents) {
     }
     return function (callback) {
       try {
-        const now = moment().format('YYYY-MM-DD');
+        var timezone = process.env.TIMEZONE;
+        const now = moment().tz(timezone).format('YYYY-MM-DD');
         compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
           where: [
             'disposition="ANSWERED" AND cnam IN ("' + agents.join('","') + '") AND ' +
