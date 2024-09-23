@@ -14,11 +14,7 @@ if [ "$NETHVOICE_LDAP_SCHEMA" = "rfc2307" ]; then
         -D "uid=$1,ou=People,$NETHVOICE_LDAP_BASE" \
         -w "$2" >  /dev/null
 elif [ "$NETHVOICE_LDAP_SCHEMA" = "ad" ]; then
-    if echo "$NETHVOICE_LDAP_USER" | grep -q '@' ; then
-        NETHVOICE_AD_DOMAIN=$(echo "$NETHVOICE_LDAP_USER" | sed 's/.*@\(.*\)/\1/')
-    else
-        NETHVOICE_AD_DOMAIN=$(echo "$NETHVOICE_LDAP_USER" | tr '[:upper:]' '[:lower:]' | rev | sed 's/\(.*\)=cd.*/\1/;s/=cd,/./g' | rev)
-    fi
+    NETHVOICE_AD_DOMAIN=$(echo "$NETHVOICE_LDAP_BASE" | sed -E 's/ *//g;s/OU=[^,]*,//Ig;s/CN=[^,]*,//Ig;s/DC=//Ig;s/,/./g')
     exec ldapsearch \
         -x \
         -s base \
