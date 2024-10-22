@@ -410,7 +410,7 @@ var EVT_USER_PROFILE_AVATAR_UPDATE = 'userProfileAvatarUpdate';
 var EVT_STREAMING_SOURCE_UPDATE = 'streamingSourceUpdate';
 
 /**
- * Emitted to a websocket client connection on a meetme conference update event.
+ * Emitted to a websocket client connection on a ConfBridge conference update event.
  *
  *                         {
       "id": "201",
@@ -424,36 +424,36 @@ var EVT_STREAMING_SOURCE_UPDATE = 'streamingSourceUpdate';
         }
       }
  *
- * @event meetmeConfUpdate
- * @param {object} data The data about the meetme conference update event
+ * @event confBridgeUpdate
+ * @param {object} data The data about the ConfBridge conference update event
  *
  */
 /**
- * The name of the meetme conference update event.
+ * The name of the ConfBridge conference update event.
  *
- * @property EVT_MEETME_CONF_UPDATE
+ * @property EVT_CONFBRIDGE_CONF_UPDATE
  * @type string
- * @default "meetmeConfUpdate"
+ * @default "confBridgeUpdate"
  */
-var EVT_MEETME_CONF_UPDATE = 'meetmeConfUpdate';
+var EVT_CONFBRIDGE_CONF_UPDATE = 'confBridgeUpdate';
 
 /**
- * Emitted to a websocket client connection on a meetme conference end event.
+ * Emitted to a websocket client connection on a ConfBridge conference end event.
  *
  *     { id: "201" }
  *
- * @event meetmeConfEnd
- * @param {object} data The data about the meetme conference end event
+ * @event confBridgeEnd
+ * @param {object} data The data about the ConfBridge conference end event
  *
  */
 /**
- * The name of the meetme conference end event.
+ * The name of the ConfBridge conference end event.
  *
- * @property EVT_MEETME_CONF_END
+ * @property EVT_CONFBRIDGE_CONF_END
  * @type string
- * @default "meetmeConfEnd"
+ * @default "confBridgeEnd"
  */
-var EVT_MEETME_CONF_END = 'meetmeConfEnd';
+var EVT_CONFBRIDGE_CONF_END = 'confBridgeEnd';
 
 /**
  * Fired when a websocket client connection has been closed.
@@ -868,8 +868,8 @@ function setAstProxyListeners() {
     astProxy.on(astProxy.EVT_QUEUE_CHANGED, queueChanged); // a queue has changed
     astProxy.on(astProxy.EVT_EXTEN_CONNECTED, extenConnected); // an extension has a connected conversation
     astProxy.on(astProxy.EVT_PARKING_CHANGED, parkingChanged); // a parking has changed
-    astProxy.on(astProxy.EVT_MEETME_CONF_END, meetmeConfEnd); // a meetme conference has been ended
-    astProxy.on(astProxy.EVT_MEETME_CONF_CHANGED, meetmeConfChanged); // a meetme conference has changed
+    astProxy.on(astProxy.EVT_CONFBRIDGE_CONF_END, confBridgeEnd); // a ConfBridge conference has been ended
+    astProxy.on(astProxy.EVT_CONFBRIDGE_CONF_CHANGED, confBridgeChanged); // a ConfBridge conference has changed
     astProxy.on(astProxy.EVT_QUEUE_MEMBER_CHANGED, queueMemberChanged); // a queue member has changed
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1469,22 +1469,22 @@ function queueMemberChanged(member) {
 }
 
 /**
- * Handler for the _astProxy.EVT\_MEETME\_CONF\_CHANGED_ event emitted by _astproxy_
- * component. Something has changed in the meetme conference, so notifies
+ * Handler for the _astProxy.EVT\_CONFBRIDGE\_CONF\_CHANGED_ event emitted by _astproxy_
+ * component. Something has changed in the ConfBridge conference, so notifies
  * all clients associated with the conference extension.
  *
- * @method meetmeConfChanged
+ * @method confBridgeChanged
  * @param {object} conf The conference object
  * @private
  */
-function meetmeConfChanged(conf) {
+function confBridgeChanged(conf) {
   try {
-    logger.log.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_CHANGED + '" for conf id ' + conf.getId());
-    logger.log.info(IDLOG, 'emit event "' + EVT_MEETME_CONF_UPDATE + '" for conf id ' + conf.getId() + ' to websockets');
-    sendEvtToUserWithExtenId(EVT_MEETME_CONF_UPDATE, conf.toJSON(), conf.getId());
+    logger.log.info(IDLOG, 'received event "' + astProxy.EVT_CONFBRIDGE_CONF_CHANGED + '" for conf id ' + conf.getId());
+    logger.log.info(IDLOG, 'emit event "' + EVT_CONFBRIDGE_CONF_UPDATE + '" for conf id ' + conf.getId() + ' to websockets');
+    sendEvtToUserWithExtenId(EVT_CONFBRIDGE_CONF_UPDATE, conf.toJSON(), conf.getId());
     var extens = Object.keys(conf.getAllUsers());
     for (var i = 0; i < extens.length; i++) {
-      sendEvtToUserWithExtenId(EVT_MEETME_CONF_UPDATE, conf.toJSON(), extens[i]);
+      sendEvtToUserWithExtenId(EVT_CONFBRIDGE_CONF_UPDATE, conf.toJSON(), extens[i]);
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -1492,19 +1492,19 @@ function meetmeConfChanged(conf) {
 }
 
 /**
- * Handler for the _astProxy.EVT\_MEETME\_CONF\_END_ event emitted by _astproxy_
- * component. A meetme conference has been ended, so notifies
+ * Handler for the _astProxy.EVT\_CONFBRIDGE\_CONF\_END_ event emitted by _astproxy_
+ * component. A ConfBridge conference has been ended, so notifies
  * all clients associated with the conference extension.
  *
- * @method meetmeConfEnd
+ * @method confBridgeEnd
  * @param {string} confId The conference identifier
  * @private
  */
-function meetmeConfEnd(confId) {
+function confBridgeEnd(confId) {
   try {
-    logger.log.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_END + '" for conf id ' + confId);
-    logger.log.info(IDLOG, 'emit event "' + EVT_MEETME_CONF_END + '" for conf id ' + confId + ' to websockets');
-    sendEvtToUserWithExtenId(EVT_MEETME_CONF_END, { id: confId }, confId);
+    logger.log.info(IDLOG, 'received event "' + astProxy.EVT_CONFBRIDGE_CONF_END + '" for conf id ' + confId);
+    logger.log.info(IDLOG, 'emit event "' + EVT_CONFBRIDGE_CONF_END + '" for conf id ' + confId + ' to websockets');
+    sendEvtToUserWithExtenId(EVT_CONFBRIDGE_CONF_END, { id: confId }, confId);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
