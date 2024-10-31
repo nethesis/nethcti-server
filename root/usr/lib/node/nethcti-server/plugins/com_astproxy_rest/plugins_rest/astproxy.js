@@ -2659,6 +2659,56 @@ var compConfigManager;
       },
 
       /**
+       * Mute/Unmute a conversation of the extension registered with a supported
+       * physical phone with the following REST API:
+       *
+       *     POST toggle_mute
+       *
+       * @method call
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      toggle_mute: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+
+          // check parameters
+          if (typeof req.params !== 'object' || typeof req.params.endpointId !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+
+          // check if the extension of the request is owned by the user: the user
+          // can only toggle hold a conversation that belong to him
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+            logger.log.warn(IDLOG, 'toggle hold from user "' + username + '" has been failed: the extension "' +
+              req.params.endpointId + '" is not owned by him');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+
+          var extenAgent = compAstProxy.getExtensionAgent(req.params.endpointId);
+          var isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
+
+          if (!isSupported) {
+            var str = 'holding conversation with unsupported phone (exten: ' + req.params.endpointId + '/' + extenAgent + ')';
+            logger.log.warn(IDLOG, str);
+            compUtil.net.sendHttp500(IDLOG, res, str);
+          } else if (isSupported && compAstProxy.isAutoC2CEnabled()) {
+            ajaxPhoneMuteUnmute(username, req, res);
+          } else if (isSupported && compAstProxy.isC2CModeCloud()) {
+            sendPhoneMuteToTcp(username, req, res);
+            compUtil.net.sendHttp200(IDLOG, res);
+          }
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
        * Makes a new call to the destination number from any extension with the following REST API:
        *
        *     POST  unauthe_call
@@ -6144,7 +6194,7 @@ function sendPhoneMuteToTcp(username, req, res) {
     const exten = req.params.endpointId;
     const extenIp = compAstProxy.getExtensionIp(exten);
     const extenAgent = compAstProxy.getExtensionAgent(exten);
-    let url = compConfigManager.getHoldUnholdUrlFromAgent(extenAgent);
+    let url = compConfigManager.getMuteUnmuteUrlFromAgent(extenAgent);
     if (typeof url === 'string' && url !== '') {
       const phoneUser = compUser.getPhoneWebUser(username, exten);
       const phonePass = compUser.getPhoneWebPass(username, exten);
