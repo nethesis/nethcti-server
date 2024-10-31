@@ -5779,6 +5779,81 @@ function ajaxPhoneHoldUnhold(username, req, res) {
 }
 
 /**
+ * Mute/Unmute current conversation sending an HTTP GET request to the phone device.
+ *
+ * @method ajaxPhoneMuteUnmute
+ * @param {string} username The username that hold the conversation
+ * @param {object} req The client request
+ * @param {object} res The client response
+ */
+function ajaxPhoneMuteUnmute(username, req, res) {
+  try {
+    // check parameters
+    if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    var exten = req.params.endpointId;
+    var extenIp = compAstProxy.getExtensionIp(exten);
+    var extenAgent = compAstProxy.getExtensionAgent(exten);
+    var serverHostname = compConfigManager.getServerHostname();
+    // get the url to call to originate the new call. If the url is an empty
+    // string, the phone is not supported, so the call fails
+    var url = compConfigManager.getMuteUnmuteUrlFromAgent(extenAgent);
+
+    if (typeof url === 'string' && url !== '') {
+
+      // the credential to access the phone via url
+      var phoneUser = compUser.getPhoneWebUser(username, exten);
+      var phonePass = compUser.getPhoneWebPass(username, exten);
+
+      // replace the parameters of the url template
+      url = url.replace(/\$SERVER/g, serverHostname);
+      url = url.replace(/\$PHONE_IP/g, extenIp);
+      url = url.replace(/\$PHONE_USER/g, phoneUser);
+      url = url.replace(/\$PHONE_PASS/g, phonePass);
+
+      httpReq.get(url, function (httpResp) {
+        try {
+          if (httpResp.statusCode === 200) {
+            logger.log.info(IDLOG, 'hold: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+              ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+            logger.log.info(IDLOG, url);
+            res.send(200, {
+              phoneRespStatusCode: httpResp.statusCode
+            });
+
+          } else {
+            logger.log.warn(IDLOG, 'hold: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+              ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+            logger.log.warn(IDLOG, url);
+            res.send(httpResp.statusCode, {
+              phoneRespStatusCode: httpResp.statusCode
+            });
+          }
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+
+      }).on('error', function (err1) {
+        logger.log.error(IDLOG, err1.message);
+        compUtil.net.sendHttp500(IDLOG, res, err1.message);
+      });
+
+    } else {
+      logger.log.warn(IDLOG, 'failed hold via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
+        ' by the user "' + username + '": ' + extenAgent + ' is not supported');
+      compUtil.net.sendHttp500(IDLOG, res, 'the phone "' + extenAgent + '" is not supported');
+    }
+
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
+
+/**
  * This is the fallback of a failed ajax phone call. It uses
  * the asterisk call.
  *
@@ -6029,6 +6104,39 @@ function sendPhoneAnswerToTcp(username, req, res) {
  * @param {object} res The client response
  */
 function sendPhoneHoldToTcp(username, req, res) {
+  try {
+    if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    const exten = req.params.endpointId;
+    const extenIp = compAstProxy.getExtensionIp(exten);
+    const extenAgent = compAstProxy.getExtensionAgent(exten);
+    let url = compConfigManager.getHoldUnholdUrlFromAgent(extenAgent);
+    if (typeof url === 'string' && url !== '') {
+      const phoneUser = compUser.getPhoneWebUser(username, exten);
+      const phonePass = compUser.getPhoneWebPass(username, exten);
+      url = url.replace(/\$PHONE_IP/g, extenIp);
+      url = url.replace(/\$PHONE_USER/g, phoneUser);
+      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      compNethctiTcp.sendPhoneRequest(username, url);
+    } else {
+      logger.log.warn(IDLOG, `failed answer via TCP request by the user "${username}": extenAgent is not supported`);
+    }
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
+
+/**
+ * Send the request to mute to a connected tcp client. The tcp client will do the request
+ * to the final physical supported phone.
+ *
+ * @method sendPhoneMuteToTcp
+ * @param {string} username The username
+ * @param {object} req The client request
+ * @param {object} res The client response
+ */
+function sendPhoneMuteToTcp(username, req, res) {
   try {
     if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
