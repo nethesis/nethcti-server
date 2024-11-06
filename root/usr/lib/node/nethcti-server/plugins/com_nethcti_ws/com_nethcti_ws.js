@@ -297,6 +297,25 @@ var EVT_ANSWER_WEBRTC = 'answerWebrtc';
  */
 var EVT_CALL_WEBRTC = 'callWebrtc';
 
+/**
+ * Emitted to a websocket client connection to call a number using NethLink application.
+ *
+ * Example:
+ *
+     "0721405516"
+ *
+ * @event callNethLink
+ * @param {string} url The destination number to be called using WebRTC extension
+ *
+ */
+/**
+ * The name of the event to call number using WebRTC extension
+ *
+ * @property EVT_CALL_NETHLINK
+ * @type string
+ */
+var EVT_CALL_NETHLINK = 'callNethLink';
+
 //  /**
 //   * Emitted to a websocket client connection on user endpoint presence update.
 //   *
@@ -1709,6 +1728,35 @@ function sendCallWebrtcToClient(username, to) {
 }
 
 /**
+ * Sends an event to the client to call the number using webrtc extension.
+ *
+ * @method sendRequestToNethLink
+ * @param {string} username The name of the client user
+ * @param {string} url       The destination number to be called using client webrtc phone
+ */
+function sendRequestToNethLink(username, url) {
+  try {
+    if (typeof username !== 'string' || typeof url !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    // emit the EVT_CALL_NETHLINK event for each logged in user
+    var socketId;
+    for (socketId in wsid) {
+
+      if (wsid[socketId].username === username) {
+        logger.log.info(IDLOG, 'emit event "' + EVT_CALL_NETHLINK + '" to url ' + url + ' to user "' + username + '"');
+
+        if (wsServer.sockets.sockets.has(socketId)) {
+          wsServer.sockets.sockets.get(socketId).emit(EVT_CALL_NETHLINK, url);
+        }
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Send an event to all the clients to inform them about all components reloaded.
  *
  * @method sendAllCompReloaded
@@ -2633,6 +2681,7 @@ exports.setCompStreaming = setCompStreaming;
 exports.sendAllCompReloaded = sendAllCompReloaded;
 exports.sendEventToAllClients = sendEventToAllClients;
 exports.sendCallWebrtcToClient = sendCallWebrtcToClient;
+exports.sendRequestToNethLink = sendRequestToNethLink;
 exports.getNumConnectedClients = getNumConnectedClients;
 exports.EVT_WS_CLIENT_LOGGEDIN = EVT_WS_CLIENT_LOGGEDIN;
 exports.EVT_WS_CLIENT_CONNECTED = EVT_WS_CLIENT_CONNECTED;
