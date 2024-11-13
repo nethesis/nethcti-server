@@ -6110,7 +6110,8 @@ function sendPhoneCallToTcp(username, req, res) {
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
-      compComNethctiWs.sendRequestToNethLink(username, url);
+      let urlType = 'call';
+      compComNethctiWs.sendRequestToNethLink(username, url, urlType);
     } else {
       logger.log.warn(IDLOG, `failed call to ${to} via TCP request by the user "${username}": extenAgent is not supported`);
       fallbackAjaxPhoneCall(username, req, res);
@@ -6145,7 +6146,8 @@ function sendPhoneAnswerToTcp(username, req, res) {
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
-      compComNethctiWs.sendRequestToNethLink(username, url);
+      let urlType = 'answer';
+      compComNethctiWs.sendRequestToNethLink(username, url, urlType);
     } else {
       logger.log.warn(IDLOG, `failed answer via TCP request by the user "${username}": extenAgent is not supported`);
     }
@@ -6178,7 +6180,8 @@ function sendPhoneHoldToTcp(username, req, res) {
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
-      compComNethctiWs.sendRequestToNethLink(username, url);
+      let urlType = 'hold-unhold';
+      compComNethctiWs.sendRequestToNethLink(username, url, urlType);
     } else {
       logger.log.warn(IDLOG, `failed answer via TCP request by the user "${username}": extenAgent is not supported`);
     }
@@ -6211,7 +6214,8 @@ function sendPhoneMuteToTcp(username, req, res) {
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
-      compComNethctiWs.sendRequestToNethLink(username, url);
+      let urlType = 'mute-unmute';
+      compComNethctiWs.sendRequestToNethLink(username, url, urlType);
     } else {
       logger.log.warn(IDLOG, `failed answer via TCP request by the user "${username}": extenAgent is not supported`);
     }
@@ -6253,7 +6257,8 @@ function sendPhoneDtmfToTcp(username, req, res) {
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
       url = url.replace(/\$TONE/g, tone);
-      compComNethctiWs.sendRequestToNethLink(username, url);
+      let urlType = 'dtmf';
+      compComNethctiWs.sendRequestToNethLink(username, url, urlType);
     } else {
       logger.log.warn(IDLOG, `failed DTMF via TCP request by the user "${username}": extenAgent is not supported`);
     }

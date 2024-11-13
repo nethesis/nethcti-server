@@ -1734,7 +1734,7 @@ function sendCallWebrtcToClient(username, to) {
  * @param {string} username The name of the client user
  * @param {string} url       The destination number to be called using client webrtc phone
  */
-function sendRequestToNethLink(username, url) {
+function sendRequestToNethLink(username, url, type) {
   try {
     if (typeof username !== 'string' || typeof url !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -1744,10 +1744,10 @@ function sendRequestToNethLink(username, url) {
     for (socketId in wsid) {
 
       if (wsid[socketId].username === username) {
-        logger.log.info(IDLOG, 'emit event "' + EVT_CALL_NETHLINK + '" to url ' + url + ' to user "' + username + '"');
+        logger.log.info(IDLOG, 'emit event "' + EVT_CALL_NETHLINK + '" to url ' + url + ' to user "' + username + '" of type ' + type);
 
         if (wsServer.sockets.sockets.has(socketId)) {
-          wsServer.sockets.sockets.get(socketId).emit(EVT_CALL_NETHLINK, url);
+          wsServer.sockets.sockets.get(socketId).emit(EVT_CALL_NETHLINK, url, type);
         }
       }
     }
