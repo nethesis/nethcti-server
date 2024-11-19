@@ -304,17 +304,17 @@ var EVT_CALL_WEBRTC = 'callWebrtc';
  *
      "0721405516"
  *
- * @event callNethLink
+ * @event actionNethLink
  * @param {string} url The destination number to be called using WebRTC extension
  *
  */
 /**
  * The name of the event to call number using WebRTC extension
  *
- * @property EVT_CALL_NETHLINK
+ * @property EVT_ACTION_NETHLINK
  * @type string
  */
-var EVT_CALL_NETHLINK = 'callNethLink';
+var EVT_ACTION_NETHLINK = 'actionNethLink';
 
 //  /**
 //   * Emitted to a websocket client connection on user endpoint presence update.
@@ -1739,15 +1739,15 @@ function sendRequestToNethLink(username, url, type) {
     if (typeof username !== 'string' || typeof url !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    // emit the EVT_CALL_NETHLINK event for each logged in user
+    // emit the EVT_ACTION_NETHLINK event for each logged in user
     var socketId;
     for (socketId in wsid) {
 
       if (wsid[socketId].username === username) {
-        logger.log.info(IDLOG, 'emit event "' + EVT_CALL_NETHLINK + '" to url ' + url + ' to user "' + username + '" of type ' + type);
+        logger.log.info(IDLOG, 'emit event "' + EVT_ACTION_NETHLINK + '" to url ' + url + ' to user "' + username + '" of type ' + type);
 
         if (wsServer.sockets.sockets.has(socketId)) {
-          wsServer.sockets.sockets.get(socketId).emit(EVT_CALL_NETHLINK, url, type);
+          wsServer.sockets.sockets.get(socketId).emit(EVT_ACTION_NETHLINK, url, type);
         }
       }
     }

@@ -709,6 +709,7 @@ var compConfigManager;
         * 1. [`astproxy/park`](#parkpost)
         * 1. [`astproxy/toggle_hold`](#toggle_holdpost)
         * 1. [`astproxy/call`](#callpost)
+        * 1. [`astproxy/toggle_mute`](#toggle_mutepost)
         * 1. [`astproxy/mute`](#mutepost)
         * 1. [`astproxy/unmute`](#unmutepost)
         * 1. [`astproxy/atxfer`](#atxferpost)
@@ -791,6 +792,19 @@ var compConfigManager;
         * ### <a id="toggle_holdpost">**`astproxy/toggle_hold`**</a>
         *
         * Hold/Unhold a conversation of the specified extension. It uses HTTP api of the physical phones, so it works
+        * only if the extension is registered with a supported phone. The request must contains the following parameters:
+        *
+        * * `endpointId: the extension identifier registered with physical supported phones.`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointId": "214" }
+        *
+        * ---
+        *
+        * ### <a id="toggle_mutepost">**`astproxy/toggle_mute`**</a>
+        *
+        * Mute/Unmute a conversation of the specified extension. It uses HTTP api of the physical phones, so it works
         * only if the extension is registered with a supported phone. The request must contains the following parameters:
         *
         * * `endpointId: the extension identifier registered with physical supported phones.`
@@ -1399,6 +1413,7 @@ var compConfigManager;
          *   @param {string} txfer_tovm            Transfer the conversation to the voicemail
          *   @param {string} start_conf            Starts a meetme conference
          *   @param {string} toggle_hold           Hold/Unhold a conversation of the user. It works only with supported physical phones
+         *   @param {string} toggle_mute           Mute/Unmute a conversation of the user. It works only with supported physical phones
          *   @param {string} join_myconf           Joins the extension owner to his meetme conference
          *   @param {string} pickup_conv           Pickup a conversation
          *   @param {string} stop_record           Stop the recording of a conversation
@@ -1449,6 +1464,7 @@ var compConfigManager;
           'txfer_tovm',
           'start_conf',
           'toggle_hold',
+          'toggle_mute',
           'pickup_conv',
           'stop_record',
           'join_myconf',
@@ -2620,12 +2636,12 @@ var compConfigManager;
        * @param {function} next Function to run the next handler in the chain
        */
       toggle_hold: function (req, res, next) {
-        var result = compUser.getUserInfoJSON(username);
-        const nethlinkExtensions = result.endpoints[compUser.ENDPOINT_TYPES.extension].filter((endpoint) => endpoint.type === 'nethlink');
-        const nethlinkExtension = nethlinkExtensions.length > 0 ? nethlinkExtensions[0].id : null;
-        var nethlinkStatus = compAstProxy.getExtenStatus(nethlinkExtension);
         try {
           var username = req.headers.authorization_user;
+          var result = compUser.getUserInfoJSON(username);
+          const nethlinkExtensions = result.endpoints[compUser.ENDPOINT_TYPES.extension].filter((endpoint) => endpoint.type === 'nethlink');
+          const nethlinkExtension = nethlinkExtensions.length > 0 ? nethlinkExtensions[0].id : null;
+          var nethlinkStatus = compAstProxy.getExtenStatus(nethlinkExtension);
 
           // check parameters
           if (typeof req.params !== 'object' || typeof req.params.endpointId !== 'string') {
@@ -2672,12 +2688,12 @@ var compConfigManager;
        * @param {function} next Function to run the next handler in the chain
        */
       toggle_mute: function (req, res, next) {
-        var result = compUser.getUserInfoJSON(username);
-        const nethlinkExtensions = result.endpoints[compUser.ENDPOINT_TYPES.extension].filter((endpoint) => endpoint.type === 'nethlink');
-        const nethlinkExtension = nethlinkExtensions.length > 0 ? nethlinkExtensions[0].id : null;
-        var nethlinkStatus = compAstProxy.getExtenStatus(nethlinkExtension);
         try {
           var username = req.headers.authorization_user;
+          var result = compUser.getUserInfoJSON(username);
+          const nethlinkExtensions = result.endpoints[compUser.ENDPOINT_TYPES.extension].filter((endpoint) => endpoint.type === 'nethlink');
+          const nethlinkExtension = nethlinkExtensions.length > 0 ? nethlinkExtensions[0].id : null;
+          var nethlinkStatus = compAstProxy.getExtenStatus(nethlinkExtension);
 
           // check parameters
           if (typeof req.params !== 'object' || typeof req.params.endpointId !== 'string') {
@@ -3459,12 +3475,12 @@ var compConfigManager;
        * @param {function} next Function to run the next handler in the chain
        */
       answer: function (req, res, next) {
-        var result = compUser.getUserInfoJSON(username);
-        const nethlinkExtensions = result.endpoints[compUser.ENDPOINT_TYPES.extension].filter((endpoint) => endpoint.type === 'nethlink');
-        const nethlinkExtension = nethlinkExtensions.length > 0 ? nethlinkExtensions[0].id : null;
-        var nethlinkStatus = compAstProxy.getExtenStatus(nethlinkExtension);
         try {
           var username = req.headers.authorization_user;
+          var result = compUser.getUserInfoJSON(username);
+          const nethlinkExtensions = result.endpoints[compUser.ENDPOINT_TYPES.extension].filter((endpoint) => endpoint.type === 'nethlink');
+          const nethlinkExtension = nethlinkExtensions.length > 0 ? nethlinkExtensions[0].id : null;
+          var nethlinkStatus = compAstProxy.getExtenStatus(nethlinkExtension);
 
           // check parameters
           if (typeof req.params !== 'object' || !req.params.endpointId || typeof req.params.endpointId !== 'string') {
@@ -3485,7 +3501,7 @@ var compConfigManager;
           }
           const extenAgent = compAstProxy.getExtensionAgent(req.params.endpointId);
           const isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
-          if (isSupported && compAstProxy.isAutoC2CEnabled && nethlinkStatus === 'online') {
+          if (isSupported && compAstProxy.isAutoC2CEnabled && (nethlinkStatus === 'online' || nethlinkStatus === 'ringing')) {
             sendPhoneAnswerToTcp(username, req, res);
             compUtil.net.sendHttp200(IDLOG, res);
           }
@@ -5187,13 +5203,12 @@ var compConfigManager;
        * @param {function} next Function to run the next handler in the chain
        */
       dtmf: function (req, res, next) {
-        var result = compUser.getUserInfoJSON(username);
-        const nethlinkExtensions = result.endpoints[compUser.ENDPOINT_TYPES.extension].filter((endpoint) => endpoint.type === 'nethlink');
-        const nethlinkExtension = nethlinkExtensions.length > 0 ? nethlinkExtensions[0].id : null;
-        var nethlinkStatus = compAstProxy.getExtenStatus(nethlinkExtension);
         try {
           var username = req.headers.authorization_user;
-
+          var result = compUser.getUserInfoJSON(username);
+          const nethlinkExtensions = result.endpoints[compUser.ENDPOINT_TYPES.extension].filter((endpoint) => endpoint.type === 'nethlink');
+          const nethlinkExtension = nethlinkExtensions.length > 0 ? nethlinkExtensions[0].id : null;
+          var nethlinkStatus = compAstProxy.getExtenStatus(nethlinkExtension);
           // check parameters
           if (typeof req.params !== 'object' ||
             typeof req.params.tone !== 'string' ||
@@ -5467,6 +5482,7 @@ var compConfigManager;
     exports.setCompUtil = setCompUtil;
     exports.join_myconf = astproxy.join_myconf;
     exports.toggle_hold = astproxy.toggle_hold;
+    exports.toggle_mute = astproxy.toggle_mute
     exports.pickup_conv = astproxy.pickup_conv;
     exports.stop_record = astproxy.stop_record;
     exports.setCompUser = setCompUser;
