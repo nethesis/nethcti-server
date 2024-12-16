@@ -1368,6 +1368,7 @@ function setDefaultUserExtensionConf(username, exten, cb) {
         } else {
           // update the configuration in mem
           userSettings[username][USER_CONFIG_KEYS.default_extension] = exten;
+          compComNethctiWs.sendUpdateDefaultDevice(username, exten);
           cb(null);
         }
       } catch (error) {

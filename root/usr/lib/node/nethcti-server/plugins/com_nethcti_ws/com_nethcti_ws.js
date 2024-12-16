@@ -316,6 +316,25 @@ var EVT_CALL_WEBRTC = 'callWebrtc';
  */
 var EVT_ACTION_NETHLINK = 'actionNethLink';
 
+/**
+ * Emitted to a websocket client connection to update user default_device.
+ *
+ * Example:
+ *
+     "0721405516"
+ *
+ * @event updateDefaultDevice
+ * @param {string} extension The id of updated default_device
+ *
+ */
+/**
+ * The name of the event to update default device
+ *
+ * @property EVT_DISPATCH_DEFAULT_DEVICE_CHANGE
+ * @type string
+ */
+var EVT_DISPATCH_DEFAULT_DEVICE_CHANGE = 'updateDefaultDevice';
+
 //  /**
 //   * Emitted to a websocket client connection on user endpoint presence update.
 //   *
@@ -1757,6 +1776,35 @@ function sendRequestToNethLink(username, url, type) {
 }
 
 /**
+ * Sends an event to the client to update the user default device.
+ *
+ * @method sendUpdateDefaultDevice
+ * @param {string} username The name of the client user
+ * @param {string} extension The device id information to be updated
+ */
+function sendUpdateDefaultDevice(username, extension) {
+  try {
+    if (typeof username !== 'string' || typeof extension !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    // emit the EVT_DISPATCH_DEFAULT_DEVICE_CHANGE event for each logged in user
+    var socketId;
+    for (socketId in wsid) {
+
+      if (wsid[socketId].username === username) {
+        logger.log.info(IDLOG, 'emit event "' + EVT_DISPATCH_DEFAULT_DEVICE_CHANGE + '" to default device ' + extension + ' to user "' + username);
+
+        if (wsServer.sockets.sockets.has(socketId)) {
+          wsServer.sockets.sockets.get(socketId).emit(EVT_DISPATCH_DEFAULT_DEVICE_CHANGE, extension);
+        }
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Send an event to all the clients to inform them about all components reloaded.
  *
  * @method sendAllCompReloaded
@@ -2682,6 +2730,7 @@ exports.sendAllCompReloaded = sendAllCompReloaded;
 exports.sendEventToAllClients = sendEventToAllClients;
 exports.sendCallWebrtcToClient = sendCallWebrtcToClient;
 exports.sendRequestToNethLink = sendRequestToNethLink;
+exports.sendUpdateDefaultDevice = sendUpdateDefaultDevice;
 exports.getNumConnectedClients = getNumConnectedClients;
 exports.EVT_WS_CLIENT_LOGGEDIN = EVT_WS_CLIENT_LOGGEDIN;
 exports.EVT_WS_CLIENT_CONNECTED = EVT_WS_CLIENT_CONNECTED;
