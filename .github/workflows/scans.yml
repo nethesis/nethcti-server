@@ -3,7 +3,7 @@ name: SBOM scans
 on:
   push:
     branches:
-      - main
+      - ns8
   release:
     types:
       - published
