@@ -1022,6 +1022,70 @@ function getHoldUnholdUrlFromAgent(agent) {
 }
 
 /**
+ * It sequentially test a match of specified agent with the keys of _phoneUrls_
+ * object. If the match exists than returns the url phone to mute/unmute the conversation,
+ * otherwise it returns an empty string. The keys of _phoneUrls_ are sequentially
+ * checked, so they must be present from the more restrictive to the least.
+ *
+ * @method getMuteUnmuteUrlFromAgent
+ * @param  {string} agent The phone user agent
+ * @return {string} The phone url used to mute/unmute the conversation
+ */
+function getMuteUnmuteUrlFromAgent(agent) {
+  try {
+    // check parameter
+    if (typeof agent !== 'string') {
+      throw new TypeError('wrong parameter: ' + agent);
+    }
+
+    var re;
+    for (re in phoneUrls) {
+      // case insensitive 'i'
+      if (agent.search(new RegExp(re, 'i')) >= 0) {
+        return phoneUrls[re].urls.mute_unmute;
+      }
+    }
+    return '';
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return '';
+  }
+}
+
+/**
+ * It sequentially test a match of specified agent with the keys of _phoneUrls_
+ * object. If the match exists than returns the url phone to cancel the action,
+ * otherwise it returns an empty string. The keys of _phoneUrls_ are sequentially
+ * checked, so they must be present from the more restrictive to the least.
+ *
+ * @method getCancelUrlFromAgent
+ * @param  {string} agent The phone user agent
+ * @return {string} The phone url used to cancel the action
+ */
+function getCancelUrlFromAgent(agent) {
+  try {
+    // check parameter
+    if (typeof agent !== 'string') {
+      throw new TypeError('wrong parameter: ' + agent);
+    }
+
+    var re;
+    for (re in phoneUrls) {
+      // case insensitive 'i'
+      if (agent.search(new RegExp(re, 'i')) >= 0) {
+        return phoneUrls[re].urls.cancel;
+      }
+    }
+    return '';
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return '';
+  }
+}
+
+/**
  * Returns true if the specified phone supports dtmf by HTTP api.
  * It sequentially test a match of specified agent with the keys of _phoneUrls_
  * object. If the match exists than returns a true value, false otherwise.
@@ -1304,6 +1368,7 @@ function setDefaultUserExtensionConf(username, exten, cb) {
         } else {
           // update the configuration in mem
           userSettings[username][USER_CONFIG_KEYS.default_extension] = exten;
+          compComNethctiWs.sendUpdateDefaultDevice(username, exten);
           cb(null);
         }
       } catch (error) {
@@ -1995,6 +2060,8 @@ exports.phoneSupportDtmfHttpApi = phoneSupportDtmfHttpApi;
 exports.phoneSupportHoldHttpApi = phoneSupportHoldHttpApi;
 exports.getAllUserEndpointsJSON = getAllUserEndpointsJSON;
 exports.getHoldUnholdUrlFromAgent = getHoldUnholdUrlFromAgent;
+exports.getMuteUnmuteUrlFromAgent = getMuteUnmuteUrlFromAgent;
+exports.getCancelUrlFromAgent = getCancelUrlFromAgent;
 exports.getPostitNotificationSmsTo = getPostitNotificationSmsTo;
 exports.setDefaultUserExtensionConf = setDefaultUserExtensionConf;
 exports.getDefaultUserExtensionConf = getDefaultUserExtensionConf;

@@ -709,6 +709,7 @@ var compConfigManager;
         * 1. [`astproxy/park`](#parkpost)
         * 1. [`astproxy/toggle_hold`](#toggle_holdpost)
         * 1. [`astproxy/call`](#callpost)
+        * 1. [`astproxy/toggle_mute`](#toggle_mutepost)
         * 1. [`astproxy/mute`](#mutepost)
         * 1. [`astproxy/unmute`](#unmutepost)
         * 1. [`astproxy/atxfer`](#atxferpost)
@@ -717,6 +718,7 @@ var compConfigManager;
         * 1. [`astproxy/dtmf`](#dtmfpost)
         * 1. [`astproxy/wakeup`](#wakeuppost)
         * 1. [`astproxy/intrude`](#intrudepost)
+        * 1. [`astproxy/cancel`](#cancelpost)
         * 1. [`astproxy/mute_record`](#mute_recordpost)
         * 1. [`astproxy/start_record`](#start_recordpost)
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
@@ -791,6 +793,19 @@ var compConfigManager;
         * ### <a id="toggle_holdpost">**`astproxy/toggle_hold`**</a>
         *
         * Hold/Unhold a conversation of the specified extension. It uses HTTP api of the physical phones, so it works
+        * only if the extension is registered with a supported phone. The request must contains the following parameters:
+        *
+        * * `endpointId: the extension identifier registered with physical supported phones.`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointId": "214" }
+        *
+        * ---
+        *
+        * ### <a id="toggle_mutepost">**`astproxy/toggle_mute`**</a>
+        *
+        * Mute/Unmute a conversation of the specified extension. It uses HTTP api of the physical phones, so it works
         * only if the extension is registered with a supported phone. The request must contains the following parameters:
         *
         * * `endpointId: the extension identifier registered with physical supported phones.`
@@ -1399,7 +1414,9 @@ var compConfigManager;
          *   @param {string} txfer_tovm            Transfer the conversation to the voicemail
          *   @param {string} start_conf            Starts a ConfBridge conference
          *   @param {string} toggle_hold           Hold/Unhold a conversation of the user. It works only with supported physical phones
-         *   @param {string} join_myconf           Joins the extension owner to his ConfBridge conference
+         *   @param {string} toggle_mute           Mute/Unmute a conversation of the user. It works only with supported physical phones
+         *   @param {string} cancel                Cancel the call, before the call is answered
+         *   @param {string} join_myconf           Joins the extension owner to his meetme conference
          *   @param {string} pickup_conv           Pickup a conversation
          *   @param {string} stop_record           Stop the recording of a conversation
          *   @param {string} mute_record           Mute the recording of a conversation
@@ -1449,6 +1466,8 @@ var compConfigManager;
           'txfer_tovm',
           'start_conf',
           'toggle_hold',
+          'toggle_mute',
+          'cancel',
           'pickup_conv',
           'stop_record',
           'join_myconf',
@@ -2622,6 +2641,10 @@ var compConfigManager;
       toggle_hold: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
+          var result = compUser.getUserInfoJSON(username);
+          const nethlinkExtensions = result.endpoints[compUser.ENDPOINT_TYPES.extension].filter((endpoint) => endpoint.type === 'nethlink');
+          const nethlinkExtension = nethlinkExtensions.length > 0 ? nethlinkExtensions[0].id : null;
+          var nethlinkStatus = compAstProxy.getExtenStatus(nethlinkExtension);
 
           // check parameters
           if (typeof req.params !== 'object' || typeof req.params.endpointId !== 'string') {
@@ -2646,9 +2669,7 @@ var compConfigManager;
             var str = 'holding conversation with unsupported phone (exten: ' + req.params.endpointId + '/' + extenAgent + ')';
             logger.log.warn(IDLOG, str);
             compUtil.net.sendHttp500(IDLOG, res, str);
-          } else if (isSupported && compAstProxy.isAutoC2CEnabled()) {
-            ajaxPhoneHoldUnhold(username, req, res);
-          } else if (isSupported && compAstProxy.isC2CModeCloud()) {
+          } else if (isSupported && compAstProxy.isAutoC2CEnabled && nethlinkStatus === 'online') {
             sendPhoneHoldToTcp(username, req, res);
             compUtil.net.sendHttp200(IDLOG, res);
           }
@@ -2657,6 +2678,110 @@ var compConfigManager;
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
+
+      /**
+       * Mute/Unmute a conversation of the extension registered with a supported
+       * physical phone with the following REST API:
+       *
+       *     POST toggle_mute
+       *
+       * @method call
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      toggle_mute: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          var result = compUser.getUserInfoJSON(username);
+          const nethlinkExtensions = result.endpoints[compUser.ENDPOINT_TYPES.extension].filter((endpoint) => endpoint.type === 'nethlink');
+          const nethlinkExtension = nethlinkExtensions.length > 0 ? nethlinkExtensions[0].id : null;
+          var nethlinkStatus = compAstProxy.getExtenStatus(nethlinkExtension);
+
+          // check parameters
+          if (typeof req.params !== 'object' || typeof req.params.endpointId !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+
+          // check if the extension of the request is owned by the user: the user
+          // can only toggle hold a conversation that belong to him
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+            logger.log.warn(IDLOG, 'toggle hold from user "' + username + '" has been failed: the extension "' +
+              req.params.endpointId + '" is not owned by him');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+
+          var extenAgent = compAstProxy.getExtensionAgent(req.params.endpointId);
+          var isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
+
+          if (!isSupported) {
+            var str = 'holding conversation with unsupported phone (exten: ' + req.params.endpointId + '/' + extenAgent + ')';
+            logger.log.warn(IDLOG, str);
+            compUtil.net.sendHttp500(IDLOG, res, str);
+          } else if (isSupported && compAstProxy.isAutoC2CEnabled && nethlinkStatus === 'online') {
+            sendPhoneMuteToTcp(username, req, res);
+            compUtil.net.sendHttp200(IDLOG, res);
+          }
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+            /**
+       * Cancel a call registered with a supported
+       * physical phone with the following REST API:
+       *
+       *     POST cancel
+       *
+       * @method call
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+            cancel: function (req, res, next) {
+              try {
+                var username = req.headers.authorization_user;
+                var result = compUser.getUserInfoJSON(username);
+                const nethlinkExtensions = result.endpoints[compUser.ENDPOINT_TYPES.extension].filter((endpoint) => endpoint.type === 'nethlink');
+                const nethlinkExtension = nethlinkExtensions.length > 0 ? nethlinkExtensions[0].id : null;
+                var nethlinkStatus = compAstProxy.getExtenStatus(nethlinkExtension);
+
+                // check parameters
+                if (typeof req.params !== 'object' || typeof req.params.endpointId !== 'string') {
+                  compUtil.net.sendHttp400(IDLOG, res);
+                  return;
+                }
+
+                // check if the extension of the request is owned by the user: the user
+                // can only cancel a conversation that belong to him
+                if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                  logger.log.warn(IDLOG, 'cancel call from "' + username + '" has been failed: the extension "' +
+                    req.params.endpointId + '" is not owned by him');
+                  compUtil.net.sendHttp403(IDLOG, res);
+                  return;
+                }
+
+                var extenAgent = compAstProxy.getExtensionAgent(req.params.endpointId);
+                var isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
+
+                if (!isSupported) {
+                  var str = 'cancel conversation with unsupported phone (exten: ' + req.params.endpointId + '/' + extenAgent + ')';
+                  logger.log.warn(IDLOG, str);
+                  compUtil.net.sendHttp500(IDLOG, res, str);
+                } else if (isSupported && compAstProxy.isAutoC2CEnabled && nethlinkStatus === 'online') {
+                  sendCancelConversation(username, req, res);
+                  compUtil.net.sendHttp200(IDLOG, res);
+                }
+              } catch (err) {
+                logger.log.error(IDLOG, err.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+              }
+            },
 
       /**
        * Makes a new call to the destination number from any extension with the following REST API:
@@ -3407,6 +3532,10 @@ var compConfigManager;
       answer: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
+          var result = compUser.getUserInfoJSON(username);
+          const nethlinkExtensions = result.endpoints[compUser.ENDPOINT_TYPES.extension].filter((endpoint) => endpoint.type === 'nethlink');
+          const nethlinkExtension = nethlinkExtensions.length > 0 ? nethlinkExtensions[0].id : null;
+          var nethlinkStatus = compAstProxy.getExtenStatus(nethlinkExtension);
 
           // check parameters
           if (typeof req.params !== 'object' || !req.params.endpointId || typeof req.params.endpointId !== 'string') {
@@ -3427,9 +3556,7 @@ var compConfigManager;
           }
           const extenAgent = compAstProxy.getExtensionAgent(req.params.endpointId);
           const isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
-          if (isSupported && compAstProxy.isAutoC2CEnabled()) {
-            ajaxPhoneAnswer(username, req, res);
-          } else if (isSupported && compAstProxy.isC2CModeCloud()) {
+          if (isSupported && compAstProxy.isAutoC2CEnabled && (nethlinkStatus === 'online' || nethlinkStatus === 'ringing')) {
             sendPhoneAnswerToTcp(username, req, res);
             compUtil.net.sendHttp200(IDLOG, res);
           }
@@ -5133,7 +5260,10 @@ var compConfigManager;
       dtmf: function (req, res, next) {
         try {
           var username = req.headers.authorization_user;
-
+          var result = compUser.getUserInfoJSON(username);
+          const nethlinkExtensions = result.endpoints[compUser.ENDPOINT_TYPES.extension].filter((endpoint) => endpoint.type === 'nethlink');
+          const nethlinkExtension = nethlinkExtensions.length > 0 ? nethlinkExtensions[0].id : null;
+          var nethlinkStatus = compAstProxy.getExtenStatus(nethlinkExtension);
           // check parameters
           if (typeof req.params !== 'object' ||
             typeof req.params.tone !== 'string' ||
@@ -5164,9 +5294,7 @@ var compConfigManager;
             var str = 'sending dtmf with unsupported phone (exten: ' + req.params.endpointId + '/' + extenAgent + ')';
             logger.log.warn(IDLOG, str);
             compUtil.net.sendHttp500(IDLOG, res, str);
-          } else if (isSupported && compAstProxy.isAutoC2CEnabled()) {
-            ajaxPhoneDtmf(username, req, res);
-          } else if (isSupported && compAstProxy.isC2CModeCloud()) {
+          } else if (isSupported && compAstProxy.isAutoC2CEnabled && nethlinkStatus === 'online') {
             sendPhoneDtmfToTcp(username, req, res);
             compUtil.net.sendHttp200(IDLOG, res);
           }
@@ -5409,6 +5537,8 @@ var compConfigManager;
     exports.setCompUtil = setCompUtil;
     exports.join_myconf = astproxy.join_myconf;
     exports.toggle_hold = astproxy.toggle_hold;
+    exports.toggle_mute = astproxy.toggle_mute;
+    exports.cancel = astproxy.cancel;
     exports.pickup_conv = astproxy.pickup_conv;
     exports.stop_record = astproxy.stop_record;
     exports.setCompUser = setCompUser;
@@ -5584,6 +5714,10 @@ function wakeupPost(req, res, next) {
  * @param {object} res The client response
  */
 function call(username, req, res) {
+  var result = compUser.getUserInfoJSON(username);
+  const nethlinkExtensions = result.endpoints[compUser.ENDPOINT_TYPES.extension].filter((endpoint) => endpoint.type === 'nethlink');
+  const nethlinkExtension = nethlinkExtensions.length > 0 ? nethlinkExtensions[0].id : null;
+  var nethlinkStatus = compAstProxy.getExtenStatus(nethlinkExtension);
   try {
     // check parameters
     if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
@@ -5603,9 +5737,7 @@ function call(username, req, res) {
         logger.log.warn(IDLOG, `making call from webrtc exten ${req.params.endpointId}: it is ${compAstProxy.getExtenStatus(req.params.endpointId)}`);
         compUtil.net.sendHttp500(IDLOG, res, `exten ${req.params.endpointId} is ${compAstProxy.getExtenStatus(req.params.endpointId)}`);
       }
-    } else if (isSupported && compAstProxy.isAutoC2CEnabled()) {
-      ajaxPhoneCall(username, req, res);
-    } else if (isSupported && compAstProxy.isC2CModeCloud() && compNethctiTcp.isUserConnected(username)) {
+    } else if (isSupported && compAstProxy.isAutoC2CEnabled && nethlinkStatus === 'online') {
       sendPhoneCallToTcp(username, req, res);
       compUtil.net.sendHttp200(IDLOG, res); // to evaluate
     } else {
@@ -5725,6 +5857,81 @@ function ajaxPhoneHoldUnhold(username, req, res) {
     // get the url to call to originate the new call. If the url is an empty
     // string, the phone is not supported, so the call fails
     var url = compConfigManager.getHoldUnholdUrlFromAgent(extenAgent);
+
+    if (typeof url === 'string' && url !== '') {
+
+      // the credential to access the phone via url
+      var phoneUser = compUser.getPhoneWebUser(username, exten);
+      var phonePass = compUser.getPhoneWebPass(username, exten);
+
+      // replace the parameters of the url template
+      url = url.replace(/\$SERVER/g, serverHostname);
+      url = url.replace(/\$PHONE_IP/g, extenIp);
+      url = url.replace(/\$PHONE_USER/g, phoneUser);
+      url = url.replace(/\$PHONE_PASS/g, phonePass);
+
+      httpReq.get(url, function (httpResp) {
+        try {
+          if (httpResp.statusCode === 200) {
+            logger.log.info(IDLOG, 'hold: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+              ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+            logger.log.info(IDLOG, url);
+            res.send(200, {
+              phoneRespStatusCode: httpResp.statusCode
+            });
+
+          } else {
+            logger.log.warn(IDLOG, 'hold: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+              ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+            logger.log.warn(IDLOG, url);
+            res.send(httpResp.statusCode, {
+              phoneRespStatusCode: httpResp.statusCode
+            });
+          }
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+
+      }).on('error', function (err1) {
+        logger.log.error(IDLOG, err1.message);
+        compUtil.net.sendHttp500(IDLOG, res, err1.message);
+      });
+
+    } else {
+      logger.log.warn(IDLOG, 'failed hold via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
+        ' by the user "' + username + '": ' + extenAgent + ' is not supported');
+      compUtil.net.sendHttp500(IDLOG, res, 'the phone "' + extenAgent + '" is not supported');
+    }
+
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
+
+/**
+ * Mute/Unmute current conversation sending an HTTP GET request to the phone device.
+ *
+ * @method ajaxPhoneMuteUnmute
+ * @param {string} username The username that hold the conversation
+ * @param {object} req The client request
+ * @param {object} res The client response
+ */
+function ajaxPhoneMuteUnmute(username, req, res) {
+  try {
+    // check parameters
+    if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    var exten = req.params.endpointId;
+    var extenIp = compAstProxy.getExtensionIp(exten);
+    var extenAgent = compAstProxy.getExtensionAgent(exten);
+    var serverHostname = compConfigManager.getServerHostname();
+    // get the url to call to originate the new call. If the url is an empty
+    // string, the phone is not supported, so the call fails
+    var url = compConfigManager.getMuteUnmuteUrlFromAgent(extenAgent);
 
     if (typeof url === 'string' && url !== '') {
 
@@ -5975,7 +6182,8 @@ function sendPhoneCallToTcp(username, req, res) {
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
-      compNethctiTcp.sendPhoneRequest(username, url);
+      let urlType = 'call';
+      compComNethctiWs.sendRequestToNethLink(username, url, urlType);
     } else {
       logger.log.warn(IDLOG, `failed call to ${to} via TCP request by the user "${username}": extenAgent is not supported`);
       fallbackAjaxPhoneCall(username, req, res);
@@ -6010,7 +6218,8 @@ function sendPhoneAnswerToTcp(username, req, res) {
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
-      compNethctiTcp.sendPhoneRequest(username, url);
+      let urlType = 'answer';
+      compComNethctiWs.sendRequestToNethLink(username, url, urlType);
     } else {
       logger.log.warn(IDLOG, `failed answer via TCP request by the user "${username}": extenAgent is not supported`);
     }
@@ -6043,7 +6252,76 @@ function sendPhoneHoldToTcp(username, req, res) {
       url = url.replace(/\$PHONE_IP/g, extenIp);
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
-      compNethctiTcp.sendPhoneRequest(username, url);
+      let urlType = 'hold-unhold';
+      compComNethctiWs.sendRequestToNethLink(username, url, urlType);
+    } else {
+      logger.log.warn(IDLOG, `failed answer via TCP request by the user "${username}": extenAgent is not supported`);
+    }
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
+
+/**
+ * Send the request to mute to a connected tcp client. The tcp client will do the request
+ * to the final physical supported phone.
+ *
+ * @method sendPhoneMuteToTcp
+ * @param {string} username The username
+ * @param {object} req The client request
+ * @param {object} res The client response
+ */
+function sendPhoneMuteToTcp(username, req, res) {
+  try {
+    if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    const exten = req.params.endpointId;
+    const extenIp = compAstProxy.getExtensionIp(exten);
+    const extenAgent = compAstProxy.getExtensionAgent(exten);
+    let url = compConfigManager.getMuteUnmuteUrlFromAgent(extenAgent);
+    if (typeof url === 'string' && url !== '') {
+      const phoneUser = compUser.getPhoneWebUser(username, exten);
+      const phonePass = compUser.getPhoneWebPass(username, exten);
+      url = url.replace(/\$PHONE_IP/g, extenIp);
+      url = url.replace(/\$PHONE_USER/g, phoneUser);
+      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      let urlType = 'mute-unmute';
+      compComNethctiWs.sendRequestToNethLink(username, url, urlType);
+    } else {
+      logger.log.warn(IDLOG, `failed answer via TCP request by the user "${username}": extenAgent is not supported`);
+    }
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+  }
+}
+
+/**
+ * Send the request to cancel a connected tcp client. The tcp client will do the request
+ * to the final physical supported phone.
+ *
+ * @method sendCancelConversation
+ * @param {string} username The username
+ * @param {object} req The client request
+ * @param {object} res The client response
+ */
+function sendCancelConversation(username, req, res) {
+  try {
+    if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    const exten = req.params.endpointId;
+    const extenIp = compAstProxy.getExtensionIp(exten);
+    const extenAgent = compAstProxy.getExtensionAgent(exten);
+    let url = compConfigManager.getCancelUrlFromAgent(extenAgent);
+    if (typeof url === 'string' && url !== '') {
+      const phoneUser = compUser.getPhoneWebUser(username, exten);
+      const phonePass = compUser.getPhoneWebPass(username, exten);
+      url = url.replace(/\$PHONE_IP/g, extenIp);
+      url = url.replace(/\$PHONE_USER/g, phoneUser);
+      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      let urlType = 'cancel';
+      compComNethctiWs.sendRequestToNethLink(username, url, urlType);
     } else {
       logger.log.warn(IDLOG, `failed answer via TCP request by the user "${username}": extenAgent is not supported`);
     }
@@ -6085,7 +6363,8 @@ function sendPhoneDtmfToTcp(username, req, res) {
       url = url.replace(/\$PHONE_USER/g, phoneUser);
       url = url.replace(/\$PHONE_PASS/g, phonePass);
       url = url.replace(/\$TONE/g, tone);
-      compNethctiTcp.sendPhoneRequest(username, url);
+      let urlType = 'dtmf';
+      compComNethctiWs.sendRequestToNethLink(username, url, urlType);
     } else {
       logger.log.warn(IDLOG, `failed DTMF via TCP request by the user "${username}": extenAgent is not supported`);
     }

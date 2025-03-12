@@ -21,7 +21,8 @@
             "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/servlet?key=number=$NUMBER&outgoing_uri=$ACCOUNT@$SERVER",
             "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/servlet?key=OK",
             "hold_unhold": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/servlet?key=F_HOLD",
-            "dtmf": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/servlet?key=$TONE"
+            "dtmf": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/servlet?key=$TONE",
+            "mute_unmute": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/servlet?key=MUTE"
         }
     },
     "^snom.*": {
@@ -29,7 +30,8 @@
             "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/command.htm?number=$NUMBER",
             "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/command.htm?key=ENTER",
             "hold_unhold": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/command.htm?key=F_HOLD",
-            "dtmf": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/command.htm?key=$TONE"
+            "dtmf": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/command.htm?key=$TONE",
+            "mute_unmute": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/command.htm?key=MUTE"
         }
     },
     "^sangoma\\\s.*": {
@@ -44,7 +46,8 @@
             "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=$NUMBER;ENTER",
             "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=OK",
             "hold_unhold": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=F_HOLD",
-            "dtmf": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=$TONE"
+            "dtmf": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=$TONE",
+            "mute_unmute": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=F_MUTE"
         }
     },
     "^Nethesis\\\s*NP.*": {
@@ -52,7 +55,8 @@
             "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=$NUMBER;ENTER",
             "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=OK",
             "hold_unhold": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=F_HOLD",
-            "dtmf": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=$TONE"
+            "dtmf": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=$TONE",
+            "mute_unmute": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=F_MUTE"
         }
     },
     "^alcatel\\\s.*1G": {
