@@ -1457,7 +1457,7 @@ function deleteCallRecording(uniqueid, cb) {
 
     // search
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].find({
-      where: ['uniqueid=?', uniqueid]
+      where: ['uniqueid=? AND recordingfile != ""', uniqueid]
 
     }).then(function (task) {
       try {
