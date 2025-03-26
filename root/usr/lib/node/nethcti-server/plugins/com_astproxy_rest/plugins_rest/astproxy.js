@@ -338,7 +338,7 @@ var compConfigManager;
         *
         * ### <a id="conferenceget">**`astproxy/conference/:endpoint`**</a>
         *
-        * Gets the data about the extension meetme conference.
+        * Gets the data about the extension ConfBridge conference.
         *
         * Example JSON response:
         *
@@ -1120,7 +1120,7 @@ var compConfigManager;
         *
         * ### <a id="end_confpost">**`astproxy/end_conf`**</a>
         *
-        * Ends the entire meetme conference. The request must contains the following parameters:
+        * Ends the entire ConfBridge conference. The request must contains the following parameters:
         *
         * * `confId: the conference identifier`
         *
@@ -1132,11 +1132,11 @@ var compConfigManager;
         *
         * ### <a id="start_confpost">**`astproxy/start_conf`**</a>
         *
-        * Starts a meetme conference. The request must contains the following parameters:
+        * Starts a ConfBridge conference. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier of the owner to be added to the conference`
         * * `addEndpointId: the identifier of the extension to be added to the conference`
-        * * `ownerEndpointId: the extension identifier who wants to start the meetme conference`
+        * * `ownerEndpointId: the extension identifier who wants to start the ConfBridge conference`
         *
         * Example JSON request parameters:
         *
@@ -1146,7 +1146,7 @@ var compConfigManager;
         *
         * ### <a id="join_myconfpost">**`astproxy/join_myconf`**</a>
         *
-        * Joins the extension owner to his meetme conference. The request must contains the following parameters:
+        * Joins the extension owner to his ConfBridge conference. The request must contains the following parameters:
         *
         * * `endpointId: the endpoint identifier`
         *
@@ -1158,7 +1158,7 @@ var compConfigManager;
         *
         * ### <a id="mute_userconfpost">**`astproxy/mute_userconf`**</a>
         *
-        * Mute a user of a meetme conference. The request must contains the following parameters:
+        * Mute a user of a ConfBridge conference. The request must contains the following parameters:
         *
         * * `confId: the conference identifier`
         * * `userId: the user identifier to be muted`
@@ -1173,7 +1173,7 @@ var compConfigManager;
         *
         * ### <a id="unmute_userconfpost">**`astproxy/unmute_userconf`**</a>
         *
-        * Unmute a user of a meetme conference. The request must contains the following parameters:
+        * Unmute a user of a ConfBridge conference. The request must contains the following parameters:
         *
         * * `confId: the conference identifier`
         * * `userId: the user identifier to be unmuted`
@@ -1187,7 +1187,7 @@ var compConfigManager;
         *
         * ### <a id="hangup_userconfpost">**`astproxy/hangup_userconf`**</a>
         *
-        * Hangup a user of a meetme conference. The request must contains the following parameters:
+        * Hangup a user of a ConfBridge conference. The request must contains the following parameters:
         *
         * * `confId: the conference identifier`
         * * `extenId: the extension identifier to be hanged up`
@@ -1331,7 +1331,7 @@ var compConfigManager;
          *   @param {string} prefix                                Gets the prefix number used with outgoing external calls
          *   @param {string} wakeup                                Gets the list of all alarms wakeup
          *   @param {string} opgroups                              Gets all the user groups of the operator panel
-         *   @param {string} conference/:endpoint                  Gets data about the meetme conference of the extension
+         *   @param {string} conference/:endpoint                  Gets data about the ConfBridge conference of the extension
          *   @param {string} parkings                              Gets all the parkings with all their status information
          *   @param {string} qmanager_qcalls_hist                  Gets the history of queues calls statistics of the current day
          *   @param {string} extension/:id                         Gets the extension with all their status information
@@ -1408,11 +1408,11 @@ var compConfigManager;
          *   @param {string} answer                Answer a conversation from the extension
          *   @param {string} hangup                Hangup a conversation
          *   @param {string} intrude               Spy and speak in a conversation
-         *   @param {string} end_conf              Ends the entire meetme conference
+         *   @param {string} end_conf              Ends the entire ConfBridge conference
          *   @param {string} call_echo             Originates a new echo call
          *   @param {string} start_spy             Spy a conversation with only listening
          *   @param {string} txfer_tovm            Transfer the conversation to the voicemail
-         *   @param {string} start_conf            Starts a meetme conference
+         *   @param {string} start_conf            Starts a ConfBridge conference
          *   @param {string} toggle_hold           Hold/Unhold a conversation of the user. It works only with supported physical phones
          *   @param {string} toggle_mute           Mute/Unmute a conversation of the user. It works only with supported physical phones
          *   @param {string} cancel                Cancel the call, before the call is answered
@@ -1427,14 +1427,14 @@ var compConfigManager;
          *   @param {string} pin                   Sets the pin for an extension
          *   @param {string} incall_audio          Listen an audio file into the current conversation
          *   @param {string} phone_reload          Reload a physical supported phone
-         *   @param {string} mute_userconf         Mute a user of a meetme conference
+         *   @param {string} mute_userconf         Mute a user of a ConfBridge conference
          *   @param {string} answer_webrtc         Answer a conversation from the webrtc extension sending the command to the client
          *   @param {string} blindtransfer         Transfer a conversation with blind type
          *   @param {string} unmute_record         Unmute the recording of a conversation
          *   @param {string} hangup_channel        Hangup the asterisk channel
          *   @param {string} pickup_parking        Pickup a parked call
-         *   @param {string} unmute_userconf       Unmute a user of a meetme conference
-         *   @param {string} hangup_userconf       Hangup a user of a meetme conference
+         *   @param {string} unmute_userconf       Unmute a user of a ConfBridge conference
+         *   @param {string} hangup_userconf       Hangup a user of a ConfBridge conference
          *   @param {string} queuemember_add       Adds the specified extension to the queue
          *   @param {string} inout_dyn_queues      Alternates the logon and logout of the extension in all the queues for which it's a dynamic member
          *   @param {string} hangup_mainexten      Hangup all conversations of the main extension
@@ -1570,7 +1570,7 @@ var compConfigManager;
 
       /**
        * It serves only the local clients: the remote sites can not ask for it.
-       * Gets the meetme conference of the extension with the following REST API:
+       * Gets the ConfBridge conference of the extension with the following REST API:
        *
        *     GET  conference/:endpoint
        *
@@ -4004,20 +4004,20 @@ var compConfigManager;
 
           if (compAuthorization.verifyUserEndpointExten(username, req.params.ownerEndpointId) === false) {
 
-            logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+            logger.log.warn(IDLOG, 'starting ConfBridge conf from "' + req.params.ownerEndpointId + '" ' +
               'by user "' + username + '" has been failed: the "' + req.params.ownerEndpointId + '" is not owned by him');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
 
           } else {
-            logger.log.info(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+            logger.log.info(IDLOG, 'starting ConfBridge conf from "' + req.params.ownerEndpointId + '" ' +
               'by user "' + username + '": the ' + req.params.ownerEndpointId + ' is owned by him');
           }
 
           // check remote site permission
           // if (req.params.site && compAuthorization.authorizeRemoteSiteUser(username) === false) {
 
-          //   logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+          //   logger.log.warn(IDLOG, 'starting ConfBridge conf from "' + req.params.ownerEndpointId + '" ' +
           //     'with remote endpoint "' + req.params.addEndpointId + '" of remote site "' + req.params.site + '" ' +
           //     'by user "' + username + '" has been failed: no remote site permission');
           //   compUtil.net.sendHttp403(IDLOG, res);
@@ -4027,7 +4027,7 @@ var compConfigManager;
           // check the remote site existence
           // if (req.params.site && !compComNethctiRemotes.remoteSiteExists(req.params.site)) {
 
-          //   logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+          //   logger.log.warn(IDLOG, 'starting ConfBridge conf from "' + req.params.ownerEndpointId + '" ' +
           //     'with remote endpoint "' + req.params.addEndpointId + '" of remote site "' + req.params.site + '" ' +
           //     'by user "' + username + '" has been failed: remote site does not exist');
           //   compUtil.net.sendHttp500(IDLOG, res, 'non existent remote site "' + req.params.site + '"');
@@ -4037,11 +4037,11 @@ var compConfigManager;
           // case 1
           // the owner of the conference is already into its conference. So hangup
           // its conversation and call the extension to be added
-          if (compAstProxy.isExtenInMeetmeConf(req.params.ownerEndpointId)) {
+          if (compAstProxy.isExtenInConfBridgeConf(req.params.ownerEndpointId)) {
             compAstProxy.hangupConversation(req.params.ownerEndpointId, req.params.convid, function (err) {
               try {
                 if (err) {
-                  logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                  logger.log.warn(IDLOG, 'starting ConfBridge conf from "' + req.params.ownerEndpointId + '" ' +
                     'by user "' + username + '" has been failed: ' + err.toString());
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
@@ -4054,7 +4054,7 @@ var compConfigManager;
                 req.params.endpointId = req.params.ownerEndpointId;
                 req.params.endpointType = 'extension';
                 call(username, req, res);
-                logger.log.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                logger.log.info(IDLOG, 'started ConfBridge conf from "' + req.params.ownerEndpointId + '" ' +
                   'by user "' + username + '" adding exten "' + req.params.addEndpointId + '" ' +
                   (req.params.site ? ('of remote site ' + req.params.site) : ''));
               } catch (error) {
@@ -4066,19 +4066,19 @@ var compConfigManager;
           // case 2
           // the owner of the conference is not into the conference
           else {
-            compAstProxy.startMeetmeConference(
+            compAstProxy.startConfBridgeConference(
               req.params.convid,
               req.params.ownerEndpointId,
               req.params.addEndpointId,
               function (err, newUser) {
                 try {
                   if (err) {
-                    logger.log.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                    logger.log.warn(IDLOG, 'starting ConfBridge conf from "' + req.params.ownerEndpointId + '" ' +
                       'by user "' + username + '" has been failed: ' + err.toString());
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                     return;
                   }
-                  logger.log.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                  logger.log.info(IDLOG, 'started ConfBridge conf from "' + req.params.ownerEndpointId + '" ' +
                     'by user "' + username + '" adding exten "' + req.params.addEndpointId + '" ' +
                     (req.params.site ? ('of remote site ' + req.params.site) : ''));
                   compUtil.net.sendHttp200(IDLOG, res);
@@ -4384,7 +4384,7 @@ var compConfigManager;
       },
 
       /**
-       * Mute a user of a meetme conference with the following REST API:
+       * Mute a user of a ConfBridge conference with the following REST API:
        *
        *     POST mute_userconf
        *
@@ -4410,19 +4410,19 @@ var compConfigManager;
 
           // check if the user to be muted is the applicant or if the conference belongs to the user
           if (extenId && compAuthorization.verifyUserEndpointExten(username, extenId) === true) {
-            logger.log.info(IDLOG, 'muting user "' + req.params.userId + '" (exten: ' + extenId + ') of meetme conf "' + req.params.confId + '": ' +
+            logger.log.info(IDLOG, 'muting user "' + req.params.userId + '" (exten: ' + extenId + ') of ConfBridge conf "' + req.params.confId + '": ' +
               'exten ' + extenId + ' is owned by "' + username + '"');
           } else if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
-            logger.log.warn(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+            logger.log.warn(IDLOG, 'muting user "' + req.params.userId + '" of ConfBridge conf "' + req.params.confId + '" ' +
               'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           } else {
-            logger.log.info(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '": ' +
+            logger.log.info(IDLOG, 'muting user "' + req.params.userId + '" of ConfBridge conf "' + req.params.confId + '": ' +
               req.params.confId + ' is owned by "' + username + '"');
           }
           var direction = req.params.direction ? req.params.direction : 'in';
-          compAstProxy.muteUserMeetmeConf(
+          compAstProxy.muteUserConfBridgeConf(
             req.params.confId,
             req.params.userId,
             extenId,
@@ -4430,12 +4430,12 @@ var compConfigManager;
             function (err) {
               try {
                 if (err) {
-                  logger.log.warn(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                  logger.log.warn(IDLOG, 'muting user "' + req.params.userId + '" of ConfBridge conf "' + req.params.confId + '" ' +
                     ' has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.log.info(IDLOG, 'user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                logger.log.info(IDLOG, 'user "' + req.params.userId + '" of ConfBridge conf "' + req.params.confId + '" ' +
                   'has been muted successfully by user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
 
@@ -4452,7 +4452,7 @@ var compConfigManager;
       },
 
       /**
-       * Unmute a user of a meetme conference with the following REST API:
+       * Unmute a user of a ConfBridge conference with the following REST API:
        *
        *     POST unmute_userconf
        *
@@ -4478,19 +4478,19 @@ var compConfigManager;
 
           // check if the user to be unmuted is the applicant or if the conference belongs to the user
           if (extenId && compAuthorization.verifyUserEndpointExten(username, extenId) === true) {
-            logger.log.info(IDLOG, 'unmuting user "' + req.params.userId + '" (exten: ' + extenId + ') of meetme conf "' + req.params.confId + '": ' +
+            logger.log.info(IDLOG, 'unmuting user "' + req.params.userId + '" (exten: ' + extenId + ') of ConfBridge conf "' + req.params.confId + '": ' +
               'exten ' + extenId + ' is owned by "' + username + '"');
           } else if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
-            logger.log.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+            logger.log.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of ConfBridge conf "' + req.params.confId + '" ' +
               'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           } else {
-            logger.log.info(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '": ' +
+            logger.log.info(IDLOG, 'unmuting user "' + req.params.userId + '" of ConfBridge conf "' + req.params.confId + '": ' +
               req.params.confId + ' is owned by "' + username + '"');
           }
           var onlyListen = req.params.onlyListen ? req.params.onlyListen : false;
-          compAstProxy.unmuteUserMeetmeConf(
+          compAstProxy.unmuteUserConfBridgeConf(
             req.params.confId,
             req.params.userId,
             extenId,
@@ -4498,12 +4498,12 @@ var compConfigManager;
             function (err) {
               try {
                 if (err) {
-                  logger.log.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                  logger.log.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of ConfBridge conf "' + req.params.confId + '" ' +
                     'has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.log.info(IDLOG, 'user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                logger.log.info(IDLOG, 'user "' + req.params.userId + '" of ConfBridge conf "' + req.params.confId + '" ' +
                   'has been unmuted successfully by user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
 
@@ -4520,7 +4520,7 @@ var compConfigManager;
       },
 
       /**
-       * Ends the entire meetme conference with the following REST API:
+       * Ends the entire ConfBridge conference with the following REST API:
        *
        *     POST end_conf
        *
@@ -4544,25 +4544,25 @@ var compConfigManager;
           // check if the conference belongs to the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
 
-            logger.log.warn(IDLOG, 'ending meetme conf "' + req.params.confId + '" ' +
+            logger.log.warn(IDLOG, 'ending ConfBridge conf "' + req.params.confId + '" ' +
               'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           } else {
-            logger.log.info(IDLOG, 'ending meetme conf "' + req.params.confId + '": ' +
+            logger.log.info(IDLOG, 'ending ConfBridge conf "' + req.params.confId + '": ' +
               req.params.confId + ' is owned by "' + username + '"');
           }
 
-          compAstProxy.endMeetmeConf(
+          compAstProxy.endConfBridgeConf(
             req.params.confId,
             function (err) {
               try {
                 if (err) {
-                  logger.log.warn(IDLOG, 'ending meetme conf "' + req.params.confId + '" by user "' + username + '" has been failed');
+                  logger.log.warn(IDLOG, 'ending ConfBridge conf "' + req.params.confId + '" by user "' + username + '" has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.log.info(IDLOG, 'meetme conf "' + req.params.confId + '" ' +
+                logger.log.info(IDLOG, 'ConfBridge conf "' + req.params.confId + '" ' +
                   'has been ended successfully by user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
 
@@ -4579,7 +4579,7 @@ var compConfigManager;
       },
 
       /**
-       * Joins the extension owner to his meetme conference with the following REST API:
+       * Joins the extension owner to his ConfBridge conference with the following REST API:
        *
        *     POST join_myconf
        *
@@ -4601,17 +4601,17 @@ var compConfigManager;
           // check if the conference belongs to the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
 
-            logger.log.warn(IDLOG, 'joining meetme conf "' + req.params.endpointId + '" ' +
+            logger.log.warn(IDLOG, 'joining ConfBridge conf "' + req.params.endpointId + '" ' +
               'by user "' + username + '" has been failed: ' + req.params.endpointId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           } else {
-            logger.log.info(IDLOG, 'joining meetme conf "' + req.params.endpointId + '": ' +
+            logger.log.info(IDLOG, 'joining ConfBridge conf "' + req.params.endpointId + '": ' +
               req.params.endpointId + ' is owned by "' + username + '"');
           }
-          logger.log.info(IDLOG, 'starting join exten "' + req.params.endpointId + '" to its meetme conf ' +
+          logger.log.info(IDLOG, 'starting join exten "' + req.params.endpointId + '" to its ConfBridge conf ' +
             'by user "' + username + '"');
-          req.params.number = compAstProxy.getMeetmeConfCode();
+          req.params.number = compAstProxy.getConfBridgeConfCode();
           req.params.endpointType = 'extension';
           call(username, req, res);
         } catch (err) {
@@ -4621,7 +4621,7 @@ var compConfigManager;
       },
 
       /**
-       * Hangup a user of a meetme conference with the following REST API:
+       * Hangup a user of a ConfBridge conference with the following REST API:
        *
        *     POST hangup_userconf
        *
@@ -4646,27 +4646,27 @@ var compConfigManager;
           // check if the conference belongs to the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
 
-            logger.log.warn(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
+            logger.log.warn(IDLOG, 'hanging up user "' + req.params.extenId + '" of ConfBridge conf "' + req.params.confId + '" ' +
               'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           } else {
-            logger.log.info(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '": ' +
+            logger.log.info(IDLOG, 'hanging up user "' + req.params.extenId + '" of ConfBridge conf "' + req.params.confId + '": ' +
               req.params.confId + ' is owned by "' + username + '"');
           }
 
-          compAstProxy.hangupUserMeetmeConf(
+          compAstProxy.hangupUserConfBridgeConf(
             req.params.confId,
             req.params.extenId,
             function (err) {
               try {
                 if (err) {
-                  logger.log.warn(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
+                  logger.log.warn(IDLOG, 'hanging up user "' + req.params.extenId + '" of ConfBridge conf "' + req.params.confId + '" ' +
                     'has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.log.info(IDLOG, 'user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
+                logger.log.info(IDLOG, 'user "' + req.params.extenId + '" of ConfBridge conf "' + req.params.confId + '" ' +
                   'has been hanged up successfully by user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
 
