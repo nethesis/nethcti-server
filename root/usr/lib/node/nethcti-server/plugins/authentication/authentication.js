@@ -1209,14 +1209,20 @@ function isAutoUpdateTokenExpires() {
         return true;
       }
     }
-    // Check the api persistent token
-    if (persistentTokens.has(`${username}_phone-island`)) {
-      const pTokenApi = persistentTokens.get(`${username}_phone-island`).token;
-      // Compare the given encrypted token with the api persistent token
-      if (pTokenApi === hashToken) {
-        return true;
+
+    // Check the api persistent tokens (both web and nethlink)
+    const subtypes = ['web', 'nethlink'];
+    for (const subtype of subtypes) {
+      const tokenKey = `${username}_phone-island_${subtype}`;
+      if (persistentTokens.has(tokenKey)) {
+        const pTokenApi = persistentTokens.get(tokenKey).token;
+        // Compare the given encrypted token with the api persistent token
+        if (pTokenApi === hashToken) {
+          return true;
+        }
       }
     }
+
     // Return false if there aren't matching tokens
     return false
   } catch (err) {
@@ -1268,7 +1274,11 @@ function verifyToken(username, token, isRemote) {
     }
 
     // check the grant presence
-    if (!grants[username] && !persistentTokens.has(username) && !persistentTokens.has(`${username}_phone-island`)) {
+    const phoneIslandTokenExists = ['web', 'nethlink'].some(subtype =>
+      persistentTokens.has(`${username}_phone-island_${subtype}`)
+    );
+
+    if (!grants[username] && !persistentTokens.has(username) && !phoneIslandTokenExists) {
       logger.log.warn(IDLOG, 'authentication failed for ' + (isRemote ? 'remote site ' : 'local ') + 'username: "' + username + '": no grant is present');
       return false;
     }
