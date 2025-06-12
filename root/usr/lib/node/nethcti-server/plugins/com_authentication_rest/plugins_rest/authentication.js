@@ -221,7 +221,7 @@ function setCompUser(comp) {
       api: {
         'root': 'authentication',
         'get': [
-          'phone_island_token_check'
+          'phone_island_token_check/:subtype'
         ],
 
         /**
