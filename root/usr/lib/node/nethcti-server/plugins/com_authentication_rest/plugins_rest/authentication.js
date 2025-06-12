@@ -221,7 +221,7 @@ function setCompUser(comp) {
       api: {
         'root': 'authentication',
         'get': [
-          'phone_island_token_check'
+          'phone_island_token_check/:subtype'
         ],
 
         /**
@@ -361,6 +361,10 @@ function setCompUser(comp) {
        */
        phone_island_token_login: async function(req, res) {
         try {
+          // Check parameters
+          if (req.params.subtype !== 'web' && req.params.subtype !== 'nethlink') {
+            throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+          }
 
           // Get the username from the headers
           const username = req.headers.authorization_user;
@@ -368,8 +372,11 @@ function setCompUser(comp) {
           // The token validity is checked inside the authorization proxy
           const authToken = req.headers.authorization_token;
 
+          // Get token login subtype. Default: web. Can be 'web' or 'nethlink'
+          const subTypeToken = req.params.subtype || 'web';
+
           // Add _phone-island to the end of api username tokens
-          const apiUsername = `${username}_phone-island`;
+          const apiUsername = `${username}_phone-island_${subTypeToken}`;
 
           // Create the persistent token using username and a valid authentication token
           const apiToken = await compAuthe.getPersistentToken(apiUsername, authToken);
@@ -433,12 +440,19 @@ function setCompUser(comp) {
        */
        phone_island_token_check: async function(req, res) {
         try {
+          // Check parameters
+          if (req.params.subtype !== 'web' && req.params.subtype !== 'nethlink') {
+            throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+          }
 
           // Get the username from the headers
           const username = req.headers.authorization_user;
 
+          // Get token login subtype. Default: web. Can be 'web' or 'nethlink'
+          const subTypeToken = req.params.subtype || 'web';
+
           // Add _phone-island to the end of api username tokens
-          const islandUsername = `${username}_phone-island`;
+          const islandUsername = `${username}_phone-island_${subTypeToken}`;
 
           // Check if the persistent token exists
           const exists = await compAuthe.persistentTokenExists(islandUsername);
@@ -455,16 +469,21 @@ function setCompUser(comp) {
 
       /**
        * Provides the api to revoke a persistent token
-       * 
+       *
        *    persistent_token_remove
-       * 
+       *
        * @param {object} req The client request
        * @param {object} res The client response
        */
       persistent_token_remove: async function(req, res) {
         try {
-          // Check parameters
+          // Check parameters type
           if (req.params.type !== 'phone-island' && req.params.type !== 'no-exp') {
+            throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+          }
+
+          // Check parameters subtype
+          if (req.params.subtype !== 'web' && req.params.subtype !== 'nethlink') {
             throw new Error('wrong parameters: ' + JSON.stringify(arguments));
           }
 
@@ -478,7 +497,11 @@ function setCompUser(comp) {
 
           // Set target username to be revoked
           if (req.params.type === 'phone-island') {
-            userToRevoke = `${username}_phone-island`;
+            // Get token login subtype. Default: web. Can be 'web' or 'nethlink'
+            const subTypeToken = req.params.subtype || 'web';
+
+            // Compose token name to remove
+            userToRevoke = `${username}_phone-island_${subTypeToken}`;
           } else if (req.params.type === 'no-exp') {
             userToRevoke = username;
           }
