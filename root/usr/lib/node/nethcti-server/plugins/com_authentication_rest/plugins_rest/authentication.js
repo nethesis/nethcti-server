@@ -361,11 +361,6 @@ function setCompUser(comp) {
        */
        phone_island_token_login: async function(req, res) {
         try {
-          // Check parameters
-          if (req.params.subtype !== 'web' && req.params.subtype !== 'nethlink') {
-            throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-          }
-
           // Get the username from the headers
           const username = req.headers.authorization_user;
           // Get the valid token from the request
@@ -440,11 +435,6 @@ function setCompUser(comp) {
        */
        phone_island_token_check: async function(req, res) {
         try {
-          // Check parameters
-          if (req.params.subtype !== 'web' && req.params.subtype !== 'nethlink') {
-            throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-          }
-
           // Get the username from the headers
           const username = req.headers.authorization_user;
 
@@ -479,11 +469,6 @@ function setCompUser(comp) {
         try {
           // Check parameters type
           if (req.params.type !== 'phone-island' && req.params.type !== 'no-exp') {
-            throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-          }
-
-          // Check parameters subtype
-          if (req.params.subtype !== 'web' && req.params.subtype !== 'nethlink') {
             throw new Error('wrong parameters: ' + JSON.stringify(arguments));
           }
 
