@@ -733,9 +733,22 @@ function initMysqlConn(name) {
       user: dbConfig[name].dbuser,
       password: dbConfig[name].dbpassword,
       database: dbConfig[name].dbname,
-      debug: logSequelize,
+      debug: false,
       charset: 'utf8'
     });
+
+    // Custom query logging if debug is enabled
+    if (logSequelize) {
+      const originalQuery = connection.query;
+      connection.query = function(sql, values, callback) {
+        if (typeof values === 'function') {
+          callback = values;
+          values = undefined;
+        }
+        logger.log.info(IDLOG, `MySQL Query [${name}]: ${sql}${values ? ' - Values: ' + JSON.stringify(values) : ''}`);
+        return originalQuery.call(this, sql, values, callback);
+      };
+    }
     connection.connect(err => {
       if (err) {
         logger.log.error(IDLOG, JSON.stringify(err, 2, null));
