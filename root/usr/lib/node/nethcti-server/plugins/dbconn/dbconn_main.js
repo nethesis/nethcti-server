@@ -740,6 +740,8 @@ function initMysqlConn(name) {
     // Custom query logging if debug is enabled
     if (logSequelize) {
       const originalQuery = connection.query;
+      const originalExecute = connection.execute;
+
       connection.query = function(sql, values, callback) {
         if (typeof values === 'function') {
           callback = values;
@@ -747,6 +749,15 @@ function initMysqlConn(name) {
         }
         logger.log.info(IDLOG, `MySQL Query [${name}]: ${sql}${values ? ' - Values: ' + JSON.stringify(values) : ''}`);
         return originalQuery.call(this, sql, values, callback);
+      };
+
+      connection.execute = function(sql, values, callback) {
+        if (typeof values === 'function') {
+          callback = values;
+          values = undefined;
+        }
+        logger.log.info(IDLOG, `MySQL Execute [${name}]: ${sql}${values ? ' - Values: ' + JSON.stringify(values) : ''}`);
+        return originalExecute.call(this, sql, values, callback);
       };
     }
     connection.connect(err => {
