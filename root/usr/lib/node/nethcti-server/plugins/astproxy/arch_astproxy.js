@@ -454,7 +454,7 @@ module.exports = function(options, imports, register) {
             nvReportConf.token = undefined;
           }
         }
-      })(); 
+      })();
     } catch (err) {
       logger.log.error(IDLOG, err.stack);
     }
@@ -498,7 +498,7 @@ module.exports = function(options, imports, register) {
             reject(`problem logging in to nethvoice report with request: ${e.message}`);
           });
           req.write(JSON.stringify({ username: 'X', password: nvReportConf.api_key }));
-          req.end(); 
+          req.end();
         } else {
           reject('wrong configuration to login to nethvoice report: ' + JSON.stringify(nvReportConf));
         }
@@ -546,7 +546,7 @@ module.exports = function(options, imports, register) {
           req.on('error', (e) => {
             reject(`problem getting nullCallPeriod from nethvoice report with request: ${e.message}`);
           });
-          req.end(); 
+          req.end();
         } else {
           reject(`problem getting nullCallPeriod from nethvoice report: ${nvReportConf}`);
         }
@@ -616,9 +616,9 @@ module.exports = function(options, imports, register) {
       }
       let req;
       for (let eid in extens) {
-        options.path = '/freepbx/rest/devices/phones/reload/' + eid;
+        options.path = '/freepbx/rest/devices/phones/reconfigure';
         req = https.request(options, res => {
-          if (res && res.statusCode === 202) {
+          if (res && res.statusCode === 200) {
             logger.log.info(IDLOG, `sent HTTP POST req to reload config of physical phone "${eid}"`);
           } else if (res.statusCode !== 403 && res.statusCode !== 501) {
             logger.log.warn(IDLOG, `error sending HTTP POST req to reload config of physical phone "${eid}": ${res.statusCode}`);
@@ -627,6 +627,7 @@ module.exports = function(options, imports, register) {
         req.on('error', error => {
           logger.log.error(IDLOG, `error sending HTTP POST req to reload config of physical phone "${eid}": ${error.toString()}`);
         })
+        req.write(JSON.stringify({ extension: eid }));
         req.end();
       }
     } catch (e) {
