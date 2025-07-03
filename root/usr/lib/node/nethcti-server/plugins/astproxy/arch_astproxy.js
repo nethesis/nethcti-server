@@ -616,9 +616,9 @@ module.exports = function(options, imports, register) {
       }
       let req;
       for (let eid in extens) {
-        options.path = '/freepbx/rest/devices/phones/reconfigure/' + eid;
+        options.path = '/freepbx/rest/devices/phones/reconfigure';
         req = https.request(options, res => {
-          if (res && res.statusCode === 202) {
+          if (res && res.statusCode === 200) {
             logger.log.info(IDLOG, `sent HTTP POST req to reload config of physical phone "${eid}"`);
           } else if (res.statusCode !== 403 && res.statusCode !== 501) {
             logger.log.warn(IDLOG, `error sending HTTP POST req to reload config of physical phone "${eid}": ${res.statusCode}`);
@@ -627,6 +627,7 @@ module.exports = function(options, imports, register) {
         req.on('error', error => {
           logger.log.error(IDLOG, `error sending HTTP POST req to reload config of physical phone "${eid}": ${error.toString()}`);
         })
+        req.write(JSON.stringify({ extension: eid }));
         req.end();
       }
     } catch (e) {
