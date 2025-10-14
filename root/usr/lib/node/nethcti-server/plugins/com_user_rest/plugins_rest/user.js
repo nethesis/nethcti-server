@@ -727,6 +727,22 @@ function setCompUtil(comp) {
             } else {
               logger.log.info(IDLOG, "Proxy fqdn missing");
             }
+
+            // Add call transcriptions status
+            var call_transcription_enabled = process.env.SATELLITE_CALL_TRANSCRIPTION_ENABLED;
+            if (call_transcription_enabled && call_transcription_enabled == 'True') {
+              result.call_transcription_enabled = true;
+            } else {
+              logger.log.info(IDLOG, "call_transcription_enabled missing");
+            }
+
+            // Add voicemail transcriptions status
+            var voicemail_transcription_enabled = process.env.SATELLITE_VOICEMAIL_TRANSCRIPTION_ENABLED;
+            if (voicemail_transcription_enabled && voicemail_transcription_enabled == 'True') {
+              result.voicemail_transcription_enabled = true;
+            } else {
+              logger.log.info(IDLOG, "voicemail_transcription_enabled missing");
+            }
           } else {
             var strerr = 'sending user info to user "' + username + '": wrong format';
             logger.log.error(IDLOG, strerr);
