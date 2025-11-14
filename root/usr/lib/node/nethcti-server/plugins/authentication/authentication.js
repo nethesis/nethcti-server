@@ -1210,8 +1210,8 @@ function isAutoUpdateTokenExpires() {
       }
     }
 
-    // Check the api persistent tokens (both web and nethlink)
-    const subtypes = ['web', 'nethlink'];
+    // Check the api persistent tokens (web, nethlink, user)
+    const subtypes = ['web', 'nethlink', 'user'];
     for (const subtype of subtypes) {
       const tokenKey = `${username}_phone-island_${subtype}`;
       if (persistentTokens.has(tokenKey)) {
@@ -1274,7 +1274,7 @@ function verifyToken(username, token, isRemote) {
     }
 
     // check the grant presence
-    const phoneIslandTokenExists = ['web', 'nethlink'].some(subtype =>
+    const phoneIslandTokenExists = ['web', 'nethlink', 'user'].some(subtype =>
       persistentTokens.has(`${username}_phone-island_${subtype}`)
     );
 
