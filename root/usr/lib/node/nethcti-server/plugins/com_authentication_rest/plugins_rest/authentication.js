@@ -367,7 +367,7 @@ function setCompUser(comp) {
           // The token validity is checked inside the authorization proxy
           const authToken = req.headers.authorization_token;
 
-          // Get token login subtype. Default: web. Can be 'web' or 'nethlink'
+          // Get token login subtype. Default: web. Can be 'web', 'nethlink' or 'user'
           const subTypeToken = req.params.subtype || 'web';
 
           // Add _phone-island to the end of api username tokens
@@ -438,7 +438,7 @@ function setCompUser(comp) {
           // Get the username from the headers
           const username = req.headers.authorization_user;
 
-          // Get token login subtype. Default: web. Can be 'web' or 'nethlink'
+          // Get token login subtype. Default: web. Can be 'web', 'nethlink' or 'user'
           const subTypeToken = req.params.subtype || 'web';
 
           // Add _phone-island to the end of api username tokens
@@ -482,7 +482,7 @@ function setCompUser(comp) {
 
           // Set target username to be revoked
           if (req.params.type === 'phone-island') {
-            // Get token login subtype. Default: web. Can be 'web' or 'nethlink'
+            // Get token login subtype. Default: web. Can be 'web', 'nethlink' or 'user'
             const subTypeToken = req.params.subtype || 'web';
 
             // Compose token name to remove
