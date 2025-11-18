@@ -652,6 +652,7 @@ module.exports = function(options, imports, register) {
       pickupQueueWaitingCaller: astProxy.proxyLogic.pickupQueueWaitingCaller,
       getEchoCallDestination: astProxy.proxyLogic.getEchoCallDestination,
       getConfBridgeConfCode: astProxy.proxyLogic.getConfBridgeConfCode,
+      getFeatureCodes: astProxy.proxyLogic.getFeatureCodes,
       isPinEnabledAtLeastOneRoute: isPinEnabledAtLeastOneRoute,
       getUserExtenIdFromConf: astProxy.proxyLogic.getUserExtenIdFromConf,
       unmuteUserConfBridgeConf: astProxy.proxyLogic.unmuteUserConfBridgeConf,
