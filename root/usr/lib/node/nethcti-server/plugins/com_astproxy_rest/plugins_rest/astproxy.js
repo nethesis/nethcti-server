@@ -1385,7 +1385,8 @@ var compConfigManager;
           'opdata',
           'qalarms',
           'pin',
-          'pinstatus'
+          'pinstatus',
+          'feature_codes'
         ],
 
         /**
@@ -2252,6 +2253,30 @@ var compConfigManager;
         } catch (error) {
           logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      },
+
+      /**
+       *  Gets the asterisk feature codes with the following REST API:
+       *
+       *     GET  feature_codes
+       *
+       * @method feature_codes
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      feature_codes: function (req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          var featureCodes = compAstProxy.getFeatureCodes();
+
+          logger.log.info(IDLOG, 'sent feature codes to user "' + username + '" ' + res.connection.remoteAddress);
+          res.send(200, featureCodes);
+
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       },
 
@@ -5547,6 +5572,7 @@ var compConfigManager;
     exports.op_wait_conv = astproxy.op_wait_conv;
     exports.pin = astproxy.pin;
     exports.pinstatus = astproxy.pinstatus;
+    exports.feature_codes = astproxy.feature_codes;
     exports.queue_recall = astproxy.queue_recall;
     exports.qmanager_queue_recall = astproxy.qmanager_queue_recall;
     exports.qrecall_info = astproxy.qrecall_info;
