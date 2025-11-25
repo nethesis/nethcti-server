@@ -364,10 +364,12 @@ function setCompAuthorization(comp) {
          *
          *   @param {string} delete To delete a voicemail messages of the user
          *   @param {string} custom_msg To customize the audio message for the voicemail
+         *   @param {string} custom_msg_from_file To customize the audio message from a recorded file
          */
         'post': [
           'delete',
-          'custom_msg'
+          'custom_msg',
+          'custom_msg_from_file'
         ],
         'head': [],
 
@@ -787,6 +789,23 @@ function setCompAuthorization(comp) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
+      },
+
+      /**
+       * Upload customized audio message from a temporary file.
+       *
+       * @method custom_msg_from_file
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      custom_msg_from_file: function(req, res, next) {
+        try {
+          customMsgFromFilePost(req, res, next);
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
       }
     };
     exports.api = voicemail.api;
@@ -796,6 +815,7 @@ function setCompAuthorization(comp) {
     exports.download = voicemail.download;
     exports.setLogger = setLogger;
     exports.custom_msg = voicemail.custom_msg;
+    exports.custom_msg_from_file = voicemail.custom_msg_from_file;
     exports.setCompUser = setCompUser;
     exports.setCompUtil = setCompUtil;
     exports.new_counters = voicemail.new_counters;
@@ -901,6 +921,54 @@ function customMsgDelete(req, res, next) {
       } catch (err) {
         logger.log.error(IDLOG, err.stack);
         compUtil.net.sendHttp500(IDLOG, res, err.toString());
+      }
+    });
+  } catch (error) {
+    logger.log.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
+
+/**
+ * Upload customized audio message from a temporary file.
+ * The request must contain: type and tempFilename.
+ *
+ * @method customMsgFromFilePost
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function customMsgFromFilePost(req, res, next) {
+  try {
+    var username = req.headers.authorization_user;
+    if (typeof req.params !== 'object' ||
+      typeof req.params.type !== 'string' ||
+      (req.params.type !== 'unavail' && req.params.type !== 'busy' && req.params.type !== 'greet') ||
+      typeof req.params.tempFilename !== 'string') {
+
+      compUtil.net.sendHttp400(IDLOG, res);
+      return;
+    }
+    var vm = compUser.getEndpointVoicemail(username);
+    if (typeof vm !== 'object' || typeof vm.getId !== 'function') {
+      var str = 'customizing voicemail message from file: no voicemail for user "' + username + '": "' + JSON.stringify(vm) + '"';
+      logger.log.warn(IDLOG, str);
+      compUtil.net.sendHttp500(IDLOG, res, str);
+      return;
+    }
+    vm = vm.getId();
+    compVoicemail.setCustomVmAudioMsgFromFile(vm, req.params.type, req.params.tempFilename, function(err) {
+      try {
+        if (err) {
+          logger.log.error(IDLOG, 'setting customized vm "' + req.params.type + '" message from file for user "' + username + '" for vm "' + vm + '"');
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+          return;
+        }
+        logger.log.info(IDLOG, 'customized vm "' + req.params.type + '" message from file for user "' + username + '" for vm "' + vm + '" has been set successfully');
+        res.send(200);
+      } catch (error) {
+        logger.log.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
       }
     });
   } catch (error) {

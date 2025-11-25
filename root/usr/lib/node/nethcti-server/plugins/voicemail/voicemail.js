@@ -4,6 +4,8 @@
  * @module voicemail
  * @main voicemail
  */
+var fs = require('fs');
+var path = require('path');
 var async = require('async');
 var EventEmitter = require('events').EventEmitter;
 
@@ -75,6 +77,16 @@ var EVT_UPDATE_NEW_VOICE_MESSAGES = 'updateNewVoiceMessages';
  * @default "newVoiceMessage"
  */
 var EVT_NEW_VOICE_MESSAGE = 'newVoiceMessage';
+
+/**
+ * The path where temporary audio recordings are stored.
+ *
+ * @property AUDIO_RECORDED_PATH
+ * @type string
+ * @private
+ * @default "/var/spool/asterisk/tmp"
+ */
+var AUDIO_RECORDED_PATH = '/var/spool/asterisk/tmp';
 
 /**
  * The dbconn module.
@@ -668,6 +680,105 @@ function setCustomVmAudioMsg(vm, type, audio, cb) {
   }
 }
 
+/**
+ * Set a custom voicemail audio message from a temporary file.
+ * The function copies the file from the temporary location to the voicemail directory
+ * and saves it to the database.
+ *
+ * @method setCustomVmAudioMsgFromFile
+ * @param {string} vm The voicemail identifier
+ * @param {string} type The type of the audio message ("unavail"|"busy"|"greet")
+ * @param {string} tempFilename The temporary filename in /var/spool/asterisk/tmp
+ * @param {function} cb The callback function
+ */
+function setCustomVmAudioMsgFromFile(vm, type, tempFilename, cb) {
+  try {
+    if (typeof vm !== 'string' ||
+      typeof tempFilename !== 'string' ||
+      typeof type !== 'string' ||
+      (type !== 'unavail' && type !== 'busy' && type !== 'greet') ||
+      typeof cb !== 'function') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    var sourcePath = path.join(AUDIO_RECORDED_PATH, tempFilename);
+    var destPath = '/var/spool/asterisk/voicemail/default/' + vm + '/' + type + '.wav';
+
+    // sequentially executes operations:
+    // 1. read the audio file content for database storage
+    // 2. copy the file to the voicemail directory
+    // 3. save to database
+    // 4. delete the temp file
+    async.waterfall([
+
+      function(callback) {
+        // read the file content for database storage
+        fs.readFile(sourcePath, function(err, data) {
+          if (err) {
+            var str = 'reading temp audio file "' + sourcePath + '" for vm "' + vm + '" failed: ' + err;
+            logger.log.error(IDLOG, str);
+            callback(str);
+          } else {
+            callback(null, data);
+          }
+        });
+      },
+
+      function(fileData, callback) {
+        // copy the file to the voicemail directory
+        fs.copyFile(sourcePath, destPath, function(err) {
+          if (err) {
+            var str = 'copying audio file "' + sourcePath + '" -> "' + destPath + '" for vm "' + vm + '" failed: ' + err;
+            logger.log.error(IDLOG, str);
+            callback(str);
+          } else {
+            logger.log.info(IDLOG, 'copied custom vm audio file "' + sourcePath + '" -> "' + destPath + '" for vm "' + vm + '"');
+            callback(null, fileData);
+          }
+        });
+      },
+
+      function(fileData, callback) {
+        // save to database
+        dbconn.setCustomVmAudioMsg(vm, type, fileData, function(err) {
+          if (err) {
+            logger.log.error(IDLOG, 'saving custom vm "' + type + '" message to database for vm "' + vm + '"');
+            callback(err);
+          } else {
+            logger.log.info(IDLOG, 'saved custom vm "' + type + '" message to database for vm "' + vm + '"');
+            callback(null);
+          }
+        });
+      },
+
+      function(callback) {
+        // delete the temp file
+        fs.unlink(sourcePath, function(err) {
+          if (err) {
+            var str = 'removing temp audio file "' + sourcePath + '" for vm "' + vm + '" failed: ' + err;
+            logger.log.warn(IDLOG, str);
+            // don't fail the whole operation if temp file deletion fails
+          } else {
+            logger.log.info(IDLOG, 'removed temp audio file "' + sourcePath + '" for vm "' + vm + '"');
+          }
+          callback(null);
+        });
+      }
+
+    ], function(err) {
+      if (err) {
+        logger.log.error(IDLOG, err);
+      }
+      cb(err);
+    });
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.start = start;
@@ -681,6 +792,7 @@ exports.listenVoiceMessage = listenVoiceMessage;
 exports.deleteCustomMessage = deleteCustomMessage;
 exports.listenCustomMessage = listenCustomMessage;
 exports.setCustomVmAudioMsg = setCustomVmAudioMsg;
+exports.setCustomVmAudioMsgFromFile = setCustomVmAudioMsgFromFile;
 exports.EVT_NEW_VOICE_MESSAGE = EVT_NEW_VOICE_MESSAGE;
 exports.getVoiceMessagesByUser = getVoiceMessagesByUser;
 exports.getAllNewVoiceMessageCount = getAllNewVoiceMessageCount;
