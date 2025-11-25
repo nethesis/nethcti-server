@@ -703,13 +703,11 @@ function setCustomVmAudioMsgFromFile(vm, type, tempFilename, cb) {
     }
 
     var sourcePath = path.join(AUDIO_RECORDED_PATH, tempFilename);
-    var destPath = '/var/spool/asterisk/voicemail/default/' + vm + '/' + type + '.wav';
 
     // sequentially executes operations:
     // 1. read the audio file content for database storage
-    // 2. copy the file to the voicemail directory
-    // 3. save to database
-    // 4. delete the temp file
+    // 2. save to database
+    // 3. delete the temp file
     async.waterfall([
 
       function(callback) {
@@ -721,20 +719,6 @@ function setCustomVmAudioMsgFromFile(vm, type, tempFilename, cb) {
             callback(str);
           } else {
             callback(null, data);
-          }
-        });
-      },
-
-      function(fileData, callback) {
-        // copy the file to the voicemail directory
-        fs.copyFile(sourcePath, destPath, function(err) {
-          if (err) {
-            var str = 'copying audio file "' + sourcePath + '" -> "' + destPath + '" for vm "' + vm + '" failed: ' + err;
-            logger.log.error(IDLOG, str);
-            callback(str);
-          } else {
-            logger.log.info(IDLOG, 'copied custom vm audio file "' + sourcePath + '" -> "' + destPath + '" for vm "' + vm + '"');
-            callback(null, fileData);
           }
         });
       },

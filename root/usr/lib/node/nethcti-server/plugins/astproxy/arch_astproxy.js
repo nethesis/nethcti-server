@@ -486,15 +486,11 @@ module.exports = function(options, imports, register) {
               data += chunk;
             });
             res.on('end', () => {
-              try {
-                data = JSON.parse(data);
-                if (data.code === 200) {
-                  resolve(data.token);
-                } else {
-                  reject(`logging-in to nethvoice-report - resp code: ${res.statusCode} - req: ${JSON.stringify(options)}`);
-                }
-              } catch (parseError) {
-                reject(`invalid JSON response from nethvoice-report - status: ${res.statusCode} - data: ${data.substring(0, 100)}`);
+              data = JSON.parse(data);
+              if (data.code === 200) {
+                resolve(data.token);
+              } else {
+                reject(`logging-in to nethvoice-report - resp code: ${res.statusCode} - req: ${JSON.stringify(options)}`);
               }
             });
           });
