@@ -616,7 +616,7 @@ module.exports = function(options, imports, register) {
       }
       let req;
       for (let eid in extens) {
-        options.path = '/freepbx/rest/devices/phones/reconfigure';
+        options.path = '/freepbx/rest/phones/reconfigure';
         req = https.request(options, res => {
           if (res && res.statusCode === 200) {
             logger.log.info(IDLOG, `sent HTTP POST req to reload config of physical phone "${eid}"`);
