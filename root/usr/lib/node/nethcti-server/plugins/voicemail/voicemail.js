@@ -7,6 +7,7 @@
 var fs = require('fs');
 var path = require('path');
 var async = require('async');
+var childProcess = require('child_process');
 var EventEmitter = require('events').EventEmitter;
 
 /**
@@ -87,6 +88,26 @@ var EVT_NEW_VOICE_MESSAGE = 'newVoiceMessage';
  * @default "/var/spool/asterisk/tmp"
  */
 var AUDIO_RECORDED_PATH = '/var/spool/asterisk/tmp';
+
+/**
+ * The mpg123 binary for MP3 conversion.
+ *
+ * @property MPG123_SCRIPT_PATH
+ * @type string
+ * @private
+ * @default "/usr/bin/mpg123"
+ */
+var MPG123_SCRIPT_PATH = '/usr/bin/mpg123';
+
+/**
+ * The sox binary for WAV conversion.
+ *
+ * @property SOX_SCRIPT_PATH
+ * @type string
+ * @private
+ * @default "/usr/bin/sox"
+ */
+var SOX_SCRIPT_PATH = '/usr/bin/sox';
 
 /**
  * The dbconn module.
@@ -654,6 +675,143 @@ function on(type, cb) {
 }
 
 /**
+ * Returns true if buffer looks like MP3.
+ *
+ * @method isMp3Buffer
+ * @param {object} buffer The buffer to check
+ * @return {boolean} True if MP3 header detected
+ * @private
+ */
+function isMp3Buffer(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 3) {
+    return false;
+  }
+  if (buffer.slice(0, 3).toString('ascii') === 'ID3') {
+    return true;
+  }
+  // MP3 frame sync 0xFFEx
+  if (buffer.length >= 2 && buffer[0] === 0xFF && (buffer[1] & 0xE0) === 0xE0) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Convert a buffer to hex string.
+ *
+ * @method bufferToHex
+ * @param {object} buffer The buffer
+ * @param {number} length The bytes to convert
+ * @return {string} Hex string
+ * @private
+ */
+function bufferToHex(buffer, length) {
+  if (!Buffer.isBuffer(buffer)) {
+    return '';
+  }
+  return buffer.slice(0, length).toString('hex');
+}
+
+/**
+ * Normalize an audio input string (base64 or data URL) to raw bytes.
+ *
+ * @method normalizeAudioInput
+ * @param {string} audio The audio content in base64 or data URL format
+ * @return {object} { buffer, detectedType, dataUrlPrefix }
+ * @private
+ */
+function normalizeAudioInput(audio) {
+  if (typeof audio !== 'string') {
+    throw new Error('uploaded audio is not a string');
+  }
+  var dataUrlPrefix = null;
+  var base64Content = audio.trim();
+  if (base64Content.indexOf('data:') === 0) {
+    var commaIdx = base64Content.indexOf(',');
+    if (commaIdx === -1) {
+      throw new Error('uploaded audio data URL is missing comma separator');
+    }
+    dataUrlPrefix = base64Content.substring(0, commaIdx);
+    base64Content = base64Content.substring(commaIdx + 1);
+  }
+  base64Content = base64Content.replace(/\s+/g, '');
+  var buffer = Buffer.from(base64Content, 'base64');
+  var header = buffer.slice(0, 4).toString('ascii');
+  var detectedType = 'unknown';
+  if (header === 'RIFF') {
+    detectedType = 'wav';
+  } else if (isMp3Buffer(buffer)) {
+    detectedType = 'mp3';
+  }
+  return {
+    buffer: buffer,
+    detectedType: detectedType,
+    dataUrlPrefix: dataUrlPrefix
+  };
+}
+
+/**
+ * Convert WAV to Asterisk format (8k mono) using sox.
+ *
+ * @method convertWavToAsteriskFormat
+ * @param {string} inputPath The source wav path
+ * @param {string} outputPath The destination wav path
+ * @param {function} cb The callback
+ * @private
+ */
+function convertWavToAsteriskFormat(inputPath, outputPath, cb) {
+  try {
+    var child = childProcess.spawn(SOX_SCRIPT_PATH, [inputPath, '-r', '8000', '-c', '1', outputPath, 'rate', '-ql']);
+    child.stdin.end();
+    child.on('error', function(err) {
+      cb('sox spawn failed: ' + err);
+    });
+    child.on('close', function(code) {
+      if (code !== 0) {
+        cb('sox conversion failed with code ' + code);
+        return;
+      }
+      cb(null, outputPath);
+    });
+  } catch (err) {
+    cb(err);
+  }
+}
+
+/**
+ * Convert MP3 to Asterisk WAV (8k mono).
+ *
+ * @method convertMp3ToAsteriskWav
+ * @param {string} inputPath The source mp3 path
+ * @param {string} outputPath The destination wav path
+ * @param {function} cb The callback
+ * @private
+ */
+function convertMp3ToAsteriskWav(inputPath, outputPath, cb) {
+  try {
+    var tmpWavPath = outputPath.replace(/\.wav$/i, '') + '_mp3tmp.wav';
+    var child = childProcess.spawn(MPG123_SCRIPT_PATH, ['-w', tmpWavPath, inputPath]);
+    child.stdin.end();
+    child.on('error', function(err) {
+      cb('mpg123 spawn failed: ' + err);
+    });
+    child.on('close', function(code) {
+      if (code !== 0) {
+        cb('mpg123 conversion failed with code ' + code);
+        return;
+      }
+      convertWavToAsteriskFormat(tmpWavPath, outputPath, function(err) {
+        fs.unlink(tmpWavPath, function() {
+          cb(err, outputPath);
+        });
+      });
+    });
+  } catch (err) {
+    cb(err);
+  }
+}
+
+/**
  * Set the custom audio message for the voicemail.
  *
  * @method setCustomVmAudioMsg
@@ -673,7 +831,63 @@ function setCustomVmAudioMsg(vm, type, audio, cb) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    dbconn.setCustomVmAudioMsg(vm, type, Buffer.from(audio, 'base64'), cb);
+    var normalized = normalizeAudioInput(audio);
+    if (normalized.detectedType !== 'wav' && normalized.detectedType !== 'mp3') {
+      throw new Error('uploaded audio is not a valid RIFF WAV file (missing RIFF header)');
+    }
+    var tmpFilename = 'vm_' + vm + '_' + type + '_' + Date.now() + '_' + process.pid + '.wav';
+    var tmpPath = path.join(AUDIO_RECORDED_PATH, tmpFilename);
+    var tmpOutPath = path.join(AUDIO_RECORDED_PATH, 'vm_' + vm + '_' + type + '_' + Date.now() + '_' + process.pid + '_out.wav');
+    async.waterfall([
+      function(callback) {
+        var tmpExt = (normalized.detectedType === 'mp3' ? '.mp3' : '.wav');
+        tmpPath = tmpPath.replace(/\.wav$/, tmpExt);
+        fs.writeFile(tmpPath, normalized.buffer, { mode: 0o600 }, function(err) {
+          if (err) {
+            callback('writing temp audio "' + tmpPath + '" failed: ' + err);
+            return;
+          }
+          callback(null);
+        });
+      },
+      function(callback) {
+        var converter = (normalized.detectedType === 'mp3') ? convertMp3ToAsteriskWav : convertWavToAsteriskFormat;
+        converter(tmpPath, tmpOutPath, function(err) {
+          if (err) {
+            callback(err);
+            return;
+          }
+          callback(null);
+        });
+      },
+      function(callback) {
+        fs.readFile(tmpOutPath, function(err, convertedData) {
+          if (err) {
+            callback('reading converted wav "' + tmpOutPath + '" failed: ' + err);
+            return;
+          }
+          dbconn.setCustomVmAudioMsg(vm, type, convertedData, function(err2) {
+            if (err2) {
+              callback(err2);
+              return;
+            }
+            callback(null);
+          });
+        });
+      },
+      function(callback) {
+        fs.unlink(tmpPath, function() {
+          fs.unlink(tmpOutPath, function() {
+            callback(null);
+          });
+        });
+      }
+    ], function(err) {
+      if (err) {
+        logger.log.error(IDLOG, 'setting custom voicemail audio failed for vm "' + vm + '" type "' + type + '": ' + err);
+      }
+      cb(err);
+    });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -703,6 +917,9 @@ function setCustomVmAudioMsgFromFile(vm, type, tempFilename, cb) {
     }
 
     var sourcePath = path.join(AUDIO_RECORDED_PATH, tempFilename);
+    var convertedTmpPath = null;
+    var ext = path.extname(tempFilename);
+    var extLower = ext.toLowerCase();
 
     // sequentially executes operations:
     // 1. read the audio file content for database storage
@@ -724,15 +941,46 @@ function setCustomVmAudioMsgFromFile(vm, type, tempFilename, cb) {
       },
 
       function(fileData, callback) {
-        // save to database
-        dbconn.setCustomVmAudioMsg(vm, type, fileData, function(err) {
-          if (err) {
-            logger.log.error(IDLOG, 'saving custom vm "' + type + '" message to database for vm "' + vm + '"');
-            callback(err);
-          } else {
-            logger.log.info(IDLOG, 'saved custom vm "' + type + '" message to database for vm "' + vm + '"');
-            callback(null);
+        if (extLower !== '' && extLower !== '.wav' && extLower !== '.mp3') {
+          callback('uploaded audio from file must be WAV or MP3; got "' + extLower + '"');
+          return;
+        }
+        if (extLower !== '.mp3') {
+          var header = fileData.slice(0, 4).toString('ascii');
+          if (header !== 'RIFF') {
+            callback('uploaded audio from file is not a valid RIFF WAV file (missing RIFF header)');
+            return;
           }
+        }
+        var tmpOutPath = path.join(AUDIO_RECORDED_PATH, 'vm_' + vm + '_' + type + '_' + Date.now() + '_' + process.pid + '_out.wav');
+        convertedTmpPath = tmpOutPath;
+        fs.stat(sourcePath, function(err) {
+          if (err) {
+            callback('reading temp audio file "' + sourcePath + '" failed: ' + err);
+            return;
+          }
+          var converter = (extLower === '.mp3') ? convertMp3ToAsteriskWav : convertWavToAsteriskFormat;
+          converter(sourcePath, tmpOutPath, function(err1) {
+            if (err1) {
+              callback(err1);
+              return;
+            }
+            fs.readFile(tmpOutPath, function(err2, convertedData) {
+              if (err2) {
+                callback('reading converted wav "' + tmpOutPath + '" failed: ' + err2);
+                return;
+              }
+              dbconn.setCustomVmAudioMsg(vm, type, convertedData, function(err3) {
+                if (err3) {
+                  logger.log.error(IDLOG, 'saving custom vm "' + type + '" message to database for vm "' + vm + '"');
+                  callback(err3);
+                } else {
+                  logger.log.info(IDLOG, 'saved custom vm "' + type + '" message to database for vm "' + vm + '"');
+                  callback(null);
+                }
+              });
+            });
+          });
         });
       },
 
@@ -745,6 +993,12 @@ function setCustomVmAudioMsgFromFile(vm, type, tempFilename, cb) {
             // don't fail the whole operation if temp file deletion fails
           } else {
             logger.log.info(IDLOG, 'removed temp audio file "' + sourcePath + '" for vm "' + vm + '"');
+          }
+          if (convertedTmpPath) {
+            fs.unlink(convertedTmpPath, function() {
+              callback(null);
+            });
+            return;
           }
           callback(null);
         });
