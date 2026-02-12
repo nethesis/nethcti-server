@@ -102,7 +102,7 @@ var port;
  * @readOnly
  * @default "localhost"
  */
-var address = 'localhost';
+var address = '127.0.0.1';
 
 /**
  * The HTTP server to be used with proxy.
@@ -176,6 +176,9 @@ function config(path) {
     port = json.http_proxy.http_port;
   } else {
     logger.log.warn(IDLOG, 'wrong ' + path + ': no "http_port" key into "http_proxy"');
+  }
+  if (json.http_proxy.address) {
+    address = json.http_proxy.address;
   }
   logger.log.info(IDLOG, 'configuration done by ' + path);
 }
