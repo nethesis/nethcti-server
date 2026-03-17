@@ -304,7 +304,8 @@ function configUser() {
   try {
     // sequentially executes two operations:
     //     1. sanitize default user extensions on "nethcti3.user_settings" db
-    //     2. load all users settings
+    //     2. initialize missing default user settings into "nethcti3.user_settings" db
+    //     3. load all users settings
     //
     // sanitize is needed because when the admin changes a user extension association
     // the default user extension into "nethcti3.user_settings" db is wrong. So it checks
@@ -401,6 +402,58 @@ function configUser() {
             });
           }
 
+        } catch (err) {
+          logger.log.error(IDLOG, err.stack);
+          callbackWaterfall(err);
+        }
+      },
+
+      // initialize missing default user settings into the database
+      function(callbackWaterfall) {
+        try {
+          logger.log.info(IDLOG, 'checking missing db user settings');
+          var users = compUser.getUsernames();
+
+          async.eachSeries(users, function(username, seriesCb) {
+            compDbconn.getUserSettings(username, function(err, results) {
+              try {
+                if (err) {
+                  logger.log.error(IDLOG, 'getting settings of user "' + username + '" from db: ' + err);
+                  seriesCb(err);
+                } else if (typeof results.call_summary_notifications === 'undefined') {
+                  compDbconn.saveUserSettings(username, {
+                    call_summary_notifications: true
+                  }, function(saveErr) {
+                    try {
+                      if (saveErr) {
+                        logger.log.error(IDLOG, 'saving missing call_summary_notifications for user "' + username + '": ' + saveErr);
+                        seriesCb(saveErr);
+                      } else {
+                        logger.log.info(IDLOG, 'initialized missing call_summary_notifications for user "' + username + '"');
+                        seriesCb(null);
+                      }
+                    } catch (error) {
+                      logger.log.error(IDLOG, error.stack);
+                      seriesCb(error);
+                    }
+                  });
+                } else {
+                  seriesCb(null);
+                }
+              } catch (error) {
+                logger.log.error(IDLOG, error.stack);
+                seriesCb(error);
+              }
+            });
+          }, function(err) {
+            if (err) {
+              logger.log.error(IDLOG, 'checking missing db user settings: ' + err.toString());
+              callbackWaterfall(err);
+            } else {
+              logger.log.info(IDLOG, 'checking missing db user settings completed');
+              callbackWaterfall(null);
+            }
+          });
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           callbackWaterfall(err);
