@@ -481,6 +481,28 @@ function getAllUserHistorySmsInterval(data, cb) {
   }
 }
 
+function getAnsweredElsewhereCondition(rowAlias) {
+  return '(' +
+    rowAlias + '.disposition IN ("NO ANSWER","BUSY","FAILED") AND ' +
+    rowAlias + '.channel LIKE "Local/%@from-queue-%;2" AND ' +
+    'EXISTS (' +
+      'SELECT 1 FROM cdr AS answered ' +
+      'WHERE answered.linkedid = ' + rowAlias + '.linkedid ' +
+        'AND answered.uniqueid <> ' + rowAlias + '.uniqueid ' +
+        'AND answered.disposition IN ("ANSWERED","ANSWERED_ELSEWHERE") ' +
+        'AND (' +
+          'answered.lastapp = "Queue" OR ' +
+          'answered.channel LIKE "Local/%@from-queue-%;2"' +
+        ')' +
+    ')' +
+  ')';
+}
+
+function getEffectiveDisposition(rowAlias) {
+  return 'CASE WHEN ' + getAnsweredElsewhereCondition(rowAlias) +
+    ' THEN "ANSWERED_ELSEWHERE" ELSE ' + rowAlias + '.disposition END';
+}
+
 /**
  * Get the history call of the specified endpoints into the interval time.
  * If the endpoints information is omitted, the results contains the
@@ -526,11 +548,12 @@ function getHistoryCallInterval(data, cb) {
 
     // define the mysql field to be returned. The "recordingfile" field
     // is returned only if the "data.recording" argument is true
+    var effectiveDisposition = getEffectiveDisposition('cdr');
     var attributes = [
       ['UNIX_TIMESTAMP(calldate)', 'time'],
       'channel', 'dstchannel', 'uniqueid', 'linkedid', 'userfield',
       ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'],
-      'disposition', 'dcontext', 'lastapp', 'lastdata'
+      [compDbconnMain.Sequelize.literal(effectiveDisposition), 'disposition'], 'dcontext', 'lastapp', 'lastdata'
     ];
     if (data.recording === true) {
       attributes.push('recordingfile');
@@ -592,7 +615,7 @@ function getHistoryCallInterval(data, cb) {
         '(cnum NOT IN (?) AND dst IN (?)) AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)' +
-        (data.removeLostCalls ? ' AND disposition NOT IN ("NO ANSWER","BUSY","FAILED")' : ''),
+        (data.removeLostCalls ? ' AND ' + effectiveDisposition + ' NOT IN ("NO ANSWER","BUSY","FAILED")' : ''),
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -604,9 +627,9 @@ function getHistoryCallInterval(data, cb) {
         '(cnum IN (?) AND dst NOT IN (?)) AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)' +
-        'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED")' +
-        'OR (disposition IN ("NO ANSWER","BUSY","FAILED")' +
-        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))',
+        'AND (' + effectiveDisposition + ' NOT IN ("NO ANSWER","BUSY","FAILED")' +
+        'OR (' + effectiveDisposition + ' IN ("NO ANSWER","BUSY","FAILED")' +
+        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE b.disposition IN ("ANSWERED","ANSWERED_ELSEWHERE") AND b.uniqueid = cdr.linkedid)))',
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -618,8 +641,8 @@ function getHistoryCallInterval(data, cb) {
         '(cnum NOT IN (?) AND dst IN (?)) AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?) AND ' +
-        'disposition IN ("NO ANSWER","BUSY","FAILED")' +
-        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)',
+        effectiveDisposition + ' IN ("NO ANSWER","BUSY","FAILED")' +
+        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE b.disposition IN ("ANSWERED","ANSWERED_ELSEWHERE") AND b.uniqueid = cdr.linkedid)',
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -631,8 +654,8 @@ function getHistoryCallInterval(data, cb) {
         '(cnum IN (?) OR dst IN (?)) AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR dst_cnam LIKE ? OR ccompany LIKE ? OR dst_ccompany LIKE ?) AND ' +
-        '(uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.uniqueid) AND ' +
-        '((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")',
+        '(uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE b.disposition IN ("ANSWERED","ANSWERED_ELSEWHERE") AND b.uniqueid = cdr.uniqueid) AND ' +
+        '((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR ' + effectiveDisposition + ' != "NO ANSWER")',
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
@@ -732,10 +755,11 @@ function getHistorySwitchCallInterval(data, cb) {
 
     // define the mysql field to be returned. The "recordingfile" field
     // is returned only if the "data.recording" argument is true
+    var effectiveDisposition = getEffectiveDisposition('cdr');
     var attributes = [
       ['UNIX_TIMESTAMP(calldate)', 'time'],
       'channel', 'dstchannel', 'uniqueid', 'linkedid', 'userfield',
-      ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'], 'disposition', 'dcontext', 'lastapp', 'lastdata'
+      ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'], [compDbconnMain.Sequelize.literal(effectiveDisposition), 'disposition'], 'dcontext', 'lastapp', 'lastdata'
     ];
     if (data.recording === true) {
       attributes.push('recordingfile');
@@ -805,7 +829,7 @@ function getHistorySwitchCallInterval(data, cb) {
         ') AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)' +
-        (data.removeLostCalls ? ' AND disposition NOT IN ("NO ANSWER","BUSY","FAILED")' : ''),
+        (data.removeLostCalls ? ' AND ' + effectiveDisposition + ' NOT IN ("NO ANSWER","BUSY","FAILED")' : ''),
         data.trunks,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -833,7 +857,7 @@ function getHistorySwitchCallInterval(data, cb) {
         'dst IN ' + data.extens + ' AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?) ' +
-        'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED") OR (disposition IN ("NO ANSWER","BUSY","FAILED") AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))',
+        'AND (' + effectiveDisposition + ' NOT IN ("NO ANSWER","BUSY","FAILED") OR (' + effectiveDisposition + ' IN ("NO ANSWER","BUSY","FAILED") AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE b.disposition IN ("ANSWERED","ANSWERED_ELSEWHERE") AND b.uniqueid = cdr.linkedid)))',
         data.trunks, data.trunks,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
@@ -856,8 +880,8 @@ function getHistorySwitchCallInterval(data, cb) {
         ') AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?) AND ' +
-        'disposition IN ("NO ANSWER","BUSY","FAILED")' +
-        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)',
+        effectiveDisposition + ' IN ("NO ANSWER","BUSY","FAILED")' +
+        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE b.disposition IN ("ANSWERED","ANSWERED_ELSEWHERE") AND b.uniqueid = cdr.linkedid)',
         data.trunks,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -867,8 +891,8 @@ function getHistorySwitchCallInterval(data, cb) {
       whereClause = [
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?) AND ' +
-        '(uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.uniqueid) AND ' +
-        '((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")',
+        '(uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE b.disposition IN ("ANSWERED","ANSWERED_ELSEWHERE") AND b.uniqueid = cdr.uniqueid) AND ' +
+        '((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR ' + effectiveDisposition + ' != "NO ANSWER")',
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
         "%" + data.filter + "%", "%" + data.filter + "%"
