@@ -89,6 +89,376 @@ function setLogger(log) {
   }
 }
 
+function getHistoryRowValues(row) {
+  if (row && row.dataValues) {
+    return row.dataValues;
+  }
+  return row;
+}
+
+function extractVoicemailMailbox(lastdata, fallbackMailbox) {
+  if (typeof lastdata === 'string' && lastdata !== '') {
+    var mailboxMatch = lastdata.match(/([A-Za-z0-9*#+._-]+)@/);
+    if (mailboxMatch && mailboxMatch[1]) {
+      return mailboxMatch[1];
+    }
+
+    var firstToken = lastdata.split(',')[0];
+    if (typeof firstToken === 'string' && firstToken !== '') {
+      return firstToken.trim();
+    }
+  }
+
+  if (typeof fallbackMailbox === 'string' && fallbackMailbox !== '') {
+    return fallbackMailbox;
+  }
+
+  return '';
+}
+
+function normalizeMailboxValue(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  return value.trim().toLowerCase();
+}
+
+function isVoicemailMailboxAllowed(rowValues, allowedMailboxes) {
+  if (!(allowedMailboxes instanceof Array) || allowedMailboxes.length === 0) {
+    return true;
+  }
+
+  var mailbox = normalizeMailboxValue(extractVoicemailMailbox(rowValues.lastdata, rowValues.dst));
+  if (mailbox === '') {
+    return false;
+  }
+
+  return allowedMailboxes.some(function(allowedMailbox) {
+    return normalizeMailboxValue(String(allowedMailbox || '')) === mailbox;
+  });
+}
+
+function normalizeCallerValue(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  var trimmedValue = value.trim();
+  if (trimmedValue === '') {
+    return '';
+  }
+
+  var calleridMatch = trimmedValue.match(/<([^>]+)>/);
+  if (calleridMatch && calleridMatch[1]) {
+    trimmedValue = calleridMatch[1].trim();
+  }
+
+  return trimmedValue.replace(/[^0-9A-Za-z*#+]/g, '').toLowerCase();
+}
+
+function areCallerValuesCompatible(leftValue, rightValue) {
+  var normalizedLeft = normalizeCallerValue(leftValue);
+  var normalizedRight = normalizeCallerValue(rightValue);
+
+  if (normalizedLeft === '' || normalizedRight === '') {
+    return false;
+  }
+
+  var numericRegexp = /^[0-9]+$/;
+  if (numericRegexp.test(normalizedLeft) && numericRegexp.test(normalizedRight)) {
+    return normalizedLeft === normalizedRight ||
+      normalizedLeft.slice(-normalizedRight.length) === normalizedRight ||
+      normalizedRight.slice(-normalizedLeft.length) === normalizedLeft;
+  }
+
+  return normalizedLeft === normalizedRight;
+}
+
+function buildCallerCandidates(rowValues) {
+  var candidates = [rowValues.src, rowValues.cnum, rowValues.clid];
+  var uniqueCandidates = [];
+
+  candidates.forEach(function(candidate) {
+    var normalizedCandidate = normalizeCallerValue(candidate);
+    if (normalizedCandidate !== '' && uniqueCandidates.indexOf(normalizedCandidate) === -1) {
+      uniqueCandidates.push(normalizedCandidate);
+    }
+  });
+
+  return uniqueCandidates;
+}
+
+function getCallAnchorTimestamp(rowValues) {
+  var candidates = [rowValues.linkedid, rowValues.uniqueid, rowValues.time];
+
+  for (var i = 0; i < candidates.length; i++) {
+    var candidate = candidates[i];
+    var timestamp = null;
+
+    if (typeof candidate === 'string' && candidate !== '') {
+      var match = candidate.match(/^(\d{10})/);
+      if (match && match[1]) {
+        timestamp = parseInt(match[1], 10);
+      }
+    } else if (typeof candidate === 'number') {
+      timestamp = parseInt(candidate, 10);
+    }
+
+    if (!isNaN(timestamp) && timestamp > 0) {
+      return timestamp;
+    }
+  }
+
+  return null;
+}
+
+function getVoicemailTimeBounds(rowValues) {
+  var callStart = getCallAnchorTimestamp(rowValues);
+  var duration = parseInt(rowValues.duration, 10);
+
+  if (callStart === null) {
+    return null;
+  }
+
+  if (isNaN(duration) || duration < 0) {
+    duration = 0;
+  }
+
+  return {
+    from: Math.max(callStart - 300, 0),
+    to: callStart + duration + 900
+  };
+}
+
+function getCallEndTimestamp(rowValues) {
+  var callStart = getCallAnchorTimestamp(rowValues);
+  var duration = parseInt(rowValues.duration, 10);
+
+  if (callStart === null) {
+    return null;
+  }
+
+  if (isNaN(duration) || duration < 0) {
+    duration = 0;
+  }
+
+  return callStart + duration;
+}
+
+function hasCloseVoicemailTimestamp(rowValues, matches, thresholdSeconds) {
+  var callEndTimestamp = getCallEndTimestamp(rowValues);
+
+  if (callEndTimestamp === null || !(matches instanceof Array) || matches.length === 0) {
+    return false;
+  }
+
+  return matches.some(function(match) {
+    var voicemailValues = getHistoryRowValues(match);
+    var voicemailTimestamp = parseInt(voicemailValues.origtime, 10);
+
+    if (isNaN(voicemailTimestamp)) {
+      return false;
+    }
+
+    return Math.abs(voicemailTimestamp - callEndTimestamp) <= thresholdSeconds;
+  });
+}
+
+function buildVoicemailMatchResult(hasMessage, messageId) {
+  return {
+    hasMessage: hasMessage === true,
+    messageId: (hasMessage === true && messageId !== undefined && messageId !== null) ? String(messageId) : ''
+  };
+}
+
+function findClosestVoicemailMatch(rowValues, matches, thresholdSeconds) {
+  var callEndTimestamp = getCallEndTimestamp(rowValues);
+  var closestMatch = null;
+  var closestDistance = null;
+
+  if (callEndTimestamp === null || !(matches instanceof Array) || matches.length === 0) {
+    return null;
+  }
+
+  matches.forEach(function(match) {
+    var voicemailValues = getHistoryRowValues(match);
+    var voicemailTimestamp = parseInt(voicemailValues.origtime, 10);
+
+    if (isNaN(voicemailTimestamp)) {
+      return;
+    }
+
+    var distance = Math.abs(voicemailTimestamp - callEndTimestamp);
+    if (distance > thresholdSeconds) {
+      return;
+    }
+
+    if (closestDistance === null || distance < closestDistance) {
+      closestDistance = distance;
+      closestMatch = voicemailValues;
+    }
+  });
+
+  return closestMatch;
+}
+
+function hasVoicemailMessage(rowValues) {
+  var voicemailModel = compDbconnMain.models[compDbconnMain.JSON_KEYS.VOICEMAIL];
+  var mailbox = extractVoicemailMailbox(rowValues.lastdata, rowValues.dst);
+  var timeBounds = getVoicemailTimeBounds(rowValues);
+  var callerCandidates = buildCallerCandidates(rowValues);
+
+  if (!voicemailModel || mailbox === '' || timeBounds === null) {
+    return hasVoicemailMessageByCallerAndTime(voicemailModel, timeBounds, callerCandidates);
+  }
+
+  compDbconnMain.incNumExecQueries();
+
+  return voicemailModel.findAll({
+    where: [
+      'mailboxuser = ? AND origtime >= ? AND origtime <= ?',
+      mailbox, String(timeBounds.from), String(timeBounds.to)
+    ],
+    attributes: ['callerid', 'origtime', 'id'],
+    limit: 25
+  }).then(function(matches) {
+    if (!matches || matches.length === 0) {
+      return hasVoicemailMessageByCallerAndTime(voicemailModel, timeBounds, callerCandidates);
+    }
+
+    var callerMatchedMatches = matches.filter(function(match) {
+      var voicemailValues = getHistoryRowValues(match);
+
+      if (callerCandidates.length === 0) {
+        return false;
+      }
+
+      return callerCandidates.some(function(candidate) {
+        return areCallerValuesCompatible(candidate, voicemailValues.callerid);
+      });
+    });
+
+    if (callerMatchedMatches.length > 0) {
+      var closestMailboxMatch = findClosestVoicemailMatch(rowValues, callerMatchedMatches, 10);
+      if (closestMailboxMatch) {
+        return buildVoicemailMatchResult(true, closestMailboxMatch.id);
+      }
+    }
+
+    return buildVoicemailMatchResult(false, '');
+  });
+}
+
+function hasVoicemailMessageByCallerAndTime(voicemailModel, timeBounds, callerCandidates) {
+  if (!voicemailModel || timeBounds === null || callerCandidates.length === 0) {
+    return Promise.resolve(buildVoicemailMatchResult(false, ''));
+  }
+
+  compDbconnMain.incNumExecQueries();
+
+  return voicemailModel.findAll({
+    where: [
+      'origtime >= ? AND origtime <= ?',
+      String(timeBounds.from), String(timeBounds.to)
+    ],
+    attributes: ['callerid', 'origtime', 'id', 'mailboxuser'],
+    limit: 50
+  }).then(function(matches) {
+    if (!matches || matches.length === 0) {
+      return buildVoicemailMatchResult(false, '');
+    }
+
+    var compatibleMatches = matches.filter(function(match) {
+      var voicemailValues = getHistoryRowValues(match);
+
+      return callerCandidates.some(function(candidate) {
+        return areCallerValuesCompatible(candidate, voicemailValues.callerid);
+      });
+    });
+
+    if (compatibleMatches.length !== 1) {
+      return buildVoicemailMatchResult(false, '');
+    }
+
+    return buildVoicemailMatchResult(true, getHistoryRowValues(compatibleMatches[0]).id);
+  });
+}
+
+function findLinkedVoicemailRow(rowValues) {
+  var historyModel = compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL];
+
+  if (!historyModel || typeof rowValues !== 'object' || !rowValues.linkedid || !rowValues.uniqueid) {
+    return Promise.resolve(null);
+  }
+
+  compDbconnMain.incNumExecQueries();
+
+  return historyModel.find({
+    where: [
+      'linkedid = ? AND uniqueid = ? AND lastapp = "VoiceMail"',
+      rowValues.linkedid, rowValues.uniqueid
+    ],
+    order: 'calldate DESC'
+  }).then(function(result) {
+    return getHistoryRowValues(result);
+  });
+}
+
+function enrichHistoryRowWithVoicemail(row, options) {
+  var rowValues = getHistoryRowValues(row);
+  var enrichOptions = options || {};
+
+  if (!rowValues) {
+    return Promise.resolve(row);
+  }
+
+  rowValues.reached_voicemail = rowValues.lastapp === 'VoiceMail';
+  rowValues.has_voicemail_message = false;
+  rowValues.voicemail_message_id = '';
+  rowValues.normalized_disposition = rowValues.disposition;
+
+  return findLinkedVoicemailRow(rowValues).then(function(linkedVoicemailRow) {
+    var voicemailCandidate = rowValues.reached_voicemail === true ? rowValues : linkedVoicemailRow;
+
+    if (!voicemailCandidate || voicemailCandidate.lastapp !== 'VoiceMail') {
+      return row;
+    }
+
+    // VoiceMail means the call reached a mailbox, not that a person answered it.
+    rowValues.reached_voicemail = true;
+    rowValues.normalized_disposition = 'NO ANSWER';
+
+    if (!isVoicemailMailboxAllowed(voicemailCandidate, enrichOptions.allowedMailboxes)) {
+      return row;
+    }
+
+    return hasVoicemailMessage(voicemailCandidate).then(function(voicemailMatch) {
+      rowValues.has_voicemail_message = voicemailMatch.hasMessage === true;
+      rowValues.voicemail_message_id = voicemailMatch.messageId || '';
+      return row;
+    }, function(err) {
+      logger.log.warn(IDLOG, 'checking voicemail message for history uniqueid "' + rowValues.uniqueid + '": ' + err.toString());
+      return row;
+    });
+  }, function(err) {
+    logger.log.warn(IDLOG, 'searching linked voicemail CDR for history uniqueid "' + rowValues.uniqueid + '": ' + err.toString());
+    return row;
+  });
+}
+
+function enrichHistoryResultsWithVoicemail(results, options) {
+  if (!(results instanceof Array) || results.length === 0) {
+    return Promise.resolve(results);
+  }
+
+  return Promise.all(results.map(function(row) {
+    return enrichHistoryRowWithVoicemail(row, options);
+  })).then(function() {
+    return results;
+  });
+}
+
 /**
  * Gets all the history sms of all the users into the interval time.
  * It can be possible to filter out the results specifying the filter. It search
@@ -160,7 +530,7 @@ function getHistoryCallInterval(data, cb) {
       ['UNIX_TIMESTAMP(calldate)', 'time'],
       'channel', 'dstchannel', 'uniqueid', 'linkedid', 'userfield',
       ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'],
-      'disposition', 'dcontext', 'lastapp'
+      'disposition', 'dcontext', 'lastapp', 'lastdata'
     ];
     if (data.recording === true) {
       attributes.push('recordingfile');
@@ -280,23 +650,31 @@ function getHistoryCallInterval(data, cb) {
       order: (data.sort ? data.sort : 'time desc')
 
     }).then(function(results) {
-      compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
-          where: whereClause,
-          group: ['uniqueid','linkedid','disposition'],
-          attributes: attributes
-          }).then(function(count) {
-              const res = {
-                count: count.length,
-                rows: results
-              }
-              logger.log.info(IDLOG, res.count + ' results searching switchboard history call interval between ' +
-                  data.from + ' to ' + data.to + ' and filter ' + data.filter);
-              cb(null, res);
-          }, function(err) { // manage the error
-              logger.log.error(IDLOG, 'counting switchboard history call interval between ' + data.from + ' to ' + data.to +
-                  ' with filter ' + data.filter + ': ' + err.toString());
-              cb(err.toString());
-          });
+      enrichHistoryResultsWithVoicemail(results, {
+        allowedMailboxes: data.endpoints
+      }).then(function(enrichedResults) {
+        compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
+            where: whereClause,
+            group: ['uniqueid','linkedid','disposition'],
+            attributes: attributes
+            }).then(function(count) {
+                const res = {
+                  count: count.length,
+                  rows: enrichedResults
+                }
+                logger.log.info(IDLOG, res.count + ' results searching switchboard history call interval between ' + 
+                    data.from + ' to ' + data.to + ' and filter ' + data.filter);
+                cb(null, res);
+            }, function(err) { // manage the error
+                logger.log.error(IDLOG, 'counting switchboard history call interval between ' + data.from + ' to ' + data.to +
+                    ' with filter ' + data.filter + ': ' + err.toString());
+                cb(err.toString());
+            });
+      }, function(err) {
+        logger.log.error(IDLOG, 'enriching history call interval with voicemail data between ' + data.from + ' to ' + data.to +
+          ' with filter ' + data.filter + ': ' + err.toString());
+        cb(err.toString());
+      });
       }, function(err) { // manage the error
       logger.log.error(IDLOG, 'searching switchboard history call interval between ' + data.from + ' to ' + data.to +
         ' with filter ' + data.filter + ': ' + err.toString());
@@ -357,7 +735,7 @@ function getHistorySwitchCallInterval(data, cb) {
     var attributes = [
       ['UNIX_TIMESTAMP(calldate)', 'time'],
       'channel', 'dstchannel', 'uniqueid', 'linkedid', 'userfield',
-      ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'], 'disposition', 'dcontext', 'lastapp'
+      ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'], 'disposition', 'dcontext', 'lastapp', 'lastdata'
     ];
     if (data.recording === true) {
       attributes.push('recordingfile');
@@ -507,23 +885,29 @@ function getHistorySwitchCallInterval(data, cb) {
       order: (data.sort ? data.sort : 'time desc')
 
     }).then(function(results) {
-      compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
-          where: whereClause,
-          group: ['uniqueid','linkedid','disposition'],
-          attributes: attributes
-           }).then(function(count) {
-              const res = {
-                count: count.length,
-                rows: results
-              }
-              logger.log.info(IDLOG, res.count + ' results searching switchboard history call interval between ' +
-                  data.from + ' to ' + data.to + ' and filter ' + data.filter);
-              cb(null, res);
-          }, function(err) { // manage the error
-              logger.log.error(IDLOG, 'counting switchboard history call interval between ' + data.from + ' to ' + data.to +
-                  ' with filter ' + data.filter + ': ' + err.toString());
-              cb(err.toString());
-          });
+      enrichHistoryResultsWithVoicemail(results).then(function(enrichedResults) {
+        compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
+            where: whereClause,
+            group: ['uniqueid','linkedid','disposition'],
+            attributes: attributes
+             }).then(function(count) {
+                const res = {
+                  count: count.length,
+                  rows: enrichedResults
+                }
+                logger.log.info(IDLOG, res.count + ' results searching switchboard history call interval between ' +
+                    data.from + ' to ' + data.to + ' and filter ' + data.filter);
+                cb(null, res);
+            }, function(err) { // manage the error
+                logger.log.error(IDLOG, 'counting switchboard history call interval between ' + data.from + ' to ' + data.to +
+                    ' with filter ' + data.filter + ': ' + err.toString());
+                cb(err.toString());
+            });
+      }, function(err) {
+        logger.log.error(IDLOG, 'enriching switchboard history call interval with voicemail data between ' + data.from + ' to ' + data.to +
+          ' with filter ' + data.filter + ': ' + err.toString());
+        cb(err.toString());
+      });
       }, function(err) { // manage the error
       logger.log.error(IDLOG, 'searching switchboard history call interval between ' + data.from + ' to ' + data.to +
         ' with filter ' + data.filter + ': ' + err.toString());

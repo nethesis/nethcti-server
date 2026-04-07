@@ -743,6 +743,14 @@ function setCompUtil(comp) {
             } else {
               logger.log.info(IDLOG, "voicemail_transcription_enabled missing");
             }
+
+            // Add call summary status
+            var call_summary_enabled = process.env.SATELLITE_CALL_SUMMARY_ENABLED;
+            if (call_summary_enabled && call_summary_enabled == 'True') {
+              result.call_summary_enabled = true;
+            } else {
+              logger.log.info(IDLOG, "call_summary_enabled missing");
+            }
           } else {
             var strerr = 'sending user info to user "' + username + '": wrong format';
             logger.log.error(IDLOG, strerr);
