@@ -503,6 +503,25 @@ function getEffectiveDisposition(rowAlias) {
     ' THEN "ANSWERED_ELSEWHERE" ELSE ' + rowAlias + '.disposition END';
 }
 
+function getAnsweredByNumber(rowAlias) {
+  return '(SELECT answered.dst FROM cdr AS answered ' +
+    'WHERE answered.linkedid = ' + rowAlias + '.linkedid ' +
+      'AND answered.uniqueid <> ' + rowAlias + '.uniqueid ' +
+      'AND answered.disposition = "ANSWERED" ' +
+      'AND answered.channel LIKE "Local/%@from-queue-%;2" ' +
+    'ORDER BY answered.calldate DESC, answered.billsec DESC ' +
+    'LIMIT 1)';
+}
+
+function getQueueNumber(rowAlias) {
+  return '(SELECT queue_call.dst FROM cdr AS queue_call ' +
+    'WHERE queue_call.linkedid = ' + rowAlias + '.linkedid ' +
+      'AND queue_call.lastapp = "Queue" ' +
+      'AND queue_call.dst <> ' + rowAlias + '.dst ' +
+    'ORDER BY queue_call.calldate ASC ' +
+    'LIMIT 1)';
+}
+
 /**
  * Get the history call of the specified endpoints into the interval time.
  * If the endpoints information is omitted, the results contains the
@@ -596,9 +615,13 @@ function getHistoryCallInterval(data, cb) {
 
     // add queue value if the call is through queue
     attributes.push([
-      '(select c.dst from cdr as c where c.uniqueid = cdr.linkedid and c.dst != cdr.dst and c.lastapp="Queue" limit 1)',
+      compDbconnMain.Sequelize.literal(getQueueNumber('cdr')),
       'queue'
-    ])
+    ]);
+    attributes.push([
+      compDbconnMain.Sequelize.literal(getAnsweredByNumber('cdr')),
+      'answered_by_num'
+    ]);
 
     // check optional parameters
     if (data.filter === undefined) {
@@ -802,6 +825,15 @@ function getHistorySwitchCallInterval(data, cb) {
       attributes.push('dst');
       attributes.push('clid');
     }
+
+    attributes.push([
+      compDbconnMain.Sequelize.literal(getAnsweredByNumber('cdr')),
+      'answered_by_num'
+    ]);
+    attributes.push([
+      compDbconnMain.Sequelize.literal(getQueueNumber('cdr')),
+      'queue'
+    ]);
 
     // check optional parameters
     if (data.filter === undefined) {
