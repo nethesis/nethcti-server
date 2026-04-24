@@ -481,6 +481,48 @@ function getAllUserHistorySmsInterval(data, cb) {
   }
 }
 
+function escapeSqlString(value) {
+  return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function getRecordingOwnerCondition(recordingExtensions, recordingAlias) {
+  if (!(recordingExtensions instanceof Array)) {
+    return '';
+  }
+
+  var conditions = [];
+  var recordingFileColumn = (recordingAlias ? recordingAlias + '.' : '') + 'recordingfile';
+  recordingExtensions.forEach(function(extension) {
+    if (extension === undefined || extension === null || String(extension).trim() === '') {
+      return;
+    }
+
+    var escapedExtension = escapeSqlString(String(extension).trim());
+    conditions.push(recordingFileColumn + ' LIKE "exten-' + escapedExtension + '-%"');
+    conditions.push(recordingFileColumn + ' LIKE "exten-%-' + escapedExtension + '-%"');
+  });
+
+  if (conditions.length === 0) {
+    return '';
+  }
+
+  return ' AND (' + conditions.join(' OR ') + ')';
+}
+
+function getRecordingFile(rowAlias, recordingExtensions) {
+  var linkedRecordingCondition = 'recording_call.linkedid = ' + rowAlias + '.linkedid' +
+    getRecordingOwnerCondition(recordingExtensions, 'recording_call');
+
+  return 'IFNULL((SELECT recording_call.recordingfile FROM cdr AS recording_call ' +
+    'WHERE recording_call.recordingfile != "" ' +
+      'AND (' +
+        'recording_call.uniqueid = ' + rowAlias + '.uniqueid OR ' +
+        '(' + linkedRecordingCondition + ')' +
+      ') ' +
+    'ORDER BY (recording_call.uniqueid = ' + rowAlias + '.uniqueid) DESC, recording_call.calldate DESC ' +
+    'LIMIT 1), "")';
+}
+
 /**
  * Get the history call of the specified endpoints into the interval time.
  * If the endpoints information is omitted, the results contains the
@@ -533,7 +575,10 @@ function getHistoryCallInterval(data, cb) {
       'disposition', 'dcontext', 'lastapp', 'lastdata'
     ];
     if (data.recording === true) {
-      attributes.push('recordingfile');
+      attributes.push([
+        compDbconnMain.Sequelize.literal(getRecordingFile('cdr', data.endpoints)),
+        'recordingfile'
+      ]);
     }
 
     // if the privacy string is present, than hide the numbers
@@ -738,7 +783,10 @@ function getHistorySwitchCallInterval(data, cb) {
       ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'], 'disposition', 'dcontext', 'lastapp', 'lastdata'
     ];
     if (data.recording === true) {
-      attributes.push('recordingfile');
+      attributes.push([
+        compDbconnMain.Sequelize.literal(getRecordingFile('cdr', data.extens)),
+        'recordingfile'
+      ]);
     }
 
     attributes.push([compDbconnMain.Sequelize.literal('"cti"'), 'source']);
@@ -1039,16 +1087,31 @@ function isAtLeastExtenInCall(uniqueid, extensions, cb) {
 
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].find({
       where: [
-        'uniqueid=? AND ' +
-        '(cnum IN (?) OR dst IN (?))',
-        uniqueid, extensions, extensions
+        '(' +
+          '(' +
+            'uniqueid=? AND ' +
+            '((cnum IN (?) OR dst IN (?))' + getRecordingOwnerCondition(extensions) + ')' +
+          ') OR (' +
+            'linkedid=(SELECT linked_call.linkedid FROM cdr AS linked_call WHERE linked_call.uniqueid=? LIMIT 1)' +
+            getRecordingOwnerCondition(extensions) +
+          ')' +
+        ') AND recordingfile!="" AND EXISTS (' +
+          'SELECT 1 FROM cdr AS involved_call WHERE ' +
+            '(' +
+              'involved_call.uniqueid=? OR ' +
+              'involved_call.linkedid=(SELECT linked_ref.linkedid FROM cdr AS linked_ref WHERE linked_ref.uniqueid=? LIMIT 1)' +
+            ') AND ' +
+            '(involved_call.cnum IN (?) OR involved_call.dst IN (?))' +
+        ')',
+        uniqueid, extensions, extensions, uniqueid, uniqueid, uniqueid, extensions, extensions
       ],
       attributes: [
         ['DATE_FORMAT(calldate, "%Y")', 'year'],
         ['DATE_FORMAT(calldate, "%m")', 'month'],
         ['DATE_FORMAT(calldate, "%d")', 'day'],
         ['recordingfile', 'filename']
-      ]
+      ],
+      order: 'calldate DESC'
 
     }).then(function(result) {
 

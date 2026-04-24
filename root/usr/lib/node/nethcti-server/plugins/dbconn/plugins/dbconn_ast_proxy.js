@@ -1446,18 +1446,26 @@ function getAgentsStatsByList(members, cb, qlist) {
  *
  * @method deleteCallRecording
  * @param {string}   uniqueid The database identifier of the call
+ * @param {string}   filename The audio filename to remove from the database entry
  * @param {function} cb       The callback function
  */
-function deleteCallRecording(uniqueid, cb) {
+function deleteCallRecording(uniqueid, filename, cb) {
   try {
     // check parameters
-    if (typeof uniqueid !== 'string' || typeof cb !== 'function') {
+    if (typeof uniqueid !== 'string' || typeof filename !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // search
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].find({
-      where: ['uniqueid=? AND recordingfile != ""', uniqueid]
+      where: [
+        '(' +
+          'uniqueid=? OR ' +
+          'linkedid=(SELECT linked_call.linkedid FROM cdr AS linked_call WHERE linked_call.uniqueid=? LIMIT 1)' +
+        ') AND recordingfile=?',
+        uniqueid, uniqueid, filename
+      ],
+      order: 'calldate DESC'
 
     }).then(function (task) {
       try {
@@ -1516,14 +1524,16 @@ function getCallRecordingFileData(uniqueid, cb) {
     // search
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].find({
       where: [
-        'uniqueid=? AND recordingfile!=""', uniqueid
+        'uniqueid=? AND recordingfile!=""',
+        uniqueid
       ],
       attributes: [
         ['DATE_FORMAT(calldate, "%Y")', 'year'],
         ['DATE_FORMAT(calldate, "%m")', 'month'],
         ['DATE_FORMAT(calldate, "%d")', 'day'],
         ['recordingfile', 'filename']
-      ]
+      ],
+      order: 'calldate DESC'
 
     }).then(function (result) {
       // extract result to return in the callback function
@@ -1685,4 +1695,3 @@ apiList.isPinEnabledAtLeastOneRoute = isPinEnabledAtLeastOneRoute;
 exports.apiList = apiList;
 exports.setLogger = setLogger;
 exports.setCompDbconnMain = setCompDbconnMain;
-
