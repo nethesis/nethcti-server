@@ -369,7 +369,7 @@ function deleteCallRecording(id, data, cb) {
         // update the database entry of the call to remove the link to the file
         else {
           logger.log.info(IDLOG, 'delete call recording from the database for call with id ' + id);
-          dbconn.deleteCallRecording(id, function(err) {
+          dbconn.deleteCallRecording(id, data.filename, function(err) {
             cb(err);
           });
         }
