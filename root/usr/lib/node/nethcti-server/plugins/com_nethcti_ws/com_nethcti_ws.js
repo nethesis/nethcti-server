@@ -1632,9 +1632,9 @@ function getFilteredCallerIndentity(username, callerIdentity) {
     }
 
     // filter the phonebook contact if it's present
-    // chose the phonebook contacts: first the public contact from the cti phonebook,
-    // then the shared group contact, then the user's private contact and finally the
-    // centralized phonebook contact.
+    // chose the phonebook contacts: first the centralized contact,
+    // then the shared group contact, then the public contact from the cti phonebook,
+    // and finally the user's private contact.
     // If more than one contact is present, the first is returned
     var pbContact;
     var sharedGroups;
@@ -1642,24 +1642,20 @@ function getFilteredCallerIndentity(username, callerIdentity) {
     if (callerIdentity.pbContacts) {
       // check if the user has the phonebook permission
       if (compAuthorization.authorizePhonebookUser(username) === true) {
-        if (compOperator && typeof compOperator.getJSONGroups === 'function') {
-          var allGroups = compOperator.getJSONGroups() || {};
-          userGroups = Object.keys(allGroups).filter(function(groupName) {
-            return Array.isArray(allGroups[groupName].users) && allGroups[groupName].users.includes(username);
-          });
+        // first check if there is a centralized phonebook contact
+        if (callerIdentity.pbContacts.centralized && callerIdentity.pbContacts.centralized.length > 0) {
+          pbContact = callerIdentity.pbContacts.centralized[0];
         }
 
-        for (i = 0; i < callerIdentity.pbContacts.nethcti.length; i++) {
-          // there is a public contact in the cti phonebook
-          if (callerIdentity.pbContacts.nethcti[i].type === 'public') {
-            pbContact = callerIdentity.pbContacts.nethcti[i];
-            break;
-          }
-        }
-
-        // check if the contact wasn't found as public contact in the cti phonebook
-        // and a contact shared with one of his groups exists
+        // if not found in centralized, check for shared group contact in the cti phonebook
         if (pbContact === undefined) {
+          if (compOperator && typeof compOperator.getJSONGroups === 'function') {
+            var allGroups = compOperator.getJSONGroups() || {};
+            userGroups = Object.keys(allGroups).filter(function(groupName) {
+              return Array.isArray(allGroups[groupName].users) && allGroups[groupName].users.includes(username);
+            });
+          }
+
           for (i = 0; i < callerIdentity.pbContacts.nethcti.length; i++) {
             if (typeof callerIdentity.pbContacts.nethcti[i].type !== 'string' ||
               callerIdentity.pbContacts.nethcti[i].type === '' ||
@@ -1684,21 +1680,24 @@ function getFilteredCallerIndentity(username, callerIdentity) {
           }
         }
 
-        // check if the contact wasn't found as public/group-shared contact of the user in the cti phonebook
+        // if not found as group-shared contact, check for public contact in the cti phonebook
         if (pbContact === undefined) {
           for (i = 0; i < callerIdentity.pbContacts.nethcti.length; i++) {
-            // the user has a private contact in the cti phonebook
-            if (callerIdentity.pbContacts.nethcti[i].owner_id === username) {
+            if (callerIdentity.pbContacts.nethcti[i].type === 'public') {
               pbContact = callerIdentity.pbContacts.nethcti[i];
               break;
             }
           }
         }
 
-        // check if the contact wasn't found in the cti phonebook
-        if (pbContact === undefined && callerIdentity.pbContacts.centralized.length > 0) {
-          // the contact was found in the centralized phonebook
-          pbContact = callerIdentity.pbContacts.centralized[0];
+        // if not found as public contact, check for private contact in the cti phonebook
+        if (pbContact === undefined) {
+          for (i = 0; i < callerIdentity.pbContacts.nethcti.length; i++) {
+            if (callerIdentity.pbContacts.nethcti[i].owner_id === username) {
+              pbContact = callerIdentity.pbContacts.nethcti[i];
+              break;
+            }
+          }
         }
       }
     }
