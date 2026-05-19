@@ -1632,9 +1632,9 @@ function getFilteredCallerIndentity(username, callerIdentity) {
     }
 
     // filter the phonebook contact if it's present
-    // chose the phonebook contacts: is first returned the contact of the user from the cti phonebook,
-    // than that from the shared group contacts, then the central phonebook and the last is the
-    // public contact from the cti phonebook.
+    // chose the phonebook contacts: first the public contact from the cti phonebook,
+    // then the shared group contact, then the user's private contact and finally the
+    // centralized phonebook contact.
     // If more than one contact is present, the first is returned
     var pbContact;
     var sharedGroups;
@@ -1650,26 +1650,30 @@ function getFilteredCallerIndentity(username, callerIdentity) {
         }
 
         for (i = 0; i < callerIdentity.pbContacts.nethcti.length; i++) {
-          // the user has a contact in the cti phonebook
-          if (callerIdentity.pbContacts.nethcti[i].owner_id === username) {
+          // there is a public contact in the cti phonebook
+          if (callerIdentity.pbContacts.nethcti[i].type === 'public') {
             pbContact = callerIdentity.pbContacts.nethcti[i];
             break;
           }
         }
 
-        // check if the contact wasn't found as private contact of the user in the cti phonebook
+        // check if the contact wasn't found as public contact in the cti phonebook
         // and a contact shared with one of his groups exists
         if (pbContact === undefined) {
           for (i = 0; i < callerIdentity.pbContacts.nethcti.length; i++) {
-            if (callerIdentity.pbContacts.nethcti[i].type !== 'group') {
+            if (typeof callerIdentity.pbContacts.nethcti[i].type !== 'string' ||
+              callerIdentity.pbContacts.nethcti[i].type === '' ||
+              callerIdentity.pbContacts.nethcti[i].type === 'public' ||
+              callerIdentity.pbContacts.nethcti[i].type === 'private' ||
+              callerIdentity.pbContacts.nethcti[i].type === 'speeddial') {
               continue;
             }
 
-            try {
-              sharedGroups = JSON.parse(callerIdentity.pbContacts.nethcti[i].shared_groups || '[]');
-            } catch (err1) {
-              sharedGroups = [];
-            }
+            sharedGroups = callerIdentity.pbContacts.nethcti[i].type.split(',').map(function(groupName) {
+              return groupName.trim();
+            }).filter(function(groupName, index, groups) {
+              return groupName !== '' && groups.indexOf(groupName) === index;
+            });
 
             if (Array.isArray(sharedGroups) && userGroups.some(function(groupName) {
               return sharedGroups.includes(groupName);
@@ -1680,22 +1684,21 @@ function getFilteredCallerIndentity(username, callerIdentity) {
           }
         }
 
-        // check if the contact wasn't found as private or group-shared contact of the user in the cti phonebook
-        if (pbContact === undefined && callerIdentity.pbContacts.centralized.length > 0) {
-          // the contact was found in the centralized phonebook
-          pbContact = callerIdentity.pbContacts.centralized[0];
-        }
-
-        // check if the contact was not found as private/group contact of the user in the cti phonebook and
-        // was not found in the centralized phonebook
+        // check if the contact wasn't found as public/group-shared contact of the user in the cti phonebook
         if (pbContact === undefined) {
           for (i = 0; i < callerIdentity.pbContacts.nethcti.length; i++) {
-            // there is a public contact in the cti phonebook
-            if (callerIdentity.pbContacts.nethcti[i].type === 'public') {
+            // the user has a private contact in the cti phonebook
+            if (callerIdentity.pbContacts.nethcti[i].owner_id === username) {
               pbContact = callerIdentity.pbContacts.nethcti[i];
               break;
             }
           }
+        }
+
+        // check if the contact wasn't found in the cti phonebook
+        if (pbContact === undefined && callerIdentity.pbContacts.centralized.length > 0) {
+          // the contact was found in the centralized phonebook
+          pbContact = callerIdentity.pbContacts.centralized[0];
         }
       }
     }

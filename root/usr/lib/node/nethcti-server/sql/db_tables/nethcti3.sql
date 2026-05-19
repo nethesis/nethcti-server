@@ -20,7 +20,6 @@ CREATE TABLE IF NOT EXISTS `cti_phonebook` (
   `id` int(11) NOT NULL auto_increment,
   `owner_id` varchar(255) NOT NULL default '',
   `type` varchar(255) NOT NULL default '',
-  `shared_groups` text,
   `homeemail` varchar(255) default NULL,
   `workemail` varchar(255) default NULL,
   `homephone` varchar(25) default NULL,

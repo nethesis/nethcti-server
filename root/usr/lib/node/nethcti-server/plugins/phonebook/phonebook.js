@@ -528,7 +528,7 @@ function saveCtiPbContact(data, cb) {
     if (typeof data  !== 'object'   || typeof data.type    !== 'string' ||
         typeof cb    !== 'function' || typeof data.creator !== 'string' ||
         data.creator === ''         || typeof data.name    !== 'string' ||
-        (data.type   !== 'private'  && data.type           !== 'public' && data.type !== 'speeddial' && data.type !== 'group')) {
+        data.type === '') {
 
           throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }

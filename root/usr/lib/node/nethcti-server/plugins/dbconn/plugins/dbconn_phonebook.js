@@ -104,13 +104,26 @@ function normalizeUserGroups(userGroups) {
     return [];
   }
 
-  return userGroups.filter(function(groupName) {
-    return typeof groupName === 'string' && groupName !== '';
+  return userGroups.map(function(groupName) {
+    return typeof groupName === 'string' ? groupName.trim() : groupName;
+  }).filter(function(groupName, index, groups) {
+    return typeof groupName === 'string' && groupName !== '' && groups.indexOf(groupName) === index;
   });
 }
 
-function getSharedGroupPattern(groupName) {
-  return '%"' + groupName.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"%';
+function escapeLikeValue(value) {
+  return value.replace(/[\\%_]/g, '\\$&');
+}
+
+function getSharedGroupPatterns(groupName) {
+  var escapedGroupName = escapeLikeValue(groupName);
+
+  return [
+    groupName,
+    escapedGroupName + ',%',
+    '%,' + escapedGroupName + ',%',
+    '%,' + escapedGroupName
+  ];
 }
 
 function buildVisibleCtiBounds(userGroups) {
@@ -119,10 +132,12 @@ function buildVisibleCtiBounds(userGroups) {
   var replacements = [];
 
   if (groups.length > 0) {
-    query += ' OR (type="group" AND (' + groups.map(function() {
-      return 'shared_groups LIKE ?';
-    }).join(' OR ') + '))';
-    replacements = groups.map(getSharedGroupPattern);
+    query += ' OR (' + groups.map(function() {
+      return '(type=? OR type LIKE ? OR type LIKE ? OR type LIKE ?)';
+    }).join(' OR ') + ')';
+    replacements = groups.reduce(function(patterns, groupName) {
+      return patterns.concat(getSharedGroupPatterns(groupName));
+    }, []);
   }
 
   query += ')';
@@ -175,7 +190,7 @@ function saveCtiPbContact(data, cb) {
 
       throw new Error('wrong parameter');
     }
-    let column = ['owner_id','type','shared_groups','name','homeemail','workemail','homephone','workphone','cellphone','fax','title','company','notes','homestreet','homepob','homecity','homeprovince','homepostalcode','homecountry','workstreet','workpob','workcity','workprovince','workpostalcode','workcountry','url','extension','speeddial_num'];
+    let column = ['owner_id','type','name','homeemail','workemail','homephone','workphone','cellphone','fax','title','company','notes','homestreet','homepob','homecity','homeprovince','homepostalcode','homecountry','workstreet','workpob','workcity','workprovince','workpostalcode','workcountry','url','extension','speeddial_num'];
     let attributes = '';
     let valuesPlaceholder = '';
     let values = [];
@@ -326,7 +341,7 @@ function modifyCtiPbContact(data, cb) {
     if (typeof data !== 'object' || typeof data.id !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    let columns = ['type','shared_groups','name','homeemail','workemail','homephone','workphone','cellphone','fax','title','company','notes','homestreet','homepob','homecity','homeprovince','homepostalcode','homecountry','workstreet','workpob','workcity','workprovince','workpostalcode','workcountry','url','extension','speeddial_num'];
+    let columns = ['type','name','homeemail','workemail','homephone','workphone','cellphone','fax','title','company','notes','homestreet','homepob','homecity','homeprovince','homepostalcode','homecountry','workstreet','workpob','workcity','workprovince','workpostalcode','workcountry','url','extension','speeddial_num'];
     let set = '';
     let values = [];
     for (let i = 0; i < columns.length; i++) {
@@ -545,7 +560,6 @@ function getAllContactsAlphabetically(username, userGroups, offset, limit, cb) {
       'id',
       'owner_id',
       'type',
-      'shared_groups',
       'homeemail',
       'workemail',
       'homephone',
@@ -575,7 +589,6 @@ function getAllContactsAlphabetically(username, userGroups, offset, limit, cb) {
       'id',
       'owner_id',
       'type',
-      '"" AS shared_groups',
       'homeemail',
       'workemail',
       'homephone',
@@ -814,7 +827,7 @@ function getCtiPbContact(id, cb) {
     if (typeof id !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    let query = 'SELECT `id`, `owner_id`, `type`, `shared_groups`, `homeemail`, `workemail`, `homephone`, `workphone`, `cellphone`, `fax`, `title`, `company`, `notes`, `name`, `homestreet`, `homepob`, `homecity`, `homeprovince`, `homepostalcode`, `homecountry`, `workstreet`, `workpob`, `workcity`, `workprovince`, `workpostalcode`, `workcountry`, `url`, `extension`, `speeddial_num`, "cti" AS `source` FROM `cti_phonebook` WHERE id=?';
+    let query = 'SELECT `id`, `owner_id`, `type`, `homeemail`, `workemail`, `homephone`, `workphone`, `cellphone`, `fax`, `title`, `company`, `notes`, `name`, `homestreet`, `homepob`, `homecity`, `homeprovince`, `homepostalcode`, `homecountry`, `workstreet`, `workpob`, `workcity`, `workprovince`, `workpostalcode`, `workcountry`, `url`, `extension`, `speeddial_num`, "cti" AS `source` FROM `cti_phonebook` WHERE id=?';
     compDbconnMain.dbConn['cti_phonebook'].query(
       query,
       [id],
@@ -986,7 +999,6 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       'id',
       'owner_id',
       'type',
-      'shared_groups',
       'homeemail',
       'workemail',
       'homephone',
@@ -1016,7 +1028,6 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       'id',
       'owner_id',
       'type',
-      '\'\' AS shared_groups',
       'homeemail',
       'workemail',
       'homephone',
@@ -1067,7 +1078,6 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       'fax',
       'workemail',
       'url',
-      'shared_groups',
       'type',
       'title',
       'notes'
@@ -1085,7 +1095,6 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       'fax',
       'workemail',
       'url',
-      '\'\' AS shared_groups',
       'type',
       'title',
       'notes'
@@ -1226,7 +1235,6 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
                 result.fax = value.data[0] ? value.data[0].fax : null
                 result.workemail = value.data[0] ? value.data[0].workemail : null
                 result.url = value.data[0] ? value.data[0].url : null
-                result.shared_groups = value.data[0] ? value.data[0].shared_groups : null
                 result.type = value.data[0] ? value.data[0].type : null
                 result.title = value.data[0] ? value.data[0].title : null
                 result.notes = value.data[0] ? value.data[0].notes : null
@@ -1279,7 +1287,6 @@ function getEmailAllContacts(ctiPbBounds, pbBounds, replacements, cb) {
       'id',
       'owner_id',
       'type',
-      'shared_groups',
       'homeemail',
       'workemail',
       'homephone',
@@ -1309,7 +1316,6 @@ function getEmailAllContacts(ctiPbBounds, pbBounds, replacements, cb) {
       'id',
       'owner_id',
       'type',
-      '\'\' AS shared_groups',
       'homeemail',
       'workemail',
       'homephone',

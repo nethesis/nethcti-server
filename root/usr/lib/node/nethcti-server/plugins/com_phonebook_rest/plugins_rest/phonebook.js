@@ -169,17 +169,49 @@ function getUserGroupNames(username) {
   }
 }
 
+function isReservedContactType(type) {
+  return type === 'private' || type === 'public' || type === 'speeddial';
+}
+
+function getSharedGroupsFromType(type) {
+  if (typeof type !== 'string' || type === '' || isReservedContactType(type)) {
+    return [];
+  }
+
+  return type.split(',').map(function(groupName) {
+    return groupName.trim();
+  }).filter(function(groupName, index, groups) {
+    return groupName !== '' && groups.indexOf(groupName) === index;
+  });
+}
+
+function getContactSharedGroups(contact) {
+  if (!contact || typeof contact !== 'object') {
+    return [];
+  }
+
+  return getSharedGroupsFromType(contact.type);
+}
+
+function encodeSharedGroupsType(sharedGroups) {
+  return sharedGroups.join(',');
+}
+
 function normalizeSharedGroups(sharedGroups) {
   try {
     if (Array.isArray(sharedGroups)) {
-      return sharedGroups.filter(function(groupName) {
-        return typeof groupName === 'string' && groupName !== '';
+      return sharedGroups.map(function(groupName) {
+        return typeof groupName === 'string' ? groupName.trim() : groupName;
+      }).filter(function(groupName, index, groups) {
+        return typeof groupName === 'string' && groupName !== '' && groups.indexOf(groupName) === index;
       });
     }
 
     if (sharedGroups && typeof sharedGroups === 'object') {
       return Object.keys(sharedGroups).sort().map(function(groupKey) {
         return sharedGroups[groupKey];
+      }).map(function(groupName) {
+        return typeof groupName === 'string' ? groupName.trim() : groupName;
       }).filter(function(groupName) {
         return typeof groupName === 'string' && groupName !== '';
       });
@@ -191,21 +223,23 @@ function normalizeSharedGroups(sharedGroups) {
       }
 
       if (sharedGroups[0] !== '[' && sharedGroups[0] !== '{') {
-        return [sharedGroups].filter(function(groupName) {
-          return typeof groupName === 'string' && groupName !== '';
-        });
+        return getSharedGroupsFromType(sharedGroups);
       }
 
       var parsed = JSON.parse(sharedGroups);
       if (Array.isArray(parsed)) {
-        return parsed.filter(function(groupName) {
-          return typeof groupName === 'string' && groupName !== '';
+        return parsed.map(function(groupName) {
+          return typeof groupName === 'string' ? groupName.trim() : groupName;
+        }).filter(function(groupName, index, groups) {
+          return typeof groupName === 'string' && groupName !== '' && groups.indexOf(groupName) === index;
         });
       }
 
       if (parsed && typeof parsed === 'object') {
         return Object.keys(parsed).sort().map(function(groupKey) {
           return parsed[groupKey];
+        }).map(function(groupName) {
+          return typeof groupName === 'string' ? groupName.trim() : groupName;
         }).filter(function(groupName) {
           return typeof groupName === 'string' && groupName !== '';
         });
@@ -231,11 +265,11 @@ function normalizeSharedGroups(sharedGroups) {
 }
 
 function isGroupContactVisible(contact, username, userGroups) {
-  if (!contact || contact.type !== 'group' || contact.owner_id === username) {
+  if (!contact || contact.owner_id === username) {
     return false;
   }
 
-  var sharedGroups = normalizeSharedGroups(contact.shared_groups);
+  var sharedGroups = getContactSharedGroups(contact);
   if (!Array.isArray(sharedGroups) || sharedGroups.length === 0) {
     return false;
   }
@@ -248,6 +282,13 @@ function isGroupContactVisible(contact, username, userGroups) {
 function validateSharedGroupsPayload(sharedGroups, username) {
   var normalizedGroups = normalizeSharedGroups(sharedGroups);
   if (!Array.isArray(normalizedGroups) || normalizedGroups.length === 0) {
+    return { error: 'invalid-groups' };
+  }
+
+  var hasInvalidGroupNames = normalizedGroups.some(function(groupName) {
+    return groupName.indexOf(',') >= 0 || isReservedContactType(groupName);
+  });
+  if (hasInvalidGroupNames) {
     return { error: 'invalid-groups' };
   }
 
@@ -1206,7 +1247,7 @@ function getRequestPayload(req) {
         try {
           var data = getRequestPayload(req);
 
-          if (typeof data !== 'object' || typeof data.type !== 'string' || typeof data.name !== 'string' || (data.type !== 'private' && data.type !== 'public' && data.type !== 'speeddial' && data.type !== 'group')) {
+          if (typeof data !== 'object' || typeof data.type !== 'string' || data.type === '' || typeof data.name !== 'string') {
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
@@ -1214,8 +1255,8 @@ function getRequestPayload(req) {
           // extract the username added in the authentication step
           var username = req.headers.authorization_user;
 
-          if (data.type === 'group') {
-            var createValidation = validateSharedGroupsPayload(data.shared_groups, username);
+          if (!isReservedContactType(data.type)) {
+            var createValidation = validateSharedGroupsPayload(data.type, username);
             if (createValidation.error === 'invalid-groups') {
               compUtil.net.sendHttp400(IDLOG, res);
               return;
@@ -1224,9 +1265,7 @@ function getRequestPayload(req) {
               compUtil.net.sendHttp403(IDLOG, res);
               return;
             }
-            data.shared_groups = JSON.stringify(createValidation.groups);
-          } else {
-            data.shared_groups = '';
+            data.type = encodeSharedGroupsType(createValidation.groups);
           }
 
           // add the creator of the contact
@@ -1392,15 +1431,13 @@ function getRequestPayload(req) {
                 return;
               }
 
-              if (typeof data.type !== 'undefined' && data.type !== 'private' && data.type !== 'public' && data.type !== 'speeddial' && data.type !== 'group') {
+              if (typeof data.type !== 'undefined' && (typeof data.type !== 'string' || data.type === '')) {
                 compUtil.net.sendHttp400(IDLOG, res);
                 return;
               }
 
-              var targetType = typeof data.type === 'string' ? data.type : result.type;
-              if (targetType === 'group') {
-                var sharedGroupsPayload = Object.prototype.hasOwnProperty.call(data, 'shared_groups') ? data.shared_groups : result.shared_groups;
-                var updateValidation = validateSharedGroupsPayload(sharedGroupsPayload, username);
+              if (typeof data.type === 'string' && !isReservedContactType(data.type)) {
+                var updateValidation = validateSharedGroupsPayload(data.type, username);
                 if (updateValidation.error === 'invalid-groups') {
                   compUtil.net.sendHttp400(IDLOG, res);
                   return;
@@ -1409,11 +1446,8 @@ function getRequestPayload(req) {
                   compUtil.net.sendHttp403(IDLOG, res);
                   return;
                 }
-                data.shared_groups = JSON.stringify(updateValidation.groups);
-              } else if (Object.prototype.hasOwnProperty.call(data, 'shared_groups') || result.type === 'group') {
-                data.shared_groups = '';
+                data.type = encodeSharedGroupsType(updateValidation.groups);
               }
-
               // use phonebook component
               compPhonebook.modifyCtiPbContact(data, function(err3, results) {
                 try {
