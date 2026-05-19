@@ -33,6 +33,7 @@ module.exports = function(options, imports, register) {
     serverRest.setCompUtil(imports.util);
     serverRest.setCompAuthorization(imports.authorization);
     serverRest.setCompPhonebook(imports.phonebook);
+    serverRest.setCompOperator(imports.operator);
     serverRest.start();
   } catch (err) {
     logger.ctilog.log.error(IDLOG, err.stack);

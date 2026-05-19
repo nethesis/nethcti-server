@@ -99,6 +99,39 @@ function setLogger(log) {
   }
 }
 
+function normalizeUserGroups(userGroups) {
+  if (!Array.isArray(userGroups)) {
+    return [];
+  }
+
+  return userGroups.filter(function(groupName) {
+    return typeof groupName === 'string' && groupName !== '';
+  });
+}
+
+function getSharedGroupPattern(groupName) {
+  return '%"' + groupName.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"%';
+}
+
+function buildVisibleCtiBounds(userGroups) {
+  var groups = normalizeUserGroups(userGroups);
+  var query = '(owner_id=? OR type="public"';
+  var replacements = [];
+
+  if (groups.length > 0) {
+    query += ' OR (type="group" AND (' + groups.map(function() {
+      return 'shared_groups LIKE ?';
+    }).join(' OR ') + '))';
+    replacements = groups.map(getSharedGroupPattern);
+  }
+
+  query += ')';
+  return {
+    query: query,
+    replacements: replacements
+  };
+}
+
 /**
  * Saves the new contact in the NethCTI phonebook that is in the
  * _cti\_phonebook_ database table.
@@ -142,7 +175,7 @@ function saveCtiPbContact(data, cb) {
 
       throw new Error('wrong parameter');
     }
-    let column = ['owner_id','type','name','homeemail','workemail','homephone','workphone','cellphone','fax','title','company','notes','homestreet','homepob','homecity','homeprovince','homepostalcode','homecountry','workstreet','workpob','workcity','workprovince','workpostalcode','workcountry','url','extension','speeddial_num'];
+    let column = ['owner_id','type','shared_groups','name','homeemail','workemail','homephone','workphone','cellphone','fax','title','company','notes','homestreet','homepob','homecity','homeprovince','homepostalcode','homecountry','workstreet','workpob','workcity','workprovince','workpostalcode','workcountry','url','extension','speeddial_num'];
     let attributes = '';
     let valuesPlaceholder = '';
     let values = [];
@@ -293,7 +326,7 @@ function modifyCtiPbContact(data, cb) {
     if (typeof data !== 'object' || typeof data.id !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    let columns = ['type','name','homeemail','workemail','homephone','workphone','cellphone','fax','title','company','notes','homestreet','homepob','homecity','homeprovince','homepostalcode','homecountry','workstreet','workpob','workcity','workprovince','workpostalcode','workcountry','url','extension','speeddial_num'];
+    let columns = ['type','shared_groups','name','homeemail','workemail','homephone','workphone','cellphone','fax','title','company','notes','homestreet','homepob','homecity','homeprovince','homepostalcode','homecountry','workstreet','workpob','workcity','workprovince','workpostalcode','workcountry','url','extension','speeddial_num'];
     let set = '';
     let values = [];
     for (let i = 0; i < columns.length; i++) {
@@ -347,7 +380,7 @@ function modifyCtiPbContact(data, cb) {
  * @param {integer}  [limit]  The results limit
  * @param {function} cb       The callback function
  */
-function getAllContactsContains(term, username, view, offset, limit, cb) {
+function getAllContactsContains(term, username, userGroups, view, offset, limit, cb) {
   try {
     // check parameters
     if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
@@ -366,7 +399,9 @@ function getAllContactsContains(term, username, view, offset, limit, cb) {
       var sview = 'name LIKE ? OR company LIKE ? ';
     }
 
-    var ctiPbBounds = '(owner_id=? OR type="public") ' +
+    var visibleCti = buildVisibleCtiBounds(userGroups);
+
+    var ctiPbBounds = visibleCti.query + ' ' +
       'AND ' +
       '(' + sview +
       'OR workphone LIKE ? ' +
@@ -387,9 +422,11 @@ function getAllContactsContains(term, username, view, offset, limit, cb) {
 
     getAllContacts(
       ctiPbBounds,
-      pbBounds, [username, term, term, term, term, term, term, term, term, term, term, term, term, term],
+      pbBounds, [username].concat(visibleCti.replacements, [term, term, term, term, term, term, term, term, term, term, term, term, term]),
       view,
       offset, limit,
+      visibleCti.query,
+      visibleCti.replacements,
       function(err, res) {
         if (err) {
           logger.log.error(IDLOG, 'searching cti and centralized phonebooks contacts that contains "' + term + '": ' + err.toString());
@@ -418,7 +455,7 @@ function getAllContactsContains(term, username, view, offset, limit, cb) {
  * @param {string}   username The name of the user used to search contacts
  * @param {function} cb       The callback function
  */
-function getEmailAllContactsContains(term, username, cb) {
+function getEmailAllContactsContains(term, username, userGroups, cb) {
   try {
     if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -433,7 +470,9 @@ function getEmailAllContactsContains(term, username, cb) {
     //   var sview = 'name LIKE ? OR company LIKE ? ';
     // }
 
-    var ctiPbBounds = '(owner_id=? OR type="public") ' +
+    var visibleCti = buildVisibleCtiBounds(userGroups);
+
+    var ctiPbBounds = visibleCti.query + ' ' +
       'AND ' +
       // '(' + sview +
       '(' +
@@ -464,7 +503,7 @@ function getEmailAllContactsContains(term, username, cb) {
     getEmailAllContacts(
       ctiPbBounds,
       pbBounds,
-      [username, term, term, term, term, term, term, term, term, term, term, term, term, term, term, term, term, term],
+      [username].concat(visibleCti.replacements, [term, term, term, term, term, term, term, term, term, term, term, term, term, term, term, term, term]),
       // view,
       // offset, limit,
       function(err, res) {
@@ -493,17 +532,50 @@ function getEmailAllContactsContains(term, username, cb) {
  * @param {integer}  [limit]  The results limit
  * @param {function} cb       The callback function
  */
-function getAllContactsAlphabetically(username, offset, limit, cb) {
+function getAllContactsAlphabetically(username, userGroups, offset, limit, cb) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    var fields = [
+    var visibleCti = buildVisibleCtiBounds(userGroups);
+
+    var ctiFields = [
       'id',
       'owner_id',
       'type',
+      'shared_groups',
+      'homeemail',
+      'workemail',
+      'homephone',
+      'workphone',
+      'cellphone',
+      'company',
+      'fax',
+      'title',
+      'notes',
+      'name',
+      'homestreet',
+      'homepob',
+      'homecity',
+      'homeprovince',
+      'homepostalcode',
+      'homecountry',
+      'workstreet',
+      'workpob',
+      'workcity',
+      'workprovince',
+      'workpostalcode',
+      'workcountry',
+      'url'
+    ].join(',');
+
+    var pbFields = [
+      'id',
+      'owner_id',
+      'type',
+      '"" AS shared_groups',
       'homeemail',
       'workemail',
       'homephone',
@@ -530,19 +602,19 @@ function getAllContactsAlphabetically(username, offset, limit, cb) {
     ].join(',');
 
     var query = [
-      '(SELECT ', fields, ', extension, speeddial_num, name AS n',
+      '(SELECT ', ctiFields, ', extension, speeddial_num, name AS n',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-      ' WHERE (name IS NOT NULL AND name != "") AND (owner_id=? OR type="public") AND (type!="speeddial"))',
+      ' WHERE (name IS NOT NULL AND name != "") AND ', visibleCti.query, ' AND (type!="speeddial"))',
       ' UNION ',
-      '(SELECT ', fields, ', "" AS extension, "" AS speeddial_num, name AS n',
+      '(SELECT ', pbFields, ', "" AS extension, "" AS speeddial_num, name AS n',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
       ' WHERE (name IS NOT NULL AND name != "") AND (type != "nethcti"))',
       ' UNION ',
-      '(SELECT ', fields, ', extension, speeddial_num, company AS n',
+      '(SELECT ', ctiFields, ', extension, speeddial_num, company AS n',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-      ' WHERE (name IS NULL OR name = "") AND (company IS NOT NULL AND company != "") AND (owner_id=? OR type="public") AND (type != "speeddial"))',
+      ' WHERE (name IS NULL OR name = "") AND (company IS NOT NULL AND company != "") AND ', visibleCti.query, ' AND (type != "speeddial"))',
       ' UNION ',
-      '(SELECT ', fields, ', "" AS extension, "" AS speeddial_num, company AS n',
+      '(SELECT ', pbFields, ', "" AS extension, "" AS speeddial_num, company AS n',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
       ' WHERE (name IS NULL OR name = "") AND (company IS NOT NULL AND company != "") AND (type != "nethcti"))',
       ' ORDER BY n',
@@ -555,7 +627,7 @@ function getAllContactsAlphabetically(username, offset, limit, cb) {
 
     compDbconnMain.dbConn['cti_phonebook'].query(
       query,
-      [username, username, offset, limit],
+      [username].concat(visibleCti.replacements, [username], visibleCti.replacements, [offset, limit]),
       (err, results) => {
       try {
         compDbconnMain.incNumExecQueries();
@@ -598,7 +670,7 @@ function getAllContactsAlphabetically(username, offset, limit, cb) {
  * @param {integer} [limit] The results limit
  * @param {function} cb The callback function
  */
-function getAllContactsStartsWith(term, username, view, offset, limit, cb) {
+function getAllContactsStartsWith(term, username, userGroups, view, offset, limit, cb) {
   try {
     // check parameters
     if (typeof term !== 'string' || typeof cb !== 'function') {
@@ -616,14 +688,17 @@ function getAllContactsStartsWith(term, username, view, offset, limit, cb) {
       var sview = 'name LIKE ? OR company LIKE ? ';
     }
 
-    var ctiPbBounds = '(owner_id=? OR type="public") AND (' + sview + ')';
+    var visibleCti = buildVisibleCtiBounds(userGroups);
+    var ctiPbBounds = visibleCti.query + ' AND (' + sview + ')';
     var pbBounds = '(' + sview + ') AND (type != "' + NETHCTI_CENTRAL_TYPE + '")';
 
     getAllContacts(
       ctiPbBounds,
-      pbBounds, [username, term, term, term, term],
+      pbBounds, [username].concat(visibleCti.replacements, [term, term, term, term]),
       view,
       offset, limit,
+      visibleCti.query,
+      visibleCti.replacements,
       function(err, res) {
         if (err) {
           logger.log.error(IDLOG, 'searching cti and centralized phonebook contacts whose names starts with "' + term + '": ' + err.toString());
@@ -693,21 +768,24 @@ function getCtiPbSpeeddialContacts(username, cb) {
  * @param {integer}  [limit]  The results limit
  * @param {function} cb       The callback function
  */
-function getAllContactsStartsWithDigit(username, view, offset, limit, cb) {
+function getAllContactsStartsWithDigit(username, userGroups, view, offset, limit, cb) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    var ctiPbBounds = '(owner_id=? OR type="public") AND (name REGEXP "^[0-9]" OR company REGEXP "^[0-9]")';
+    var visibleCti = buildVisibleCtiBounds(userGroups);
+    var ctiPbBounds = visibleCti.query + ' AND (name REGEXP "^[0-9]" OR company REGEXP "^[0-9]")';
     var pbBounds = '(name REGEXP "^[0-9]" OR company REGEXP "^[0-9]") AND (type != "' + NETHCTI_CENTRAL_TYPE + '")';
 
     getAllContacts(
       ctiPbBounds,
-      pbBounds, [username],
+      pbBounds, [username].concat(visibleCti.replacements),
       view,
       offset, limit,
+      visibleCti.query,
+      visibleCti.replacements,
       function(err, res) {
         if (err) {
           logger.log.error(IDLOG, 'searching cti phonebook contacts whose names starts with a digit: ' + err.toString());
@@ -736,7 +814,7 @@ function getCtiPbContact(id, cb) {
     if (typeof id !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    let query = 'SELECT `id`, `owner_id`, `type`, `homeemail`, `workemail`, `homephone`, `workphone`, `cellphone`, `fax`, `title`, `company`, `notes`, `name`, `homestreet`, `homepob`, `homecity`, `homeprovince`, `homepostalcode`, `homecountry`, `workstreet`, `workpob`, `workcity`, `workprovince`, `workpostalcode`, `workcountry`, `url`, `extension`, `speeddial_num`, "cti" AS `source` FROM `cti_phonebook` WHERE id=?';
+    let query = 'SELECT `id`, `owner_id`, `type`, `shared_groups`, `homeemail`, `workemail`, `homephone`, `workphone`, `cellphone`, `fax`, `title`, `company`, `notes`, `name`, `homestreet`, `homepob`, `homecity`, `homeprovince`, `homepostalcode`, `homecountry`, `workstreet`, `workpob`, `workcity`, `workprovince`, `workpostalcode`, `workcountry`, `url`, `extension`, `speeddial_num`, "cti" AS `source` FROM `cti_phonebook` WHERE id=?';
     compDbconnMain.dbConn['cti_phonebook'].query(
       query,
       [id],
@@ -899,66 +977,119 @@ function pbQueryAsync (query, replacements) {
  * @param {function} cb The callback function
  * @private
  */
-function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit, cb) {
+function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit, ctiVisibilityQuery, ctiVisibilityReplacements, cb) {
   try {
-    var fields = [
-      'id,',
-      'owner_id,',
-      'type,',
-      'homeemail,',
-      'workemail,',
-      'homephone,',
-      'workphone,',
-      'cellphone,',
-      'fax,',
-      'title,',
-      'company,',
-      'notes,',
-      'name,',
-      'homestreet,',
-      'homepob,',
-      'homecity,',
-      'homeprovince,',
-      'homepostalcode,',
-      'homecountry,',
-      'workstreet,',
-      'workpob,',
-      'workcity,',
-      'workprovince,',
-      'workpostalcode,',
-      'workcountry,',
+    ctiVisibilityQuery = ctiVisibilityQuery || '(owner_id = ? OR type = "public")';
+    ctiVisibilityReplacements = Array.isArray(ctiVisibilityReplacements) ? ctiVisibilityReplacements : [];
+
+    var ctiFields = [
+      'id',
+      'owner_id',
+      'type',
+      'shared_groups',
+      'homeemail',
+      'workemail',
+      'homephone',
+      'workphone',
+      'cellphone',
+      'fax',
+      'title',
+      'company',
+      'notes',
+      'name',
+      'homestreet',
+      'homepob',
+      'homecity',
+      'homeprovince',
+      'homepostalcode',
+      'homecountry',
+      'workstreet',
+      'workpob',
+      'workcity',
+      'workprovince',
+      'workpostalcode',
+      'workcountry',
       'url'
-    ].join('');
+    ].join(', ');
+
+    var pbFields = [
+      'id',
+      'owner_id',
+      'type',
+      '\'\' AS shared_groups',
+      'homeemail',
+      'workemail',
+      'homephone',
+      'workphone',
+      'cellphone',
+      'fax',
+      'title',
+      'company',
+      'notes',
+      'name',
+      'homestreet',
+      'homepob',
+      'homecity',
+      'homeprovince',
+      'homepostalcode',
+      'homecountry',
+      'workstreet',
+      'workpob',
+      'workcity',
+      'workprovince',
+      'workpostalcode',
+      'workcountry',
+      'url'
+    ].join(', ');
 
     var query = [
-      '(SELECT ', fields, ', extension, speeddial_num, \'cti\' AS source',
+      '(SELECT ', ctiFields, ', extension, speeddial_num, \'cti\' AS source',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
       ' WHERE ', ctiPbBounds,
       ' AND (type != \'speeddial\'))',
       ' UNION ',
-      '(SELECT ', fields, ', \'\' AS extension, \'\' AS speeddial_num, \'centralized\' AS source',
+      '(SELECT ', pbFields, ', \'\' AS extension, \'\' AS speeddial_num, \'centralized\' AS source',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
       ' WHERE ', pbBounds, ')',
       ' ORDER BY company ASC, name ASC',
       (offset && limit ? ' LIMIT ' + offset + ',' + limit : '')
     ].join('');
 
-    var companyXFields = [
-      'owner_id,',
-      'workstreet,',
-      'workcity,',
-      'workprovince,',
-      'workcountry,',
-      'workphone,',
-      'homephone,',
-      'cellphone,',
-      'fax,',
-      'workemail,',
-      'url,',
-      'type,',
-      'title,',
+    var companyXCtiFields = [
+      'owner_id',
+      'workstreet',
+      'workcity',
+      'workprovince',
+      'workcountry',
+      'workphone',
+      'homephone',
+      'cellphone',
+      'fax',
+      'workemail',
+      'url',
+      'shared_groups',
+      'type',
+      'title',
       'notes'
-    ].join('');
+    ].join(', ');
+
+    var companyXPbFields = [
+      'owner_id',
+      'workstreet',
+      'workcity',
+      'workprovince',
+      'workcountry',
+      'workphone',
+      'homephone',
+      'cellphone',
+      'fax',
+      'workemail',
+      'url',
+      '\'\' AS shared_groups',
+      'type',
+      'title',
+      'notes'
+    ].join(', ');
 
     var queryCompany = [
       'SELECT company',
@@ -977,15 +1108,15 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
     ].join('');
 
     var queryInfo = [
-      'SELECT id, company, ', companyXFields, ', source',
+      'SELECT id, company, ', companyXCtiFields, ', source',
       ' FROM (',
-      '(SELECT id, name, company, ', companyXFields, ', \'cti\' AS source',
+      '(SELECT id, name, company, ', companyXCtiFields, ', \'cti\' AS source',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-      ' WHERE (owner_id = ? OR type = "public") AND (company = ?)',
+      ' WHERE ', ctiVisibilityQuery, ' AND (company = ?)',
       ' AND (name IS NULL OR name = "")',
       ' AND (type != "speeddial"))',
       ' UNION ',
-      '(SELECT id, name, company, ', companyXFields, ', \'centralized\' AS source',
+      '(SELECT id, name, company, ', companyXPbFields, ', \'centralized\' AS source',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
       ' WHERE (company = ?) AND (type != "nethcti")',
       ' AND (name IS NULL OR name = ""))',
@@ -1002,7 +1133,7 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       ' FROM (',
       '(SELECT ', contactsXFields, ', \'cti\' AS source',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
-      ' WHERE (owner_id = ? OR type = "public") AND (company = ?)',
+      ' WHERE ', ctiVisibilityQuery, ' AND (company = ?)',
       ' AND (name IS NOT NULL AND name != "")',
       ' AND (type != \'speeddial\'))',
       ' UNION ',
@@ -1055,11 +1186,7 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       if (view === 'company' && results.length > 0)  {
         let promises = []
         results.forEach((result) => {
-          let companyReplacements = [
-            replacements[0],
-            result.company,
-            result.company
-          ]
+          let companyReplacements = [replacements[0]].concat(ctiVisibilityReplacements, [result.company, result.company])
           // prepare company info query
           promises.push(
             pbQueryAsyncTag(
@@ -1099,6 +1226,7 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
                 result.fax = value.data[0] ? value.data[0].fax : null
                 result.workemail = value.data[0] ? value.data[0].workemail : null
                 result.url = value.data[0] ? value.data[0].url : null
+                result.shared_groups = value.data[0] ? value.data[0].shared_groups : null
                 result.type = value.data[0] ? value.data[0].type : null
                 result.title = value.data[0] ? value.data[0].title : null
                 result.notes = value.data[0] ? value.data[0].notes : null
@@ -1147,41 +1275,72 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
  */
 function getEmailAllContacts(ctiPbBounds, pbBounds, replacements, cb) {
   try {
-    var fields = [
-      'id,',
-      'owner_id,',
-      'type,',
-      'homeemail,',
-      'workemail,',
-      'homephone,',
-      'workphone,',
-      'cellphone,',
-      'fax,',
-      'title,',
-      'company,',
-      'notes,',
-      'name,',
-      'homestreet,',
-      'homepob,',
-      'homecity,',
-      'homeprovince,',
-      'homepostalcode,',
-      'homecountry,',
-      'workstreet,',
-      'workpob,',
-      'workcity,',
-      'workprovince,',
-      'workpostalcode,',
-      'workcountry,',
+    var ctiFields = [
+      'id',
+      'owner_id',
+      'type',
+      'shared_groups',
+      'homeemail',
+      'workemail',
+      'homephone',
+      'workphone',
+      'cellphone',
+      'fax',
+      'title',
+      'company',
+      'notes',
+      'name',
+      'homestreet',
+      'homepob',
+      'homecity',
+      'homeprovince',
+      'homepostalcode',
+      'homecountry',
+      'workstreet',
+      'workpob',
+      'workcity',
+      'workprovince',
+      'workpostalcode',
+      'workcountry',
       'url'
-    ].join('');
+    ].join(', ');
+
+    var pbFields = [
+      'id',
+      'owner_id',
+      'type',
+      '\'\' AS shared_groups',
+      'homeemail',
+      'workemail',
+      'homephone',
+      'workphone',
+      'cellphone',
+      'fax',
+      'title',
+      'company',
+      'notes',
+      'name',
+      'homestreet',
+      'homepob',
+      'homecity',
+      'homeprovince',
+      'homepostalcode',
+      'homecountry',
+      'workstreet',
+      'workpob',
+      'workcity',
+      'workprovince',
+      'workpostalcode',
+      'workcountry',
+      'url'
+    ].join(', ');
 
     var query = [
-      '(SELECT ', fields, ', extension, speeddial_num, \'cti\' AS source',
+      '(SELECT ', ctiFields, ', extension, speeddial_num, \'cti\' AS source',
       ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
       ' WHERE ', ctiPbBounds, ')',
       ' UNION ',
-      '(SELECT ', fields, ', \'\' AS extension, \'\' AS speeddial_num, \'centralized\' AS source',
+      '(SELECT ', pbFields, ', \'\' AS extension, \'\' AS speeddial_num, \'centralized\' AS source',
       ' FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK,
       ' WHERE ', pbBounds,
       ' AND (type != \'speeddial\'))',

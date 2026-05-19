@@ -37,6 +37,10 @@ EXISTS=$(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "SHOW KEYS FROM nethcti
 if [[ $EXISTS == "" ]]; then
   /usr/bin/mysql --defaults-file=/root/.my.cnf -e "ALTER TABLE nethcti3.cti_phonebook ADD INDEX company_idx(company)"
 fi
+EXISTS=$(/usr/bin/mysql --defaults-file=/root/.my.cnf -e "SHOW COLUMNS FROM nethcti3.cti_phonebook LIKE 'shared_groups'");
+if [[ $EXISTS == "" ]]; then
+  /usr/bin/mysql --defaults-file=/root/.my.cnf -e "ALTER TABLE nethcti3.cti_phonebook ADD COLUMN shared_groups TEXT NULL AFTER type"
+fi
 
 # Update SQL queries of default customer cards for issue #5870
 EXISTS=$(/usr/bin/mysql --defaults-file=/root/.my.cnf -se "SELECT query FROM nethcti3.customer_card WHERE name='Identity'");

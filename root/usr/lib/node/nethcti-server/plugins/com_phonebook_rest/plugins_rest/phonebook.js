@@ -55,6 +55,15 @@ var compAuthorization;
 var compUtil;
 
 /**
+ * The operator architect component.
+ *
+ * @property compOperator
+ * @type object
+ * @private
+ */
+var compOperator;
+
+/**
  * Set the logger to be used.
  *
  * @method setLogger
@@ -127,6 +136,143 @@ function setCompUtil(comp) {
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
+}
+
+/**
+ * Sets the operator architect component.
+ *
+ * @method setCompOperator
+ * @param {object} comp The operator architect component.
+ */
+function setCompOperator(comp) {
+  try {
+    compOperator = comp;
+    logger.log.info(IDLOG, 'set operator architect component');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+function getUserGroupNames(username) {
+  try {
+    if (!compOperator || typeof compOperator.getJSONGroups !== 'function') {
+      return [];
+    }
+
+    var groups = compOperator.getJSONGroups() || {};
+    return Object.keys(groups).filter(function(groupName) {
+      return Array.isArray(groups[groupName].users) && groups[groupName].users.includes(username);
+    });
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return [];
+  }
+}
+
+function normalizeSharedGroups(sharedGroups) {
+  try {
+    if (Array.isArray(sharedGroups)) {
+      return sharedGroups.filter(function(groupName) {
+        return typeof groupName === 'string' && groupName !== '';
+      });
+    }
+
+    if (sharedGroups && typeof sharedGroups === 'object') {
+      return Object.keys(sharedGroups).sort().map(function(groupKey) {
+        return sharedGroups[groupKey];
+      }).filter(function(groupName) {
+        return typeof groupName === 'string' && groupName !== '';
+      });
+    }
+
+    if (typeof sharedGroups === 'string') {
+      if (sharedGroups === '') {
+        return [];
+      }
+
+      if (sharedGroups[0] !== '[' && sharedGroups[0] !== '{') {
+        return [sharedGroups].filter(function(groupName) {
+          return typeof groupName === 'string' && groupName !== '';
+        });
+      }
+
+      var parsed = JSON.parse(sharedGroups);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(function(groupName) {
+          return typeof groupName === 'string' && groupName !== '';
+        });
+      }
+
+      if (parsed && typeof parsed === 'object') {
+        return Object.keys(parsed).sort().map(function(groupKey) {
+          return parsed[groupKey];
+        }).filter(function(groupName) {
+          return typeof groupName === 'string' && groupName !== '';
+        });
+      }
+
+      return null;
+    }
+
+    if (typeof sharedGroups === 'undefined' || sharedGroups === null) {
+      return [];
+    }
+
+    if (typeof sharedGroups === 'number' || typeof sharedGroups === 'boolean') {
+      return null;
+    }
+
+    return [sharedGroups].filter(function(groupName) {
+      return typeof groupName === 'string' && groupName !== '';
+    });
+  } catch (err) {
+    return null;
+  }
+}
+
+function isGroupContactVisible(contact, username, userGroups) {
+  if (!contact || contact.type !== 'group' || contact.owner_id === username) {
+    return false;
+  }
+
+  var sharedGroups = normalizeSharedGroups(contact.shared_groups);
+  if (!Array.isArray(sharedGroups) || sharedGroups.length === 0) {
+    return false;
+  }
+
+  return userGroups.some(function(groupName) {
+    return sharedGroups.includes(groupName);
+  });
+}
+
+function validateSharedGroupsPayload(sharedGroups, username) {
+  var normalizedGroups = normalizeSharedGroups(sharedGroups);
+  if (!Array.isArray(normalizedGroups) || normalizedGroups.length === 0) {
+    return { error: 'invalid-groups' };
+  }
+
+  if (compAuthorization.authorizeAdminPhonebookUser(username) === true) {
+    return { groups: normalizedGroups };
+  }
+
+  var userGroups = getUserGroupNames(username);
+  var allGroupsAllowed = normalizedGroups.every(function(groupName) {
+    return userGroups.includes(groupName);
+  });
+
+  if (!allGroupsAllowed) {
+    return { error: 'forbidden-groups' };
+  }
+
+  return { groups: normalizedGroups };
+}
+
+function getRequestPayload(req) {
+  if (req && req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+    return req.body;
+  }
+
+  return req.params;
 }
 
 (function() {
@@ -764,11 +910,13 @@ function setCompUtil(comp) {
       search: function(req, res, next) {
         try {
           var username = req.headers.authorization_user;
+          var userGroups = getUserGroupNames(username);
 
           // use phonebook component
           compPhonebook.getPbContactsContains(
             req.params.term,
             username,
+            userGroups,
             req.params.view,
             req.params.offset,
             req.params.limit,
@@ -807,9 +955,11 @@ function setCompUtil(comp) {
       searchemail: function(req, res, next) {
         try {
           var username = req.headers.authorization_user;
+          var userGroups = getUserGroupNames(username);
           compPhonebook.getEmailPbContactsContains(
             req.params.term,
             username,
+            userGroups,
             function(err, results) {
               try {
                 if (err) {
@@ -843,9 +993,11 @@ function setCompUtil(comp) {
       getall: function(req, res) {
         try {
           var username = req.headers.authorization_user;
+          var userGroups = getUserGroupNames(username);
           // use phonebook component
           compPhonebook.getAllPbContacts(
             username,
+            userGroups,
             req.params.offset,
             req.params.limit,
             function(err, results) {
@@ -881,6 +1033,7 @@ function setCompUtil(comp) {
       cticontact: function(req, res, next) {
         try {
           var username = req.headers.authorization_user;
+          var userGroups = getUserGroupNames(username);
 
           // use phonebook component
           compPhonebook.getCtiPbContact(req.params.id, function(err, result) {
@@ -893,7 +1046,7 @@ function setCompUtil(comp) {
                 // contacts and only public contacts created by the other users. If no contact
                 // has been found the "result" property is an empty object and it's returned to the user
                 if (Object.keys(result).length === 0 || // the object is empty: no pb contact has been found
-                  result.type === 'public' || result.owner_id === username) {
+                  result.type === 'public' || result.owner_id === username || isGroupContactVisible(result, username, userGroups)) {
 
                   logger.log.info(IDLOG, 'send cti phonebook contact details of contact id "' + req.params.id + '" to user "' + username + '"');
                   res.send(200, result);
@@ -967,11 +1120,13 @@ function setCompUtil(comp) {
       searchstartswith: function(req, res, next) {
         try {
           var username = req.headers.authorization_user;
+          var userGroups = getUserGroupNames(username);
 
           // use phonebook component
           compPhonebook.getPbContactsStartsWith(
             req.params.term,
             username,
+            userGroups,
             req.params.view,
             req.params.offset,
             req.params.limit,
@@ -1009,10 +1164,12 @@ function setCompUtil(comp) {
       searchstartswith_digit: function(req, res, next) {
         try {
           var username = req.headers.authorization_user;
+          var userGroups = getUserGroupNames(username);
 
           // use phonebook component
           compPhonebook.getPbContactsStartsWithDigit(
             username,
+            userGroups,
             req.params.view,
             req.params.offset,
             req.params.limit,
@@ -1047,16 +1204,30 @@ function setCompUtil(comp) {
        */
       create: function(req, res, next) {
         try {
-          var data = req.params;
+          var data = getRequestPayload(req);
 
-          if (typeof data !== 'object' || typeof data.type !== 'string' || typeof data.name !== 'string' || (data.type !== 'private' && data.type !== 'public' && data.type !== 'speeddial')) {
-
+          if (typeof data !== 'object' || typeof data.type !== 'string' || typeof data.name !== 'string' || (data.type !== 'private' && data.type !== 'public' && data.type !== 'speeddial' && data.type !== 'group')) {
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
 
           // extract the username added in the authentication step
           var username = req.headers.authorization_user;
+
+          if (data.type === 'group') {
+            var createValidation = validateSharedGroupsPayload(data.shared_groups, username);
+            if (createValidation.error === 'invalid-groups') {
+              compUtil.net.sendHttp400(IDLOG, res);
+              return;
+            }
+            if (createValidation.error === 'forbidden-groups') {
+              compUtil.net.sendHttp403(IDLOG, res);
+              return;
+            }
+            data.shared_groups = JSON.stringify(createValidation.groups);
+          } else {
+            data.shared_groups = '';
+          }
 
           // add the creator of the contact
           data.creator = username;
@@ -1185,7 +1356,7 @@ function setCompUtil(comp) {
        */
       modify_cticontact: function(req, res, next) {
         try {
-          var data = req.params;
+          var data = getRequestPayload(req);
 
           if (typeof data !== 'object' || typeof data.id !== 'string') {
             compUtil.net.sendHttp400(IDLOG, res);
@@ -1219,6 +1390,28 @@ function setCompUtil(comp) {
                   '": the contact is not present');
                 compUtil.net.sendHttp403(IDLOG, res);
                 return;
+              }
+
+              if (typeof data.type !== 'undefined' && data.type !== 'private' && data.type !== 'public' && data.type !== 'speeddial' && data.type !== 'group') {
+                compUtil.net.sendHttp400(IDLOG, res);
+                return;
+              }
+
+              var targetType = typeof data.type === 'string' ? data.type : result.type;
+              if (targetType === 'group') {
+                var sharedGroupsPayload = Object.prototype.hasOwnProperty.call(data, 'shared_groups') ? data.shared_groups : result.shared_groups;
+                var updateValidation = validateSharedGroupsPayload(sharedGroupsPayload, username);
+                if (updateValidation.error === 'invalid-groups') {
+                  compUtil.net.sendHttp400(IDLOG, res);
+                  return;
+                }
+                if (updateValidation.error === 'forbidden-groups') {
+                  compUtil.net.sendHttp403(IDLOG, res);
+                  return;
+                }
+                data.shared_groups = JSON.stringify(updateValidation.groups);
+              } else if (Object.prototype.hasOwnProperty.call(data, 'shared_groups') || result.type === 'group') {
+                data.shared_groups = '';
               }
 
               // use phonebook component
@@ -1303,6 +1496,7 @@ function setCompUtil(comp) {
     exports.setCompUtil = setCompUtil;
     exports.searchstartswith = phonebook.searchstartswith;
     exports.setCompPhonebook = setCompPhonebook;
+    exports.setCompOperator = setCompOperator;
     exports.delete_cticontact = phonebook.delete_cticontact;
     exports.modify_cticontact = phonebook.modify_cticontact;
     exports.import_csv_speeddial = phonebook.import_csv_speeddial;

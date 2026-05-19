@@ -7,7 +7,8 @@
       "util",
       "logger",
       "phonebook",
-      "authorization"
+      "authorization",
+      "operator"
     ],
     "provides": []
   }

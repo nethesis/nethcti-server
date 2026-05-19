@@ -235,6 +235,31 @@ function setCompAuthorization(comp) {
 }
 
 /**
+ * Set the operator architect component.
+ *
+ * @method setCompOperator
+ * @param {object} comp The architect operator component
+ * @static
+ */
+function setCompOperator(comp) {
+  try {
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameter');
+    }
+
+    var key;
+    for (key in plugins) {
+      if (typeof plugins[key].setCompOperator === 'function') {
+        plugins[key].setCompOperator(comp);
+        logger.log.info(IDLOG, 'operator component has been set for rest plugin ' + key);
+      }
+    }
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Called by _setCompAuthorization_ function for all REST plugins.
  *
  * @method setAllRestPluginsAuthorization
@@ -364,3 +389,4 @@ exports.setLogger = setLogger;
 exports.setCompUtil = setCompUtil;
 exports.setCompPhonebook = setCompPhonebook;
 exports.setCompAuthorization = setCompAuthorization;
+exports.setCompOperator = setCompOperator;

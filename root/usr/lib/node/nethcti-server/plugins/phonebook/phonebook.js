@@ -79,14 +79,14 @@ function setLogger(log) {
  * @param {integer} [limit] The results limit
  * @param {function} cb The callback function
  */
-function getPbContactsContains(term, username, view, offset, limit, cb) {
+function getPbContactsContains(term, username, userGroups, view, offset, limit, cb) {
   try {
     // check parameters
     if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    dbconn.getAllContactsContains(term, username, view, offset, limit, function(err, results) {
+    dbconn.getAllContactsContains(term, username, userGroups, view, offset, limit, function(err, results) {
       try {
         if (err) { // some error in the query
           logger.log.error(IDLOG, err);
@@ -116,12 +116,12 @@ function getPbContactsContains(term, username, view, offset, limit, cb) {
  * @param {string} username The name of the user used to search contacts in the cti phonebook
  * @param {function} cb The callback function
  */
-function getEmailPbContactsContains(term, username, cb) {
+function getEmailPbContactsContains(term, username, userGroups, cb) {
   try {
     if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    dbconn.getEmailAllContactsContains(term, username, function(err, results) {
+    dbconn.getEmailAllContactsContains(term, username, userGroups, function(err, results) {
       try {
         if (err) {
           logger.log.error(IDLOG, err);
@@ -150,14 +150,14 @@ function getEmailPbContactsContains(term, username, cb) {
  * @param {integer} [limit] The results limit
  * @param {function} cb The callback function
  */
-function getAllPbContacts(username, offset, limit, cb) {
+function getAllPbContacts(username, userGroups, offset, limit, cb) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    dbconn.getAllContactsAlphabetically(username, offset, limit, function(err, results) {
+    dbconn.getAllContactsAlphabetically(username, userGroups, offset, limit, function(err, results) {
       try {
         if (err) { // some error in the query
           logger.log.error(IDLOG, err);
@@ -402,14 +402,14 @@ function modifyCtiPbContact(data, cb) {
  * @param {integer}  [limit]    The results limit
  * @param {function} cb       The callback function
  */
-function getPbContactsStartsWith(term, username, view, offset, limit, cb) {
+function getPbContactsStartsWith(term, username, userGroups, view, offset, limit, cb) {
   try {
     // check parameters
     if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    dbconn.getAllContactsStartsWith(term, username, view, offset, limit, function(err, results) {
+    dbconn.getAllContactsStartsWith(term, username, userGroups, view, offset, limit, function(err, results) {
       try {
         if (err) { // some error in the query
           logger.log.error(IDLOG, err);
@@ -441,14 +441,14 @@ function getPbContactsStartsWith(term, username, view, offset, limit, cb) {
  * @param {integer}  [limit]    The results limit
  * @param {function} cb       The callback function
  */
-function getPbContactsStartsWithDigit(username, view, offset, limit, cb) {
+function getPbContactsStartsWithDigit(username, userGroups, view, offset, limit, cb) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    dbconn.getAllContactsStartsWithDigit(username, view, offset, limit, function(err, results) {
+    dbconn.getAllContactsStartsWithDigit(username, userGroups, view, offset, limit, function(err, results) {
       try {
         if (err) { // some error in the query
           logger.log.error(IDLOG, err);
@@ -528,7 +528,7 @@ function saveCtiPbContact(data, cb) {
     if (typeof data  !== 'object'   || typeof data.type    !== 'string' ||
         typeof cb    !== 'function' || typeof data.creator !== 'string' ||
         data.creator === ''         || typeof data.name    !== 'string' ||
-        (data.type   !== 'private'  && data.type           !== 'public' && data.type !== 'speeddial')) {
+        (data.type   !== 'private'  && data.type           !== 'public' && data.type !== 'speeddial' && data.type !== 'group')) {
 
           throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }

@@ -1633,12 +1633,21 @@ function getFilteredCallerIndentity(username, callerIdentity) {
 
     // filter the phonebook contact if it's present
     // chose the phonebook contacts: is first returned the contact of the user from the cti phonebook,
-    // than that from the central phonebook and the last is the public contact from the cti phonebook.
+    // than that from the shared group contacts, then the central phonebook and the last is the
+    // public contact from the cti phonebook.
     // If more than one contact is present, the first is returned
     var pbContact;
+    var sharedGroups;
+    var userGroups = [];
     if (callerIdentity.pbContacts) {
       // check if the user has the phonebook permission
       if (compAuthorization.authorizePhonebookUser(username) === true) {
+        if (compOperator && typeof compOperator.getJSONGroups === 'function') {
+          var allGroups = compOperator.getJSONGroups() || {};
+          userGroups = Object.keys(allGroups).filter(function(groupName) {
+            return Array.isArray(allGroups[groupName].users) && allGroups[groupName].users.includes(username);
+          });
+        }
 
         for (i = 0; i < callerIdentity.pbContacts.nethcti.length; i++) {
           // the user has a contact in the cti phonebook
@@ -1649,12 +1658,35 @@ function getFilteredCallerIndentity(username, callerIdentity) {
         }
 
         // check if the contact wasn't found as private contact of the user in the cti phonebook
+        // and a contact shared with one of his groups exists
+        if (pbContact === undefined) {
+          for (i = 0; i < callerIdentity.pbContacts.nethcti.length; i++) {
+            if (callerIdentity.pbContacts.nethcti[i].type !== 'group') {
+              continue;
+            }
+
+            try {
+              sharedGroups = JSON.parse(callerIdentity.pbContacts.nethcti[i].shared_groups || '[]');
+            } catch (err1) {
+              sharedGroups = [];
+            }
+
+            if (Array.isArray(sharedGroups) && userGroups.some(function(groupName) {
+              return sharedGroups.includes(groupName);
+            })) {
+              pbContact = callerIdentity.pbContacts.nethcti[i];
+              break;
+            }
+          }
+        }
+
+        // check if the contact wasn't found as private or group-shared contact of the user in the cti phonebook
         if (pbContact === undefined && callerIdentity.pbContacts.centralized.length > 0) {
           // the contact was found in the centralized phonebook
           pbContact = callerIdentity.pbContacts.centralized[0];
         }
 
-        // check if the contact was not found as private contact of the user in the cti phonebook and
+        // check if the contact was not found as private/group contact of the user in the cti phonebook and
         // was not found in the centralized phonebook
         if (pbContact === undefined) {
           for (i = 0; i < callerIdentity.pbContacts.nethcti.length; i++) {
