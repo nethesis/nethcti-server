@@ -153,15 +153,45 @@ function setCompOperator(comp) {
   }
 }
 
+function getGroupPermissionId(groupName) {
+  if (typeof groupName !== 'string') {
+    return '';
+  }
+
+  return 'grp_' + groupName.replace(/[^a-z0-9]/gi, '').toLowerCase();
+}
+
 function getUserGroupNames(username) {
   try {
-    if (!compOperator || typeof compOperator.getJSONGroups !== 'function') {
-      return [];
+    var groups = compOperator && typeof compOperator.getJSONGroups === 'function' ? compOperator.getJSONGroups() || {} : {};
+    var allGroupNames = Object.keys(groups);
+    var belongingGroups = allGroupNames.filter(function(groupName) {
+      return Array.isArray(groups[groupName].users) && groups[groupName].users.includes(username);
+    });
+
+    if (!compAuthorization || typeof compAuthorization.getUserProfileJSON !== 'function') {
+      return belongingGroups;
     }
 
-    var groups = compOperator.getJSONGroups() || {};
-    return Object.keys(groups).filter(function(groupName) {
-      return Array.isArray(groups[groupName].users) && groups[groupName].users.includes(username);
+    var profile = compAuthorization.getUserProfileJSON(username) || {};
+    var presencePanelPermissions = (((profile.macro_permissions || {}).presence_panel || {}).permissions || {});
+
+    if (presencePanelPermissions.all_groups && presencePanelPermissions.all_groups.value === true) {
+      return allGroupNames;
+    }
+
+    var allowedGroupsIds = Object.keys(presencePanelPermissions).filter(function(permissionId) {
+      return permissionId.indexOf('grp_') === 0 &&
+        presencePanelPermissions[permissionId] &&
+        presencePanelPermissions[permissionId].value === true;
+    });
+
+    var allowedGroups = allGroupNames.filter(function(groupName) {
+      return allowedGroupsIds.includes(getGroupPermissionId(groupName));
+    });
+
+    return allowedGroups.concat(belongingGroups).filter(function(groupName, index, groupNames) {
+      return groupNames.indexOf(groupName) === index;
     });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
