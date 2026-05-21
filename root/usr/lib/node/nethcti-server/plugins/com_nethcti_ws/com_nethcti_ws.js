@@ -1661,11 +1661,12 @@ function getFilteredCallerIndentity(username, callerIdentity) {
               callerIdentity.pbContacts.nethcti[i].type === '' ||
               callerIdentity.pbContacts.nethcti[i].type === 'public' ||
               callerIdentity.pbContacts.nethcti[i].type === 'private' ||
-              callerIdentity.pbContacts.nethcti[i].type === 'speeddial') {
+              callerIdentity.pbContacts.nethcti[i].type === 'speeddial' ||
+              callerIdentity.pbContacts.nethcti[i].type.indexOf('group:') !== 0) {
               continue;
             }
 
-            sharedGroups = callerIdentity.pbContacts.nethcti[i].type.split(',').map(function(groupName) {
+            sharedGroups = callerIdentity.pbContacts.nethcti[i].type.slice('group:'.length).split(',').map(function(groupName) {
               return groupName.trim();
             }).filter(function(groupName, index, groups) {
               return groupName !== '' && groups.indexOf(groupName) === index;

@@ -173,12 +173,14 @@ function isReservedContactType(type) {
   return type === 'private' || type === 'public' || type === 'speeddial';
 }
 
+var GROUP_TYPE_PREFIX = 'group:';
+
 function getSharedGroupsFromType(type) {
-  if (typeof type !== 'string' || type === '' || isReservedContactType(type)) {
+  if (typeof type !== 'string' || type === '' || isReservedContactType(type) || type.indexOf(GROUP_TYPE_PREFIX) !== 0) {
     return [];
   }
 
-  return type.split(',').map(function(groupName) {
+  return type.slice(GROUP_TYPE_PREFIX.length).split(',').map(function(groupName) {
     return groupName.trim();
   }).filter(function(groupName, index, groups) {
     return groupName !== '' && groups.indexOf(groupName) === index;
@@ -194,7 +196,7 @@ function getContactSharedGroups(contact) {
 }
 
 function encodeSharedGroupsType(sharedGroups) {
-  return sharedGroups.join(',');
+  return GROUP_TYPE_PREFIX + sharedGroups.join(',');
 }
 
 function normalizeSharedGroups(sharedGroups) {
@@ -286,7 +288,7 @@ function validateSharedGroupsPayload(sharedGroups, username) {
   }
 
   var hasInvalidGroupNames = normalizedGroups.some(function(groupName) {
-    return groupName.indexOf(',') >= 0 || isReservedContactType(groupName);
+    return groupName.indexOf(',') >= 0 || isReservedContactType(groupName) || groupName.indexOf(GROUP_TYPE_PREFIX) === 0;
   });
   if (hasInvalidGroupNames) {
     return { error: 'invalid-groups' };

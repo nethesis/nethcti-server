@@ -116,13 +116,14 @@ function escapeLikeValue(value) {
 }
 
 function getSharedGroupPatterns(groupName) {
+  var groupTypePrefix = 'group:';
   var escapedGroupName = escapeLikeValue(groupName);
 
   return [
-    groupName,
-    escapedGroupName + ',%',
-    '%,' + escapedGroupName + ',%',
-    '%,' + escapedGroupName
+    groupTypePrefix + groupName,
+    groupTypePrefix + escapedGroupName + ',%',
+    groupTypePrefix + '%,' + escapedGroupName + ',%',
+    groupTypePrefix + '%,' + escapedGroupName
   ];
 }
 
