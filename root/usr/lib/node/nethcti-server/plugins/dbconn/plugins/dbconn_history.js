@@ -592,7 +592,8 @@ function getHistoryCallInterval(data, cb) {
         '(cnum NOT IN (?) AND dst IN (?)) AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)' +
-        (data.removeLostCalls ? ' AND disposition NOT IN ("NO ANSWER","BUSY","FAILED")' : ''),
+        (data.removeLostCalls ? ' AND disposition NOT IN ("NO ANSWER","BUSY","FAILED")' : '') +
+        ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -606,7 +607,8 @@ function getHistoryCallInterval(data, cb) {
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)' +
         'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED")' +
         'OR (disposition IN ("NO ANSWER","BUSY","FAILED")' +
-        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))',
+        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))' +
+        ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -619,7 +621,8 @@ function getHistoryCallInterval(data, cb) {
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?) AND ' +
         'disposition IN ("NO ANSWER","BUSY","FAILED")' +
-        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)',
+        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)' +
+        ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -632,7 +635,8 @@ function getHistoryCallInterval(data, cb) {
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR dst_cnam LIKE ? OR ccompany LIKE ? OR dst_ccompany LIKE ?) AND ' +
         '(uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.uniqueid) AND ' +
-        '((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")',
+        '((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")' +
+        ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
@@ -805,7 +809,8 @@ function getHistorySwitchCallInterval(data, cb) {
         ') AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)' +
-        (data.removeLostCalls ? ' AND disposition NOT IN ("NO ANSWER","BUSY","FAILED")' : ''),
+        (data.removeLostCalls ? ' AND disposition NOT IN ("NO ANSWER","BUSY","FAILED")' : '') +
+        ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.trunks,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -816,7 +821,8 @@ function getHistorySwitchCallInterval(data, cb) {
       whereClause = [
         'dstchannel REGEXP ? AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)' +
+        ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.trunks,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -833,7 +839,8 @@ function getHistorySwitchCallInterval(data, cb) {
         'dst IN ' + data.extens + ' AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?) ' +
-        'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED") OR (disposition IN ("NO ANSWER","BUSY","FAILED") AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))',
+        'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED") OR (disposition IN ("NO ANSWER","BUSY","FAILED") AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))' +
+        ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.trunks, data.trunks,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
@@ -857,7 +864,8 @@ function getHistorySwitchCallInterval(data, cb) {
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?) AND ' +
         'disposition IN ("NO ANSWER","BUSY","FAILED")' +
-        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)',
+        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)' +
+        ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.trunks,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%"
@@ -868,7 +876,8 @@ function getHistorySwitchCallInterval(data, cb) {
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?) AND ' +
         '(uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.uniqueid) AND ' +
-        '((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")',
+        '((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")' +
+        ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
         "%" + data.filter + "%", "%" + data.filter + "%"
