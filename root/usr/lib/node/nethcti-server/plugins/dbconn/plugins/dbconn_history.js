@@ -498,8 +498,10 @@ function getRecordingOwnerCondition(recordingExtensions, recordingAlias) {
     }
 
     var escapedExtension = escapeSqlString(String(extension).trim());
+    // Only match files where the extension is the FIRST field (i.e. the extension started the recording).
+    // Files where the extension appears as the second field (e.g. exten-202-201-...) are recordings
+    // owned by another party and must not appear in this extension's history.
     conditions.push(recordingFileColumn + ' LIKE "exten-' + escapedExtension + '-%"');
-    conditions.push(recordingFileColumn + ' LIKE "exten-%-' + escapedExtension + '-%"');
   });
 
   if (conditions.length === 0) {
@@ -513,13 +515,33 @@ function getRecordingFile(rowAlias, recordingExtensions) {
   var linkedRecordingCondition = 'recording_call.linkedid = ' + rowAlias + '.linkedid' +
     getRecordingOwnerCondition(recordingExtensions, 'recording_call');
 
+  // Recording filenames embed a UTC timestamp (YYYYMMDD-HHmmss at positions 4-5 when split by '-').
+  // Convert it to server local time so it can be compared against cdr.calldate (stored in local time).
+  var filenameToLocalTime =
+    'DATE_ADD(' +
+      'STR_TO_DATE(' +
+        'CONCAT(' +
+          'SUBSTRING_INDEX(SUBSTRING_INDEX(recording_call.recordingfile,"-",4),"-",-1),' +
+          'SUBSTRING_INDEX(SUBSTRING_INDEX(recording_call.recordingfile,"-",5),"-",-1)' +
+        '),' +
+        '"%Y%m%d%H%i%s"' +
+      '),' +
+      'INTERVAL TIMESTAMPDIFF(SECOND,UTC_TIMESTAMP(),NOW()) SECOND' +
+    ')';
+
+  // Use the earliest calldate for this uniqueid to avoid non-determinism in GROUP BY queries.
+  var rowCalldate = '(SELECT MIN(t.calldate) FROM cdr AS t WHERE t.uniqueid=' + rowAlias + '.uniqueid)';
+
   return 'IFNULL((SELECT recording_call.recordingfile FROM cdr AS recording_call ' +
     'WHERE recording_call.recordingfile != "" ' +
       'AND (' +
         'recording_call.uniqueid = ' + rowAlias + '.uniqueid OR ' +
-        '(' + linkedRecordingCondition + ')' +
+        '(' + rowAlias + '.disposition = "ANSWERED" AND ' + linkedRecordingCondition + ')' +
       ') ' +
-    'ORDER BY (recording_call.uniqueid = ' + rowAlias + '.uniqueid) DESC, recording_call.calldate DESC ' +
+    'ORDER BY ' +
+      '(recording_call.uniqueid = ' + rowAlias + '.uniqueid) DESC, ' +
+      'ABS(TIMESTAMPDIFF(SECOND,' + rowCalldate + ',' + filenameToLocalTime + ')) ASC, ' +
+      'recording_call.calldate DESC ' +
     'LIMIT 1), "")';
 }
 
