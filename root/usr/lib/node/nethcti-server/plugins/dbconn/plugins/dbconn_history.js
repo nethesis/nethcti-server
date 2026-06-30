@@ -498,10 +498,12 @@ function getRecordingOwnerCondition(recordingExtensions, recordingAlias) {
     }
 
     var escapedExtension = escapeSqlString(String(extension).trim());
-    // Only match files where the extension is the FIRST field (i.e. the extension started the recording).
-    // Files where the extension appears as the second field (e.g. exten-202-201-...) are recordings
-    // owned by another party and must not appear in this extension's history.
+    // The recording filename encodes the extension in a position that depends on the call direction
+    // (see astproxy getRecordFilename): inbound calls are named "exten-<ext>-<counterpart>-..." while
+    // outbound calls are named "exten-<counterpart>-<ext>-...". Match both positions, otherwise the
+    // extension's own outbound recordings are not recognised as theirs (causing a 403 on playback).
     conditions.push(recordingFileColumn + ' LIKE "exten-' + escapedExtension + '-%"');
+    conditions.push(recordingFileColumn + ' LIKE "exten-%-' + escapedExtension + '-%"');
   });
 
   if (conditions.length === 0) {
