@@ -728,9 +728,13 @@ function setCompUtil(comp) {
               logger.log.info(IDLOG, "Proxy fqdn missing");
             }
 
+            // Speech-To-Text features depend both on the module-level switch
+            // (SATELLITE_* env vars) and on the user's "satellite_stt" profile permission.
+            var hasSttPermission = compAuthorization.authorizeSttUser(username);
+
             // Add call transcriptions status
             var call_transcription_enabled = process.env.SATELLITE_CALL_TRANSCRIPTION_ENABLED;
-            if (call_transcription_enabled && call_transcription_enabled == 'True') {
+            if (hasSttPermission && call_transcription_enabled && call_transcription_enabled == 'True') {
               result.call_transcription_enabled = true;
             } else {
               logger.log.info(IDLOG, "call_transcription_enabled missing");
@@ -746,7 +750,7 @@ function setCompUtil(comp) {
 
             // Add call summary status
             var call_summary_enabled = process.env.SATELLITE_CALL_SUMMARY_ENABLED;
-            if (call_summary_enabled && call_summary_enabled == 'True') {
+            if (hasSttPermission && call_summary_enabled && call_summary_enabled == 'True') {
               result.call_summary_enabled = true;
             } else {
               logger.log.info(IDLOG, "call_summary_enabled missing");

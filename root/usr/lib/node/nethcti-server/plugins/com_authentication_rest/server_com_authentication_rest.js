@@ -414,19 +414,31 @@ function reload() {
 /**
  * Reset the component.
  *
+ * `server.close()` releases the listening socket immediately (only its
+ * callback waits for existing connections to drain), so we can call
+ * `start()` right away to re-bind the port. We also force-close any
+ * lingering keep-alive connections to avoid leaking them on the old
+ * server, which previously caused the port to stay unusable when a
+ * hanging request kept connections open indefinitely.
+ *
  * @method reset
  */
 function reset() {
   try {
     logger.log.info(IDLOG, 'server closing...');
-    server.close(function () {
-      if (reloading === true) {
-        reloading = false;
-        server = undefined;
-        start();
-        logger.log.warn(IDLOG, 'reloaded');
-      }
-    });
+    var oldServer = server;
+    server = undefined;
+
+    oldServer.close();
+    if (typeof oldServer.closeAllConnections === 'function') {
+      try { oldServer.closeAllConnections(); } catch (e) {}
+    }
+
+    if (reloading === true) {
+      reloading = false;
+      start();
+      logger.log.warn(IDLOG, 'reloaded');
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }

@@ -90,6 +90,25 @@ var EVT_NEW_VOICE_MESSAGE = 'newVoiceMessage';
 var AUDIO_RECORDED_PATH = '/var/spool/asterisk/tmp';
 
 /**
+ * Resolves a name to an absolute path that is guaranteed to stay inside
+ * AUDIO_RECORDED_PATH. Throws if the resulting path would be the directory
+ * itself or escape it, so every filesystem operation is forced under the
+ * recordings directory regardless of the name components.
+ *
+ * @method resolveRecordedPath
+ * @param {string} name The filename to place inside AUDIO_RECORDED_PATH
+ * @return {string} The absolute path inside AUDIO_RECORDED_PATH
+ * @private
+ */
+function resolveRecordedPath(name) {
+  var resolved = path.resolve(AUDIO_RECORDED_PATH, String(name));
+  if (resolved.indexOf(AUDIO_RECORDED_PATH + path.sep) !== 0) {
+    throw new Error('refusing to use a path outside the recordings directory');
+  }
+  return resolved;
+}
+
+/**
  * The mpg123 binary for MP3 conversion.
  *
  * @property MPG123_SCRIPT_PATH
@@ -836,8 +855,8 @@ function setCustomVmAudioMsg(vm, type, audio, cb) {
       throw new Error('uploaded audio is not a valid RIFF WAV file (missing RIFF header)');
     }
     var tmpFilename = 'vm_' + vm + '_' + type + '_' + Date.now() + '_' + process.pid + '.wav';
-    var tmpPath = path.join(AUDIO_RECORDED_PATH, tmpFilename);
-    var tmpOutPath = path.join(AUDIO_RECORDED_PATH, 'vm_' + vm + '_' + type + '_' + Date.now() + '_' + process.pid + '_out.wav');
+    var tmpPath = resolveRecordedPath(tmpFilename);
+    var tmpOutPath = resolveRecordedPath('vm_' + vm + '_' + type + '_' + Date.now() + '_' + process.pid + '_out.wav');
     async.waterfall([
       function(callback) {
         var tmpExt = (normalized.detectedType === 'mp3' ? '.mp3' : '.wav');
@@ -916,9 +935,19 @@ function setCustomVmAudioMsgFromFile(vm, type, tempFilename, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    var sourcePath = path.join(AUDIO_RECORDED_PATH, tempFilename);
+    // tempFilename must be a bare filename inside AUDIO_RECORDED_PATH: reject any
+    // name with path components and the "", ".", ".." special names so that
+    // readFile/stat/unlink always operate inside the recordings directory.
+    var safeTempFilename = path.basename(tempFilename);
+    if (safeTempFilename !== tempFilename ||
+      safeTempFilename === '' || safeTempFilename === '.' || safeTempFilename === '..') {
+
+      throw new Error('invalid tempFilename');
+    }
+
+    var sourcePath = resolveRecordedPath(safeTempFilename);
     var convertedTmpPath = null;
-    var ext = path.extname(tempFilename);
+    var ext = path.extname(safeTempFilename);
     var extLower = ext.toLowerCase();
 
     // sequentially executes operations:
@@ -952,7 +981,7 @@ function setCustomVmAudioMsgFromFile(vm, type, tempFilename, cb) {
             return;
           }
         }
-        var tmpOutPath = path.join(AUDIO_RECORDED_PATH, 'vm_' + vm + '_' + type + '_' + Date.now() + '_' + process.pid + '_out.wav');
+        var tmpOutPath = resolveRecordedPath('vm_' + vm + '_' + type + '_' + Date.now() + '_' + process.pid + '_out.wav');
         convertedTmpPath = tmpOutPath;
         fs.stat(sourcePath, function(err) {
           if (err) {
