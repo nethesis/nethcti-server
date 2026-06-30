@@ -514,8 +514,11 @@ function getRecordingOwnerCondition(recordingExtensions, recordingAlias) {
 }
 
 function getRecordingFile(rowAlias, recordingExtensions) {
-  var linkedRecordingCondition = 'recording_call.linkedid = ' + rowAlias + '.linkedid' +
-    getRecordingOwnerCondition(recordingExtensions, 'recording_call');
+  // The ownership condition must gate BOTH match branches (same uniqueid and same linkedid).
+  // Through transfers Asterisk can copy a recordingfile onto CDR rows of legs the extension does
+  // not own; without this guard the uniqueid branch would surface another party's recording on
+  // this row, showing a play button that then returns 403 on playback.
+  var ownerCondition = getRecordingOwnerCondition(recordingExtensions, 'recording_call');
 
   // Recording filenames embed a UTC timestamp (YYYYMMDD-HHmmss at positions 4-5 when split by '-').
   // Convert it to server local time so it can be compared against cdr.calldate (stored in local time).
@@ -536,9 +539,10 @@ function getRecordingFile(rowAlias, recordingExtensions) {
 
   return 'IFNULL((SELECT recording_call.recordingfile FROM cdr AS recording_call ' +
     'WHERE recording_call.recordingfile != "" ' +
+      ownerCondition +
       'AND (' +
         'recording_call.uniqueid = ' + rowAlias + '.uniqueid OR ' +
-        '(' + rowAlias + '.disposition = "ANSWERED" AND ' + linkedRecordingCondition + ')' +
+        '(' + rowAlias + '.disposition = "ANSWERED" AND recording_call.linkedid = ' + rowAlias + '.linkedid)' +
       ') ' +
     'ORDER BY ' +
       '(recording_call.uniqueid = ' + rowAlias + '.uniqueid) DESC, ' +
