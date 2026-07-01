@@ -491,19 +491,20 @@ function getRecordingOwnerCondition(recordingExtensions, recordingAlias) {
   }
 
   var conditions = [];
-  var recordingFileColumn = (recordingAlias ? recordingAlias + '.' : '') + 'recordingfile';
+  var channelColumn = (recordingAlias ? recordingAlias + '.' : '') + 'channel';
   recordingExtensions.forEach(function(extension) {
     if (extension === undefined || extension === null || String(extension).trim() === '') {
       return;
     }
 
     var escapedExtension = escapeSqlString(String(extension).trim());
-    // The recording filename encodes the extension in a position that depends on the call direction
-    // (see astproxy getRecordFilename): inbound calls are named "exten-<ext>-<counterpart>-..." while
-    // outbound calls are named "exten-<counterpart>-<ext>-...". Match both positions, otherwise the
-    // extension's own outbound recordings are not recognised as theirs (causing a 403 on playback).
-    conditions.push(recordingFileColumn + ' LIKE "exten-' + escapedExtension + '-%"');
-    conditions.push(recordingFileColumn + ' LIKE "exten-%-' + escapedExtension + '-%"');
+    // A recording belongs to the extension that captured it, i.e. the party whose PJSIP channel
+    // holds the recordingfile (the one who pressed record). The filename position is ambiguous:
+    // an internal call 201->202 is named "exten-202-201-..." whether 201 or 202 recorded, so a
+    // filename match would let the non-recording party hear a recording it never made. Matching
+    // the recorder's channel instead is unambiguous and also recognises outbound recordings
+    // (where the extension is not the first filename field).
+    conditions.push(channelColumn + ' LIKE "PJSIP/' + escapedExtension + '-%"');
   });
 
   if (conditions.length === 0) {
