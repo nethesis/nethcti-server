@@ -430,6 +430,35 @@ function authorizeRecordingUser(username) {
 }
 
 /**
+ * Returns true if the specified user has the Speech-To-Text authorization.
+ *
+ * @method authorizeSttUser
+ * @param  {string}  username The username
+ * @return {boolean} True if the user has the Speech-To-Text authorization.
+ */
+function authorizeSttUser(username) {
+  try {
+    // check parameter
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid] !== undefined &&
+      profiles[profid].macro_permissions.nethvoice_cti.value === true &&
+      profiles[profid].macro_permissions.nethvoice_cti.permissions.satellite_stt.value === true
+    );
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    // in the case of exception it returns false for security reasons
+    return false;
+  }
+}
+
+/**
  * Returns true if the specified user has the authorization to view the lost calls of the queues.
  *
  * @method authorizeLostQueueCallsUser
@@ -2189,6 +2218,7 @@ exports.authorizeAdminCdrUser = authorizeAdminCdrUser;
 exports.getUserAuthorizations = getUserAuthorizations;
 exports.authorizeAdminPhoneUser = authorizeAdminPhoneUser;
 exports.authorizeRecordingUser = authorizeRecordingUser;
+exports.authorizeSttUser = authorizeSttUser;
 exports.authorizePhonebookUser = authorizePhonebookUser;
 exports.authorizeStreamingUser = authorizeStreamingUser;
 exports.authorizeRemoteSiteUser = authorizeRemoteSiteUser;

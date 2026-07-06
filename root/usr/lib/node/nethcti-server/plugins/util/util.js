@@ -89,6 +89,7 @@ function sendHttp201(parentIdLog, resp) {
     resp.end();
   } catch (err) {
     logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    try { resp.end(); } catch (e) {}
   }
 }
 
@@ -107,6 +108,7 @@ function sendHttp200(parentIdLog, resp) {
     resp.end();
   } catch (err) {
     logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    try { resp.end(); } catch (e) {}
   }
 }
 
@@ -129,6 +131,7 @@ function sendHttp400(parentIdLog, resp, params) {
     resp.end();
   } catch (err) {
     logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    try { resp.end(); } catch (e) {}
   }
 }
 
@@ -147,6 +150,7 @@ function sendHttp404(parentIdLog, resp) {
     resp.end();
   } catch (err) {
     logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    try { resp.end(); } catch (e) {}
   }
 }
 
@@ -175,6 +179,7 @@ function sendHttp401(parentIdLog, resp, err, code) {
     resp.end();
   } catch (err) {
     logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    try { resp.end(); } catch (e) {}
   }
 }
 
@@ -196,6 +201,7 @@ function sendHttp401Nonce(parentIdLog, resp, nonce) {
     resp.end();
   } catch (err) {
     logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    try { resp.end(); } catch (e) {}
   }
 }
 
@@ -214,6 +220,7 @@ function sendHttp403(parentIdLog, resp) {
     resp.end();
   } catch (err) {
     logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    try { resp.end(); } catch (e) {}
   }
 }
 
@@ -238,6 +245,7 @@ function sendHttp500(parentIdLog, resp, err) {
     resp.end();
   } catch (err) {
     logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    try { resp.end(); } catch (e) {}
   }
 }
 
@@ -257,6 +265,7 @@ let sendHttp503 = (parentIdLog, resp, reason) => {
     resp.end();
   } catch (err) {
     logger.log.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    try { resp.end(); } catch (e) {}
   }
 };
 
