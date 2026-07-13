@@ -356,6 +356,7 @@ function setCompAuthorization(ca) {
         'get': [
           'down_callrec/:id',
           'listen_callrec/:id',
+          'queues/:type/:target',
           'interval/:type/:target/:from/:to',
           'interval/:type/:target/:from/:to/:filter'
         ],
@@ -457,6 +458,70 @@ function setCompAuthorization(ca) {
               }
             });
           }
+        } catch (error) {
+          logger.log.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
+        }
+      },
+
+      queues: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+
+          if (req.params.type !== 'extension' && req.params.type !== 'user') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+
+          if (compAuthorization.authorizeAdminCdrUser(username) === true) {
+            logger.log.info(IDLOG, 'admin cdr authorization successfully for user "' + username + '"');
+          }
+          else if (compAuthorization.authorizeCdrUser(username) === true &&
+            req.params.type === 'extension' &&
+            compAuthorization.verifyUserEndpointExten(username, req.params.target) === false) {
+
+            logger.log.warn(IDLOG, 'authorization cdr queue failed for user "' + username +
+              '": requested extension "' + req.params.target + '" not owned by him');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          else if (compAuthorization.authorizeCdrUser(username) === true &&
+            req.params.type === 'user' &&
+            req.params.target !== username) {
+
+            logger.log.warn(IDLOG, 'authorization cdr queue failed for user "' + username +
+              '": requested user "' + req.params.target + '" not himself');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          else if (compAuthorization.authorizeCdrUser(username) !== true) {
+            logger.log.warn(IDLOG, 'getting history queues: cdr authorization failed for user "' + username + '" !');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+
+          var extens;
+          if (req.params.type === 'user') {
+            extens = Object.keys(compUser.getAllEndpointsExtension(req.params.target));
+          } else {
+            extens = [req.params.target];
+          }
+
+          compHistory.getHistoryQueues({ endpoints: extens }, function(err, queues) {
+            try {
+              if (err) {
+                throw err;
+              }
+
+              logger.log.info(IDLOG, 'send #' + queues.length + ' history queues for ' +
+                req.params.type + ' "' + req.params.target + '" [' + extens + ']' +
+                ' to user "' + username + '"');
+              res.send(200, queues);
+            } catch (error) {
+              logger.log.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
         } catch (error) {
           logger.log.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -753,6 +818,9 @@ function setCompAuthorization(ca) {
           if (req.params.removeLostCalls) {
             obj.removeLostCalls = req.params.removeLostCalls;
           }
+          if (req.params.queue) {
+            obj.queue = req.params.queue;
+          }
 
           // use the history component
           compHistory.getHistoryCallInterval(obj, function(err1, results) {
@@ -792,6 +860,7 @@ function setCompAuthorization(ca) {
       }
     };
     exports.api = historycall.api;
+    exports.queues = historycall.queues;
     exports.interval = historycall.interval;
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;

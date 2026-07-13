@@ -313,6 +313,9 @@ function setCompAuthorization(ca) {
           if (req.params.removeLostCalls) {
             obj.removeLostCalls = req.params.removeLostCalls;
           }
+          if (req.params.queue) {
+            obj.queue = req.params.queue;
+          }
 
           // if the user has the privacy enabled, it adds the privacy string to be used to hide the phone numbers
           if (compAuthorization.isPrivacyEnabled(username)) {

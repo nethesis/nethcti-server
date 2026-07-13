@@ -560,6 +560,7 @@ function getHistoryCallInterval(data, cb) {
       !(data.endpoints instanceof Array) ||
       (typeof data.filter !== 'string' && data.filter !== undefined) ||
       (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined) ||
+      (typeof data.queue !== 'string' && data.queue !== undefined) ||
       (data.direction && data.direction !== 'in' && data.direction !== 'out' && data.direction !== 'lost')) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -690,6 +691,11 @@ function getHistoryCallInterval(data, cb) {
       ];
     }
 
+    if (data.queue) {
+      whereClause[0] += ' AND ' + getQueueNumber('cdr') + ' = ?';
+      whereClause.push(data.queue);
+    }
+
     // search
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
       where: whereClause,
@@ -775,6 +781,7 @@ function getHistorySwitchCallInterval(data, cb) {
       (data.trunks && !(data.trunks instanceof Array)) ||
       (typeof data.filter !== 'string' && data.filter !== undefined) ||
       (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined) ||
+      (typeof data.queue !== 'string' && data.queue !== undefined) ||
       (data.type && data.type !== 'in' && data.type !== 'out' && data.type !== 'internal' && data.type !== 'lost')) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -940,6 +947,11 @@ function getHistorySwitchCallInterval(data, cb) {
       ];
     }
 
+    if (data.queue) {
+      whereClause[0] += ' AND ' + getQueueNumber('cdr') + ' = ?';
+      whereClause.push(data.queue);
+    }
+
     // search
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
       where: whereClause,
@@ -976,6 +988,41 @@ function getHistorySwitchCallInterval(data, cb) {
       }, function(err) { // manage the error
       logger.log.error(IDLOG, 'searching switchboard history call interval between ' + data.from + ' to ' + data.to +
         ' with filter ' + data.filter + ': ' + err.toString());
+      cb(err.toString());
+    });
+
+    compDbconnMain.incNumExecQueries();
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err.toString());
+  }
+}
+
+function getHistoryQueues(data, cb) {
+  try {
+    if (typeof data !== 'object' ||
+      typeof cb !== 'function' ||
+      !(data.endpoints instanceof Array)) {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
+      where: [
+        'linkedid IN (SELECT linkedid FROM cdr AS history_filter WHERE history_filter.cnum IN (?) OR history_filter.dst IN (?)) AND ' +
+        'lastapp = "Queue" AND dst <> ""',
+        data.endpoints, data.endpoints
+      ],
+      attributes: [
+        ['DISTINCT(dst)', 'queue']
+      ],
+      raw: true
+    }).then(function(results) {
+      cb(null, results);
+    }, function(err) {
+      logger.log.error(IDLOG, 'searching history queues for endpoints ' + data.endpoints +
+        ': ' + err.toString());
       cb(err.toString());
     });
 
@@ -1145,6 +1192,7 @@ apiList.isAtLeastExtenInCall = isAtLeastExtenInCall;
 apiList.getHistorySmsInterval = getHistorySmsInterval;
 apiList.getHistoryCallInterval = getHistoryCallInterval;
 apiList.getHistorySwitchCallInterval = getHistorySwitchCallInterval;
+apiList.getHistoryQueues = getHistoryQueues;
 apiList.getAllUserHistorySmsInterval = getAllUserHistorySmsInterval;
 
 // public interface

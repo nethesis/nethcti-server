@@ -311,6 +311,70 @@ function getHistorySwitchCallInterval(data, cb) {
   }
 }
 
+function getHistoryQueues(data, cb) {
+  try {
+    if (typeof data !== 'object' ||
+      typeof cb !== 'function' ||
+      !(data.endpoints instanceof Array)) {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    var queueNameMap = getQueueNameMap();
+    var queuesMap = {};
+
+    data.endpoints.forEach(function(endpoint) {
+      Object.keys(compAstProxy.getQueueIdsOfExten(endpoint)).forEach(function(queueId) {
+        queuesMap[queueId] = {
+          queue: queueId,
+          name: queueNameMap[queueId] || ''
+        };
+      });
+    });
+
+    dbconn.getHistoryQueues(data, function(err, results) {
+      if (err) {
+        cb(err);
+        return;
+      }
+
+      results.forEach(function(row) {
+        var queueId = row && row.queue ? String(row.queue) : '';
+        if (!queueId) {
+          return;
+        }
+
+        if (!queuesMap[queueId]) {
+          queuesMap[queueId] = {
+            queue: queueId,
+            name: queueNameMap[queueId] || ''
+          };
+        }
+      });
+
+      var queues = Object.keys(queuesMap).map(function(queueId) {
+        return queuesMap[queueId];
+      }).sort(function(a, b) {
+        var labelA = (a.name || a.queue).toLowerCase();
+        var labelB = (b.name || b.queue).toLowerCase();
+        if (labelA < labelB) {
+          return -1;
+        }
+        if (labelA > labelB) {
+          return 1;
+        }
+        return 0;
+      });
+
+      cb(null, queues);
+    });
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
 /**
  * Get the history call of all endpoints of the groups into the interval time.
  * It can be possible to filter the results.
@@ -509,3 +573,4 @@ exports.getCallRecordingFileData = getCallRecordingFileData;
 exports.getHistorySwitchCallInterval = getHistorySwitchCallInterval;
 exports.isAtLeastExtenInCallRecording = isAtLeastExtenInCallRecording;
 exports.getHistoryGroupsCallInterval = getHistoryGroupsCallInterval;
+exports.getHistoryQueues = getHistoryQueues;
