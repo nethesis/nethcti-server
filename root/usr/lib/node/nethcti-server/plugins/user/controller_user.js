@@ -288,6 +288,9 @@ function config(path, ROBPath) {
     for (userid in json) { // cycle users
       // add new user in memory
       newuser = new User(userid, json[userid].name);
+      // firstname/lastname are optional: absent on legacy users.json
+      newuser.setFirstname(json[userid].firstname);
+      newuser.setLastname(json[userid].lastname);
       users[userid] = newuser;
       logger.log.info(IDLOG, 'new user "' + newuser.getUsername() + '" has been created');
     }
