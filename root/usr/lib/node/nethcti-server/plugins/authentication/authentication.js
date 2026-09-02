@@ -98,6 +98,21 @@ var CONFIG_FILEPATH;
 var enabled = true;
 
 /**
+ * Trusted SSO login settings (see ssoLogin): the mint-authorization secret
+ * (empty = disabled), the token-signing key and the user policy.
+ *
+ * @property sso
+ * @type object
+ * @private
+ */
+var sso = {
+  trustedSecret: '',
+  tokenKey: '',
+  userAllowlist: [],
+  userDenylist: ['admin', 'administrator', 'root']
+};
+
+/**
  * The event emitter.
  *
  * @property emitter
@@ -402,6 +417,20 @@ function config(path) {
     temp.forEach(function (addr) {
       unauthenticatedCallAddress.push(new Netmask(addr));
     });
+  }
+
+  // trusted SSO login (see ssoLogin): enabled when the mint secret is set
+  if (typeof json.sso_trusted_secret === 'string' && json.sso_trusted_secret !== '') {
+    sso.trustedSecret = json.sso_trusted_secret;
+    sso.tokenKey = (typeof json.sso_token_key === 'string' && json.sso_token_key !== '') ?
+      json.sso_token_key : json.sso_trusted_secret;
+    sso.userAllowlist = String(json.sso_user_allowlist || '').split(/[\s,]+/)
+      .map(function(u) { return u.trim().toLowerCase(); }).filter(Boolean);
+    logger.log.info(IDLOG, 'trusted SSO login is enabled (allowlist entries: ' + sso.userAllowlist.length + ')');
+  } else {
+    sso.trustedSecret = '';
+    sso.tokenKey = '';
+    sso.userAllowlist = [];
   }
 
   startIntervalRemoveExpiredTokens();
@@ -1412,10 +1441,48 @@ function isShibbolethUser(username) {
   }
 }
 
+/**
+ * Attempts a trusted SSO login: a trusted front-end forwards the asserted
+ * username together with the shared secret, without a user password.
+ *
+ * @method ssoLogin
+ * @param {string} username The username asserted by the trusted front-end
+ * @param {string} secret The trusted SSO shared secret
+ * @return {object|false} False when SSO does not apply; { denied: true } when
+ *   the user policy rejects the username; else { username, tokenPassword }.
+ */
+function ssoLogin(username, secret) {
+  try {
+    if (sso.trustedSecret === '' ||
+      typeof username !== 'string' || username.trim() === '' ||
+      typeof secret !== 'string' || secret === '') {
+
+      return false;
+    }
+    var a = Buffer.from(secret);
+    var b = Buffer.from(sso.trustedSecret);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      return false;
+    }
+    var u = username.trim().toLowerCase();
+    if (sso.userDenylist.indexOf(u) !== -1 ||
+      (sso.userAllowlist.length > 0 && sso.userAllowlist.indexOf(u) === -1)) {
+
+      logger.log.warn(IDLOG, 'trusted SSO login rejected by user policy for "' + username + '"');
+      return { denied: true };
+    }
+    return { username: username, tokenPassword: sso.tokenKey };
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
 // public interface
 exports.on = on;
 exports.start = start;
 exports.config = config;
+exports.ssoLogin = ssoLogin;
 exports.reload = reload;
 exports.getNonce = getNonce;
 exports.setLogger = setLogger;

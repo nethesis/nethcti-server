@@ -31,6 +31,7 @@ module.exports = function(options, imports, register) {
       on: authentication.on,
       config: authentication.config,
       getNonce: authentication.getNonce,
+      ssoLogin: authentication.ssoLogin,
       setLogger: authentication.setLogger,
       verifyToken: authentication.verifyToken,
       removeToken: authentication.removeToken,
