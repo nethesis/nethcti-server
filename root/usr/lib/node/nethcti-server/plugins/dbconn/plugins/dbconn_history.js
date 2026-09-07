@@ -605,9 +605,14 @@ function getHistoryCallInterval(data, cb) {
         '(cnum IN (?) AND dst NOT IN (?)) AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)' +
-        'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED")' +
-        'OR (disposition IN ("NO ANSWER","BUSY","FAILED")' +
-        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))' +
+        // Same opt-in as the "all directions" branch above: this clause hides the
+        // unanswered legs of a call that someone did answer, which for a queue or
+        // ring group are the very legs the caller asked to expand. It stays on for
+        // every other caller.
+        (data.expandLegs ? '' :
+          'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED")' +
+          'OR (disposition IN ("NO ANSWER","BUSY","FAILED")' +
+          'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))') +
         ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.endpoints, data.endpoints,
         data.from, data.to,
@@ -846,7 +851,12 @@ function getHistorySwitchCallInterval(data, cb) {
         'dst IN ' + data.extens + ' AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?) ' +
-        'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED") OR (disposition IN ("NO ANSWER","BUSY","FAILED") AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))' +
+        // Same opt-in as the "all directions" branch above: this clause hides the
+        // unanswered legs of a call that someone did answer, which for a queue or
+        // ring group are the very legs the caller asked to expand. It stays on for
+        // every other caller.
+        (data.expandLegs ? '' :
+          'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED") OR (disposition IN ("NO ANSWER","BUSY","FAILED") AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))') +
         ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.trunks, data.trunks,
         data.from, data.to,
