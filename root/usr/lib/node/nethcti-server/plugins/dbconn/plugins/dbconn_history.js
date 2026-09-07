@@ -656,6 +656,22 @@ function getHistoryCallInterval(data, cb) {
       ];
     }
 
+    // With expandLegs the caller groups a call's legs back into one row, so the
+    // filter has to select CALLS, not legs. Every clause above matches leg by
+    // leg — a direction filter keeps only the leg carrying the trunk (or the
+    // user's own extension) — so a queue or ring-group call came back as a
+    // single row with nothing left to expand: of the nine legs of one queue
+    // call, the incoming filter returned four, and pruning left one.
+    //
+    // Selecting by linkedid returns the whole call whenever any of its legs
+    // matches. It also means a call the user took part in brings back the legs
+    // of the colleagues involved (who else the queue rang, who answered
+    // instead), which is the point of expanding a call.
+    if (data.expandLegs && whereClause && whereClause.length) {
+      whereClause = ['linkedid IN (SELECT linkedid FROM cdr WHERE ' + whereClause[0] + ')']
+        .concat(whereClause.slice(1));
+    }
+
     // search
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
       where: whereClause,
@@ -906,6 +922,22 @@ function getHistorySwitchCallInterval(data, cb) {
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
         "%" + data.filter + "%", "%" + data.filter + "%"
       ];
+    }
+
+    // With expandLegs the caller groups a call's legs back into one row, so the
+    // filter has to select CALLS, not legs. Every clause above matches leg by
+    // leg — a direction filter keeps only the leg carrying the trunk (or the
+    // user's own extension) — so a queue or ring-group call came back as a
+    // single row with nothing left to expand: of the nine legs of one queue
+    // call, the incoming filter returned four, and pruning left one.
+    //
+    // Selecting by linkedid returns the whole call whenever any of its legs
+    // matches. It also means a call the user took part in brings back the legs
+    // of the colleagues involved (who else the queue rang, who answered
+    // instead), which is the point of expanding a call.
+    if (data.expandLegs && whereClause && whereClause.length) {
+      whereClause = ['linkedid IN (SELECT linkedid FROM cdr WHERE ' + whereClause[0] + ')']
+        .concat(whereClause.slice(1));
     }
 
     // search
