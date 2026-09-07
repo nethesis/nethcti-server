@@ -605,9 +605,14 @@ function getHistoryCallInterval(data, cb) {
         '(cnum IN (?) AND dst NOT IN (?)) AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)' +
-        'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED")' +
-        'OR (disposition IN ("NO ANSWER","BUSY","FAILED")' +
-        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))' +
+        // Same opt-in as the "all directions" branch above: this clause hides the
+        // unanswered legs of a call that someone did answer, which for a queue or
+        // ring group are the very legs the caller asked to expand. It stays on for
+        // every other caller.
+        (data.expandLegs ? '' :
+          'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED")' +
+          'OR (disposition IN ("NO ANSWER","BUSY","FAILED")' +
+          'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))') +
         ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.endpoints, data.endpoints,
         data.from, data.to,
@@ -633,15 +638,38 @@ function getHistoryCallInterval(data, cb) {
       whereClause = [
         '(cnum IN (?) OR dst IN (?)) AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR dst_cnam LIKE ? OR ccompany LIKE ? OR dst_ccompany LIKE ?) AND ' +
-        '(uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.uniqueid) AND ' +
-        '((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")' +
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR dst_cnam LIKE ? OR ccompany LIKE ? OR dst_ccompany LIKE ?)' +
+        // Unanswered legs are kept out unless the caller asks for them. They are
+        // duplicates for anyone who lists calls as they come: a queue writes one
+        // row per member it rang, and a ring group dials all its members from the
+        // SAME channel, so all those legs share one uniqueid. Only a caller that
+        // groups them back into one call per linkedid wants them, and it says so
+        // with expandLegs.
+        (data.expandLegs ? '' :
+          ' AND (uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.uniqueid)' +
+          ' AND ((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")') +
         ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.endpoints, data.endpoints,
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
         "%" + data.filter + "%", "%" + data.filter + "%"
       ];
+    }
+
+    // With expandLegs the caller groups a call's legs back into one row, so the
+    // filter has to select CALLS, not legs. Every clause above matches leg by
+    // leg — a direction filter keeps only the leg carrying the trunk (or the
+    // user's own extension) — so a queue or ring-group call came back as a
+    // single row with nothing left to expand: of the nine legs of one queue
+    // call, the incoming filter returned four, and pruning left one.
+    //
+    // Selecting by linkedid returns the whole call whenever any of its legs
+    // matches. It also means a call the user took part in brings back the legs
+    // of the colleagues involved (who else the queue rang, who answered
+    // instead), which is the point of expanding a call.
+    if (data.expandLegs && whereClause && whereClause.length) {
+      whereClause = ['linkedid IN (SELECT linkedid FROM cdr WHERE ' + whereClause[0] + ')']
+        .concat(whereClause.slice(1));
     }
 
     // search
@@ -839,7 +867,12 @@ function getHistorySwitchCallInterval(data, cb) {
         'dst IN ' + data.extens + ' AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?) ' +
-        'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED") OR (disposition IN ("NO ANSWER","BUSY","FAILED") AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))' +
+        // Same opt-in as the "all directions" branch above: this clause hides the
+        // unanswered legs of a call that someone did answer, which for a queue or
+        // ring group are the very legs the caller asked to expand. It stays on for
+        // every other caller.
+        (data.expandLegs ? '' :
+          'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED") OR (disposition IN ("NO ANSWER","BUSY","FAILED") AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))') +
         ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.trunks, data.trunks,
         data.from, data.to,
@@ -874,14 +907,37 @@ function getHistorySwitchCallInterval(data, cb) {
     } else {
       whereClause = [
         '(calldate>=? AND calldate<=?) AND ' +
-        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?) AND ' +
-        '(uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.uniqueid) AND ' +
-        '((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")' +
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ? OR dst_cnam LIKE ? OR dst_ccompany LIKE ?)' +
+        // Unanswered legs are kept out unless the caller asks for them. They are
+        // duplicates for anyone who lists calls as they come: a queue writes one
+        // row per member it rang, and a ring group dials all its members from the
+        // SAME channel, so all those legs share one uniqueid. Only a caller that
+        // groups them back into one call per linkedid wants them, and it says so
+        // with expandLegs.
+        (data.expandLegs ? '' :
+          ' AND (uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.uniqueid)' +
+          ' AND ((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")') +
         ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
         "%" + data.filter + "%", "%" + data.filter + "%"
       ];
+    }
+
+    // With expandLegs the caller groups a call's legs back into one row, so the
+    // filter has to select CALLS, not legs. Every clause above matches leg by
+    // leg — a direction filter keeps only the leg carrying the trunk (or the
+    // user's own extension) — so a queue or ring-group call came back as a
+    // single row with nothing left to expand: of the nine legs of one queue
+    // call, the incoming filter returned four, and pruning left one.
+    //
+    // Selecting by linkedid returns the whole call whenever any of its legs
+    // matches. It also means a call the user took part in brings back the legs
+    // of the colleagues involved (who else the queue rang, who answered
+    // instead), which is the point of expanding a call.
+    if (data.expandLegs && whereClause && whereClause.length) {
+      whereClause = ['linkedid IN (SELECT linkedid FROM cdr WHERE ' + whereClause[0] + ')']
+        .concat(whereClause.slice(1));
     }
 
     // search
