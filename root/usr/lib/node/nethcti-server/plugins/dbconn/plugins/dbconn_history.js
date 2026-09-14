@@ -656,21 +656,12 @@ function getHistoryCallInterval(data, cb) {
       ];
     }
 
-    // With expandLegs the caller groups a call's legs back into one row, so the
-    // filter has to select CALLS, not legs. Every clause above matches leg by
-    // leg — a direction filter keeps only the leg carrying the trunk (or the
-    // user's own extension) — so a queue or ring-group call came back as a
-    // single row with nothing left to expand: of the nine legs of one queue
-    // call, the incoming filter returned four, and pruning left one.
-    //
-    // Selecting by linkedid returns the whole call whenever any of its legs
-    // matches. It also means a call the user took part in brings back the legs
-    // of the colleagues involved (who else the queue rang, who answered
-    // instead), which is the point of expanding a call.
-    if (data.expandLegs && whereClause && whereClause.length) {
-      whereClause = ['linkedid IN (SELECT linkedid FROM cdr WHERE ' + whereClause[0] + ')']
-        .concat(whereClause.slice(1));
-    }
+    // NOTE: the personal history is deliberately NOT widened to whole calls the way
+    // the switchboard one is (see getHistorySwitchCallInterval). Its clauses match
+    // the legs the user is a party to, and selecting by linkedid instead would
+    // return the legs between their colleagues as well — the detail the switchboard
+    // view exists for, and which is gated there by the "switchboard cdr"
+    // authorization that this endpoint does not require.
 
     // search
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
