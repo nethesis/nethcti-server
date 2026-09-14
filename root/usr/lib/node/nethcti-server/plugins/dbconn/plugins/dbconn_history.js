@@ -508,6 +508,30 @@ function getAllUserHistorySmsInterval(data, cb) {
  *   @param {boolean} [removeLostCalls] True if you want to remove lost calls from the results
  * @param {function} cb The callback function
  */
+/**
+ * Returns the GROUP BY used by the history queries.
+ *
+ * Rows are normally aggregated per (uniqueid, linkedid, disposition). A ring
+ * group dials all its members from the SAME channel, so their legs share one
+ * uniqueid, and the ones that ended the same way collapse into a single row
+ * before the caller ever sees them — the ringing members are lost, and the
+ * non-aggregated columns of the survivor (dst, dstchannel, ...) come from an
+ * arbitrary leg of the group. Adding the destination channel, which is the
+ * member that was rung, keeps one row per leg for a caller that asked to
+ * expand them.
+ *
+ * @param {object} data The query parameters, as received by the caller.
+ * @return {array} The columns to group by.
+ * @private
+ */
+function historyGroupBy(data) {
+  var group = ['uniqueid', 'linkedid', 'disposition'];
+  if (data.expandLegs) {
+    group.push('dstchannel');
+  }
+  return group;
+}
+
 function getHistoryCallInterval(data, cb) {
   try {
     // check parameters
@@ -669,7 +693,7 @@ function getHistoryCallInterval(data, cb) {
       attributes: attributes,
       offset: (data.offset ? parseInt(data.offset) : 0),
       limit: (data.limit ? parseInt(data.limit) : null),
-      group: ['uniqueid','linkedid','disposition'],
+      group: historyGroupBy(data),
       order: (data.sort ? data.sort : 'time desc')
 
     }).then(function(results) {
@@ -678,7 +702,7 @@ function getHistoryCallInterval(data, cb) {
       }).then(function(enrichedResults) {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
             where: whereClause,
-            group: ['uniqueid','linkedid','disposition'],
+            group: historyGroupBy(data),
             attributes: attributes
             }).then(function(count) {
                 const res = {
@@ -937,14 +961,14 @@ function getHistorySwitchCallInterval(data, cb) {
       attributes: attributes,
       offset: (data.offset ? parseInt(data.offset) : 0),
       limit: (data.limit ? parseInt(data.limit) : null),
-      group: ['uniqueid','linkedid','disposition'],
+      group: historyGroupBy(data),
       order: (data.sort ? data.sort : 'time desc')
 
     }).then(function(results) {
       enrichHistoryResultsWithVoicemail(results).then(function(enrichedResults) {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
             where: whereClause,
-            group: ['uniqueid','linkedid','disposition'],
+            group: historyGroupBy(data),
             attributes: attributes
              }).then(function(count) {
                 const res = {
