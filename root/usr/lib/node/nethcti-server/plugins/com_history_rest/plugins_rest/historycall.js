@@ -818,15 +818,14 @@ function setCompAuthorization(ca) {
           if (req.params.removeLostCalls) {
             obj.removeLostCalls = req.params.removeLostCalls;
           }
-<<<<<<< HEAD
           if (req.params.queue) {
             obj.queue = req.params.queue;
-=======
+          }
+
           // Asks for every leg of a call, instead of one row per call. Only a
           // caller that groups them back together wants this.
           if (req.params.expandLegs) {
             obj.expandLegs = req.params.expandLegs;
->>>>>>> origin/feat_group_calls
           }
 
           // use the history component
