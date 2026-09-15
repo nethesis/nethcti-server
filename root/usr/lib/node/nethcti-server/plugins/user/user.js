@@ -51,6 +51,26 @@ exports.User = function (uname, na) {
   var name = na;
 
   /**
+   * The first name of the user. Optional: may be empty on legacy
+   * users.json that predates the firstname/lastname fields.
+   *
+   * @property firstname
+   * @type {string}
+   * @private
+   */
+  var firstname = '';
+
+  /**
+   * The last name of the user. Optional: may be empty on legacy
+   * users.json that predates the firstname/lastname fields.
+   *
+   * @property lastname
+   * @type {string}
+   * @private
+   */
+  var lastname = '';
+
+  /**
    * The presence of the user.
    *
    * @property presence
@@ -148,6 +168,48 @@ exports.User = function (uname, na) {
    */
   function getName() {
     return name;
+  }
+
+  /**
+   * Returns the first name of the user.
+   *
+   * @method getFirstname
+   * @return {string} The first name (empty string if not set).
+   */
+  function getFirstname() {
+    return firstname ? firstname : '';
+  }
+
+  /**
+   * Set the first name of the user. Tolerates missing/non-string
+   * values by falling back to an empty string.
+   *
+   * @method setFirstname
+   * @param {string} value The first name
+   */
+  function setFirstname(value) {
+    firstname = (typeof value === 'string') ? value : '';
+  }
+
+  /**
+   * Returns the last name of the user.
+   *
+   * @method getLastname
+   * @return {string} The last name (empty string if not set).
+   */
+  function getLastname() {
+    return lastname ? lastname : '';
+  }
+
+  /**
+   * Set the last name of the user. Tolerates missing/non-string
+   * values by falling back to an empty string.
+   *
+   * @method setLastname
+   * @param {string} value The last name
+   */
+  function setLastname(value) {
+    lastname = (typeof value === 'string') ? value : '';
   }
 
   /**
@@ -436,6 +498,8 @@ exports.User = function (uname, na) {
 
     return {
       name: getName(),
+      firstname: getFirstname(),
+      lastname: getLastname(),
       username: username,
       mainPresence: getMainPresence(),
       presence: getPresence(),
@@ -450,6 +514,10 @@ exports.User = function (uname, na) {
   return {
     toJSON: toJSON,
     getName: getName,
+    getFirstname: getFirstname,
+    setFirstname: setFirstname,
+    getLastname: getLastname,
+    setLastname: setLastname,
     toString: toString,
     setPresence: setPresence,
     getPresence: getPresence,
