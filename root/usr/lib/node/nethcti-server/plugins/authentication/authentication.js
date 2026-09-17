@@ -1156,13 +1156,13 @@ function updateTokenExpires(username, token) {
 
     // check grants presence
     if (!grants[username]) {
-      logger.log.warn(IDLOG, 'update token expiration "' + token + '" failed: no grants for username ' + username);
+      logger.log.warn(IDLOG, 'update token expiration failed: no grants for username ' + username);
       return;
     }
 
     // check token presence
     if (!grants[username][token]) {
-      logger.log.warn(IDLOG, 'update token expiration "' + token + '" failed: token is not present for username ' + username);
+      logger.log.warn(IDLOG, 'update token expiration failed: token is not present for username ' + username);
       return;
     }
 
