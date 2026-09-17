@@ -1395,7 +1395,13 @@ function connHdlr(socket) {
         }
 
       } catch (err1) {
-        logger.log.error(IDLOG, err1.stack);
+        // port scanners and stray HTTP clients send data that is not JSON
+        if (err1 instanceof SyntaxError) {
+          logger.log.info(IDLOG, 'discarded malformed message from ' +
+            getClientSocketEndpoint(socket) + ': ' + err1.message);
+        } else {
+          logger.log.error(IDLOG, err1.stack);
+        }
       }
     });
 
