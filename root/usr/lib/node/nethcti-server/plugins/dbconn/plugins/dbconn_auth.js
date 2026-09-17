@@ -210,7 +210,6 @@ function getToken(id) {
         [id],
         (err, results, fields) => {
         try {
-          console.log(results);
           if (err) {
             logger.log.error(IDLOG, `getting token id "${id}" failed: ${err.toString()}`);
             reject(err.toString());
