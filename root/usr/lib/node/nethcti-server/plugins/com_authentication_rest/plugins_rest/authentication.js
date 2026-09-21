@@ -281,6 +281,18 @@ function setCompUser(comp) {
             useShibboleth = true;
             logger.log.info(IDLOG, 'user supplied shibboleth headers to login: corresponding username is "' + req.params.username + '"');
           }
+          // trusted SSO login (see authentication.ssoLogin): the token
+          // password stands in for the user password
+          var ssoLogin = compAuthe.ssoLogin(req.headers['x-sso-user'], req.headers['x-sso-secret']);
+          if (ssoLogin && ssoLogin.denied) {
+            compUtil.net.sendHttp401(IDLOG, res);
+            return;
+          }
+          if (ssoLogin) {
+            req.params.username = ssoLogin.username;
+            req.params.password = ssoLogin.tokenPassword;
+            logger.log.info(IDLOG, 'trusted SSO login: corresponding username is "' + req.params.username + '"');
+          }
           // username can be a real username or an extension number. This is because
           // the user can do the login with his username or with the main extension number
           var username = req.params.username;
@@ -315,7 +327,7 @@ function setCompUser(comp) {
             compUtil.net.sendHttp401(IDLOG, res, errmsg, '1');
             return;
           }
-          compAuthe.authenticate(username, password, function(err) {
+          var onAuthenticated = function(err) {
             try {
               if (err) {
                 logger.log.warn(IDLOG, 'authentication failed for user "' + username + '"');
@@ -339,7 +351,14 @@ function setCompUser(comp) {
               logger.log.error(IDLOG, error.stack);
               compUtil.net.sendHttp401(IDLOG, res);
             }
-          });
+          };
+          // trusted SSO login skips the password verification (PAM): the user
+          // has already been authenticated by the trusted front-end
+          if (ssoLogin) {
+            onAuthenticated();
+          } else {
+            compAuthe.authenticate(username, password, onAuthenticated);
+          }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
           compUtil.net.sendHttp401(IDLOG, res);
