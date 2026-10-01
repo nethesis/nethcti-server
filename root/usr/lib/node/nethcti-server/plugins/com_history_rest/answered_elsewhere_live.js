@@ -109,7 +109,12 @@ function getActiveLinkedids(cb) {
         }
 
         if (message.event === 'CoreShowChannel' && message.linkedid) {
-          activeLinkedids[message.linkedid] = true;
+          // The queues the call is in: its CDR rows that name them are written
+          // when the caller hangs up.
+          activeLinkedids[message.linkedid] = activeLinkedids[message.linkedid] || [];
+          if (message.application === 'Queue' && message.applicationdata) {
+            activeLinkedids[message.linkedid].push(message.applicationdata.split(',')[0]);
+          }
         } else if (message.event === 'CoreShowChannelsComplete') {
           socket.write('Action: Logoff\r\n\r\n');
           finish(null);
@@ -143,9 +148,17 @@ function isAnsweredElsewhereCandidate(row) {
     ['NO ANSWER', 'BUSY', 'FAILED'].indexOf(row.disposition) !== -1;
 }
 
-function promoteAnsweredElsewhereRows(results, logger, idLog, cb) {
+// The call went through a queue whose "answered elsewhere" option is on.
+function isThroughAnsweredElsewhereQueue(row, callQueues, queues) {
+  return [row.queue].concat(callQueues).some(function (queue) {
+    return queue && queues.indexOf(String(queue)) !== -1;
+  });
+}
+
+function promoteAnsweredElsewhereRows(results, queues, logger, idLog, cb) {
   try {
-    if (!results || !Array.isArray(results.rows) || results.rows.length === 0) {
+    if (!results || !Array.isArray(results.rows) || results.rows.length === 0 ||
+      !queues || queues.length === 0) {
       cb(null, results);
       return;
     }
@@ -174,7 +187,8 @@ function promoteAnsweredElsewhereRows(results, logger, idLog, cb) {
       }
 
       plainRows.forEach(function (row) {
-        if (activeLinkedids[row.linkedid] && isAnsweredElsewhereCandidate(row)) {
+        if (activeLinkedids[row.linkedid] && isAnsweredElsewhereCandidate(row) &&
+          isThroughAnsweredElsewhereQueue(row, activeLinkedids[row.linkedid], queues)) {
           row.disposition = 'ANSWERED_ELSEWHERE';
           row.normalized_disposition = 'ANSWERED_ELSEWHERE';
         }

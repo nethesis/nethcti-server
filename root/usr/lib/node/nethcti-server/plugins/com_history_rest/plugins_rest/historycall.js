@@ -834,7 +834,7 @@ function setCompAuthorization(ca) {
               if (err1) {
                 throw err1;
               } else {
-                answeredElsewhereLive.promoteAnsweredElsewhereRows(results, logger, IDLOG, function (err2, promotedResults) {
+                answeredElsewhereLive.promoteAnsweredElsewhereRows(results, obj.answeredElsewhereQueues, logger, IDLOG, function (err2, promotedResults) {
                   try {
                     if (err2) {
                       throw err2;

@@ -334,7 +334,7 @@ function setCompAuthorization(ca) {
               if (err) {
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
               } else {
-                answeredElsewhereLive.promoteAnsweredElsewhereRows(results, logger, IDLOG, function (err1, promotedResults) {
+                answeredElsewhereLive.promoteAnsweredElsewhereRows(results, obj.answeredElsewhereQueues, logger, IDLOG, function (err1, promotedResults) {
                   try {
                     if (err1) {
                       throw err1;

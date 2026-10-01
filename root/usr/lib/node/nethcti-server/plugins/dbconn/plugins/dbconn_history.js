@@ -481,7 +481,64 @@ function getAllUserHistorySmsInterval(data, cb) {
   }
 }
 
-function getAnsweredElsewhereCondition(rowAlias) {
+/**
+ * Reads the queues whose "answered elsewhere" option is on: only the calls
+ * through one of them are marked answered elsewhere, as the phones of their
+ * members do. The option is in the FreePBX database, which the CDR connection
+ * cannot read. On failure the CDR disposition is left as it is.
+ *
+ * @method getAnsweredElsewhereQueues
+ * @param {function} cb Called with the queue numbers
+ * @private
+ */
+function getAnsweredElsewhereQueues(cb) {
+  var conn = compDbconnMain.dbConn && compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.AMPUSERS];
+  if (!conn) {
+    logger.log.warn(IDLOG, 'no connection to read the queues that mark calls answered elsewhere');
+    cb([]);
+    return;
+  }
+  conn.query(
+    'SELECT `id` FROM `queues_details` WHERE `keyword` = "answered_elsewhere" AND LOWER(`data`) IN ("1","yes")',
+    function (err, results) {
+      if (err) {
+        logger.log.warn(IDLOG, 'reading the queues that mark calls answered elsewhere: ' + err.toString());
+        cb([]);
+        return;
+      }
+      cb(results.map(function (row) {
+        return String(row.id);
+      }).filter(function (id) {
+        return /^[0-9]+$/.test(id);
+      }));
+    }
+  );
+}
+
+/**
+ * Runs a history query once the queues that mark calls answered elsewhere are
+ * known. They are kept in data.answeredElsewhereQueues for the caller.
+ *
+ * @method withAnsweredElsewhereQueues
+ * @param {function} query The history query
+ * @return {function} The query, taking the same arguments
+ * @private
+ */
+function withAnsweredElsewhereQueues(query) {
+  return function (data, cb) {
+    getAnsweredElsewhereQueues(function (queues) {
+      if (data && typeof data === 'object') {
+        data.answeredElsewhereQueues = queues;
+      }
+      query(data, cb);
+    });
+  };
+}
+
+function getAnsweredElsewhereCondition(rowAlias, queues) {
+  if (!queues || queues.length === 0) {
+    return 'FALSE';
+  }
   return '(' +
     rowAlias + '.disposition IN ("NO ANSWER","BUSY","FAILED") AND ' +
     rowAlias + '.channel LIKE "Local/%@from-queue-%;2" AND ' +
@@ -494,12 +551,18 @@ function getAnsweredElsewhereCondition(rowAlias) {
           'answered.lastapp = "Queue" OR ' +
           'answered.channel LIKE "Local/%@from-queue-%;2"' +
         ')' +
+    ') AND ' +
+    'EXISTS (' +
+      'SELECT 1 FROM cdr AS queue_call ' +
+      'WHERE queue_call.linkedid = ' + rowAlias + '.linkedid ' +
+        'AND queue_call.lastapp = "Queue" ' +
+        'AND queue_call.dst IN ("' + queues.join('","') + '")' +
     ')' +
   ')';
 }
 
-function getEffectiveDisposition(rowAlias) {
-  return 'CASE WHEN ' + getAnsweredElsewhereCondition(rowAlias) +
+function getEffectiveDisposition(rowAlias, queues) {
+  return 'CASE WHEN ' + getAnsweredElsewhereCondition(rowAlias, queues) +
     ' THEN "ANSWERED_ELSEWHERE" ELSE ' + rowAlias + '.disposition END';
 }
 
@@ -592,7 +655,7 @@ function getHistoryCallInterval(data, cb) {
 
     // define the mysql field to be returned. The "recordingfile" field
     // is returned only if the "data.recording" argument is true
-    var effectiveDisposition = getEffectiveDisposition('cdr');
+    var effectiveDisposition = getEffectiveDisposition('cdr', data.answeredElsewhereQueues);
     var attributes = [
       ['UNIX_TIMESTAMP(calldate)', 'time'],
       'channel', 'dstchannel', 'uniqueid', 'linkedid', 'userfield',
@@ -832,7 +895,7 @@ function getHistorySwitchCallInterval(data, cb) {
 
     // define the mysql field to be returned. The "recordingfile" field
     // is returned only if the "data.recording" argument is true
-    var effectiveDisposition = getEffectiveDisposition('cdr');
+    var effectiveDisposition = getEffectiveDisposition('cdr', data.answeredElsewhereQueues);
     var attributes = [
       ['UNIX_TIMESTAMP(calldate)', 'time'],
       'channel', 'dstchannel', 'uniqueid', 'linkedid', 'userfield',
@@ -1257,8 +1320,8 @@ function isAtLeastExtenInCall(uniqueid, extensions, cb) {
 
 apiList.isAtLeastExtenInCall = isAtLeastExtenInCall;
 apiList.getHistorySmsInterval = getHistorySmsInterval;
-apiList.getHistoryCallInterval = getHistoryCallInterval;
-apiList.getHistorySwitchCallInterval = getHistorySwitchCallInterval;
+apiList.getHistoryCallInterval = withAnsweredElsewhereQueues(getHistoryCallInterval);
+apiList.getHistorySwitchCallInterval = withAnsweredElsewhereQueues(getHistorySwitchCallInterval);
 apiList.getHistoryQueues = getHistoryQueues;
 apiList.getAllUserHistorySmsInterval = getAllUserHistorySmsInterval;
 
