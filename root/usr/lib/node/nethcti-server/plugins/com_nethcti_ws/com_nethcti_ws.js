@@ -2134,7 +2134,7 @@ function wsConnHdlr(socket) {
     // this event is emitted when a client websocket has been connected
     logger.log.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_CONNECTED + '"');
     emitter.emit(EVT_WS_CLIENT_CONNECTED, socket);
-    logger.log.warn(IDLOG, 'new ws connection from ' + getWebsocketEndpoint(socket) + ' (sid: ' + socket.id + ')');
+    logger.log.info(IDLOG, 'new ws connection from ' + getWebsocketEndpoint(socket) + ' (sid: ' + socket.id + ')');
     // set the listeners for the new http socket connection
     socket.on('ping', (cb) => {
       if (typeof cb === 'function') {
@@ -2247,7 +2247,7 @@ function getWebsocketEndpoint(socket) {
 function unauthorized(socket) {
   try {
     send401(socket); // send 401 unauthorized response to the client
-    logger.log.warn(IDLOG, 'disconnect socket ' + getWebsocketEndpoint(socket));
+    logger.log.info(IDLOG, 'disconnect socket ' + getWebsocketEndpoint(socket));
     socket.disconnect();
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -2468,7 +2468,7 @@ function doLogin(socket, obj) {
  */
 function disconnHdlr(socket, reason) {
   try {
-    logger.log.warn(IDLOG, 'ws disconnected ' + getWebsocketEndpoint(socket) + ' - reason: ' + reason + (wsid[socket.id] ? ' (user: ' + wsid[socket.id].username + ')' : ''));
+    logger.log.info(IDLOG, 'ws disconnected ' + getWebsocketEndpoint(socket) + ' - reason: ' + reason + (wsid[socket.id] ? ' (user: ' + wsid[socket.id].username + ')' : ''));
     var username;
     // when the user is not authenticated but connected by websocket,
     // the "socket.id" is not present in the "wsid" property
@@ -2515,7 +2515,7 @@ function disconnHdlr(socket, reason) {
  */
 let logWsNumber = () => {
   try {
-    logger.log.warn(IDLOG, `ws conn ${wsServer.sockets.sockets.size} - wsid conn ${getNumConnectedClients()}`);
+    logger.log.info(IDLOG, `ws conn ${wsServer.sockets.sockets.size} - wsid conn ${getNumConnectedClients()}`);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -2595,7 +2595,7 @@ function sendAutheSuccess(socket) {
     socket.emit('authe_ok', {
       message: 'authorized successfully'
     });
-    logger.log.warn(IDLOG, 'sent authorized successfully ("authe_ok") to "' + socket.nethcti.username + '" ' + getWebsocketEndpoint(socket) + ' with sid ' + socket.id);
+    logger.log.info(IDLOG, 'sent authorized successfully ("authe_ok") to "' + socket.nethcti.username + '" ' + getWebsocketEndpoint(socket) + ' with sid ' + socket.id);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
