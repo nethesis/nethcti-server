@@ -109,12 +109,8 @@ function getActiveLinkedids(cb) {
         }
 
         if (message.event === 'CoreShowChannel' && message.linkedid) {
-          // The queues the call is in: its CDR rows that name them are written
-          // when the caller hangs up.
           activeLinkedids[message.linkedid] = activeLinkedids[message.linkedid] || [];
-          if (message.application === 'Queue' && message.applicationdata) {
-            activeLinkedids[message.linkedid].push(message.applicationdata.split(',')[0]);
-          }
+          activeLinkedids[message.linkedid].push(message);
         } else if (message.event === 'CoreShowChannelsComplete') {
           socket.write('Action: Logoff\r\n\r\n');
           finish(null);
@@ -148,11 +144,27 @@ function isAnsweredElsewhereCandidate(row) {
     ['NO ANSWER', 'BUSY', 'FAILED'].indexOf(row.disposition) !== -1;
 }
 
-// The call went through a queue whose "answered elsewhere" option is on.
-function isThroughAnsweredElsewhereQueue(row, callQueues, queues) {
-  return [row.queue].concat(callQueues).some(function (queue) {
-    return queue && queues.indexOf(String(queue)) !== -1;
+// Whether a queue call still in progress was answered, and by whom, read from
+// its channels: the CDR rows that say so are written only when the call ends.
+// The caller sits in the Queue application of a queue whose "answered
+// elsewhere" option is on, and once a member answers it shares a bridge with
+// that member's Local channel.
+function getQueueAnswer(channels, queues) {
+  var answer = { answered: false, by: '' };
+  channels.forEach(function (caller) {
+    var queue = (caller.applicationdata || '').split(',')[0];
+    if (caller.application !== 'Queue' || queues.indexOf(queue) === -1 || !caller.bridgeid) {
+      return;
+    }
+    answer.answered = true;
+    channels.forEach(function (member) {
+      var match = /^Local\/([^@]+)@from-queue-/.exec(member.channel || '');
+      if (match && member.bridgeid === caller.bridgeid) {
+        answer.by = match[1];
+      }
+    });
   });
+  return answer;
 }
 
 function promoteAnsweredElsewhereRows(results, queues, logger, idLog, cb) {
@@ -187,10 +199,16 @@ function promoteAnsweredElsewhereRows(results, queues, logger, idLog, cb) {
       }
 
       plainRows.forEach(function (row) {
-        if (activeLinkedids[row.linkedid] && isAnsweredElsewhereCandidate(row) &&
-          isThroughAnsweredElsewhereQueue(row, activeLinkedids[row.linkedid], queues)) {
+        if (!activeLinkedids[row.linkedid] || !isAnsweredElsewhereCandidate(row)) {
+          return;
+        }
+        var answer = getQueueAnswer(activeLinkedids[row.linkedid], queues);
+        if (answer.answered) {
           row.disposition = 'ANSWERED_ELSEWHERE';
           row.normalized_disposition = 'ANSWERED_ELSEWHERE';
+          if (answer.by && !row.answered_by_num) {
+            row.answered_by_num = answer.by;
+          }
         }
       });
 
