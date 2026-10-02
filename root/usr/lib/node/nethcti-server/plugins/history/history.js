@@ -114,6 +114,97 @@ function setCompAstProxy(comp) {
   }
 }
 
+function getHistoryRowValues(row) {
+  if (row && row.dataValues) {
+    return row.dataValues;
+  }
+
+  return row;
+}
+
+function setHistoryRowValue(row, field, value) {
+  if (!row) {
+    return;
+  }
+
+  if (row.dataValues) {
+    row.dataValues[field] = value;
+  }
+
+  row[field] = value;
+}
+
+function getQueueNameMap() {
+  var queueNameMap = {};
+
+  if (!compAstProxy || typeof compAstProxy.getJSONQueues !== 'function') {
+    return queueNameMap;
+  }
+
+  var queues = compAstProxy.getJSONQueues() || {};
+  Object.keys(queues).forEach(function(queueId) {
+    var queue = queues[queueId] || {};
+    queueNameMap[String(queueId)] = queue.name || queue.description || queue.queueName || queue.queuename || '';
+  });
+
+  return queueNameMap;
+}
+
+function extractQueueId(rowValues) {
+  if (!rowValues || typeof rowValues !== 'object') {
+    return '';
+  }
+
+  if (rowValues.queue) {
+    return String(rowValues.queue);
+  }
+
+  if (rowValues.lastapp === 'Queue' && rowValues.dst) {
+    return String(rowValues.dst);
+  }
+
+  return '';
+}
+
+function enrichHistoryResultsWithQueueNames(results) {
+  if (!results || !(results.rows instanceof Array) || results.rows.length === 0) {
+    return results;
+  }
+
+  var queueNameMap = getQueueNameMap();
+  var linkedQueueIds = {};
+
+  results.rows.forEach(function(row) {
+    var rowValues = getHistoryRowValues(row);
+    var queueId = extractQueueId(rowValues);
+
+    if (queueId && rowValues.linkedid && !linkedQueueIds[rowValues.linkedid]) {
+      linkedQueueIds[rowValues.linkedid] = queueId;
+    }
+  });
+
+  results.rows.forEach(function(row) {
+    var rowValues = getHistoryRowValues(row);
+    var queueId = extractQueueId(rowValues);
+
+    if (!queueId && rowValues.linkedid && linkedQueueIds[rowValues.linkedid]) {
+      queueId = linkedQueueIds[rowValues.linkedid];
+    }
+
+    if (!queueId) {
+      return;
+    }
+
+    setHistoryRowValue(row, 'queue', queueId);
+
+    if (queueNameMap[queueId]) {
+      setHistoryRowValue(row, 'queue_name', queueNameMap[queueId]);
+    }
+  });
+
+  return results;
+}
+
 /**
  * Get the history call of the specified extension into the interval time.
  * It can be possible to filter the results.
@@ -151,7 +242,14 @@ function getHistoryCallInterval(data, cb) {
       'endpoints ' + data.endpoints + ' and filter ' + (data.filter ? data.filter : '""') +
       (data.recording ? ' with recording data' : ''));
 
-    dbconn.getHistoryCallInterval(data, cb);
+    dbconn.getHistoryCallInterval(data, function(err, results) {
+      if (err) {
+        cb(err);
+        return;
+      }
+
+      cb(null, enrichHistoryResultsWithQueueNames(results));
+    });
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -198,7 +296,78 @@ function getHistorySwitchCallInterval(data, cb) {
 
     data.trunks = compAstProxy.getTrunksList();
     data.extens = compAstProxy.getExtensList();
-    dbconn.getHistorySwitchCallInterval(data, cb);
+    dbconn.getHistorySwitchCallInterval(data, function(err, results) {
+      if (err) {
+        cb(err);
+        return;
+      }
+
+      cb(null, enrichHistoryResultsWithQueueNames(results));
+    });
+
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+function getHistoryQueues(data, cb) {
+  try {
+    if (typeof data !== 'object' ||
+      typeof cb !== 'function' ||
+      !(data.endpoints instanceof Array)) {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    var queueNameMap = getQueueNameMap();
+    var queuesMap = {};
+
+    data.endpoints.forEach(function(endpoint) {
+      Object.keys(compAstProxy.getQueueIdsOfExten(endpoint)).forEach(function(queueId) {
+        queuesMap[queueId] = {
+          queue: queueId,
+          name: queueNameMap[queueId] || ''
+        };
+      });
+    });
+
+    dbconn.getHistoryQueues(data, function(err, results) {
+      if (err) {
+        cb(err);
+        return;
+      }
+
+      results.forEach(function(row) {
+        var queueId = row && row.queue ? String(row.queue) : '';
+        if (!queueId) {
+          return;
+        }
+
+        if (!queuesMap[queueId]) {
+          queuesMap[queueId] = {
+            queue: queueId,
+            name: queueNameMap[queueId] || ''
+          };
+        }
+      });
+
+      var queues = Object.keys(queuesMap).map(function(queueId) {
+        return queuesMap[queueId];
+      }).sort(function(a, b) {
+        var labelA = (a.name || a.queue).toLowerCase();
+        var labelB = (b.name || b.queue).toLowerCase();
+        if (labelA < labelB) {
+          return -1;
+        }
+        if (labelA > labelB) {
+          return 1;
+        }
+        return 0;
+      });
+
+      cb(null, queues);
+    });
 
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -244,7 +413,14 @@ function getHistoryGroupsCallInterval(data, extens, cb) {
       (data.recording ? ' with recording data' : '') + ' about extens ' + extens);
     data.trunks = compAstProxy.getTrunksList();
     data.extens = extens;
-    dbconn.getHistorySwitchCallInterval(data, cb);
+    dbconn.getHistorySwitchCallInterval(data, function(err, results) {
+      if (err) {
+        cb(err);
+        return;
+      }
+
+      cb(null, enrichHistoryResultsWithQueueNames(results));
+    });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
@@ -397,3 +573,4 @@ exports.getCallRecordingFileData = getCallRecordingFileData;
 exports.getHistorySwitchCallInterval = getHistorySwitchCallInterval;
 exports.isAtLeastExtenInCallRecording = isAtLeastExtenInCallRecording;
 exports.getHistoryGroupsCallInterval = getHistoryGroupsCallInterval;
+exports.getHistoryQueues = getHistoryQueues;
