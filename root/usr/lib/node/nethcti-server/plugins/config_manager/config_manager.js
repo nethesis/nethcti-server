@@ -1141,7 +1141,8 @@ function getCancelUrlFromAgent(agent) {
 /**
  * Returns true if the specified phone supports dtmf by HTTP api.
  * It sequentially test a match of specified agent with the keys of _phoneUrls_
- * object. If the match exists than returns a true value, false otherwise.
+ * object. If the match exists than returns true when the dtmf url is defined
+ * for that key, false otherwise.
  *
  * @method phoneSupportDtmfHttpApi
  * @param  {string}  agent The phone user agent
@@ -1157,8 +1158,8 @@ function phoneSupportDtmfHttpApi(agent) {
     var re;
     for (re in phoneUrls) {
       // case insensitive 'i'
-      if (agent.search(new RegExp(re, 'i')) >= 0 && phoneUrls[re].urls.dtmf) {
-        return true;
+      if (agent.search(new RegExp(re, 'i')) >= 0) {
+        return !!(phoneUrls[re].urls && phoneUrls[re].urls.dtmf);
       }
     }
     return false;
@@ -1172,7 +1173,8 @@ function phoneSupportDtmfHttpApi(agent) {
 /**
  * Returns true if the specified phone supports hold by HTTP api.
  * It sequentially test a match of specified agent with the keys of _phoneUrls_
- * object. If the match exists than returns a true value, false otherwise.
+ * object. If the match exists than returns true when the hold url is defined
+ * for that key, false otherwise.
  *
  * @method phoneSupportHoldHttpApi
  * @param  {string}  agent The phone user agent
@@ -1188,8 +1190,8 @@ function phoneSupportHoldHttpApi(agent) {
     var re;
     for (re in phoneUrls) {
       // case insensitive 'i'
-      if (agent.search(new RegExp(re, 'i')) >= 0 && phoneUrls[re].urls.hold_unhold) {
-        return true;
+      if (agent.search(new RegExp(re, 'i')) >= 0) {
+        return !!(phoneUrls[re].urls && phoneUrls[re].urls.hold_unhold);
       }
     }
     return false;
@@ -1203,7 +1205,8 @@ function phoneSupportHoldHttpApi(agent) {
 /**
  * Returns true if the specified phone is supported by HTTP api.
  * It sequentially test a match of specified agent with the keys of _phoneUrls_
- * object. If the match exists than returns a true value, false otherwise.
+ * object. If the match exists than returns true when at least one url is
+ * defined for that key, false otherwise.
  *
  * @method phoneSupportHttpApi
  * @param  {string}  agent The phone user agent
@@ -1220,7 +1223,7 @@ function phoneSupportHttpApi(agent) {
     for (re in phoneUrls) {
       // case insensitive 'i'
       if (agent.search(new RegExp(re, 'i')) >= 0) {
-        return true;
+        return Object.keys(phoneUrls[re].urls || {}).length > 0;
       }
     }
     return false;

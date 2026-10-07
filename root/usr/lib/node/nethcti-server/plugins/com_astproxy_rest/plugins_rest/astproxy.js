@@ -3584,6 +3584,10 @@ var compConfigManager;
           if (isSupported && compAstProxy.isAutoC2CEnabled && (nethlinkStatus === 'online' || nethlinkStatus === 'ringing')) {
             sendPhoneAnswerToTcp(username, req, res);
             compUtil.net.sendHttp200(IDLOG, res);
+          } else if (!isSupported) {
+            var str = 'answering conversation with unsupported phone (exten: ' + req.params.endpointId + '/' + extenAgent + ')';
+            logger.log.warn(IDLOG, str);
+            compUtil.net.sendHttp500(IDLOG, res, str);
           }
         } catch (err) {
           logger.log.error(IDLOG, err.stack);
