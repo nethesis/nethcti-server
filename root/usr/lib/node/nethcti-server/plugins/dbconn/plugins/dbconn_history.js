@@ -535,6 +535,32 @@ function withAnsweredElsewhereQueues(query) {
   };
 }
 
+// The call went through a queue whose "answered elsewhere" option is on.
+function getAnsweredElsewhereQueueCondition(rowAlias, queues) {
+  return 'EXISTS (' +
+    'SELECT 1 FROM cdr AS queue_call ' +
+    'WHERE queue_call.linkedid = ' + rowAlias + '.linkedid ' +
+      'AND queue_call.lastapp = "Queue" ' +
+      'AND queue_call.dst IN ("' + queues.join('","') + '")' +
+  ')';
+}
+
+// A ring the member missed before answering a later one: he took the call himself.
+function getOwnMissedRingCondition(rowAlias) {
+  return '(' +
+    rowAlias + '.disposition IN ("NO ANSWER","BUSY","FAILED") AND ' +
+    rowAlias + '.channel LIKE "Local/%@from-queue-%;2" AND ' +
+    'EXISTS (' +
+      'SELECT 1 FROM cdr AS own_answer ' +
+      'WHERE own_answer.linkedid = ' + rowAlias + '.linkedid ' +
+        'AND own_answer.disposition = "ANSWERED" ' +
+        'AND own_answer.channel LIKE "Local/%@from-queue-%;2" ' +
+        'AND own_answer.dst = ' + rowAlias + '.dst ' +
+        'AND own_answer.calldate >= ' + rowAlias + '.calldate' +
+    ')' +
+  ')';
+}
+
 function getAnsweredElsewhereCondition(rowAlias, queues) {
   if (!queues || queues.length === 0) {
     return 'FALSE';
@@ -552,12 +578,8 @@ function getAnsweredElsewhereCondition(rowAlias, queues) {
           'answered.channel LIKE "Local/%@from-queue-%;2"' +
         ')' +
     ') AND ' +
-    'EXISTS (' +
-      'SELECT 1 FROM cdr AS queue_call ' +
-      'WHERE queue_call.linkedid = ' + rowAlias + '.linkedid ' +
-        'AND queue_call.lastapp = "Queue" ' +
-        'AND queue_call.dst IN ("' + queues.join('","') + '")' +
-    ')' +
+    getAnsweredElsewhereQueueCondition(rowAlias, queues) + ' AND ' +
+    'NOT ' + getOwnMissedRingCondition(rowAlias) +
   ')';
 }
 
@@ -790,6 +812,16 @@ function getHistoryCallInterval(data, cb) {
       ];
     }
 
+    // Without expandLegs the legs are listed as they come, not grouped into calls,
+    // so the ring a member missed before answering a later one would read as a
+    // call he lost (NethLink notifies it as one). Like the other unanswered legs
+    // of an answered call, it is left out.
+    if (!data.expandLegs && data.direction !== 'lost' &&
+      data.answeredElsewhereQueues && data.answeredElsewhereQueues.length > 0) {
+      whereClause[0] += ' AND NOT (' + getOwnMissedRingCondition('cdr') + ' AND ' +
+        getAnsweredElsewhereQueueCondition('cdr', data.answeredElsewhereQueues) + ')';
+    }
+
     if (data.queue) {
       whereClause[0] += ' AND ' + getQueueNumber('cdr') + ' = ?';
       whereClause.push(data.queue);
@@ -895,11 +927,10 @@ function getHistorySwitchCallInterval(data, cb) {
 
     // define the mysql field to be returned. The "recordingfile" field
     // is returned only if the "data.recording" argument is true
-    var effectiveDisposition = getEffectiveDisposition('cdr', data.answeredElsewhereQueues);
     var attributes = [
       ['UNIX_TIMESTAMP(calldate)', 'time'],
       'channel', 'dstchannel', 'uniqueid', 'linkedid', 'userfield',
-      ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'], [compDbconnMain.Sequelize.literal(effectiveDisposition), 'disposition'], 'dcontext', 'lastapp', 'lastdata'
+      ['MAX(duration)','duration'], ['IF (MIN(disposition) = "ANSWERED", MAX(billsec), MIN(billsec))','billsec'], 'disposition', 'dcontext', 'lastapp', 'lastdata'
     ];
     if (data.recording === true) {
       attributes.push('recordingfile');
@@ -944,10 +975,6 @@ function getHistorySwitchCallInterval(data, cb) {
     }
 
     attributes.push([
-      compDbconnMain.Sequelize.literal(getAnsweredByNumber('cdr')),
-      'answered_by_num'
-    ]);
-    attributes.push([
       compDbconnMain.Sequelize.literal(getQueueNumber('cdr')),
       'queue'
     ]);
@@ -978,7 +1005,7 @@ function getHistorySwitchCallInterval(data, cb) {
         ') AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?)' +
-        (data.removeLostCalls ? ' AND ' + effectiveDisposition + ' NOT IN ("NO ANSWER","BUSY","FAILED")' : '') +
+        (data.removeLostCalls ? ' AND disposition NOT IN ("NO ANSWER","BUSY","FAILED")' : '') +
         ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.trunks,
         data.from, data.to,
@@ -1013,7 +1040,7 @@ function getHistorySwitchCallInterval(data, cb) {
         // ring group are the very legs the caller asked to expand. It stays on for
         // every other caller.
         (data.expandLegs ? '' :
-          'AND (' + effectiveDisposition + ' NOT IN ("NO ANSWER","BUSY","FAILED") OR (' + effectiveDisposition + ' IN ("NO ANSWER","BUSY","FAILED") AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE b.disposition IN ("ANSWERED","ANSWERED_ELSEWHERE") AND b.uniqueid = cdr.linkedid)))') +
+          'AND (disposition NOT IN ("NO ANSWER","BUSY","FAILED") OR (disposition IN ("NO ANSWER","BUSY","FAILED") AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)))') +
         ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.trunks, data.trunks,
         data.from, data.to,
@@ -1037,8 +1064,8 @@ function getHistorySwitchCallInterval(data, cb) {
         ') AND ' +
         '(calldate>=? AND calldate<=?) AND ' +
         '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ? OR cnam LIKE ? OR ccompany LIKE ?) AND ' +
-        effectiveDisposition + ' IN ("NO ANSWER","BUSY","FAILED")' +
-        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE b.disposition IN ("ANSWERED","ANSWERED_ELSEWHERE") AND b.uniqueid = cdr.linkedid)' +
+        'disposition IN ("NO ANSWER","BUSY","FAILED")' +
+        'AND linkedid NOT IN (SELECT uniqueid FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.linkedid)' +
         ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.trunks,
         data.from, data.to,
@@ -1056,8 +1083,8 @@ function getHistorySwitchCallInterval(data, cb) {
         // groups them back into one call per linkedid wants them, and it says so
         // with expandLegs.
         (data.expandLegs ? '' :
-          ' AND (uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE b.disposition IN ("ANSWERED","ANSWERED_ELSEWHERE") AND b.uniqueid = cdr.uniqueid)' +
-          ' AND ((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR ' + effectiveDisposition + ' != "NO ANSWER")') +
+          ' AND (uniqueid,linkedid,disposition) NOT IN (SELECT uniqueid,linkedid,"NO ANSWER" disposition FROM cdr AS b WHERE disposition = "ANSWERED" AND b.uniqueid = cdr.uniqueid)' +
+          ' AND ((uniqueid,linkedid,channel,dstchannel) IN (SELECT uniqueid,linkedid,MAX(channel),MAX(dstchannel) FROM cdr AS b WHERE b.uniqueid = cdr.uniqueid AND b.linkedid = cdr.linkedid AND disposition = "NO ANSWER" ) OR disposition != "NO ANSWER")') +
         ' AND NOT (lastapp = "Stasis" AND lastdata = "satellite")',
         data.from, data.to,
         "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%", "%" + data.filter + "%",
@@ -1321,7 +1348,7 @@ function isAtLeastExtenInCall(uniqueid, extensions, cb) {
 apiList.isAtLeastExtenInCall = isAtLeastExtenInCall;
 apiList.getHistorySmsInterval = getHistorySmsInterval;
 apiList.getHistoryCallInterval = withAnsweredElsewhereQueues(getHistoryCallInterval);
-apiList.getHistorySwitchCallInterval = withAnsweredElsewhereQueues(getHistorySwitchCallInterval);
+apiList.getHistorySwitchCallInterval = getHistorySwitchCallInterval;
 apiList.getHistoryQueues = getHistoryQueues;
 apiList.getAllUserHistorySmsInterval = getAllUserHistorySmsInterval;
 

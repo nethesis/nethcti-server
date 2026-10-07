@@ -203,7 +203,9 @@ function promoteAnsweredElsewhereRows(results, queues, logger, idLog, cb) {
           return;
         }
         var answer = getQueueAnswer(activeLinkedids[row.linkedid], queues);
-        if (answer.answered) {
+        var member = /^Local\/([^@]+)@from-queue-/.exec(row.channel || '');
+        // A member who missed a ring and answered a later one took the call himself.
+        if (answer.answered && !(answer.by && member && member[1] === answer.by)) {
           row.disposition = 'ANSWERED_ELSEWHERE';
           row.normalized_disposition = 'ANSWERED_ELSEWHERE';
           if (answer.by && !row.answered_by_num) {

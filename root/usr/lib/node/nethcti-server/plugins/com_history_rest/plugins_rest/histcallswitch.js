@@ -5,7 +5,6 @@
  * @module com_history_rest
  * @submodule plugins_rest
  */
-var answeredElsewhereLive = require('../answered_elsewhere_live');
 
 /**
  * The module identifier used by the logger.
@@ -334,23 +333,12 @@ function setCompAuthorization(ca) {
               if (err) {
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
               } else {
-                answeredElsewhereLive.promoteAnsweredElsewhereRows(results, obj.answeredElsewhereQueues, logger, IDLOG, function (err1, promotedResults) {
-                  try {
-                    if (err1) {
-                      throw err1;
-                    }
-
-                    logger.log.info(IDLOG, 'send ' + promotedResults.count + ' results searching switchboard history call ' +
-                      'interval between ' + obj.from + ' to ' + obj.to + ' for all endpoints ' +
-                      'and filter ' + (obj.filter ? obj.filter : '""') +
-                      (obj.recording ? ' with recording data' : '') +
-                      ' to user "' + username + '"');
-                    res.send(200, promotedResults);
-                  } catch (error1) {
-                    logger.log.error(IDLOG, error1.stack);
-                    compUtil.net.sendHttp500(IDLOG, res, error1.toString());
-                  }
-                });
+                logger.log.info(IDLOG, 'send ' + results.count + ' results searching switchboard history call ' +
+                  'interval between ' + obj.from + ' to ' + obj.to + ' for all endpoints ' +
+                  'and filter ' + (obj.filter ? obj.filter : '""') +
+                  (obj.recording ? ' with recording data' : '') +
+                  ' to user "' + username + '"');
+                res.send(200, results);
               }
             } catch (error) {
               logger.log.error(IDLOG, error.stack);
