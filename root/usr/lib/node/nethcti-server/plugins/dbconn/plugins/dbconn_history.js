@@ -806,6 +806,50 @@ function readCallPage(conn, whereClause, order, offset, limit) {
   return read(Math.max(wanted * CALL_PAGE_LEGS_PER_CALL, 100));
 }
 
+// On a long interval counting the calls takes longer than reading a page, and
+// moving to another page asks for the same total again: it is kept for this
+// many milliseconds, for the last searches only.
+var CALL_COUNT_TTL = 60000;
+var CALL_COUNT_CACHE_SIZE = 100;
+var callCountCache = new Map();
+
+/**
+ * Returns the number of calls (distinct linkedids) of the legs that match the
+ * where clause, reusing a count of the same search made in the last minute.
+ *
+ * @param {object} conn The CDR connection.
+ * @param {array} whereClause The where clause selecting the legs that match the filters.
+ * @return {Promise} Resolved with the number of calls.
+ * @private
+ */
+function countCalls(conn, whereClause) {
+  var key = JSON.stringify(whereClause);
+  var cached = callCountCache.get(key);
+  if (cached && Date.now() - cached.countedAt < CALL_COUNT_TTL) {
+    return cached.count;
+  }
+  callCountCache.delete(key);
+  if (callCountCache.size >= CALL_COUNT_CACHE_SIZE) {
+    callCountCache.delete(callCountCache.keys().next().value);
+  }
+
+  compDbconnMain.incNumExecQueries();
+  var count = conn.query(
+    'SELECT COUNT(DISTINCT linkedid) AS count FROM cdr WHERE ' + whereClause[0],
+    { replacements: whereClause.slice(1), type: compDbconnMain.Sequelize.QueryTypes.SELECT }
+  ).then(function(results) {
+    return results && results[0] ? parseInt(results[0].count, 10) : 0;
+  });
+  // Requests of the same search that arrive while counting wait for this count.
+  callCountCache.set(key, { count: count, countedAt: Date.now() });
+  count.catch(function() {
+    if (callCountCache.get(key) && callCountCache.get(key).count === count) {
+      callCountCache.delete(key);
+    }
+  });
+  return count;
+}
+
 /**
  * Reads a page of calls: first the linkedids of the calls in the page (see
  * readCallPage) and their total, then the legs of those calls only. The cost
@@ -834,15 +878,11 @@ function getHistoryCallPage(data, whereClause, wholeCalls, attributes, voicemail
   };
 
   var pageQuery = readCallPage(conn, whereClause, order, offset, limit);
-  var countQuery = conn.query(
-    'SELECT COUNT(DISTINCT linkedid) AS count FROM cdr WHERE ' + whereClause[0],
-    { replacements: whereClause.slice(1), type: compDbconnMain.Sequelize.QueryTypes.SELECT }
-  );
-  compDbconnMain.incNumExecQueries();
+  var countQuery = countCalls(conn, whereClause);
 
   Promise.all([pageQuery, countQuery]).then(function(results) {
     var linkedids = results[0];
-    var count = results[1] && results[1][0] ? parseInt(results[1][0].count, 10) : 0;
+    var count = results[1];
     if (linkedids.length === 0) {
       reply(null, { count: count, rows: [] });
       return;
