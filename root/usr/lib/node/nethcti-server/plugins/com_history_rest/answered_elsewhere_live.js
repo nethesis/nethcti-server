@@ -133,9 +133,20 @@ function getActiveLinkedids(cb) {
   }
 }
 
+// Only a call still in progress is looked up on AMI, and a leg that started
+// longer ago than this belongs to a call that has ended: a page of older calls
+// does not open an AMI connection at all.
+var LIVE_CALL_MAX_AGE_SECONDS = 12 * 3600;
+
+function isRecentLeg(row) {
+  var time = Number(row.time);
+  return !isFinite(time) || time <= 0 || Date.now() / 1000 - time < LIVE_CALL_MAX_AGE_SECONDS;
+}
+
 function isAnsweredElsewhereCandidate(row) {
   return row &&
     row.linkedid &&
+    isRecentLeg(row) &&
     (
       row.queue ||
       (typeof row.channel === 'string' && row.channel.indexOf('@from-queue-') !== -1) ||

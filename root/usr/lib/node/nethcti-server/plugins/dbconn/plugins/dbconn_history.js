@@ -385,27 +385,66 @@ function hasVoicemailMessageByCallerAndTime(voicemailModel, timeBounds, callerCa
   });
 }
 
-function findLinkedVoicemailRow(rowValues) {
-  var historyModel = compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL];
+// Linkedids per query when looking up the VoiceMail legs of a page of rows.
+var VOICEMAIL_LOOKUP_CHUNK = 500;
 
-  if (!historyModel || typeof rowValues !== 'object' || !rowValues.linkedid || !rowValues.uniqueid) {
-    return Promise.resolve(null);
+function getLinkedVoicemailKey(linkedid, uniqueid) {
+  return linkedid + '|' + uniqueid;
+}
+
+/**
+ * Finds the VoiceMail leg of each row, the latest one when a leg reached the
+ * mailbox more than once. One query per chunk of linkedids instead of one per
+ * row: a history page used to cost as many queries as it had rows.
+ *
+ * @method findLinkedVoicemailRows
+ * @param {array} rowsValues The plain history rows
+ * @return {Promise} Resolved with the VoiceMail legs keyed by linkedid and uniqueid
+ * @private
+ */
+function findLinkedVoicemailRows(rowsValues) {
+  var historyModel = compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL];
+  var linkedids = {};
+
+  rowsValues.forEach(function(rowValues) {
+    if (rowValues && rowValues.lastapp !== 'VoiceMail' && rowValues.linkedid && rowValues.uniqueid) {
+      linkedids[rowValues.linkedid] = true;
+    }
+  });
+
+  var ids = Object.keys(linkedids);
+  if (!historyModel || ids.length === 0) {
+    return Promise.resolve({});
   }
 
-  compDbconnMain.incNumExecQueries();
+  var chunks = [];
+  for (var i = 0; i < ids.length; i += VOICEMAIL_LOOKUP_CHUNK) {
+    chunks.push(ids.slice(i, i + VOICEMAIL_LOOKUP_CHUNK));
+  }
 
-  return historyModel.find({
-    where: [
-      'linkedid = ? AND uniqueid = ? AND lastapp = "VoiceMail"',
-      rowValues.linkedid, rowValues.uniqueid
-    ],
-    order: 'calldate DESC'
-  }).then(function(result) {
-    return getHistoryRowValues(result);
+  return Promise.all(chunks.map(function(chunk) {
+    compDbconnMain.incNumExecQueries();
+    return historyModel.findAll({
+      where: ['linkedid IN (?) AND lastapp = "VoiceMail"', chunk],
+      order: 'calldate DESC'
+    });
+  })).then(function(chunkResults) {
+    var voicemailRows = {};
+    chunkResults.forEach(function(results) {
+      results.forEach(function(result) {
+        var values = getHistoryRowValues(result);
+        var key = getLinkedVoicemailKey(values.linkedid, values.uniqueid);
+        // Ordered by calldate DESC: the first one is the latest.
+        if (!voicemailRows[key]) {
+          voicemailRows[key] = values;
+        }
+      });
+    });
+    return voicemailRows;
   });
 }
 
-function enrichHistoryRowWithVoicemail(row, options) {
+function enrichHistoryRowWithVoicemail(row, options, linkedVoicemailRows) {
   var rowValues = getHistoryRowValues(row);
   var enrichOptions = options || {};
 
@@ -418,31 +457,27 @@ function enrichHistoryRowWithVoicemail(row, options) {
   rowValues.voicemail_message_id = '';
   rowValues.normalized_disposition = rowValues.disposition;
 
-  return findLinkedVoicemailRow(rowValues).then(function(linkedVoicemailRow) {
-    var voicemailCandidate = rowValues.reached_voicemail === true ? rowValues : linkedVoicemailRow;
+  var linkedVoicemailRow = linkedVoicemailRows[getLinkedVoicemailKey(rowValues.linkedid, rowValues.uniqueid)];
+  var voicemailCandidate = rowValues.reached_voicemail === true ? rowValues : linkedVoicemailRow;
 
-    if (!voicemailCandidate || voicemailCandidate.lastapp !== 'VoiceMail') {
-      return row;
-    }
+  if (!voicemailCandidate || voicemailCandidate.lastapp !== 'VoiceMail') {
+    return Promise.resolve(row);
+  }
 
-    // VoiceMail means the call reached a mailbox, not that a person answered it.
-    rowValues.reached_voicemail = true;
-    rowValues.normalized_disposition = 'NO ANSWER';
+  // VoiceMail means the call reached a mailbox, not that a person answered it.
+  rowValues.reached_voicemail = true;
+  rowValues.normalized_disposition = 'NO ANSWER';
 
-    if (!isVoicemailMailboxAllowed(voicemailCandidate, enrichOptions.allowedMailboxes)) {
-      return row;
-    }
+  if (!isVoicemailMailboxAllowed(voicemailCandidate, enrichOptions.allowedMailboxes)) {
+    return Promise.resolve(row);
+  }
 
-    return hasVoicemailMessage(voicemailCandidate).then(function(voicemailMatch) {
-      rowValues.has_voicemail_message = voicemailMatch.hasMessage === true;
-      rowValues.voicemail_message_id = voicemailMatch.messageId || '';
-      return row;
-    }, function(err) {
-      logger.log.warn(IDLOG, 'checking voicemail message for history uniqueid "' + rowValues.uniqueid + '": ' + err.toString());
-      return row;
-    });
+  return hasVoicemailMessage(voicemailCandidate).then(function(voicemailMatch) {
+    rowValues.has_voicemail_message = voicemailMatch.hasMessage === true;
+    rowValues.voicemail_message_id = voicemailMatch.messageId || '';
+    return row;
   }, function(err) {
-    logger.log.warn(IDLOG, 'searching linked voicemail CDR for history uniqueid "' + rowValues.uniqueid + '": ' + err.toString());
+    logger.log.warn(IDLOG, 'checking voicemail message for history uniqueid "' + rowValues.uniqueid + '": ' + err.toString());
     return row;
   });
 }
@@ -452,9 +487,16 @@ function enrichHistoryResultsWithVoicemail(results, options) {
     return Promise.resolve(results);
   }
 
-  return Promise.all(results.map(function(row) {
-    return enrichHistoryRowWithVoicemail(row, options);
-  })).then(function() {
+  return findLinkedVoicemailRows(results.map(getHistoryRowValues)).then(function(linkedVoicemailRows) {
+    return linkedVoicemailRows;
+  }, function(err) {
+    logger.log.warn(IDLOG, 'searching linked voicemail CDR for history rows: ' + err.toString());
+    return {};
+  }).then(function(linkedVoicemailRows) {
+    return Promise.all(results.map(function(row) {
+      return enrichHistoryRowWithVoicemail(row, options, linkedVoicemailRows);
+    }));
+  }).then(function() {
     return results;
   });
 }
@@ -491,7 +533,16 @@ function getAllUserHistorySmsInterval(data, cb) {
  * @param {function} cb Called with the queue numbers
  * @private
  */
+// The option changes only when an administrator edits a queue: it is read again
+// after this many milliseconds instead of on every history request.
+var ANSWERED_ELSEWHERE_QUEUES_TTL = 60000;
+var answeredElsewhereQueuesCache = null;
+
 function getAnsweredElsewhereQueues(cb) {
+  if (answeredElsewhereQueuesCache && Date.now() - answeredElsewhereQueuesCache.readAt < ANSWERED_ELSEWHERE_QUEUES_TTL) {
+    cb(answeredElsewhereQueuesCache.queues);
+    return;
+  }
   var conn = compDbconnMain.dbConn && compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.AMPUSERS];
   if (!conn) {
     logger.log.warn(IDLOG, 'no connection to read the queues that mark calls answered elsewhere');
@@ -506,11 +557,13 @@ function getAnsweredElsewhereQueues(cb) {
         cb([]);
         return;
       }
-      cb(results.map(function (row) {
+      var queues = results.map(function (row) {
         return String(row.id);
       }).filter(function (id) {
         return /^[0-9]+$/.test(id);
-      }));
+      });
+      answeredElsewhereQueuesCache = { queues: queues, readAt: Date.now() };
+      cb(queues);
     }
   );
 }
@@ -656,6 +709,198 @@ function historyGroupBy(data) {
     group.push('dstchannel');
   }
   return group;
+}
+
+/**
+ * Returns the order of the calls when a page is made of calls, not legs, or
+ * null when the requested sort cannot be applied to whole calls.
+ *
+ * @param {object} data The query parameters, as received by the caller.
+ * @return {string|null} "ASC", "DESC" or null.
+ * @private
+ */
+function getCallPageOrder(data) {
+  var match = /^\s*time\s+(asc|desc)\s*$/i.exec(data.sort || 'time desc');
+  return match ? match[1].toUpperCase() : null;
+}
+
+/**
+ * Whether the caller asked for a page of calls (groupByCall): limit and offset
+ * count calls, every leg of the calls in the page is returned, and count is the
+ * number of calls. Without it a caller that groups the legs by linkedid has to
+ * read the whole interval to build a single page.
+ *
+ * @param {object} data The query parameters, as received by the caller.
+ * @return {boolean}
+ * @private
+ */
+function isCallPageRequest(data) {
+  return (data.groupByCall === true || data.groupByCall === 'true') &&
+    parseInt(data.limit, 10) > 0 &&
+    getCallPageOrder(data) !== null;
+}
+
+/**
+ * Appends to the where clause the condition that leaves out the audio test
+ * (echo) legs, as the middleware does on the rows it receives. In SQL a call
+ * made only of such legs is not counted and does not take a place in a page.
+ *
+ * @param {array} whereClause The where clause and its replacements, changed in place.
+ * @param {string} [audioTest] The audio test feature code, e.g. "*41".
+ * @private
+ */
+function excludeAudioTestLegs(whereClause, audioTest) {
+  var code = typeof audioTest === 'string' ? audioTest.trim() : '';
+  if (code === '') {
+    return;
+  }
+  var pattern = '%' + code.replace(/[\\%_]/g, '\\$&') + '%';
+  whereClause[0] += ' AND NOT (src LIKE ? OR dst LIKE ?)';
+  whereClause.push(pattern, pattern);
+}
+
+// Legs read per call wanted in the first attempt to fill a page of calls: a
+// call has about three legs, queue calls more.
+var CALL_PAGE_LEGS_PER_CALL = 4;
+
+/**
+ * Returns the linkedids of a page of calls, in the order their first leg comes
+ * when the legs are sorted by time: the order in which the middleware lists the
+ * calls it groups. The legs are read along the calldate index and the reading
+ * stops as soon as the page is full, instead of grouping every call of the
+ * interval to sort them.
+ *
+ * @param {object} conn The CDR connection.
+ * @param {array} whereClause The where clause selecting the legs that match the filters.
+ * @param {string} order "ASC" or "DESC".
+ * @param {number} offset The calls to skip.
+ * @param {number} limit The calls of the page.
+ * @return {Promise} Resolved with the linkedids of the page.
+ * @private
+ */
+function readCallPage(conn, whereClause, order, offset, limit) {
+  var wanted = offset + limit;
+
+  function read(batch) {
+    compDbconnMain.incNumExecQueries();
+    return conn.query(
+      'SELECT linkedid FROM cdr WHERE ' + whereClause[0] + ' ORDER BY calldate ' + order + ' LIMIT ' + batch,
+      { replacements: whereClause.slice(1), type: compDbconnMain.Sequelize.QueryTypes.SELECT }
+    ).then(function(legs) {
+      var seen = {};
+      var linkedids = [];
+      legs.forEach(function(leg) {
+        if (!seen[leg.linkedid]) {
+          seen[leg.linkedid] = true;
+          linkedids.push(leg.linkedid);
+        }
+      });
+      // Calls with many legs: read further until the page is full or the legs end.
+      if (linkedids.length < wanted && legs.length === batch) {
+        return read(batch * CALL_PAGE_LEGS_PER_CALL);
+      }
+      return linkedids.slice(offset, wanted);
+    });
+  }
+
+  return read(Math.max(wanted * CALL_PAGE_LEGS_PER_CALL, 100));
+}
+
+/**
+ * Reads a page of calls: first the linkedids of the calls in the page (see
+ * readCallPage) and their total, then the legs of those calls only. The cost
+ * of a page depends on its size, not on the interval.
+ *
+ * @param {object} data The query parameters, as received by the caller.
+ * @param {array} whereClause The where clause selecting the legs that match the filters.
+ * @param {boolean} wholeCalls True to return every leg of the calls in the page,
+ *                             false to return only the legs that match.
+ * @param {array} attributes The columns of a leg.
+ * @param {object} [voicemailOptions] The options of the voicemail enrichment.
+ * @param {function} cb Called with {count, rows}.
+ * @private
+ */
+function getHistoryCallPage(data, whereClause, wholeCalls, attributes, voicemailOptions, cb) {
+  var order = getCallPageOrder(data);
+  var limit = parseInt(data.limit, 10);
+  var offset = parseInt(data.offset, 10) > 0 ? parseInt(data.offset, 10) : 0;
+  var conn = compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.HISTORY_CALL];
+  var done = false;
+  var reply = function(err, res) {
+    if (!done) {
+      done = true;
+      cb(err, res);
+    }
+  };
+
+  var pageQuery = readCallPage(conn, whereClause, order, offset, limit);
+  var countQuery = conn.query(
+    'SELECT COUNT(DISTINCT linkedid) AS count FROM cdr WHERE ' + whereClause[0],
+    { replacements: whereClause.slice(1), type: compDbconnMain.Sequelize.QueryTypes.SELECT }
+  );
+  compDbconnMain.incNumExecQueries();
+
+  Promise.all([pageQuery, countQuery]).then(function(results) {
+    var linkedids = results[0];
+    var count = results[1] && results[1][0] ? parseInt(results[1][0].count, 10) : 0;
+    if (linkedids.length === 0) {
+      reply(null, { count: count, rows: [] });
+      return;
+    }
+
+    var position = {};
+    linkedids.forEach(function(linkedid, i) {
+      position[linkedid] = i;
+    });
+    var legsWhere = wholeCalls ?
+      ['linkedid IN (?)', linkedids] :
+      ['(' + whereClause[0] + ') AND linkedid IN (?)'].concat(whereClause.slice(1), [linkedids]);
+
+    compDbconnMain.incNumExecQueries();
+    return compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
+      where: legsWhere,
+      attributes: attributes,
+      group: historyGroupBy(data)
+    }).then(function(legs) {
+      // The calls in page order, the legs of a call by time in the same direction.
+      legs.sort(function(a, b) {
+        var left = getHistoryRowValues(a);
+        var right = getHistoryRowValues(b);
+        var byCall = position[left.linkedid] - position[right.linkedid];
+        if (byCall !== 0) {
+          return byCall;
+        }
+        return order === 'ASC' ? left.time - right.time : right.time - left.time;
+      });
+      return enrichHistoryResultsWithVoicemail(legs, voicemailOptions);
+    }).then(function(enrichedLegs) {
+      reply(null, { count: count, rows: enrichedLegs });
+    });
+  }).catch(function(err) {
+    logger.log.error(IDLOG, 'searching history call page between ' + data.from + ' to ' + data.to +
+      ' with filter ' + data.filter + ': ' + err.toString());
+    reply(err.toString());
+  });
+}
+
+/**
+ * Counts the rows of a history query. When the query was not paginated its
+ * rows are all there is, and they are not read a second time to count them.
+ *
+ * @param {object} data The query parameters, as received by the caller.
+ * @param {array} rows The rows of the query.
+ * @param {object} countOptions The options of the count query.
+ * @return {Promise} Resolved with the number of rows.
+ * @private
+ */
+function countHistoryRows(data, rows, countOptions) {
+  if (!data.limit && !(parseInt(data.offset, 10) > 0)) {
+    return Promise.resolve(rows.length);
+  }
+  compDbconnMain.incNumExecQueries();
+  return compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count(countOptions).then(function(count) {
+    return count.length;
+  });
 }
 
 function getHistoryCallInterval(data, cb) {
@@ -827,12 +1072,19 @@ function getHistoryCallInterval(data, cb) {
       whereClause.push(data.queue);
     }
 
+    excludeAudioTestLegs(whereClause, data.audioTest);
+
     // NOTE: the personal history is deliberately NOT widened to whole calls the way
     // the switchboard one is (see getHistorySwitchCallInterval). Its clauses match
     // the legs the user is a party to, and selecting by linkedid instead would
     // return the legs between their colleagues as well — the detail the switchboard
     // view exists for, and which is gated there by the "switchboard cdr"
-    // authorization that this endpoint does not require.
+    // authorization that this endpoint does not require. For the same reason a
+    // page of calls returns only the legs that match.
+    if (isCallPageRequest(data)) {
+      getHistoryCallPage(data, whereClause, false, attributes, { allowedMailboxes: data.endpoints }, cb);
+      return;
+    }
 
     // search
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
@@ -847,13 +1099,13 @@ function getHistoryCallInterval(data, cb) {
       enrichHistoryResultsWithVoicemail(results, {
         allowedMailboxes: data.endpoints
       }).then(function(enrichedResults) {
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
+        countHistoryRows(data, enrichedResults, {
             where: whereClause,
             group: historyGroupBy(data),
             attributes: attributes
             }).then(function(count) {
                 const res = {
-                  count: count.length,
+                  count: count,
                   rows: enrichedResults
                 }
                 logger.log.info(IDLOG, res.count + ' results searching switchboard history call interval between ' + 
@@ -1097,6 +1349,15 @@ function getHistorySwitchCallInterval(data, cb) {
       whereClause.push(data.queue);
     }
 
+    excludeAudioTestLegs(whereClause, data.audioTest);
+
+    // A page of calls is selected by the clauses above and returns every leg of
+    // those calls when the caller asked for them, like the query below.
+    if (isCallPageRequest(data)) {
+      getHistoryCallPage(data, whereClause, !!data.expandLegs, attributes, undefined, cb);
+      return;
+    }
+
     // With expandLegs the caller groups a call's legs back into one row, so the
     // filter has to select CALLS, not legs. Every clause above matches leg by
     // leg — a direction filter keeps only the leg carrying the trunk — so a queue
@@ -1120,13 +1381,13 @@ function getHistorySwitchCallInterval(data, cb) {
 
     }).then(function(results) {
       enrichHistoryResultsWithVoicemail(results).then(function(enrichedResults) {
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].count({
+        countHistoryRows(data, enrichedResults, {
             where: whereClause,
             group: historyGroupBy(data),
             attributes: attributes
              }).then(function(count) {
                 const res = {
-                  count: count.length,
+                  count: count,
                   rows: enrichedResults
                 }
                 logger.log.info(IDLOG, res.count + ' results searching switchboard history call interval between ' +
@@ -1156,20 +1417,54 @@ function getHistorySwitchCallInterval(data, cb) {
   }
 }
 
+// Days of history searched for the queues of a user when no interval is given.
+var HISTORY_QUEUES_DEFAULT_DAYS = 30;
+
+function formatHistoryDay(date) {
+  return date.getFullYear() +
+    ('0' + (date.getMonth() + 1)).slice(-2) +
+    ('0' + date.getDate()).slice(-2);
+}
+
+/**
+ * Returns the queues the calls of the endpoints went through in the interval.
+ * Without an interval it searched the whole history of the user, which took
+ * tens of seconds on a large CDR.
+ *
+ * @method getHistoryQueues
+ * @param {object} data
+ *   @param {array}  data.endpoints The endpoints of the user
+ *   @param {string} [data.from]    The starting date of the interval in the YYYYMMDD format,
+ *                                  by default HISTORY_QUEUES_DEFAULT_DAYS days ago
+ *   @param {string} [data.to]      The ending date of the interval in the YYYYMMDD format, by default today
+ * @param {function} cb The callback function
+ */
 function getHistoryQueues(data, cb) {
   try {
     if (typeof data !== 'object' ||
       typeof cb !== 'function' ||
-      !(data.endpoints instanceof Array)) {
+      !(data.endpoints instanceof Array) ||
+      (data.from !== undefined && !/^[0-9]{8}$/.test(data.from)) ||
+      (data.to !== undefined && !/^[0-9]{8}$/.test(data.to))) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
+    var to = data.to || formatHistoryDay(new Date());
+    var from = data.from || formatHistoryDay(new Date(Date.now() - HISTORY_QUEUES_DEFAULT_DAYS * 86400000));
+    from = from.substring(0, 4) + '-' + from.substring(4, 6) + '-' + from.substring(6, 8) + ' 00:00:00';
+    to = to.substring(0, 4) + '-' + to.substring(4, 6) + '-' + to.substring(6, 8) + ' 23:59:59';
+
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
       where: [
-        'linkedid IN (SELECT linkedid FROM cdr AS history_filter WHERE history_filter.cnum IN (?) OR history_filter.dst IN (?)) AND ' +
+        'linkedid IN (' +
+          'SELECT linkedid FROM cdr AS history_filter ' +
+          'WHERE (history_filter.cnum IN (?) OR history_filter.dst IN (?)) ' +
+            'AND history_filter.calldate >= ? AND history_filter.calldate <= ?' +
+        ') AND ' +
+        'calldate >= ? AND calldate <= ? AND ' +
         'lastapp = "Queue" AND dst <> ""',
-        data.endpoints, data.endpoints
+        data.endpoints, data.endpoints, from, to, from, to
       ],
       attributes: [
         ['DISTINCT(dst)', 'queue']

@@ -507,7 +507,23 @@ function setCompAuthorization(ca) {
             extens = [req.params.target];
           }
 
-          compHistory.getHistoryQueues({ endpoints: extens }, function(err, queues) {
+          // The queues of the calls in the interval the history shows
+          // (?from=YYYYMMDD&to=YYYYMMDD): the whole history of a user is too large
+          // to be searched on every request.
+          if ((req.params.from && !/^[0-9]{8}$/.test(req.params.from)) ||
+            (req.params.to && !/^[0-9]{8}$/.test(req.params.to))) {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+          var queuesQuery = { endpoints: extens };
+          if (req.params.from) {
+            queuesQuery.from = req.params.from;
+          }
+          if (req.params.to) {
+            queuesQuery.to = req.params.to;
+          }
+
+          compHistory.getHistoryQueues(queuesQuery, function(err, queues) {
             try {
               if (err) {
                 throw err;
@@ -826,6 +842,13 @@ function setCompAuthorization(ca) {
           // caller that groups them back together wants this.
           if (req.params.expandLegs) {
             obj.expandLegs = req.params.expandLegs;
+          }
+          // limit and offset count calls instead of legs: see dbconn_history.
+          if (req.params.groupByCall) {
+            obj.groupByCall = req.params.groupByCall;
+          }
+          if (req.params.audioTest) {
+            obj.audioTest = req.params.audioTest;
           }
 
           // use the history component
