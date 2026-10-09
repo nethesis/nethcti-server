@@ -360,6 +360,16 @@ function setCompAuthorization(ca) {
           if (req.params.removeLostCalls) {
             obj.removeLostCalls = req.params.removeLostCalls;
           }
+          if (req.params.queue) {
+            obj.queue = req.params.queue;
+          }
+          // limit and offset count calls instead of legs: see dbconn_history.
+          if (req.params.groupByCall) {
+            obj.groupByCall = req.params.groupByCall;
+          }
+          if (req.params.audioTest) {
+            obj.audioTest = req.params.audioTest;
+          }
 
           // if the user has the privacy enabled, it adds the privacy string to be used to hide the phone numbers
           if (compAuthorization.isPrivacyEnabled(username)) {
