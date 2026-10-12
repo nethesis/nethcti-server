@@ -278,8 +278,8 @@ function enrichHistoryResultsWithQueueNames(results) {
  * @method getHistoryCallInterval
  * @param {object} data
  *   @param {string}  data.endpoints The endpoints involved in the research, e.g. the extension identifiers
- *   @param {string}  data.from      The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
- *   @param {string}  data.to        The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+ *   @param {string}  data.from      The starting date of the interval in the YYYYMMDD[HHmm[ss]] format (e.g. 20130521 or 201305210930)
+ *   @param {string}  data.to        The ending date of the interval in the YYYYMMDD[HHmm[ss]] format (e.g. 20130528 or 201305280930)
  *   @param {boolean} data.recording True if the data about recording audio file must be returned
  *   @param {string}  [data.filter]  The filter to be used
  *   @param {integer} [offset]       The results offset
@@ -329,8 +329,8 @@ function getHistoryCallInterval(data, cb) {
  *
  * @method getHistorySwitchCallInterval
  * @param {object} data
- *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
- *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+ *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD[HHmm[ss]] format (e.g. 20130521 or 201305210930)
+ *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD[HHmm[ss]] format (e.g. 20130528 or 201305280930)
  *   @param {boolean} data.recording    True if the data about recording audio file must be returned
  *   @param {string}  [data.filter]     The filter to be used
  *   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
@@ -447,8 +447,8 @@ function getHistoryQueues(data, cb) {
  *
  * @method getHistoryGroupsCallInterval
  * @param {object} data
- *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
- *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+ *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD[HHmm[ss]] format (e.g. 20130521 or 201305210930)
+ *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD[HHmm[ss]] format (e.g. 20130528 or 201305280930)
  *   @param {boolean} data.recording    True if the data about recording audio file must be returned
  *   @param {string}  [data.filter]     The filter to be used
  *   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
