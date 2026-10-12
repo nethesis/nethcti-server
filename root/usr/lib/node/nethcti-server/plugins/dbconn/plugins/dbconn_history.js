@@ -674,8 +674,8 @@ function getQueueNumber(rowAlias) {
  *                                      identifiers. It is used to filter out the _cnum_ and _dst_ fields.
  *                                      If it is omitted the function treats it as ['%'] string. The '%'
  *                                      matches any number of characters, even zero character
- *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
- *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+ *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD[HHmm[ss]] format (e.g. 20130521 or 201305210930)
+ *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD[HHmm[ss]] format (e.g. 20130528 or 201305280930)
  *   @param {boolean} data.recording    True if the data about recording audio file must be returned
  *   @param {string}  [data.filter]     The filter to be used in the _cnum, clid_ and _dst_ fields. If it is
  *                                      omitted the function treats it as '%' string
@@ -943,6 +943,30 @@ function countHistoryRows(data, rows, countOptions) {
   });
 }
 
+/**
+ * Converts a bound of a history interval into a calldate. The bound is a day
+ * in the YYYYMMDD format, optionally followed by the time in the HHmm or
+ * HHmmss format (e.g. 20130521 or 201305210930). A day alone stands for all
+ * of it, and an ending time without seconds includes its whole minute.
+ *
+ * @param {string} value The bound of the interval
+ * @param {boolean} isEnd True if it is the ending bound of the interval
+ * @return {string} The calldate in the "YYYY-MM-DD HH:mm:ss" format.
+ * @private
+ */
+function toCallDate(value, isEnd) {
+  var day = value.substring(0, 4) + '-' + value.substring(4, 6) + '-' + value.substring(6, 8);
+  var time = /^[0-9]{8}([0-9]{2})([0-9]{2})([0-9]{2})?$/.exec(value);
+  if (time === null) {
+    return day + (isEnd ? ' 23:59:59' : ' 00:00:00');
+  }
+  var seconds = time[3] || (isEnd ? '59' : '00');
+  if (parseInt(time[1], 10) > 23 || parseInt(time[2], 10) > 59 || parseInt(seconds, 10) > 59) {
+    throw new Error('wrong time in the history interval: ' + value);
+  }
+  return day + ' ' + time[1] + ':' + time[2] + ':' + seconds;
+}
+
 function getHistoryCallInterval(data, cb) {
   try {
     // check parameters
@@ -1023,8 +1047,8 @@ function getHistoryCallInterval(data, cb) {
       data.filter = '%';
     }
 
-    data.from = data.from.substring(0,4) + '-' + data.from.substring(4,6) + '-' + data.from.substring(6,8) + ' 00:00:00';
-    data.to = data.to.substring(0,4) + '-' + data.to.substring(4,6) + '-' + data.to.substring(6,8) + ' 23:59:59';
+    data.from = toCallDate(data.from, false);
+    data.to = toCallDate(data.to, true);
     var whereClause;
 
     if (data.direction && data.direction === 'in') {
@@ -1187,8 +1211,8 @@ function getHistoryCallInterval(data, cb) {
  *                                      and _dstchannel_ fields to get out the type "in" and "out".
  *                                      If it is omitted the function treats it as ['%'] string. The '%'
  *                                      matches any number of characters, even zero character
- *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
- *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+ *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD[HHmm[ss]] format (e.g. 20130521 or 201305210930)
+ *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD[HHmm[ss]] format (e.g. 20130528 or 201305280930)
  *   @param {boolean} data.recording    True if the data about recording audio file must be returned
  *   @param {string}  [data.filter]     The filter to be used in the _cnum, clid_ and _dst_ fields. If it is
  *                                      omitted the function treats it as '%' string
@@ -1277,8 +1301,8 @@ function getHistorySwitchCallInterval(data, cb) {
     }
 
     data.extens = '("' + data.extens.join('","') + '")';
-    data.from = data.from.substring(0,4) + '-' + data.from.substring(4,6) + '-' + data.from.substring(6,8) + ' 00:00:00';
-    data.to = data.to.substring(0,4) + '-' + data.to.substring(4,6) + '-' + data.to.substring(6,8) + ' 23:59:59';
+    data.from = toCallDate(data.from, false);
+    data.to = toCallDate(data.to, true);
 
     var whereClause;
     if (data.type === 'in') {

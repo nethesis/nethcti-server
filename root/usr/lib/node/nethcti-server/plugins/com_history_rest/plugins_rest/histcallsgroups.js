@@ -197,8 +197,8 @@ function setCompAuthorization(ca) {
         *
         * Returns the history calls of agents belonging to the groups of the user between _"from"_ date to _"to"_ date of all endpoints.
         *
-        * * `from: the start date in YYYYMMDD format`
-        * * `to: the end date in YYYYMMDD format`
+        * * `from: the start date in YYYYMMDD[HHmm[ss]] format`
+        * * `to: the end date in YYYYMMDD[HHmm[ss]] format`
         * * `[type]: ("in" | "out" | "internal" | "lost") the type of the calls. If it is through a trunk`
         *
         * If an error occurs an HTTP 500 response is returned. It supports pagination with limit and offset parameters and sorting.
@@ -237,8 +237,8 @@ function setCompAuthorization(ca) {
         * Returns the calls of agents belonging to the groups of the user between _"from"_ date to _"to"_ date of all endpoints
         * filtering by _"filter"_.
         *
-        * * `from: the start date in YYYYMMDD format`
-        * * `to: the end date in YYYYMMDD format`
+        * * `from: the start date in YYYYMMDD[HHmm[ss]] format`
+        * * `to: the end date in YYYYMMDD[HHmm[ss]] format`
         * * `filter: filter results on "cnum", "clid" and "dst" fields of the database`
         * * `[type]: ("in" | "out" | "internal") the type of the calls. If it is through a trunk`
         *
@@ -287,10 +287,10 @@ function setCompAuthorization(ca) {
          * @type {array}
          *
          *   @param {string} interval/:from/:to[?type=type&limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_ date.
-         *     The date must be expressed in YYYYMMDD format
+         *     The date must be expressed in YYYYMMDD[HHmm[ss]] format
          *
          *   @param {string} interval/:from/:to/:filter[?type=type&limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_
-         *     date filtering by filter. The date must be expressed in YYYYMMDD format
+         *     date filtering by filter. The date must be expressed in YYYYMMDD[HHmm[ss]] format
          */
         'get': [
           'interval/:from/:to',

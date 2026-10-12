@@ -233,8 +233,8 @@ function setCompAuthorization(ca) {
         *
         * * `type: ("extension" | "user")`
         * * `target: the extension identifier or the username`
-        * * `from: the start date in YYYYMMDD format`
-        * * `to: the end date in YYYYMMDD format`
+        * * `from: the start date in YYYYMMDD[HHmm[ss]] format`
+        * * `to: the end date in YYYYMMDD[HHmm[ss]] format`
         * * `[direction]: ("in" | "out" | "lost") the direction of the calls`
         *
         * The results will be the history calls of the single extension or the history calls of all the extensions of the user.
@@ -275,8 +275,8 @@ function setCompAuthorization(ca) {
         *
         * * `type: ("extension" | "user")`
         * * `target: the extension identifier or the username`
-        * * `from: the start date in YYYYMMDD format`
-        * * `to: the end date in YYYYMMDD format`
+        * * `from: the start date in YYYYMMDD[HHmm[ss]] format`
+        * * `to: the end date in YYYYMMDD[HHmm[ss]] format`
         * * `filter: filter results on "cnum", "clid" and "dst" fields of the database`
         * * `[direction]: ("in" | "out") the direction of the calls`
         *
@@ -348,10 +348,10 @@ function setCompAuthorization(ca) {
          *   @param {string} listen_callrec/:id To listen the record audio file of a call
          *
          *   @param {string} interval/:type/:target/:from/:to[?direction=dir&limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_ date.
-         *     The date must be expressed in YYYYMMDD format
+         *     The date must be expressed in YYYYMMDD[HHmm[ss]] format
          *
          *   @param {string} interval/:type/:target/:from/:to/:filter[?direction=dir&limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_
-         *     date filtering by filter. The date must be expressed in YYYYMMDD format
+         *     date filtering by filter. The date must be expressed in YYYYMMDD[HHmm[ss]] format
          */
         'get': [
           'down_callrec/:id',
