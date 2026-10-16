@@ -30,6 +30,7 @@ module.exports = (options, imports, register) => {
     }
     alarm.setLogger(logger.ctilog);
     alarm.setCompComIpc(imports.comIpc);
+    alarm.setCompAstProxy(imports.astProxy);
     alarm.start();
   } catch (err) {
     logger.ctilog.log.error(IDLOG, err.stack);

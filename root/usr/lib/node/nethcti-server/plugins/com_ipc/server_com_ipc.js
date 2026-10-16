@@ -169,7 +169,7 @@ let start = () => {
             ipc.server.emit(socket, JSON.stringify({ type: 'dump', data: compComNethctiWs.dump() }));
           } else if (o.type === 'collectd_notify') {
             logger.log.info(IDLOG, 'received collectd event');
-            process.emit(EVT_ALARM,
+            emitter.emit(EVT_ALARM,
               {
                 date: new Date().toISOString(),
                 status: o.notification.status.toLowerCase(),
