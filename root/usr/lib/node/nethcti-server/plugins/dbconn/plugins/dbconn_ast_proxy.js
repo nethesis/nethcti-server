@@ -249,9 +249,20 @@ const queryLostCalls = '\
     agent,\
     event \
   FROM asteriskcdrdb.queue_log a \
-  WHERE event IN ("ABANDON", "EXITWITHTIMEOUT", "EXITWITHKEY", "EXITEMPTY", "FULL", "JOINEMPTY", "JOINUNAVAIL")\
+  WHERE <REPLACE_LOST_EVENT_CONDITION>\
     AND <REPLACE_LOST_TIME_CONDITION_QL>\
     AND a.queuename IN (<REPLACE_LOST_QUEUES>)';
+
+const lostEventsCondition = 'event IN ("ABANDON", "EXITWITHTIMEOUT", "EXITWITHKEY", "EXITEMPTY", "FULL", "JOINEMPTY", "JOINUNAVAIL")';
+
+function getLostEventsCondition(nullCallPeriod) {
+  const period = parseInt(nullCallPeriod);
+  if (isNaN(period) || period <= 0) {
+    return lostEventsCondition;
+  }
+  return '(event IN ("EXITWITHTIMEOUT", "EXITWITHKEY", "EXITEMPTY", "FULL", "JOINEMPTY", "JOINUNAVAIL")' +
+    ' OR (event = "ABANDON" AND CAST(data3 AS UNSIGNED) >= ' + period + '))';
+}
 
 const queryDoneCalls = '\
   SELECT time,\
@@ -314,7 +325,7 @@ const queryCdrCalls = '\
  * @return {string} The query to obtain the entries about queue recall table
  * @private
  */
-function getAllQueueRecallQueryTable(hours, queues, agents) {
+function getAllQueueRecallQueryTable(hours, queues, agents, nullCallPeriod) {
   try {
     if (typeof hours !== 'string' || !queues || !agents) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
@@ -336,7 +347,8 @@ function getAllQueueRecallQueryTable(hours, queues, agents) {
         ' ORDER BY time DESC) queue_recall'
     ].join('');
     query = query.replace(/<REPLACE_LOST_TIME_CONDITION_QL>/g, timeConditionQl)
-      .replace(/<REPLACE_LOST_QUEUES>/g, queues);
+      .replace(/<REPLACE_LOST_QUEUES>/g, queues)
+      .replace('<REPLACE_LOST_EVENT_CONDITION>', getLostEventsCondition(nullCallPeriod));
     return query;
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -370,7 +382,7 @@ function getRecall(obj, cb) {
 SELECT
   cid, name, company, action, MIN(UNIX_TIMESTAMP(time)) as time, direction, queuename,
   IF (event = "", action, event) AS event
-FROM ${getAllQueueRecallQueryTable(obj.hours, obj.queues, obj.agents)}
+FROM ${getAllQueueRecallQueryTable(obj.hours, obj.queues, obj.agents, obj.nullCallPeriod)}
 GROUP BY cid, queuename
 ORDER BY time ASC`;
     compDbconnMain.dbConn['queue_log'].query(
