@@ -297,6 +297,7 @@ module.exports = function(options, imports, register) {
         throw new Error('wrong parameters: ' + JSON.stringify(arguments));
       }
       obj.agents = astProxy.proxyLogic.getAgentsOfQueues(obj.queues);
+      obj.nullCallPeriod = nullCallPeriod;
       compDbconn.getRecall(obj, cb);
     } catch (error) {
       logger.log.error(IDLOG, error.stack);
