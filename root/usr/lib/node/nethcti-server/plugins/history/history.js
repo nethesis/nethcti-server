@@ -54,6 +54,8 @@ var dbconn;
  */
 var compAstProxy;
 
+var compUser;
+
 /**
  * Set the logger to be used.
  *
@@ -114,6 +116,15 @@ function setCompAstProxy(comp) {
   }
 }
 
+function setCompUser(comp) {
+  try {
+    compUser = comp;
+    logger.log.info(IDLOG, 'set user architect component');
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+  }
+}
+
 function getHistoryRowValues(row) {
   if (row && row.dataValues) {
     return row.dataValues;
@@ -164,6 +175,61 @@ function extractQueueId(rowValues) {
   }
 
   return '';
+}
+
+function getSecondaryExtensionMap() {
+  var secondaryExtensionMap = {};
+
+  if (!compUser ||
+    typeof compUser.getAllUsersEndpointsExtension !== 'function' ||
+    typeof compUser.getEndpointMainExtension !== 'function') {
+
+    return secondaryExtensionMap;
+  }
+
+  var usersExtensions = compUser.getAllUsersEndpointsExtension() || {};
+  Object.keys(usersExtensions).forEach(function(username) {
+    var mainExtension = compUser.getEndpointMainExtension(username);
+    var mainExtensionId = mainExtension && typeof mainExtension.getId === 'function' ?
+      String(mainExtension.getId()) : '';
+
+    if (!mainExtensionId) {
+      return;
+    }
+
+    Object.keys(usersExtensions[username] || {}).forEach(function(extension) {
+      if (extension !== mainExtensionId) {
+        secondaryExtensionMap[extension] = mainExtensionId;
+      }
+    });
+  });
+
+  return secondaryExtensionMap;
+}
+
+function normalizeSecondaryExtensions(results) {
+  if (!results || !(results.rows instanceof Array) || results.rows.length === 0) {
+    return results;
+  }
+
+  var secondaryExtensionMap = getSecondaryExtensionMap();
+  if (Object.keys(secondaryExtensionMap).length === 0) {
+    return results;
+  }
+
+  results.rows.forEach(function(row) {
+    var rowValues = getHistoryRowValues(row);
+
+    ['cnum', 'src', 'dst'].forEach(function(field) {
+      var value = rowValues[field];
+
+      if (value !== undefined && value !== null && secondaryExtensionMap[String(value)]) {
+        setHistoryRowValue(row, field, secondaryExtensionMap[String(value)]);
+      }
+    });
+  });
+
+  return results;
 }
 
 function enrichHistoryResultsWithQueueNames(results) {
@@ -248,7 +314,7 @@ function getHistoryCallInterval(data, cb) {
         return;
       }
 
-      cb(null, enrichHistoryResultsWithQueueNames(results));
+      cb(null, enrichHistoryResultsWithQueueNames(normalizeSecondaryExtensions(results)));
     });
 
   } catch (err) {
@@ -302,7 +368,7 @@ function getHistorySwitchCallInterval(data, cb) {
         return;
       }
 
-      cb(null, enrichHistoryResultsWithQueueNames(results));
+      cb(null, enrichHistoryResultsWithQueueNames(normalizeSecondaryExtensions(results)));
     });
 
   } catch (err) {
@@ -419,7 +485,7 @@ function getHistoryGroupsCallInterval(data, extens, cb) {
         return;
       }
 
-      cb(null, enrichHistoryResultsWithQueueNames(results));
+      cb(null, enrichHistoryResultsWithQueueNames(normalizeSecondaryExtensions(results)));
     });
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
@@ -566,6 +632,7 @@ function deleteCallRecording(id, data, cb) {
 exports.setLogger = setLogger;
 exports.setDbconn = setDbconn;
 exports.setCompAstProxy = setCompAstProxy;
+exports.setCompUser = setCompUser;
 exports.deleteCallRecording = deleteCallRecording;
 exports.getHistoryCallInterval = getHistoryCallInterval;
 exports.getCallRecordingContent = getCallRecordingContent;

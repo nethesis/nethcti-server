@@ -6,7 +6,8 @@
     "consumes": [
       "logger",
       "dbconn",
-      "astProxy"
+      "astProxy",
+      "user"
     ],
     "provides": [
       "history"

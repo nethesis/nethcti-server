@@ -35,6 +35,7 @@ module.exports = function(options, imports, register) {
       history.setLogger(logger.ctilog);
       history.setDbconn(imports.dbconn);
       history.setCompAstProxy(imports.astProxy);
+      history.setCompUser(imports.user);
     });
   } catch (err) {
     logger.ctilog.log.error(IDLOG, err.stack);
