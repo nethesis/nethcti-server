@@ -326,6 +326,11 @@ function setCompAuthorization(ca) {
 
           logger.log.info(IDLOG, 'group cdr authorization successfully for user "' + username + '"');
 
+          if (!compHistory.isValidInterval(req.params.from, req.params.to)) {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+
           // check the administration recording authorization. If it's enabled the user
           // can view also all data about recording audio files
           var recording = compAuthorization.authorizeAdminRecordingUser(username);

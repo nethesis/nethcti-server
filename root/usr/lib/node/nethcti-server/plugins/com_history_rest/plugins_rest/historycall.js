@@ -508,10 +508,9 @@ function setCompAuthorization(ca) {
           }
 
           // The queues of the calls in the interval the history shows
-          // (?from=YYYYMMDD&to=YYYYMMDD): the whole history of a user is too large
-          // to be searched on every request.
-          if ((req.params.from && !/^[0-9]{8}$/.test(req.params.from)) ||
-            (req.params.to && !/^[0-9]{8}$/.test(req.params.to))) {
+          // (?from=YYYYMMDD[HHmm[ss]]&to=YYYYMMDD[HHmm[ss]]): the whole history of a user
+          // is too large to be searched on every request.
+          if (!compHistory.isValidInterval(req.params.from || undefined, req.params.to || undefined)) {
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
@@ -749,7 +748,8 @@ function setCompAuthorization(ca) {
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (req.params.type !== 'extension' && req.params.type !== 'user') {
+          if ((req.params.type !== 'extension' && req.params.type !== 'user') ||
+            !compHistory.isValidInterval(req.params.from, req.params.to)) {
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }

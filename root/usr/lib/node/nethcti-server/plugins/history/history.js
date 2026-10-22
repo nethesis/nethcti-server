@@ -377,6 +377,16 @@ function getHistorySwitchCallInterval(data, cb) {
   }
 }
 
+function isValidInterval(from, to) {
+  try {
+    dbconn.toCallDateInterval(from, to);
+    return true;
+  } catch (err) {
+    logger.log.warn(IDLOG, err.message);
+    return false;
+  }
+}
+
 function getHistoryQueues(data, cb) {
   try {
     if (typeof data !== 'object' ||
@@ -641,3 +651,4 @@ exports.getHistorySwitchCallInterval = getHistorySwitchCallInterval;
 exports.isAtLeastExtenInCallRecording = isAtLeastExtenInCallRecording;
 exports.getHistoryGroupsCallInterval = getHistoryGroupsCallInterval;
 exports.getHistoryQueues = getHistoryQueues;
+exports.isValidInterval = isValidInterval;
