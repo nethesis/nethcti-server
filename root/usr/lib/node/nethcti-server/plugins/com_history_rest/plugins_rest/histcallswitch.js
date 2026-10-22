@@ -149,8 +149,8 @@ function setCompAuthorization(ca) {
         *
         * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints.
         *
-        * * `from: the start date in YYYYMMDD format`
-        * * `to: the end date in YYYYMMDD format`
+        * * `from: the start date in YYYYMMDD[HHmm[ss]] format`
+        * * `to: the end date in YYYYMMDD[HHmm[ss]] format`
         * * `[type]: ("in" | "out" | "internal" | "lost") the type of the calls. If it is through a trunk`
         *
         * If an error occurs an HTTP 500 response is returned. It supports pagination with limit and offset parameters and sorting.
@@ -189,8 +189,8 @@ function setCompAuthorization(ca) {
         * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints
         * filtering by _"filter"_.
         *
-        * * `from: the start date in YYYYMMDD format`
-        * * `to: the end date in YYYYMMDD format`
+        * * `from: the start date in YYYYMMDD[HHmm[ss]] format`
+        * * `to: the end date in YYYYMMDD[HHmm[ss]] format`
         * * `filter: filter results on "cnum", "clid" and "dst" fields of the database`
         * * `[type]: ("in" | "out" | "internal") the type of the calls. If it is through a trunk`
         *
@@ -239,10 +239,10 @@ function setCompAuthorization(ca) {
          * @type {array}
          *
          *   @param {string} interval/:from/:to[?type=type&limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_ date.
-         *     The date must be expressed in YYYYMMDD format
+         *     The date must be expressed in YYYYMMDD[HHmm[ss]] format
          *
          *   @param {string} interval/:from/:to/:filter[?type=type&limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_
-         *     date filtering by filter. The date must be expressed in YYYYMMDD format
+         *     date filtering by filter. The date must be expressed in YYYYMMDD[HHmm[ss]] format
          */
         'get': [
           'interval/:from/:to',
@@ -277,6 +277,11 @@ function setCompAuthorization(ca) {
           }
 
           logger.log.info(IDLOG, 'switchboard cdr authorization successfully for user "' + username + '"');
+
+          if (!compHistory.isValidInterval(req.params.from, req.params.to)) {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
 
           // check the administration recording authorization. If it's enabled the user
           // can view also all data about recording audio files

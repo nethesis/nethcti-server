@@ -674,8 +674,8 @@ function getQueueNumber(rowAlias) {
  *                                      identifiers. It is used to filter out the _cnum_ and _dst_ fields.
  *                                      If it is omitted the function treats it as ['%'] string. The '%'
  *                                      matches any number of characters, even zero character
- *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
- *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+ *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD[HHmm[ss]] format (e.g. 20130521 or 201305210930)
+ *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD[HHmm[ss]] format (e.g. 20130528 or 201305280930)
  *   @param {boolean} data.recording    True if the data about recording audio file must be returned
  *   @param {string}  [data.filter]     The filter to be used in the _cnum, clid_ and _dst_ fields. If it is
  *                                      omitted the function treats it as '%' string
@@ -943,6 +943,50 @@ function countHistoryRows(data, rows, countOptions) {
   });
 }
 
+/**
+ * Converts a bound of a history interval into a calldate. The bound is a day
+ * in the YYYYMMDD format, optionally followed by the time in the HHmm or
+ * HHmmss format (e.g. 20130521 or 201305210930). A day alone stands for all
+ * of it, and an ending time without seconds includes its whole minute.
+ * It throws an error if the bound is malformed or is not a real date and time.
+ *
+ * @param {string} value The bound of the interval
+ * @param {boolean} isEnd True if it is the ending bound of the interval
+ * @return {string} The calldate in the "YYYY-MM-DD HH:mm:ss" format.
+ * @private
+ */
+function toCallDate(value, isEnd) {
+  var bound = /^([0-9]{4})([0-9]{2})([0-9]{2})(?:([0-9]{2})([0-9]{2})([0-9]{2})?)?$/.exec(value);
+  if (typeof value !== 'string' || bound === null) {
+    throw new Error('wrong bound of the history interval: ' + value);
+  }
+  var year = parseInt(bound[1], 10);
+  var month = parseInt(bound[2], 10);
+  var day = parseInt(bound[3], 10);
+  var date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
+    throw new Error('wrong day in the history interval: ' + value);
+  }
+  var hours = bound[4] || (isEnd ? '23' : '00');
+  var minutes = bound[5] || (isEnd ? '59' : '00');
+  var seconds = bound[6] || (isEnd ? '59' : '00');
+  if (parseInt(hours, 10) > 23 || parseInt(minutes, 10) > 59 || parseInt(seconds, 10) > 59) {
+    throw new Error('wrong time in the history interval: ' + value);
+  }
+  return bound[1] + '-' + bound[2] + '-' + bound[3] + ' ' + hours + ':' + minutes + ':' + seconds;
+}
+
+function toCallDateInterval(from, to) {
+  var interval = {
+    from: from === undefined ? undefined : toCallDate(from, false),
+    to: to === undefined ? undefined : toCallDate(to, true)
+  };
+  if (interval.from !== undefined && interval.to !== undefined && interval.from > interval.to) {
+    throw new Error('the history interval starts after its end: ' + from + ' - ' + to);
+  }
+  return interval;
+}
+
 function getHistoryCallInterval(data, cb) {
   try {
     // check parameters
@@ -1023,8 +1067,9 @@ function getHistoryCallInterval(data, cb) {
       data.filter = '%';
     }
 
-    data.from = data.from.substring(0,4) + '-' + data.from.substring(4,6) + '-' + data.from.substring(6,8) + ' 00:00:00';
-    data.to = data.to.substring(0,4) + '-' + data.to.substring(4,6) + '-' + data.to.substring(6,8) + ' 23:59:59';
+    var interval = toCallDateInterval(data.from, data.to);
+    data.from = interval.from;
+    data.to = interval.to;
     var whereClause;
 
     if (data.direction && data.direction === 'in') {
@@ -1187,8 +1232,8 @@ function getHistoryCallInterval(data, cb) {
  *                                      and _dstchannel_ fields to get out the type "in" and "out".
  *                                      If it is omitted the function treats it as ['%'] string. The '%'
  *                                      matches any number of characters, even zero character
- *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
- *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+ *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD[HHmm[ss]] format (e.g. 20130521 or 201305210930)
+ *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD[HHmm[ss]] format (e.g. 20130528 or 201305280930)
  *   @param {boolean} data.recording    True if the data about recording audio file must be returned
  *   @param {string}  [data.filter]     The filter to be used in the _cnum, clid_ and _dst_ fields. If it is
  *                                      omitted the function treats it as '%' string
@@ -1277,8 +1322,9 @@ function getHistorySwitchCallInterval(data, cb) {
     }
 
     data.extens = '("' + data.extens.join('","') + '")';
-    data.from = data.from.substring(0,4) + '-' + data.from.substring(4,6) + '-' + data.from.substring(6,8) + ' 00:00:00';
-    data.to = data.to.substring(0,4) + '-' + data.to.substring(4,6) + '-' + data.to.substring(6,8) + ' 23:59:59';
+    var interval = toCallDateInterval(data.from, data.to);
+    data.from = interval.from;
+    data.to = interval.to;
 
     var whereClause;
     if (data.type === 'in') {
@@ -1474,9 +1520,9 @@ function formatHistoryDay(date) {
  * @method getHistoryQueues
  * @param {object} data
  *   @param {array}  data.endpoints The endpoints of the user
- *   @param {string} [data.from]    The starting date of the interval in the YYYYMMDD format,
+ *   @param {string} [data.from]    The starting date of the interval in the YYYYMMDD[HHmm[ss]] format,
  *                                  by default HISTORY_QUEUES_DEFAULT_DAYS days ago
- *   @param {string} [data.to]      The ending date of the interval in the YYYYMMDD format, by default today
+ *   @param {string} [data.to]      The ending date of the interval in the YYYYMMDD[HHmm[ss]] format, by default today
  * @param {function} cb The callback function
  */
 function getHistoryQueues(data, cb) {
@@ -1484,16 +1530,14 @@ function getHistoryQueues(data, cb) {
     if (typeof data !== 'object' ||
       typeof cb !== 'function' ||
       !(data.endpoints instanceof Array) ||
-      (data.from !== undefined && !/^[0-9]{8}$/.test(data.from)) ||
-      (data.to !== undefined && !/^[0-9]{8}$/.test(data.to))) {
+      (data.from !== undefined && typeof data.from !== 'string') ||
+      (data.to !== undefined && typeof data.to !== 'string')) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    var to = data.to || formatHistoryDay(new Date());
-    var from = data.from || formatHistoryDay(new Date(Date.now() - HISTORY_QUEUES_DEFAULT_DAYS * 86400000));
-    from = from.substring(0, 4) + '-' + from.substring(4, 6) + '-' + from.substring(6, 8) + ' 00:00:00';
-    to = to.substring(0, 4) + '-' + to.substring(4, 6) + '-' + to.substring(6, 8) + ' 23:59:59';
+    var to = toCallDate(data.to || formatHistoryDay(new Date()), true);
+    var from = toCallDate(data.from || formatHistoryDay(new Date(Date.now() - HISTORY_QUEUES_DEFAULT_DAYS * 86400000)), false);
 
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
       where: [
@@ -1685,6 +1729,7 @@ apiList.getHistorySmsInterval = getHistorySmsInterval;
 apiList.getHistoryCallInterval = withAnsweredElsewhereQueues(getHistoryCallInterval);
 apiList.getHistorySwitchCallInterval = getHistorySwitchCallInterval;
 apiList.getHistoryQueues = getHistoryQueues;
+apiList.toCallDateInterval = toCallDateInterval;
 apiList.getAllUserHistorySmsInterval = getAllUserHistorySmsInterval;
 
 // public interface
