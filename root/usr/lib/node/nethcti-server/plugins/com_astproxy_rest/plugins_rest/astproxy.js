@@ -6070,6 +6070,8 @@ function ajaxPhoneCall(username, req, res) {
 
       // replace the parameters of the url template
       url = url.replace(/\$SERVER/g, serverHostname);
+      // some phones (e.g. Fanvil W611W) need each digit separated by ";"
+      url = url.replace(/\$NUMBER_DIGITS/g, to.split('').join(';'));
       url = url.replace(/\$NUMBER/g, to);
       url = url.replace(/\$ACCOUNT/g, exten);
       url = url.replace(/\$PHONE_IP/g, extenIp);
@@ -6207,6 +6209,8 @@ function sendPhoneCallToTcp(username, req, res) {
       let phoneUser = compUser.getPhoneWebUser(username, exten);
       let phonePass = compUser.getPhoneWebPass(username, exten);
       url = url.replace(/\$SERVER/g, serverHostname);
+      // some phones (e.g. Fanvil W611W) need each digit separated by ";"
+      url = url.replace(/\$NUMBER_DIGITS/g, to.split('').join(';'));
       url = url.replace(/\$NUMBER/g, to);
       url = url.replace(/\$ACCOUNT/g, exten);
       url = url.replace(/\$PHONE_IP/g, extenIp);
