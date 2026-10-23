@@ -402,12 +402,16 @@ module.exports = function(options, imports, register) {
     try {
       const NVREPORT_CONF_FILEPATH = '/opt/nethvoice-report/api/conf.json';
       let json = JSON.parse(fs.readFileSync(NVREPORT_CONF_FILEPATH, 'utf8'));
-      if (typeof json.api_key !== 'string' || typeof json.api_endpoint !== 'string') {
+      if (typeof json.api_key !== 'string' || typeof json.listen_address !== 'string') {
         throw new Error(NVREPORT_CONF_FILEPATH + ' wrong file format');
       }
+      // reach the report API directly on its local listen address: going through
+      // the public endpoint fails TLS validation with self-signed certificates
+      let url = new URL('http://' + json.listen_address);
       nvReportConf = {
         api_key: json.api_key,
-        api_endpoint: json.api_endpoint,
+        hostname: url.hostname,
+        port: url.port,
       };
     } catch (err) {
       logger.log.error(IDLOG, err.stack);
@@ -438,6 +442,8 @@ module.exports = function(options, imports, register) {
     try {
       (async function exec() {
         if (nvReportConf.token === undefined) {
+          // re-read the configuration: the report API port may have changed (e.g. after a restore)
+          nethvoiceReportConfig();
           try {
             const token = await makeNVReportLogin();
             nvReportConf.token = token;
@@ -469,18 +475,17 @@ module.exports = function(options, imports, register) {
   function makeNVReportLogin() {
     try {
       return new Promise((resolve, reject) => {
-        if (nvReportConf.api_endpoint && typeof nvReportConf.api_endpoint === 'string' && nvReportConf.api_endpoint !== '') {
-          let url = new URL(nvReportConf.api_endpoint);
+        if (nvReportConf.hostname && nvReportConf.port) {
           const options = {
-            hostname: url.hostname,
-            port: url.port,
-            path: url.pathname + '/login',
+            hostname: nvReportConf.hostname,
+            port: nvReportConf.port,
+            path: '/login',
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             }
           };
-          const req = https.request(options, (res) => {
+          const req = http.request(options, (res) => {
             let data = '';
             res.setEncoding('utf8');
             res.on('data', (chunk) => {
@@ -518,18 +523,17 @@ module.exports = function(options, imports, register) {
     try {
       return new Promise((resolve, reject) => {
         if (nvReportConf.token && typeof nvReportConf.token === 'string' && nvReportConf.token !== '') {
-          let url = new URL(nvReportConf.api_endpoint);
           const options = {
-            hostname: url.hostname,
-            port: url.port,
-            path: url.pathname + '/settings',
+            hostname: nvReportConf.hostname,
+            port: nvReportConf.port,
+            path: '/settings',
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${nvReportConf.token}`
             }
           };
-          const req = https.request(options, (res) => {
+          const req = http.request(options, (res) => {
             let data = '';
             res.setEncoding('utf8');
             res.on('data', (chunk) => {
