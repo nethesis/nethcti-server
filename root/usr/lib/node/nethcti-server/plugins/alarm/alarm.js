@@ -1,4 +1,5 @@
 'use strict';
+const fs = require('fs');
 /**
  * Provides the alarm functions.
  *
@@ -45,33 +46,44 @@ let logger = console;
 const alarms = {};
 
 /**
- * The interval in milliseconds between two checks of the queues.
+ * The configuration file containing the queues alarms settings.
  *
- * @property CHECK_INTERVAL
- * @type number
+ * @property AST_CONF_FILEPATH
+ * @type string
  * @private
  * @final
  * @readOnly
- * @default 30000
+ * @default "/etc/nethcti/asterisk.json"
  */
-const CHECK_INTERVAL = 30000;
+const AST_CONF_FILEPATH = '/etc/nethcti/asterisk.json';
 
 /**
- * The thresholds used to raise the queues alarms. They are the same
- * defaults of the legacy collectd asterisk monitor plugin.
+ * The default settings used to raise the queues alarms. Thresholds are
+ * in seconds, except maxCallsPerOp and maxCalls. They can be overridden
+ * by the "qm_alarms" key of the configuration file.
  *
- * @property THRESHOLDS
+ * @property DEFAULT_CONFIG
  * @type object
  * @private
  * @final
  * @readOnly
  */
-const THRESHOLDS = {
+const DEFAULT_CONFIG = {
   maxCallsPerOp: 2,
   maxCalls: 10,
   maxHoldtime: 120,
-  callersMaxWait: 250
+  callersMaxWait: 250,
+  checkInterval: 30
 };
+
+/**
+ * The settings used to raise the queues alarms.
+ *
+ * @property config
+ * @type object
+ * @private
+ */
+let config = Object.assign({}, DEFAULT_CONFIG);
 
 /**
  * The asterisk proxy component.
@@ -158,10 +170,44 @@ function start() {
   try {
     logger.log.info(IDLOG, 'set listeners for com ipc component');
     setComIpcListeners();
-    setInterval(checkQueues, CHECK_INTERVAL);
+    readConfig();
+    setInterval(checkQueues, config.checkInterval * 1000);
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
+}
+
+/**
+ * Reads the queues alarms settings from the configuration file. Missing
+ * or invalid values fall back to the defaults.
+ *
+ * @method readConfig
+ * @private
+ */
+function readConfig() {
+  try {
+    const json = JSON.parse(fs.readFileSync(AST_CONF_FILEPATH, 'utf8'));
+    const custom = json.qm_alarms || {};
+    const keys = {
+      maxCallsPerOp: 'max_calls_per_op',
+      maxCalls: 'max_calls',
+      maxHoldtime: 'max_holdtime',
+      callersMaxWait: 'callers_max_wait',
+      checkInterval: 'check_interval'
+    };
+    for (const k in keys) {
+      const value = parseFloat(custom[keys[k]]);
+      if (!isNaN(value) && value >= 0) {
+        config[k] = value;
+      }
+    }
+    if (config.checkInterval <= 0) {
+      config.checkInterval = DEFAULT_CONFIG.checkInterval;
+    }
+  } catch (err) {
+    logger.log.warn(IDLOG, 'using default alarms settings: ' + err.message);
+  }
+  logger.log.info(IDLOG, 'alarms settings: ' + JSON.stringify(config));
 }
 
 /**
@@ -190,10 +236,10 @@ function checkQueues() {
       const holdtime = parseInt(queues[q].avgHoldTime, 10) || 0;
       const callersMaxWait = callers.reduce((max, c) => Math.max(max, c.waiting || 0), 0);
       const status = {
-        queueload: calls > THRESHOLDS.maxCalls && holdtime > THRESHOLDS.maxHoldtime,
-        queuemaxwait: calls > THRESHOLDS.maxCalls && callersMaxWait > THRESHOLDS.callersMaxWait,
-        queuefewop: calls > onlineMembers * THRESHOLDS.maxCallsPerOp,
-        queueholdtime: holdtime > THRESHOLDS.maxHoldtime
+        queueload: calls > config.maxCalls && holdtime > config.maxHoldtime,
+        queuemaxwait: calls > config.maxCalls && callersMaxWait > config.callersMaxWait,
+        queuefewop: calls > onlineMembers * config.maxCallsPerOp,
+        queueholdtime: holdtime > config.maxHoldtime
       };
       for (const alarm in status) {
         const active = Boolean(alarms[q] && alarms[q][alarm]);
