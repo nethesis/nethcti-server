@@ -2205,6 +2205,12 @@ exports.authorizeCdrUser = authorizeCdrUser;
 exports.isPrivacyEnabled = isPrivacyEnabled;
 exports.authorizeSmsUser = authorizeSmsUser;
 exports.authorizeChatUser = authorizeChatUser;
+// Narrow service reads use the same current profile that /user/me exposes.
+exports.canReceiveConsultationChat = function(username) {
+  const profile = getUserProfileJSON(username);
+  const cti = profile && profile.macro_permissions && profile.macro_permissions.nethvoice_cti;
+  return !!(cti && cti.value === true && cti.permissions && cti.permissions.chat && cti.permissions.chat.value === true);
+};
 exports.getUserProfileJSON = getUserProfileJSON;
 exports.authorizePickupUser = authorizePickupUser;
 exports.authorizePostitUser = authorizePostitUser;

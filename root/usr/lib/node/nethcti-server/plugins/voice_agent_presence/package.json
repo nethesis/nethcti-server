@@ -1,0 +1,6 @@
+{
+  "name": "voice_agent_presence",
+  "main": "index.js",
+  "private": true,
+  "plugin": {"consumes": ["user", "authorization", "astProxy", "logger"], "provides": []}
+}

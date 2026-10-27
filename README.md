@@ -20,6 +20,14 @@ Actually it supports only [Asterisk PBX](https://www.asterisk.org/).
 
 ## How to use
 
+### Private consultation recipient service
+
+The optional `voice_agent_presence` plugin provides only `GET /v1/recipients/{mainextension}` on a separate loopback HTTP listener. Set `NETHVOICE_RECIPIENT_SERVICE_PORT` and `NETHVOICE_RECIPIENT_SERVICE_TOKEN_FILE` to an owner-only file containing a 32–128 character random URL-safe token. Requests require `Authorization: Bearer <token>`. Without the port the plugin is disabled. Do not publish this listener through a reverse proxy.
+
+The version-1 response contains only `recipient_id`, `mainextension`, `effective_presence`, `device_state`, `chat_allowed` and `observed_at`. It reads the existing user/presence and authorization components, requires an unambiguous single main extension, and verifies the native connection with a bounded native DND read and the current CTI device state. No staff login or administrator token is used. It rejects secondary extensions, ambiguous/removed recipients, invalid authentication and unavailable native state. The result is display/eligibility data, never a dialing grant; callers must still authorize destinations and recheck before ringing. DND is returned without modification. SIP secrets and profiles never leave the service.
+
+Run its standalone tests with `node root/usr/lib/node/nethcti-server/plugins/voice_agent_presence/test.js`.
+
 To launch it manually copy all the server content into the path:
 
 ```bash
