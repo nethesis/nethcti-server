@@ -4,7 +4,7 @@
   "description": "NethCti Server",
   "main": "nethcti.js",
   "dependencies": {
-    "@nethesis/astproxy": "https://codeload.github.com/nethesis/astproxy/tar.gz/171ab87266fc6ee638c06b77ba7895a7bbdbd959",
+    "@nethesis/astproxy": "^0.2.3",
     "architect": "0.1.11",
     "asterisk-ami": "0.2.0-beta1",
     "ejs": "2.5.6",
