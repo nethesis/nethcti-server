@@ -1242,9 +1242,7 @@ function evtStreamingSourceChanged(evt) {
 
     var room_name = 'STREAMING_' + evt.streaming.source.toUpperCase();
 
-    // emits the event to all clients
-    var sockid;
-    for (sockid in wsid) {
+    if (WS_ROOM[room_name]) {
       wsServer.sockets.in(WS_ROOM[room_name]).emit(EVT_STREAMING_SOURCE_UPDATE, evt);
     }
   } catch (err) {
