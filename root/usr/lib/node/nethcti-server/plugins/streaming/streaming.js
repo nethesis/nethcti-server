@@ -135,6 +135,17 @@ var streamings = {};
 let streamingErrors = {};
 
 /**
+ * Returns true if the streaming source has at least one subscriber. Only the
+ * sources with subscribers are sampled. By default all sources are sampled,
+ * it is replaced by the websocket component using _setSubscribersChecker_.
+ *
+ * @property hasSubscribers
+ * @type function
+ * @private
+ */
+let hasSubscribers = function() { return true; };
+
+/**
  * The asterisk proxy component used for asterisk functions.
  *
  * @property compAstProxy
@@ -282,7 +293,7 @@ function start() {
     intervalGetSourceSample = setInterval(function() {
       try {
         for (var i in streamings) {
-          if (loopStep % (streamings[i].getFramerate() / baseTime) === 0) {
+          if (loopStep % (streamings[i].getFramerate() / baseTime) === 0 && hasSubscribers(i)) {
             // emit the streaming source changed event
             streamings[i].getSample(function(err1, id, img) {
               try {
@@ -401,6 +412,20 @@ function open(streamId, callerid, fromExten, cb) {
     logger.log.error(IDLOG, err.stack);
     cb(err);
   }
+}
+
+/**
+ * Sets the function used to check if a streaming source has subscribers.
+ * The sources without subscribers are not sampled.
+ *
+ * @method setSubscribersChecker
+ * @param {function} fn The function called with the streaming source identifier
+ */
+function setSubscribersChecker(fn) {
+  if (typeof fn !== 'function') {
+    throw new Error('wrong subscribers checker function');
+  }
+  hasSubscribers = fn;
 }
 
 /**
@@ -625,6 +650,7 @@ exports.setCompAuthorization = setCompAuthorization;
 exports.getAllStreamingSources = getAllStreamingSources;
 exports.subscribeSource = subscribeSource;
 exports.unsubscribeSource = unsubscribeSource;
+exports.setSubscribersChecker = setSubscribersChecker;
 exports.getSourceJSONByExten = getSourceJSONByExten;
 exports.isExtenStreamingSource = isExtenStreamingSource;
 exports.EVT_STREAMING_SOURCE_CHANGED = EVT_STREAMING_SOURCE_CHANGED;
