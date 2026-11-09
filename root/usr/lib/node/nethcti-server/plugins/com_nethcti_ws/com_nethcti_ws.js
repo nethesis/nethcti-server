@@ -1018,6 +1018,10 @@ function setStreamingListeners() {
     compStreaming.on(compStreaming.EVT_STREAMING_SOURCE_SUBSCRIBED, evtStreamingSourceSubscribed);
     compStreaming.on(compStreaming.EVT_STREAMING_SOURCE_UNSUBSCRIBED, evtStreamingSourceUnsubscribed);
 
+    // sample only the streaming sources watched by at least one websocket
+    if (typeof compStreaming.setSubscribersChecker === 'function') {
+      compStreaming.setSubscribersChecker(hasStreamingSubscribers);
+    }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
   }
@@ -1247,6 +1251,25 @@ function evtStreamingSourceChanged(evt) {
     }
   } catch (err) {
     logger.log.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Returns true if at least one websocket is in the room of the streaming source.
+ *
+ * @method hasStreamingSubscribers
+ * @param {string} sourceId The streaming source identifier
+ * @return {boolean} True if the streaming source has at least one subscriber.
+ * @private
+ */
+function hasStreamingSubscribers(sourceId) {
+  try {
+    var room = WS_ROOM['STREAMING_' + sourceId.toUpperCase()];
+    var members = room && wsServer && wsServer.sockets.adapter.rooms.get(room);
+    return !!(members && members.size > 0);
+  } catch (err) {
+    logger.log.error(IDLOG, err.stack);
+    return true;
   }
 }
 
